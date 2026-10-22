@@ -5,7 +5,7 @@ Inspect existing sources first and reuse accepted answers across subagents and l
 | Decision | Ask when missing | Record |
 | --- | --- | --- |
 | Authority and identity | Which approved brand guide/assets should govern, and is this Omni, the customer, or a permitted co-brand? | Source links/files, brand owner if stated, logo versions/clear-space rules, permitted uses, and asset-rights evidence. |
-| Company website | What is your company's official website URL, and should this experience follow a particular product, subsidiary or regional brand? | Supplied/canonical URL, intended brand, inspected pages/date, observed logo/colors/fonts, conflicting guidelines and unresolved reuse rights. Reuse a supplied URL; do not infer approval from public visibility. |
+| Company website and logo | What is the official website, and should we use an approved logo file/URL or source the logo from that website? Ask only the missing parts; retain an explicit no-logo preference. | Website, intended product/regional brand, selected logo/variant, source, sourcing/use authorization and unresolved restrictions. Reuse prior answers; public visibility alone is not authorization or endorsement. |
 | Audience and task | Who uses this, for which decisions, on which screens, and at what density? | Viewer/analyst roles, executive/operational use, primary tasks, supported widths and input methods, density preference. |
 | Surface and scope | Is the target a native dashboard, native Omni App, both, or an explicitly requested external embedded application? Which instance/document/scope? | Selected target(s), identifiers when supplied, internal/embed context, organization/default/single-document impact. Never infer external hosting from “app.” |
 | Color semantics | Which brand colors are required, and which colors already mean good/bad, selected, risk, or forecast? | Brand accents; foreground/background pairs; neutral/status/focus roles; categorical, sequential, and diverging palettes; category mappings. |
@@ -20,7 +20,7 @@ Use the engagement's existing schema if available; otherwise record these fields
 
 - Identity: engagement, version, chosen surface(s), source authority, accepted/proposed status.
 - Website: supplied URL, canonical domain when verified, brand/product context, scoped page references, review date and observed-versus-approved findings. No website supplied means discovery unavailable, not invented branding.
-- Assets: reference, purpose, provenance, use permission status, appearance variants.
+- Assets: specific selected logo or explicit omission; reference, variant, purpose, provenance, use authorization, loading path, expected placement and target visibility evidence. Keep temporary placeholders labeled and unresolved.
 - Tokens: semantic role, candidate value, light/dark variant where relevant, contrast partner, target mapping, support status.
 - Typography: roles, font source and rights, fallback, number formatting considerations, measured overflow/fallback findings.
 - Data color: palette purpose, ordered categories, business semantics, non-color encodings, behavior for unknown/new categories.
@@ -33,6 +33,12 @@ Use the engagement's existing schema if available; otherwise record these fields
 Consult the maintained [Omni capability reference](../../omni-artifact-accelerator/references/omni-capabilities.md). Treat these as separate mappings: application theme; dashboard/document theme; native App CSS variables; external host styles only when that surface is selected.
 
 Do not distribute a fabricated theme-import payload. Confirm actual export/import shape and current field behavior. Preserve a snapshot before an authorized change and explicitly account for omitted fields, defaults, document propagation, and save effects. An unavailable font or chart-color feature is a documented gap, not permission to change surfaces or loosen network/security policy.
+
+## Logo decision and handoff
+
+A requested branded experience needs an explicit logo decision, not an inferred substitution. Combine missing website and approved-file/URL or official-site sourcing authorization into the existing short interview. Reuse an answer across roles and later turns. If sourcing is already authorized, select a suitable official variant and record it; do not ask again merely because the file was not supplied. Record any actual conflicting restriction without claiming third-party endorsement or legal approval. If the user wants no logo, record that omission and skip unrelated logo research.
+
+Hand engineering the selected asset ID, exact file/URL and hash when retained, variant (for example, symbol versus wordmark and light/dark), source page, authorization reference, loading path, aspect ratio, intended size/placement, alternative text and fallback. A temporary text/monogram placeholder may support provisional work only when visibly labeled and retained as unresolved; it cannot satisfy the requested logo or become the final choice silently. An unavailable native loading path returns a specific gap, not a generic replacement. Verify the chosen asset appears correctly in the actual target; color-only QA does not establish brand identity.
 
 ## Brand-to-composition specimen
 
@@ -49,7 +55,7 @@ brand_and_purpose: <identity, orientation, analytical explanation; omit decorati
 evidence_type: <observed reference / supplied approved asset / original candidate>
 permission: {status: unresolved, evidence_ref: null, permitted_use: null}
 file: {path: null, sha256: null, media_type: null, dimensions: null}
-composition: {focal_point: null, crop: null, aspect_ratio: null, appearance_variant: null}
+composition: {focal_point: null, crop: null, aspect_ratio: null, appearance_variant: null, expected_placement: null}
 accessibility: {alt_text: null, decorative: false}
 runtime: {loading_source: null, network_requirement: none, fallback: null}
 decision: <reference_only / proposed_for_use / eligible_for_scoped_use / rejected>

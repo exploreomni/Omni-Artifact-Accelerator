@@ -10,7 +10,7 @@ Start with an existing Omni model, bring an exported BI experience, or continue 
 - **Build an analytical App:** design a task flow with governed queries, inputs, scenario state and recovery behavior.
 - **Migrate an existing experience:** preserve source identities, calculations, controls, layout intent and unresolved behavior while making deliberate design improvements.
 - **Coordinate frontend and backend work:** send specific model gaps to Data Model Accelerator and reconcile its versioned response without repeating discovery.
-- **Create a consistent customer experience:** reuse approved logos, images, fonts and color semantics across the selected dashboard and App surfaces.
+- **Create a consistent customer experience:** reuse approved logos, images, fonts and color semantics across the selected dashboard and App surfaces. Supply your official website and preferred logo file/URL, authorize sourcing its logo, or explicitly choose no logo; the package reuses that decision.
 
 This is a skill bundle for an agent host, not a standalone BI service. Skills define roles; the host runs the agent and supplies its tools. The local helpers manage files, evidence and bounded operations—they do not launch a permanent team of agents or connect accounts automatically.
 
