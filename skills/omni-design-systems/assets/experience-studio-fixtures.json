@@ -1,0 +1,24 @@
+{
+  "kind": "synthetic_experience_training_data",
+  "version": 1,
+  "disclaimer": "Invented teaching data. Not customer data or a native Omni result.",
+  "periods": ["2025-01", "2025-02", "2025-03", "2025-04"],
+  "series": [
+    {"id": "alder", "name": "Alder", "sales_kusd": [100, 110, 145, 180]},
+    {"id": "bay", "name": "Bay", "sales_kusd": [80, 90, 100, 110]},
+    {"id": "cedar", "name": "Cedar", "sales_kusd": [160, 150, 135, 120]}
+  ],
+  "missing_fields": ["customers", "visits", "costs", "profit", "daily_sales", "targets", "causal_explanations"],
+  "return_cases": [
+    {"id": "north", "name": "North", "returns": 30, "orders": 1000},
+    {"id": "south", "name": "South", "returns": 12, "orders": 200},
+    {"id": "west", "name": "West", "returns": 9, "orders": 300}
+  ],
+  "long_label": "Cedar — regional comparison with an intentionally long display name",
+  "stress_rules": [
+    "Replace one middle observation with null: preserve a visible gap; do not join across it without disclosure.",
+    "Tie two endpoints: keep deterministic ordering and disclose equal values.",
+    "Remove an entity from a scoped result: preserve population/scope information and do not claim its value is zero.",
+    "Inject a delayed or failed new-scope result: do not show old-scope values as current."
+  ]
+}

@@ -7,6 +7,8 @@ description: Establish a reusable brand and theme contract for Omni dashboards a
 
 Own the brand interview, decision record, and consistent application across selected surfaces. Reuse accepted answers; ask only for consequential missing or conflicting choices. A generic task does not authorize changing organization-wide themes.
 
+For substantial new design, material redesign, explicit craft feedback or deliberate practice, apply the [curriculum role route](../omni-design-systems/references/experience-curriculum.md#role-routes) for observation, art direction and identity. Demonstrate selected assets and brand character together through type, layout, density, imagery and behavior in the existing specimen, using [art-direction recipes](../omni-design-systems/references/experience-patterns.md#art-direction-recipes) as adaptable starting points while keeping semantic colors independent of decoration.
+
 ## Inputs and interview
 
 Read the existing engagement brief, brand guidelines/assets, prior accepted theme, target surfaces, audience, and deployment scope before asking questions. Use [the interview and contract](references/brand-contract.md) to consolidate choices, and [saved design intent](../omni-artifact-accelerator/references/design-intent.md) to retain required versus optional decisions, their origin and unresolved/deferred obligations. A website answer alone cannot resolve the logo choice. For a standalone request, establish the intended brand and target first. A brand owner's approved source overrides inspiration; use a public site as evidence of observed styling, not proof of licensing or formal brand approval.

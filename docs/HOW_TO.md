@@ -66,6 +66,8 @@ For `both`, assign each requirement to dashboard, App or both. Shared metrics ca
 
 The analyst defines meaning and independent examples. Designers create the chart/layout or task/state specification. Branding and design systems establish shared visual roles; storytelling and motion participate when useful. BI and App engineers bind the approved requirements to actual available target capabilities.
 
+Use the [Data Experience Design Studio](../skills/omni-design-systems/references/experience-curriculum.md) when developing a substantial design, addressing craft feedback or practicing a new technique. Select the relevant role lessons, write a concrete design thesis and compare suitable visual structures from the pattern atlas. The worked studios demonstrate how to diagnose and revise a generic starting composition; ordinary engagements need only the lessons that improve the actual task.
+
 For a substantial new experience or material redesign:
 
 1. Retain a brief describing the audience/task, website/brand authority, density, reference qualities to borrow/avoid and target constraints.
@@ -75,6 +77,8 @@ For a substantial new experience or material redesign:
 5. Keep independent numerical, craft, native behavior and human-usability evidence separate. Update the engagement index and artifact/query records; missing testing remains visible.
 
 Use a focused review for a narrow correction. Preserve a faithful migration's source obligations and record adaptations rather than imposing a redesign.
+
+Respect explicit tool constraints. If browser/rendering work is prohibited or unavailable, continue with supported specifications, code and CLI/MCP checks. Mark rendered alternatives, native appearance and native interactions as `not_run` where unobserved; do not claim prose alternatives or an API readback close those lanes. This limitation does not create a new permission gate for already authorized work.
 
 For reproducible review evidence, author the scoped specification described in [design evidence](../skills/omni-qa-analyst/references/design-evidence.md), then freeze it after the selected checks:
 

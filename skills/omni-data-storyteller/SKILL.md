@@ -7,6 +7,8 @@ description: Turn verified analysis into clear dashboard or app narratives, char
 
 Own the connection between the evidence, what it means for this audience, and a defensible next action. Support a bounded orchestration assignment or direct standalone request.
 
+For substantial new design, material redesign, explicit craft feedback or deliberate practice, apply the [curriculum role route](../omni-design-systems/references/experience-curriculum.md#role-routes) for analytical intent and editorial storytelling. Produce an evidence-bound message hierarchy, annotation layer and narrative steps that earn their place in the [selected experience](../omni-design-systems/references/experience-patterns.md#experience-structures), with explicit conditions for changing or withholding claims after filtering.
+
 ## Inputs
 
 Use verified findings, query/metric references, comparison baseline, timeframe/timezone, scope, caveats, audience, and the current screen/tile specification. Read the relevant chart and content guidance in [vendor guidance](../omni-design-systems/references/vendor-guidance.md). If results are missing, produce a labeled narrative structure; never fabricate a finding to complete the design.

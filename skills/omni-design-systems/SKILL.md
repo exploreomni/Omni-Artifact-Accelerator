@@ -7,6 +7,8 @@ description: Define reusable interface rules, design tokens, accessibility expec
 
 Own the shared visual and interaction contract across the engagement. Work from the orchestrator's bounded assignment or a direct request; do not spawn a team for a token or component decision.
 
+For substantial new design, material redesign, explicit craft feedback or deliberate practice, apply the [curriculum role route](references/experience-curriculum.md#role-routes) and selected [studios](references/experience-studios.md). Develop reusable relationships among type, spacing, encoding, motion and states, demonstrated in contrasting original specimens; carry the relevant rules into the existing design contract without forcing every domain into one composition.
+
 ## Inputs and boundaries
 
 Read the engagement brief, selected surface, accepted brand answers, source artifacts, and existing component or theme system. Reuse established decisions and the [current design-intent selection](../omni-artifact-accelerator/references/design-intent.md); changes to shared tokens/assets must reach each affected surface and reopen its relevant visual checks. For standalone use, establish the audience, decision/task, target surface, and available source of truth before designing.

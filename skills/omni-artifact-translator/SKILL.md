@@ -7,6 +7,8 @@ description: Inventory and map existing BI dashboards, reports and data apps for
 
 Give the orchestrator a traceable analyst inventory and a proposed source-to-target mapping. Preserve what the analyst experiences: page hierarchy, metric meaning, filters, default states, interactions, visual intent, annotations, accessibility, responsive behavior and access boundaries. The data engineering inventory alone does not establish these.
 
+For substantial target design, authorized material redesign, explicit craft feedback or deliberate practice, apply the [curriculum role route](../omni-design-systems/references/experience-curriculum.md#role-routes) for visual observation and experience mapping. Add the source's visual grammar, hierarchy, navigation and narrative intent to the existing crosswalk, then distinguish preserved behavior, supported adaptation and authorized redesign when considering [alternative patterns](../omni-design-systems/references/experience-patterns.md).
+
 ## Intake and extraction
 
 - Establish the source platform/version, selected export scope, intended Omni surface, and migration intent: preserve behavior, redesign, or a combination explicitly selected by the user. A new visual design must not silently change metric definitions or filter populations.

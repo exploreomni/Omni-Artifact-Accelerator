@@ -7,6 +7,8 @@ description: Design task flows, screen layouts, interaction states, and responsi
 
 Own the experience specification: how an intended user moves from a question to an informed action. Work from a bounded orchestrator assignment or directly on a standalone app brief.
 
+For substantial new design, material redesign, explicit craft feedback or deliberate practice, apply the [curriculum role route](../omni-design-systems/references/experience-curriculum.md#role-routes) for composition and interaction architecture. Resolve a distinctive task path and screen relationship using relevant [experience structures](../omni-design-systems/references/experience-patterns.md#experience-structures), specifying the useful evidence gained, preserved context, responsive behavior and recovery in the existing design handoff.
+
 ## Inputs
 
 Use the audience and tasks, delivery mode, metric/query contract, security roles, source interaction inventory for migrations, accepted brand contract, and available target capabilities. Reuse existing decisions. For direct invocation too, read the [current design intent](../omni-artifact-accelerator/references/design-intent.md), its brand/assets and unresolved requirements; a missing required choice is a dependency, not permission to invent a substitute. A focused change reuses the selection without reopening unrelated intake. Native **Omni Apps** is the default app target; an external app is a separate explicit choice. Read [Omni capabilities](../omni-artifact-accelerator/references/omni-capabilities.md) and [design foundations](../omni-design-systems/SKILL.md).

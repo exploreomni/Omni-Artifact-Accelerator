@@ -113,6 +113,22 @@ Read [parser coverage](docs/parser-coverage.md) for exact formats and limitation
 
 Each specialist can also be invoked directly. Design guidance draws from official Apple, Google, Microsoft, Samsung and other primary sources, with platform-specific advice distinguished from package recommendations. See [design foundations](skills/omni-design-systems/references/vendor-guidance.md).
 
+## Develop distinctive data experiences
+
+The [Data Experience Design Studio](skills/omni-design-systems/references/experience-curriculum.md) gives all 13 roles a shared curriculum for analytical judgment, art direction, advanced visual encoding, storytelling, dashboard composition, App interactions, motion, branding, implementation and critique. It teaches agents through worked choices and revision instead of prescribing one house layout.
+
+Start with one relevant exercise:
+
+1. Read the curriculum's role route and choose the competency the task needs.
+2. Work through an [original studio](skills/omni-design-systems/references/experience-studios.md), or use the same method on an authorized engagement. The [interactive teaching specimen](skills/omni-design-systems/assets/experience-studio.html) runs locally with invented data and no external dependencies; download/open the file to explore it. It is not a native Omni artifact.
+3. Select a visual structure from the [pattern atlas](skills/omni-design-systems/references/experience-patterns.md), state its data prerequisites and compare it with a simpler alternative.
+4. Resolve the design, implement the relevant slice, and use the [critique rubric](skills/omni-design-systems/references/experience-review.md) to make a specific revision. Keep the designer involved through the actual target where permitted.
+5. For deliberate training, repeat in a different domain and record the work actually reviewed. Installing lessons makes them available; it does not certify every agent or guarantee native quality.
+
+> Use the Data Experience Design Studio for a performance dashboard and an investigation App. Develop distinct tasks and compositions from the same governed metrics. Compare a change-and-contribution design with a comparison atlas, resolve a clear visual direction, and propose one useful App interaction with purposeful motion and a reduced-motion equivalent. Reuse our brand answers. Keep native capability gaps explicit and have the designer critique the implemented result.
+
+The curriculum uses neutral pattern names and original practice data. Its guidance supports polished static dashboards and expressive Apps without treating animation or unusual chart types as requirements. Load only the relevant lessons for normal work. If a user limits the workflow to CLI/MCP and prohibits browser rendering, continue the authorized work and report visual/native interaction checks as unrun.
+
 ## From a local candidate to native delivery
 
 For a substantial new experience, expect **rendered alternatives → a resolved screen design → native implementation → designer critique → revision**. The dashboard and App should serve distinct tasks even when they share metrics. Ask for the customer's website when it is missing, turn brand characteristics into composition choices, and retain image/font provenance and fallback behavior. A small correction uses focused checks; a faithful migration keeps its original behavior obligations.

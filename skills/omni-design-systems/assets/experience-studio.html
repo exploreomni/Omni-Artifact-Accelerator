@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>Fieldnotes — two ways to read a change</title>
+<style>
+  :root{--paper:#f5f3eb;--surface:#fffefa;--ink:#182d32;--muted:#526266;--rule:#c9ceca;--faint:#e4e7e1;--accent:#245f63;--selected:#e5efea;--alder:#193c43;--bay:#426a85;--cedar:#80602e;--focus:#9c3e20;--ease:cubic-bezier(.22,.61,.36,1);font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--ink);background:var(--paper);font-synthesis:none}
+  *{box-sizing:border-box} body{margin:0} button,select,input{font:inherit} button,select{color:inherit} button{cursor:pointer} a{color:var(--accent)} [hidden]{display:none!important} :focus-visible{outline:3px solid var(--focus);outline-offset:4px} svg{display:block;max-width:100%;overflow:visible} svg text{fill:var(--muted);font-family:inherit;font-size:12px} .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0} .skip{position:absolute;top:-100px;left:16px;z-index:10;padding:12px;background:var(--surface)} .skip:focus{top:8px}
+  .shell{max-width:1360px;margin:auto;padding:0 44px} .masthead{display:flex;justify-content:space-between;align-items:center;gap:24px;min-height:92px;border-bottom:1px solid var(--rule)} .wordmark{font-size:24px;font-weight:750;letter-spacing:-1px}.wordmark span{font-weight:400;color:var(--muted)} .meta{font-size:12px;line-height:1.6;max-width:340px;color:var(--muted);text-align:right} .synthetic{font-weight:750;letter-spacing:.08em;text-transform:uppercase;font-size:10px}
+  .tabs{display:flex;gap:28px;margin-top:22px;border-bottom:1px solid var(--rule)} .tab{border:0;border-bottom:3px solid transparent;background:none;padding:12px 0 14px;font-weight:650;font-size:14px;text-align:left}.tab[aria-selected="true"]{border-color:var(--accent);color:var(--accent)} .tab small{display:block;font-size:11px;font-weight:400;margin-top:4px;color:var(--muted)} main{padding:34px 0 46px}.eyebrow{font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:750;color:var(--muted);margin:0 0 13px}.intro{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(230px,.75fr);gap:46px;align-items:end;margin-bottom:32px} h1,h2,h3,p{margin-top:0}h1{font-family:ui-serif,Georgia,"Times New Roman",serif;font-weight:400;font-size:clamp(36px,4.1vw,56px);line-height:1.03;letter-spacing:-1.6px;max-width:740px;margin-bottom:16px} .deck{font-size:15px;line-height:1.65;max-width:620px;color:var(--muted);margin-bottom:0} .scope{border-left:2px solid var(--rule);padding-left:18px;font-size:12px;line-height:1.7;color:var(--muted);margin:0}.scope strong{color:var(--ink);font-weight:650}.scope span{display:block}h2{font-size:20px;font-weight:700;letter-spacing:-.5px;line-height:1.25;margin-bottom:8px}h3{font-size:15px;line-height:1.4;margin-bottom:6px}.note{font-size:12px;line-height:1.6;color:var(--muted)}.number,table,.values,.change-value{font-variant-numeric:tabular-nums lining-nums}.chapter{border-top:1px solid var(--rule);padding-top:24px;margin-top:30px}.section-heading{display:flex;gap:30px;justify-content:space-between;align-items:baseline;margin-bottom:18px}.section-heading p{max-width:470px;margin:0}.chapter-index{display:inline-block;font-size:10px;color:var(--muted);letter-spacing:.08em;vertical-align:middle;margin-right:12px}
+  .hero-evidence{display:grid;grid-template-columns:minmax(190px,.62fr) minmax(0,1.5fr);background:var(--surface);border-top:3px solid var(--ink);border-bottom:1px solid var(--rule)}.total{padding:30px 30px 30px 26px;border-right:1px solid var(--rule)}.total .big{font-size:clamp(58px,6.4vw,88px);line-height:1;font-weight:600;letter-spacing:-5px;display:block;margin:6px 0 8px}.unit{font-size:12px;color:var(--muted);font-weight:500}.total .change-rate{margin:22px 0 5px;font-size:19px;font-weight:650}.total p{font-size:13px;line-height:1.6;max-width:240px}.total .endpoints{border-top:1px solid var(--rule);padding-top:15px;margin-top:24px;font-size:12px;display:grid;grid-template-columns:1fr auto;gap:7px}.total .endpoints strong{font-size:15px}.contribution{padding:28px 30px 20px}.chart-description{font-size:13px;line-height:1.6;color:var(--muted)}.contribution-legend{display:grid;grid-template-columns:88px minmax(0,1fr) 64px;gap:12px;color:var(--muted);font-size:10px;letter-spacing:.04em;margin:26px 0 5px}.contribution-legend span:last-child{text-align:right}.contribution-row{display:grid;grid-template-columns:88px minmax(0,1fr) 64px;gap:12px;align-items:center;padding:8px 0}.entity-name{font-size:14px;font-weight:650;overflow-wrap:anywhere}.entity-name small{display:block;font-size:11px;font-weight:400;color:var(--muted);margin-top:3px}.delta{font-size:22px;font-weight:650;text-align:right;letter-spacing:-.6px}.contribution-row svg{width:100%;height:44px}.contribution-axis{display:grid;grid-template-columns:88px minmax(0,1fr) 64px;gap:12px;margin-top:0}.axis-track{position:relative;height:20px;color:var(--muted);font-size:10px}.axis-track span{position:absolute;transform:translateX(-50%)}.reconciliation{margin:20px 0 0;border-top:1px solid var(--faint);padding-top:13px;font-size:12px;color:var(--muted)}.reconciliation strong{color:var(--ink)}.inline-comment{border-left:3px solid var(--cedar);padding-left:12px;font-size:13px;line-height:1.6;margin:22px 0 0;max-width:510px}
+  .atlas{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:26px}.mini{min-width:0}.mini-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px}.mini-head h3{font-size:16px}.mini-head p{font-size:12px;margin:0;color:var(--muted)}.mini svg{width:100%;height:auto;aspect-ratio:320/170}.gridline{stroke:var(--faint);stroke-width:1}.trace{fill:none;stroke-width:2.5;stroke-linejoin:round;stroke-linecap:round}.alder{stroke:var(--alder)}.bay{stroke:var(--bay)}.cedar{stroke:var(--cedar)}.mini-caption{font-size:12px;line-height:1.5;color:var(--muted);margin:8px 0 0}.table-wrap{overflow-x:auto;overscroll-behavior-inline:contain}.table-wrap:focus-visible{outline-offset:0}table{width:100%;border-collapse:collapse;font-size:13px;text-align:right}caption{text-align:left;color:var(--muted);font-size:12px;line-height:1.6;padding:0 0 12px}th,td{padding:12px 12px;border-bottom:1px solid var(--faint);white-space:nowrap}th:first-child,td:first-child{text-align:left;padding-left:0;white-space:normal;min-width:92px}thead th{font-size:11px;color:var(--muted);font-weight:600;border-bottom:1px solid var(--rule)}tfoot th,tfoot td{font-weight:750;border-top:1px solid var(--rule);border-bottom:0} .evidence-details{margin-top:26px}.evidence-details summary,.teaching summary{cursor:pointer;font-size:13px;font-weight:650;padding:14px 0}.evidence-details[open] summary{margin-bottom:8px}
+  .app-intro{margin-bottom:24px}.app-intro h1{font-size:clamp(34px,3.8vw,50px)}.controls{display:flex;align-items:end;flex-wrap:wrap;gap:16px 24px;border-top:2px solid var(--ink);border-bottom:1px solid var(--rule);padding:20px 0}.field{display:flex;flex-direction:column;gap:7px;font-size:11px;font-weight:650;letter-spacing:.02em}.field select{border:1px solid #899896;border-radius:4px;background:var(--surface);min-height:42px;padding:8px 34px 8px 12px;font-size:14px;font-weight:500;letter-spacing:0;min-width:145px}.range-join{padding-bottom:13px;color:var(--muted)}.reset{border:1px solid #899896;border-radius:4px;background:transparent;padding:10px 15px;min-height:42px;font-size:13px;font-weight:650}.motion-choice{margin-left:auto;display:flex;align-items:center;gap:9px;font-size:12px;min-height:42px;max-width:220px}.motion-choice input{accent-color:var(--accent);width:17px;height:17px}.motion-help{font-size:11px;color:var(--muted);margin:10px 0 0}.scope-live{font-size:12px;color:var(--muted);margin:22px 0 15px;line-height:1.65}.scope-live strong{color:var(--ink)}.compare-layout{display:grid;grid-template-columns:minmax(0,1fr) 260px;gap:30px;align-items:start}.plot-panel{min-width:0}.plot-legend{display:flex;align-items:center;gap:20px;font-size:11px;color:var(--muted);margin:10px 0 18px}.legend-mark{display:inline-flex;gap:7px;align-items:center}.open-dot,.closed-dot{display:inline-block;width:10px;height:10px;border:2px solid var(--ink);border-radius:50%;background:var(--surface)}.closed-dot{background:var(--ink)}.paired-row{padding:14px 14px 12px;border:1px solid transparent;border-bottom-color:var(--rule);margin:0 -14px;position:relative}.paired-row.selected{background:var(--selected);border-color:#91aba1;border-radius:5px}.paired-heading{display:flex;justify-content:space-between;align-items:baseline;gap:15px}.entity-button{border:0;padding:4px 0;background:none;text-align:left;font-size:15px;font-weight:700;min-height:32px;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:4px;text-decoration-color:transparent}.entity-button:hover,.entity-button:focus-visible{text-decoration-color:currentColor}.entity-button[aria-pressed="true"]::after{content:"Selected";display:inline-block;margin-left:9px;font-size:9px;font-weight:650;text-transform:uppercase;letter-spacing:.06em;text-decoration:none}.paired-values{font-size:12px;white-space:nowrap}.paired-values .paired-delta{font-weight:700;margin-left:16px}.paired-row svg{width:100%;height:46px}.moving{transition:transform 280ms var(--ease);transform-origin:0 0}.plot-ticks{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin:10px 0 0}.plot-footnote{font-size:11px;color:var(--muted);line-height:1.6;margin:12px 0 0}.selected-evidence{padding:24px;border-left:2px solid var(--ink);background:var(--surface);min-width:0}.selected-evidence h2{font-family:ui-serif,Georgia,serif;font-size:30px;font-weight:400;letter-spacing:-.5px;overflow-wrap:anywhere}.change-value{font-size:44px;line-height:1.1;letter-spacing:-2px;font-weight:600;margin:18px 0 4px}.selected-evidence .selected-percent{font-size:14px;font-weight:650;margin:12px 0}.selected-evidence .peer-note{border-top:1px solid var(--rule);padding-top:14px;margin-top:20px;font-size:12px;line-height:1.7}.selected-evidence .note{margin:0}.context-grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:44px;align-items:start}.context-grid figure{margin:0;min-width:0}.context-grid svg{width:100%;height:auto;aspect-ratio:520/225}.context-grid figcaption{font-size:11px;color:var(--muted);line-height:1.6;margin-top:9px}.context-label{font-weight:650;font-size:12px}.context-path{fill:none;stroke-linejoin:round;stroke-linecap:round}.current-row{background:var(--selected)}.current-row th:first-child{padding-left:9px}.reading-note{font-size:12px;color:var(--muted);line-height:1.7;margin-top:14px}.teaching{border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);padding:4px 0;margin:12px 0 30px}.teaching-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 34px;padding:12px 0 20px}.teaching-grid p{font-size:12px;line-height:1.7;margin:0;color:var(--muted)}.teaching-grid strong{display:block;color:var(--ink);font-size:13px;margin-bottom:5px}.footer{display:flex;justify-content:space-between;gap:24px;color:var(--muted);font-size:11px;line-height:1.65;padding-bottom:30px}.footer p{max-width:650px;margin:0}.footer a{white-space:nowrap}.reduce-motion .moving{transition:none!important}
+  @media(prefers-reduced-motion:reduce){.moving{transition:none!important}html{scroll-behavior:auto}}
+  @media(min-width:1500px){.shell{padding:0 56px}.hero-evidence{grid-template-columns:.65fr 1.5fr}}
+  @media(max-width:1020px){.shell{padding:0 28px}.intro{gap:28px}.hero-evidence{grid-template-columns:220px minmax(0,1fr)}.total{padding:26px 22px}.contribution{padding:26px 22px}.compare-layout{grid-template-columns:minmax(0,1fr) 220px;gap:22px}.selected-evidence{padding:20px}.context-grid{grid-template-columns:1fr;gap:24px}.context-grid figure{max-width:650px}.atlas{gap:18px}.contribution-row,.contribution-legend,.contribution-axis{grid-template-columns:74px minmax(0,1fr) 48px;gap:9px}.delta{font-size:20px}}
+  @media(max-width:760px){.shell{padding:0 20px}.masthead{min-height:82px;gap:16px}.wordmark{font-size:22px}.meta{font-size:10px;max-width:210px}.tabs{gap:26px;margin-top:14px}.tab{font-size:13px}.tab small{font-size:10px}main{padding-top:28px}.intro{display:block;margin-bottom:24px}h1{letter-spacing:-1px}.scope{margin-top:20px;padding-left:13px}.scope span{display:inline}.scope span+span::before{content:" · "}.hero-evidence{display:block}.total{display:grid;grid-template-columns:1fr 1fr;gap:0 20px;border-right:0;border-bottom:1px solid var(--rule);padding:22px}.total>div{min-width:0}.total .big{font-size:66px;letter-spacing:-4px}.total .change-rate{margin-top:10px;font-size:17px}.total .endpoints{margin:6px 0 0;align-self:center;line-height:1.8;border-top:0;padding-top:0}.total .total-summary{grid-column:1/-1;max-width:none;margin:14px 0 0}.contribution{padding:22px}.contribution-row,.contribution-legend,.contribution-axis{grid-template-columns:70px minmax(0,1fr) 44px;gap:8px}.contribution-legend{font-size:9px;margin-top:20px}.entity-name{font-size:13px}.entity-name small{font-size:10px}.contribution-row svg{height:40px}.inline-comment{font-size:12px}.section-heading{display:block}.section-heading p{margin-top:8px}.atlas{display:block}.mini{display:grid;grid-template-columns:112px minmax(0,1fr);column-gap:16px;border-bottom:1px solid var(--rule);padding:16px 0}.mini-head{display:block;align-self:center}.mini-head p{margin-top:4px}.mini svg{aspect-ratio:320/170}.mini-caption{grid-column:2;margin:0}.compare-layout{display:flex;flex-direction:column;gap:22px}.plot-panel{width:100%}.selected-evidence{width:100%;display:grid;grid-template-columns:1fr 1fr;column-gap:22px;align-items:start;padding:20px}.selected-evidence .eyebrow{grid-column:1/-1}.selected-evidence h2{font-size:28px}.selected-evidence .change-value{margin:0;font-size:38px}.selected-evidence .selected-percent{margin-top:8px}.selected-evidence .peer-note{grid-column:1/-1;margin:12px 0 0}.controls{gap:14px 10px}.field{flex:1;min-width:120px}.field select{min-width:0;width:100%;font-size:13px}.range-join{display:none}.reset{flex:0 0 auto}.motion-choice{margin-left:0;font-size:11px;min-height:30px;max-width:none;flex-basis:100%}.paired-row{margin:0 -8px;padding:12px 8px}.paired-values{font-size:11px}.paired-values .paired-delta{margin-left:10px}.paired-heading{gap:8px}.entity-button{font-size:14px}.context-grid{gap:22px}.teaching-grid{grid-template-columns:1fr;gap:20px}.footer{display:block}.footer a{display:inline-block;margin-top:10px}th,td{padding:11px 8px}.table-wrap{margin-right:-4px}.chapter{margin-top:25px}}
+  @media(max-width:420px){.shell{padding:0 16px}.masthead{display:block;padding:18px 0 14px}.meta{text-align:left;max-width:none;margin-top:7px}.meta br{display:none}.synthetic{margin-right:6px}.tabs{gap:22px}.tab small{max-width:130px;line-height:1.5}h1,.app-intro h1{font-size:35px;line-height:1.07}.deck{font-size:14px}.total{padding:20px}.total .big{font-size:60px}.total .endpoints{font-size:11px;column-gap:10px}.contribution{padding:20px 15px}.contribution-row,.contribution-legend,.contribution-axis{grid-template-columns:63px minmax(0,1fr) 38px;gap:6px}.delta{font-size:18px}.mini{grid-template-columns:78px minmax(0,1fr);column-gap:10px}.mini-head h3{font-size:14px}.mini-head p{font-size:10px}.mini-caption{font-size:11px}.controls .field{min-width:calc(50% - 8px)}.reset{min-height:40px}.motion-choice{flex-basis:auto;margin-left:3px;max-width:190px}.paired-heading{flex-wrap:wrap;row-gap:2px}.paired-values{width:100%;display:flex;justify-content:space-between;padding-bottom:3px}.entity-button[aria-pressed="true"]::after{font-size:8px}.selected-evidence{column-gap:14px;padding:18px}.selected-evidence h2{font-size:25px}.change-value{font-size:36px}.plot-legend{gap:12px;font-size:10px}.table-wrap table{font-size:12px}th,td{padding:10px 7px}.table-wrap caption{font-size:11px}.footer{font-size:10px}}
+  .chart-wrap{overflow-x:auto;overscroll-behavior-inline:contain}.chart-wrap svg{min-width:480px}.chart-wrap:focus-visible{outline-offset:0}
+  @media(max-width:600px){.mini{display:block;padding:18px 0}.mini-head{display:flex;justify-content:space-between;gap:16px}.mini-head h3{font-size:16px}.mini-head p{font-size:12px}.mini-caption{font-size:12px}.mini svg{max-width:420px;margin-top:4px}}
+  @media print{body{background:white}.shell{max-width:none;padding:0}.tabs,.controls,.skip{display:none}.panel[hidden]{display:block!important}.panel{break-before:page}#dashboard-panel{break-before:auto}.teaching{display:none}.hero-evidence,.selected-evidence{background:white}.moving{transition:none!important}.table-wrap{overflow:visible}.footer{padding-bottom:0}}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to the evidence</a>
+<div class="shell">
+  <header class="masthead">
+    <div class="wordmark">Fieldnotes<span> / 01</span></div>
+    <div class="meta"><span class="synthetic">Synthetic teaching specimen</span><br>Local HTML · not a native Omni dashboard or App</div>
+  </header>
+  <nav class="tabs" role="tablist" aria-label="Choose a learning experience">
+    <button id="dashboard-tab" class="tab" type="button" role="tab" aria-selected="true" aria-controls="dashboard-panel" tabindex="0">Read the portfolio<small>Dashboard · a guided reading sequence</small></button>
+    <button id="app-tab" class="tab" type="button" role="tab" aria-selected="false" aria-controls="app-panel" tabindex="-1">Compare the locations<small>App · a comparison workspace</small></button>
+  </nav>
+  <main id="main" tabindex="-1">
+    <noscript><p class="note">The dashboard and its exact-value table work without JavaScript. The comparison workspace requires JavaScript for its local controls. No network connection is used.</p></noscript>
+    <section id="dashboard-panel" class="panel" role="tabpanel" aria-labelledby="dashboard-tab" tabindex="0">
+      <div class="intro">
+        <div><p class="eyebrow">Portfolio / January → April 2025</p><h1>Sales rose.<br>Not everywhere.</h1><p class="deck">Alder and Bay added 110 kUSD. Cedar declined by 40 kUSD, leaving a net increase of 70 kUSD across the three locations.</p></div>
+        <p class="scope"><strong>Fixed reading scope</strong><span>All three locations · four monthly observations each</span><span>Sales in kUSD (thousands of US dollars)</span><span>Observed values within this invented fixture only</span></p>
+      </div>
+      <section class="hero-evidence" aria-labelledby="contribution-title">
+        <div class="total">
+          <div><p class="eyebrow">Net change</p><span class="big number">+70</span><span class="unit">kUSD · January → April</span><p class="change-rate number">+20.6%</p></div>
+          <div class="endpoints"><span>January total</span><strong>340</strong><span>April total</span><strong>410</strong><span class="unit">Both in kUSD</span></div>
+          <p class="total-summary">A portfolio increase is not evidence that every location grew.</p>
+        </div>
+        <div class="contribution">
+          <h2 id="contribution-title">Where the +70 came from</h2><p class="chart-description">Signed change by location, on one scale. The line marks zero.</p>
+          <div class="contribution-legend" aria-hidden="true"><span>JAN → APR</span><span>CONTRIBUTION TO CHANGE</span><span>kUSD</span></div>
+          <div class="contribution-row"><div class="entity-name">Alder<small>100 → 180</small></div><svg viewBox="0 0 600 44" role="img" aria-label="Alder: January 100, April 180; an increase of 80 kUSD"><line x1="200" y1="0" x2="200" y2="44" stroke="#899896"/><rect x="200" y="12" width="320" height="20" fill="var(--alder)"/><circle cx="520" cy="22" r="3" fill="var(--alder)"/></svg><div class="delta number">+80</div></div>
+          <div class="contribution-row"><div class="entity-name">Bay<small>80 → 110</small></div><svg viewBox="0 0 600 44" role="img" aria-label="Bay: January 80, April 110; an increase of 30 kUSD"><line x1="200" y1="0" x2="200" y2="44" stroke="#899896"/><rect x="200" y="12" width="120" height="20" fill="var(--bay)"/><circle cx="320" cy="22" r="3" fill="var(--bay)"/></svg><div class="delta number">+30</div></div>
+          <div class="contribution-row"><div class="entity-name">Cedar<small>160 → 120</small></div><svg viewBox="0 0 600 44" role="img" aria-label="Cedar: January 160, April 120; a decrease of 40 kUSD"><line x1="200" y1="0" x2="200" y2="44" stroke="#899896"/><rect x="40" y="12" width="160" height="20" fill="var(--cedar)"/><line x1="40" y1="7" x2="40" y2="37" stroke="var(--cedar)" stroke-width="2"/></svg><div class="delta number">−40</div></div>
+          <div class="contribution-axis" aria-hidden="true"><span></span><div class="axis-track"><span style="left:0">−50</span><span style="left:33.3333%">0</span><span style="left:66.6667%">+50</span><span style="left:100%">+100</span></div><span></span></div>
+          <p class="reconciliation"><strong class="number">+80 + 30 − 40 = +70 kUSD.</strong> These exhaustive location sales add at the same scope.</p>
+          <p class="inline-comment">Cedar is the counterexample: its decline offsets part of the increase elsewhere. The fixture does not explain why.</p>
+        </div>
+      </section>
+      <section class="chapter" aria-labelledby="monthly-title">
+        <div class="section-heading"><h2 id="monthly-title"><span class="chapter-index">02</span>Put the change in context</h2><p class="note">Every panel shares a 0–200 kUSD scale. Comparing height is meaningful; independently scaled sparklines would hide the difference.</p></div>
+        <div class="atlas">
+          <article class="mini"><div class="mini-head"><h3>Alder</h3><p class="number">100 → 180 kUSD</p></div><svg viewBox="0 0 320 170" role="img" aria-label="Alder monthly sales, common zero to 200 kUSD scale: January 100, February 110, March 145, April 180"><path class="gridline" d="M32 20H268 M32 80H268 M32 140H268"/><text x="0" y="24">200</text><text x="0" y="84">100</text><text x="18" y="144">0</text><path class="trace alder" d="M32 80L110.6667 74L189.3333 53L268 32"/><circle cx="268" cy="32" r="3.5" fill="var(--alder)"/><text x="278" y="36" style="fill:var(--alder);font-weight:700">180</text><text x="32" y="162" text-anchor="middle">Jan</text><text x="110.6667" y="162" text-anchor="middle">Feb</text><text x="189.3333" y="162" text-anchor="middle">Mar</text><text x="268" y="162" text-anchor="middle">Apr</text></svg><p class="mini-caption">Largest increase: +80 kUSD.</p></article>
+          <article class="mini"><div class="mini-head"><h3>Bay</h3><p class="number">80 → 110 kUSD</p></div><svg viewBox="0 0 320 170" role="img" aria-label="Bay monthly sales, common zero to 200 kUSD scale: January 80, February 90, March 100, April 110"><path class="gridline" d="M32 20H268 M32 80H268 M32 140H268"/><text x="0" y="24">200</text><text x="0" y="84">100</text><text x="18" y="144">0</text><path class="trace bay" d="M32 92L110.6667 86L189.3333 80L268 74"/><circle cx="268" cy="74" r="3.5" fill="var(--bay)"/><text x="278" y="78" style="fill:var(--bay);font-weight:700">110</text><text x="32" y="162" text-anchor="middle">Jan</text><text x="110.6667" y="162" text-anchor="middle">Feb</text><text x="189.3333" y="162" text-anchor="middle">Mar</text><text x="268" y="162" text-anchor="middle">Apr</text></svg><p class="mini-caption">Three equal monthly increases.</p></article>
+          <article class="mini"><div class="mini-head"><h3>Cedar</h3><p class="number">160 → 120 kUSD</p></div><svg viewBox="0 0 320 170" role="img" aria-label="Cedar monthly sales, common zero to 200 kUSD scale: January 160, February 150, March 135, April 120"><path class="gridline" d="M32 20H268 M32 80H268 M32 140H268"/><text x="0" y="24">200</text><text x="0" y="84">100</text><text x="18" y="144">0</text><path class="trace cedar" d="M32 44L110.6667 50L189.3333 59L268 68"/><circle cx="268" cy="68" r="3.5" fill="var(--cedar)"/><text x="278" y="72" style="fill:var(--cedar);font-weight:700">120</text><text x="32" y="162" text-anchor="middle">Jan</text><text x="110.6667" y="162" text-anchor="middle">Feb</text><text x="189.3333" y="162" text-anchor="middle">Mar</text><text x="268" y="162" text-anchor="middle">Apr</text></svg><p class="mini-caption">Declines across all three intervals.</p></article>
+        </div>
+      </section>
+      <details class="evidence-details" open><summary>Exact monthly evidence</summary><div class="table-wrap" tabindex="0" role="region" aria-label="Monthly evidence table; scroll horizontally if needed"><table><caption>Synthetic sales, kUSD · January–April 2025 · all three locations</caption><thead><tr><th scope="col">Location</th><th scope="col">Jan</th><th scope="col">Feb</th><th scope="col">Mar</th><th scope="col">Apr</th><th scope="col">Jan → Apr</th></tr></thead><tbody><tr><th scope="row">Alder</th><td>100</td><td>110</td><td>145</td><td>180</td><td>+80</td></tr><tr><th scope="row">Bay</th><td>80</td><td>90</td><td>100</td><td>110</td><td>+30</td></tr><tr><th scope="row">Cedar</th><td>160</td><td>150</td><td>135</td><td>120</td><td>−40</td></tr></tbody><tfoot><tr><th scope="row">Portfolio</th><td>340</td><td>350</td><td>380</td><td>410</td><td>+70</td></tr></tfoot></table></div></details>
+    </section>
+
+    <section id="app-panel" class="panel" role="tabpanel" aria-labelledby="app-tab" tabindex="0" hidden>
+      <div class="intro app-intro"><div><p class="eyebrow">Comparison workspace / same synthetic evidence</p><h1>Follow a location.<br>Keep its peers in view.</h1><p class="deck">Choose two months, then select a location to compare its change. Everyone keeps the same scale and position; selection never removes the peer evidence.</p></div><p class="scope"><strong>One task: compare trajectories</strong><span>All three locations remain in scope</span><span>Sales in kUSD · January–April 2025</span><span>No forecasts, targets, profit or causal evidence supplied</span></p></div>
+      <form class="controls" id="comparison-controls" aria-label="Comparison period">
+        <label class="field" for="from-period">From<select id="from-period" name="from"><option value="0">January 2025</option><option value="1">February 2025</option><option value="2">March 2025</option><option value="3" disabled>April 2025</option></select></label><span class="range-join" aria-hidden="true">→</span>
+        <label class="field" for="to-period">To<select id="to-period" name="to"><option value="0" disabled>January 2025</option><option value="1">February 2025</option><option value="2">March 2025</option><option value="3" selected>April 2025</option></select></label>
+        <button type="button" class="reset" id="reset">Reset comparison</button>
+        <label class="motion-choice"><input type="checkbox" id="motion" checked>Animate comparison marks</label>
+      </form>
+      <p class="motion-help" id="motion-help">Your system's reduced-motion preference takes priority. The same evidence is available with motion off.</p>
+      <p class="scope-live" id="comparison-scope"></p>
+      <div class="compare-layout">
+        <section class="plot-panel" aria-labelledby="compare-title"><h2 id="compare-title">Two endpoints, three distinct stories</h2><div class="plot-legend"><span class="legend-mark"><span class="open-dot" aria-hidden="true"></span><span id="from-legend">January</span></span><span class="legend-mark"><span class="closed-dot" aria-hidden="true"></span><span id="to-legend">April</span></span><span>kUSD · fixed 0–200 scale</span></div><div id="paired-rows"></div><div class="plot-ticks" aria-hidden="true"><span>0</span><span>50</span><span>100</span><span>150</span><span>200</span></div><p class="plot-footnote">Select a location name for its comparison. Exact labels switch immediately to the chosen months; moving marks are only a transition, not additional observations.</p></section>
+        <aside class="selected-evidence" aria-labelledby="selected-name"><p class="eyebrow">Selected location / not a population filter</p><div><h2 id="selected-name">Alder</h2><p class="note" id="selected-period"></p></div><div><p class="change-value" id="selected-delta"></p><p class="unit">kUSD change</p><p class="selected-percent" id="selected-percent"></p></div><p class="peer-note" id="selected-peer"></p></aside>
+      </div>
+      <section class="chapter" aria-labelledby="context-title"><div class="section-heading"><h2 id="context-title"><span class="chapter-index">02</span>Read the path between endpoints</h2><p class="note">The full four-month history stays visible. The shaded interval is the current comparison; direct names and different line patterns preserve peer identity.</p></div><div class="context-grid"><figure><div class="chart-wrap" tabindex="0" role="region" aria-label="Monthly trajectory chart; scroll horizontally if needed"><svg id="context-chart" viewBox="0 0 520 225" role="img" aria-labelledby="context-chart-title context-chart-description"><title id="context-chart-title">All locations on a shared monthly scale</title><desc id="context-chart-description">Synthetic monthly sales from January through April 2025. Exact data are available in the adjacent table.</desc><rect id="context-band" x="42" y="15" width="342" height="165" fill="#e5efea"/><path class="gridline" d="M42 20H384 M42 100H384 M42 180H384"/><text x="10" y="24">200</text><text x="10" y="104">100</text><text x="28" y="184">0</text><text x="42" y="213" text-anchor="middle">Jan</text><text x="156" y="213" text-anchor="middle">Feb</text><text x="270" y="213" text-anchor="middle">Mar</text><text x="384" y="213" text-anchor="middle">Apr</text><g id="context-lines"></g></svg></div><figcaption>0–200 kUSD throughout. A connecting line summarizes adjacent observations; it does not supply daily sales or explain the cause of a change.</figcaption></figure><div><div class="table-wrap" tabindex="0" role="region" aria-label="Comparison evidence table; scroll horizontally if needed"><table><caption id="comparison-caption">Exact comparison evidence · kUSD</caption><thead><tr><th scope="col">Location</th><th scope="col" id="from-heading">January</th><th scope="col" id="to-heading">April</th><th scope="col">Change</th><th scope="col">Change %</th></tr></thead><tbody id="comparison-table"></tbody><tfoot id="comparison-total"></tfoot></table></div><p class="reading-note">Portfolio percent change is calculated from portfolio totals. It is not the average of the three location percentages. A decrease describes sales, not profit or performance against an absent target.</p></div></div></section>
+      <p id="comparison-status" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></p>
+    </section>
+  </main>
+  <details class="teaching"><summary>Inside the composition — choices, mechanics and tradeoffs</summary><div class="teaching-grid"><p><strong>Two tasks, not two skins</strong>The dashboard establishes a fixed portfolio claim, reconciles contributions, then supplies monthly context. The App puts period and identity selection first. Both use the same 12 sales observations; neither fabricates a richer dataset.</p><p><strong>Editorial emphasis + a comparison atlas</strong>One large signed change creates hierarchy. A zero-centered contribution plot explains it. Repeated monthly panels share their scale, while direct labels make the exact evidence available without a legend hunt. Narrow layouts stack the evidence rather than shrink a desktop canvas.</p><p><strong>Identity before choreography</strong>The comparison keeps Alder, Bay and Cedar in fixed row order. Open and filled endpoints distinguish periods. A 280ms ease-out movement changes only mark geometry; exact values commit immediately. Rapid changes retarget those same marks. Reduced motion or the checkbox produces the completed state immediately.</p><p><strong>What the design does not prove</strong>This original local specimen is not an import file or a verified native implementation. It has no query runtime, security boundary or customer acceptance. Contribution geometry and custom motion need separate capability qualification in a target. Static code checks are not rendered, keyboard-user or assistive-technology evidence.</p><p><strong>Useful tradeoffs</strong>Stable rows protect identity but do not expose changing rank as directly as a sorted view. A fixed zero-based scale supports magnitude comparison but compresses small changes. Exact endpoint labels and the table provide precision; the timeline restores evidence omitted by a two-period view.</p><p><strong>Try a transfer, not a copy</strong>Ask what grain would be needed for a distribution, journey or retention view. Monthly sales do not supply those facts. Practice long labels and missing observations in a separate copy; the embedded fixture here remains unchanged. The original practice palette has no real brand affiliation.</p></div></details>
+  <footer class="footer"><p>Invented teaching data · 3 locations × 4 months · kUSD means thousands of US dollars. No costs, profit, visits, customer counts, targets or causal explanation are supplied. This specimen uses local HTML, CSS, SVG and JavaScript only.</p><a href="experience-studio-fixtures.json">Inspect the authoritative fixture</a></footer>
+</div>
+<script id="studio-fixture" type="application/json">
+{
+  "kind": "synthetic_experience_training_data",
+  "version": 1,
+  "disclaimer": "Invented teaching data. Not customer data or a native Omni result.",
+  "periods": ["2025-01", "2025-02", "2025-03", "2025-04"],
+  "series": [
+    {"id": "alder", "name": "Alder", "sales_kusd": [100, 110, 145, 180]},
+    {"id": "bay", "name": "Bay", "sales_kusd": [80, 90, 100, 110]},
+    {"id": "cedar", "name": "Cedar", "sales_kusd": [160, 150, 135, 120]}
+  ],
+  "missing_fields": ["customers", "visits", "costs", "profit", "daily_sales", "targets", "causal_explanations"],
+  "return_cases": [
+    {"id": "north", "name": "North", "returns": 30, "orders": 1000},
+    {"id": "south", "name": "South", "returns": 12, "orders": 200},
+    {"id": "west", "name": "West", "returns": 9, "orders": 300}
+  ],
+  "long_label": "Cedar — regional comparison with an intentionally long display name",
+  "stress_rules": [
+    "Replace one middle observation with null: preserve a visible gap; do not join across it without disclosure.",
+    "Tie two endpoints: keep deterministic ordering and disclose equal values.",
+    "Remove an entity from a scoped result: preserve population/scope information and do not claim its value is zero.",
+    "Inject a delayed or failed new-scope result: do not show old-scope values as current."
+  ]
+}
+</script>
+<script>
+(() => {
+  'use strict';
+  const DATA = JSON.parse(document.getElementById('studio-fixture').textContent);
+  const MONTHS = ['January', 'February', 'March', 'April'];
+  const SHORT = ['Jan', 'Feb', 'Mar', 'Apr'];
+  const COLORS = {alder:'#193c43', bay:'#426a85', cedar:'#80602e'};
+  const DASHES = {alder:'', bay:'8 4', cedar:'2 4'};
+  // Separate close endpoint labels; leader lines retain their true positions.
+  const LABEL_Y = {alder:40, bay:112, cedar:82};
+  const state = {from:0, to:3, selected:'alder', motion:true, view:'dashboard'};
+  const $ = id => document.getElementById(id);
+  const signed = value => value === 0 ? '0' : `${value > 0 ? '+' : '−'}${Math.abs(value)}`;
+  const percent = value => value === null ? 'Not defined' : `${value > 0 ? '+' : value < 0 ? '−' : ''}${Math.abs(value).toFixed(1)}%`;
+  const validPeriod = (from, to) => Number.isInteger(from) && Number.isInteger(to) && from >= 0 && to < DATA.periods.length && from < to;
+  function summary(from, to) {
+    if (!validPeriod(from, to)) throw new RangeError('Choose an earlier from-month and a later to-month.');
+    const rows = DATA.series.map(series => {
+      const start = series.sales_kusd[from], end = series.sales_kusd[to];
+      const change = start === null || end === null ? null : end - start;
+      return {id:series.id, name:series.name, start, end, change, percentage:change === null || start === 0 ? null : change / start * 100};
+    });
+    const complete = rows.every(row => row.start !== null && row.end !== null);
+    const start = complete ? rows.reduce((sum, row) => sum + row.start, 0) : null;
+    const end = complete ? rows.reduce((sum, row) => sum + row.end, 0) : null;
+    const change = complete ? end - start : null;
+    return {rows, total:{start, end, change, percentage:!complete || start === 0 ? null : change / start * 100}};
+  }
+  // Coordinates encode only the supplied observations. They do not generate new data.
+  const point = (value, width=600) => value === null ? null : value / 200 * width;
+  function segments(values, width=342, left=42, top=20, height=160) {
+    let path = '', open = false;
+    values.forEach((value, index) => {
+      if (value === null) {open = false; return;}
+      path += `${open ? 'L' : 'M'}${left + index * width / (values.length - 1)} ${top + height - value / 200 * height}`;
+      open = true;
+    });
+    return path;
+  }
+  const escaped = value => String(value).replace(/[&<>"']/g, character => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[character]));
+  const rowNodes = new Map();
+  function buildRows() {
+    $('paired-rows').innerHTML = DATA.series.map(series => `<div class="paired-row" id="row-${series.id}"><div class="paired-heading"><button type="button" class="entity-button" id="choose-${series.id}" aria-pressed="false" aria-controls="selected-name context-chart">${escaped(series.name)}</button><div class="paired-values number"><span id="values-${series.id}"></span><span class="paired-delta" id="delta-${series.id}"></span></div></div><svg viewBox="0 0 600 46" role="img" aria-label="" id="pair-${series.id}"><path d="M0 23H600 M0 19V27 M150 19V27 M300 19V27 M450 19V27 M600 19V27" fill="none" stroke="#c9ceca"/><line class="moving" id="link-${series.id}" x1="0" y1="23" x2="1" y2="23" stroke="${COLORS[series.id]}" stroke-width="3"/><circle class="moving" id="start-${series.id}" cx="0" cy="23" r="5" fill="#fffefa" stroke="${COLORS[series.id]}" stroke-width="2"/><circle class="moving" id="end-${series.id}" cx="0" cy="23" r="5" fill="${COLORS[series.id]}"/></svg></div>`).join('');
+    DATA.series.forEach(series => {
+      rowNodes.set(series.id, {row:$(`row-${series.id}`), button:$(`choose-${series.id}`), values:$(`values-${series.id}`), delta:$(`delta-${series.id}`), pair:$(`pair-${series.id}`), link:$(`link-${series.id}`), start:$(`start-${series.id}`), end:$(`end-${series.id}`)});
+      rowNodes.get(series.id).button.addEventListener('click', () => selectEntity(series.id));
+    });
+    $('context-lines').innerHTML = DATA.series.map(series => `<path id="path-${series.id}" class="context-path" d="${segments(series.sales_kusd)}" stroke="${COLORS[series.id]}" stroke-dasharray="${DASHES[series.id]}"/><path d="M384 ${180 - series.sales_kusd[3] / 200 * 160}L395 ${LABEL_Y[series.id]-4}" fill="none" stroke="${COLORS[series.id]}" stroke-width="1"/><text id="label-${series.id}" class="context-label" x="400" y="${LABEL_Y[series.id]}" style="fill:${COLORS[series.id]}">${escaped(series.name)} ${series.sales_kusd[3]}</text>`).join('');
+  }
+  function render(announce=true) {
+    const result = summary(state.from, state.to), chosen = result.rows.find(row => row.id === state.selected);
+    const period = `${MONTHS[state.from]} → ${MONTHS[state.to]} 2025`;
+    $('from-period').value = String(state.from); $('to-period').value = String(state.to);
+    Array.from($('from-period').options).forEach(option => {option.disabled = Number(option.value) >= state.to;});
+    Array.from($('to-period').options).forEach(option => {option.disabled = Number(option.value) <= state.from;});
+    $('from-legend').textContent = MONTHS[state.from]; $('to-legend').textContent = MONTHS[state.to];
+    $('comparison-scope').innerHTML = `<strong>${period}</strong> · all 3 locations · selected: <strong>${escaped(chosen.name)}</strong> · portfolio ${result.total.start} → ${result.total.end} kUSD (${signed(result.total.change)}; ${percent(result.total.percentage)}).`;
+    result.rows.forEach(row => {
+      const nodes = rowNodes.get(row.id), selected = row.id === state.selected;
+      nodes.row.classList.toggle('selected', selected); nodes.button.setAttribute('aria-pressed', String(selected));
+      nodes.values.textContent = `${row.start} → ${row.end} kUSD`; nodes.delta.textContent = `${signed(row.change)} kUSD`;
+      nodes.pair.setAttribute('aria-label', `${row.name}: ${MONTHS[state.from]} ${row.start}, ${MONTHS[state.to]} ${row.end}, change ${signed(row.change)} kUSD. ${selected ? 'Selected location.' : 'Peer location.'}`);
+      const fromX = point(row.start), toX = point(row.end);
+      nodes.start.style.transform = `translateX(${fromX}px)`; nodes.end.style.transform = `translateX(${toX}px)`;
+      nodes.link.style.transform = `translateX(${Math.min(fromX,toX)}px) scaleX(${Math.abs(toX-fromX)})`;
+      $(`path-${row.id}`).setAttribute('stroke-width', selected ? '3.5' : '1.7');
+      $(`label-${row.id}`).setAttribute('font-weight', selected ? '750' : '500');
+    });
+    $('selected-name').textContent = chosen.name; $('selected-period').textContent = period;
+    $('selected-delta').textContent = signed(chosen.change); $('selected-percent').textContent = `${percent(chosen.percentage)} from ${MONTHS[state.from]}`;
+    const sameDirection = result.rows.filter(row => Math.sign(row.change) === Math.sign(chosen.change)).length;
+    $('selected-peer').textContent = `${chosen.name} ${chosen.change > 0 ? 'increased' : chosen.change < 0 ? 'decreased' : 'was unchanged'} by ${Math.abs(chosen.change)} kUSD. ${sameDirection} of 3 locations ${chosen.change > 0 ? 'increased' : chosen.change < 0 ? 'decreased' : 'were unchanged'} in this period. No cause is supplied.`;
+    $('from-heading').textContent = SHORT[state.from]; $('to-heading').textContent = SHORT[state.to];
+    $('comparison-caption').textContent = `${period} · exact sales in kUSD · selected row emphasized`;
+    $('comparison-table').innerHTML = result.rows.map(row => `<tr class="${row.id === state.selected ? 'current-row' : ''}"><th scope="row">${escaped(row.name)}${row.id === state.selected ? '<span class="sr-only">, selected</span>' : ''}</th><td>${row.start}</td><td>${row.end}</td><td>${signed(row.change)}</td><td>${percent(row.percentage)}</td></tr>`).join('');
+    $('comparison-total').innerHTML = `<tr><th scope="row">Portfolio</th><td>${result.total.start}</td><td>${result.total.end}</td><td>${signed(result.total.change)}</td><td>${percent(result.total.percentage)}</td></tr>`;
+    $('context-band').setAttribute('x', String(42 + state.from * 114)); $('context-band').setAttribute('width', String((state.to-state.from) * 114));
+    $('context-chart-description').textContent = `Selected ${chosen.name}. Comparison ${period}. All locations remain visible, with a common zero to 200 kUSD scale. ${DATA.series.map(series => `${series.name}: ${series.sales_kusd.join(', ')}.`).join(' ')} Exact values and change are also in the table.`;
+    if (announce) $('comparison-status').textContent = `${period}. Selected ${chosen.name}, ${signed(chosen.change)} kUSD, ${percent(chosen.percentage)}. All three locations remain in scope. Portfolio change ${signed(result.total.change)} kUSD.`;
+    return result;
+  }
+  function setPeriod(from, to) {
+    if (!validPeriod(from, to)) return false;
+    state.from = from; state.to = to; render(); return true;
+  }
+  function selectEntity(id) {
+    if (!DATA.series.some(series => series.id === id)) return false;
+    state.selected = id; render(); return true;
+  }
+  function reset() {
+    state.from = 0; state.to = 3; state.selected = 'alder'; render();
+    // Reset analytical scope only; never override the reader's motion preference.
+  }
+  function showView(view, focusTab=false) {
+    if (!['dashboard','app'].includes(view)) return false;
+    state.view = view;
+    ['dashboard','app'].forEach(name => {
+      const active = view === name; $(`${name}-panel`).hidden = !active;
+      $(`${name}-tab`).setAttribute('aria-selected', String(active)); $(`${name}-tab`).tabIndex = active ? 0 : -1;
+    });
+    if (focusTab) $(`${view}-tab`).focus();
+    return true;
+  }
+  buildRows();
+  const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
+  function updateMotion() {
+    document.documentElement.classList.toggle('reduce-motion', preference.matches || !state.motion);
+    $('motion').disabled = preference.matches;
+    $('motion').checked = !preference.matches && state.motion;
+    $('motion-help').textContent = preference.matches ? 'System reduced motion is on. Comparison marks change immediately; every value and control remains available.' : 'A brief mark transition can help track change. Turn it off for an immediate comparison; exact labels never count up.';
+  }
+  $('motion').addEventListener('change', event => {state.motion = event.target.checked; updateMotion();});
+  if (preference.addEventListener) preference.addEventListener('change', updateMotion);
+  $('from-period').addEventListener('change', event => setPeriod(Number(event.target.value), state.to));
+  $('to-period').addEventListener('change', event => setPeriod(state.from, Number(event.target.value)));
+  $('reset').addEventListener('click', reset);
+  $('comparison-controls').addEventListener('submit', event => event.preventDefault());
+  ['dashboard','app'].forEach(view => {
+    $(`${view}-tab`).addEventListener('click', () => showView(view));
+    $(`${view}-tab`).addEventListener('keydown', event => {
+      if (!['ArrowLeft','ArrowRight','Home','End'].includes(event.key)) return;
+      event.preventDefault();
+      const next = event.key === 'Home' ? 'dashboard' : event.key === 'End' ? 'app' : view === 'dashboard' ? 'app' : 'dashboard';
+      showView(next, true);
+    });
+  });
+  document.documentElement.classList.add('reduce-motion'); render(false); updateMotion();
+  // Small local inspection interface; no networking, external state or native runtime.
+  window.ExperienceStudio = {data:DATA, state, summary, point, segments, setPeriod, selectEntity, reset, showView};
+})();
+</script>
+</body>
+</html>

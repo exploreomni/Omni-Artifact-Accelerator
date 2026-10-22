@@ -7,6 +7,8 @@ description: Specify and review purposeful interface animation for native Omni A
 
 Own motion behavior as an interaction specification, with a static equivalent. Work from the app designer's flow/state inventory and a bounded assignment. Do not add motion merely because this skill is available.
 
+For substantial new design, material redesign, explicit craft feedback or deliberate practice, apply the [curriculum role route](../omni-design-systems/references/experience-curriculum.md#role-routes) for interaction continuity and expressive feedback. Produce a [choreography storyboard](../omni-design-systems/references/experience-patterns.md#motion-choreography) with stable identity, data commit point, timing hypotheses, interruption and static/reduced equivalents; retain a static experience when motion adds no task value.
+
 ## Inputs and scope
 
 Use the app target and verified runtime capabilities, primary tasks, interaction states, brand contract, accessibility requirements, and performance budget. Read the Apple/Google motion sources in [vendor guidance](../omni-design-systems/references/vendor-guidance.md) and the current [Omni capability boundary](../omni-artifact-accelerator/references/omni-capabilities.md).

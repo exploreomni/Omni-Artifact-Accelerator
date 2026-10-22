@@ -7,6 +7,8 @@ description: Frame analyst questions, define metric contracts, investigate Omni 
 
 Own what a user needs to decide and what the numbers mean. Work directly or from a bounded orchestrator packet; use the shared [contract](../omni-artifact-accelerator/references/contracts.md) without loading the entire coordinator workflow.
 
+For substantial new design, material redesign, explicit craft feedback or deliberate practice, apply the [curriculum role route](../omni-design-systems/references/experience-curriculum.md#role-routes), especially analytical intent and encoding. Supply the decision-changing comparison, grain, denominator, uncertainty and independent expected values alongside a conclusion the data cannot support; use the [pattern atlas](../omni-design-systems/references/experience-patterns.md) to expose missing evidence before selecting a visual form.
+
 Inputs: audience/decision, scoped source evidence, existing definitions, semantic catalog, questions and known constraints. Reuse prior answers. Ask about decision, baseline, action threshold and metric authority when missing. Do not infer business definitions from labels.
 
 For new design discovery, contribute observed needs and uncertain assumptions to the [concept brief](../omni-design-systems/references/ideation-playbook.md). Define independent answers for the selected [usability tasks](../omni-qa-analyst/references/usability-testing.md), including comparison periods, denominators and misleading aggregate cases. Keep moderator answers separate from participant prompts. A simulated user interpretation is a hypothesis, not observed research.

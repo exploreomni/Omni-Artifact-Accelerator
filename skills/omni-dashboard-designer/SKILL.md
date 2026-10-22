@@ -7,6 +7,8 @@ description: Design or redesign native Omni dashboard layouts, chart specificati
 
 Own native dashboard composition and analytical usability. Support a Data Model Accelerator handoff, a migration inventory, or a standalone dashboard brief without requiring the other modes.
 
+For substantial new design, material redesign, explicit craft feedback or deliberate practice, apply the [curriculum role route](../omni-design-systems/references/experience-curriculum.md#role-routes) for composition, encoding and editorial sequence. Resolve a chart storyboard showing how the reading path, hierarchy, chart anatomy and exact-value access answer the analytical question; compare relevant [pattern alternatives](../omni-design-systems/references/experience-patterns.md) instead of defaulting to a card grid.
+
 For Tableau migrations, apply [Tableau mapping](references/tableau-mapping.md): keep worksheet definitions distinct from placements; preserve filter order, table-calculation scope, parameter/action behavior and hidden/device obligations. Produce a faithful baseline and separately recorded improvements. Reuse the company website/brand answer, or ask for it when missing. A static visual match cannot close numerical or interaction cases.
 
 For Power BI, apply [Power BI mapping](references/powerbi-mapping.md). Preserve page/visual identity, category/measure roles, visual groups, slicers, bookmarks, drill/tooltip dependencies and custom-visual gaps. Keep a source-faithful composition and an explicit improvement ledger. Verify control behavior separately from the chart's appearance; a query filter alone does not recreate a slicer. Reuse company website and approved brand context.
