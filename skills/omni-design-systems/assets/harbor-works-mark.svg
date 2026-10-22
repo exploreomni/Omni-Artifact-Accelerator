@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" role="img" aria-labelledby="title desc">
+  <title id="title">Harbor Works — original fictional specimen mark</title>
+  <desc id="desc">An original open arch and horizon symbol, created for this package's synthetic design example.</desc>
+  <rect width="48" height="48" rx="10" fill="#173b31"/>
+  <path d="M12 33V24a12 12 0 0 1 24 0v9M19 33V24a5 5 0 0 1 10 0v9M9 36h30" fill="none" stroke="#f5f4ef" stroke-width="2.5"/>
+  <circle cx="35" cy="12" r="3" fill="#e8b185"/>
+</svg>

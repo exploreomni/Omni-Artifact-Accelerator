@@ -279,6 +279,7 @@ def prepare_return(project, scope_relative, return_spec_path, output_relative):
     record = build_return(root, obj, scope_relative, return_spec_path)
     ap.write_json(destination, record)
     return {"status": "frontend_evidence_prepared", "path": str(destination), "sha256": record["sha256"],
+            "design_completion": ap.design_completion(root),
             "report": {k: record[k] for k in ("candidate_coverage", "coverage_basis", "gaps", "missing_lanes", "acceptance")}}
 
 
@@ -305,6 +306,7 @@ def verify_return(project, receipt_relative):
     ap.need(receipt == build_return(root, obj, receipt["scope"]["path"], receipt["spec"]["path"]),
             "frontend return differs from pinned specification and evidence")
     return {"status": "consistent", "candidate_coverage": receipt["candidate_coverage"],
+            "design_completion": ap.design_completion(root),
             "native_verification": "not_assessed", "business_acceptance": "not_assessed",
             "migration_accepted": False, "authorizes_target_write": False}
 

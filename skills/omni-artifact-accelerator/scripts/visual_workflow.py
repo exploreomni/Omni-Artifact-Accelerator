@@ -361,20 +361,45 @@ def cases(asset):
              "expectation": None, "status": "not_run"} for lane, scenario in scenarios]
 
 
-def prepare(root, original, inventory, destination, website=None):
-    root, project = ap.load_project(root)
-    source = source_inventory(root, original, inventory)
+def brand_context(root, project, website=None):
+    helper = ap.intent_helper()
+    state = helper.check(root)
+    need(state["status"] != "inconsistent", "brand.current_design_selection_inconsistent")
     if website is not None:
         parsed = urlsplit(website)
         need(parsed.scheme in ("http", "https") and parsed.hostname and not parsed.username
              and not parsed.password, "brand.invalid_website")
+        need(state["website"] in (None, website), "brand.website_conflicts_with_saved_choice")
+    effective = website or state["website"]
+    # A supplied website starts brand discovery; it never resolves the logo choice.
+    # This projection does not mutate the saved project or its current selection.
+    if effective and state["branding"] == "unknown":
+        state["branding"] = "requested"
+        pending = helper.starter(project["surfaces"], "requested")["requirements"]
+        existing = {r["id"] for r in state["requirements"]}
+        state["requirements"].extend(r for r in pending if r["id"] not in existing)
+    state["website"] = effective
+    questions, findings = helper.choice_report(state)
+    if not effective and state["branding"] == "unknown":
+        questions = ["What is the company website URL?", *questions]
+    return {"company_website_url": effective, "approved_theme": None,
+            "asset_refs": copy.deepcopy(state["assets"]),
+            "design_intent": state["selected"], "branding": state["branding"],
+            "requirements": copy.deepcopy(state["requirements"]),
+            "logo_sourcing": copy.deepcopy(state["logo_sourcing"]),
+            "open_questions": questions,
+            "findings": [f for f in state["findings"] if f not in findings] + findings}
+
+
+def prepare(root, original, inventory, destination, website=None):
+    root, project = ap.load_project(root)
+    source = source_inventory(root, original, inventory)
     route = source.get("migration_context", {}).get("route") or "unselected"
     result = {"schema_version": 1, "kind": "analyst_visual_requirements", "project_id": project["id"],
               "source_files": [pin(root, original), pin(root, inventory)], "route": route,
               "route_reference": source.get("migration_context", {}).get("route_reference"),
               "surface": project["surfaces"],
-              "brand": {"company_website_url": website, "approved_theme": None, "asset_refs": [],
-                        "open_questions": [] if website else ["What is the company website URL?"]},
+              "brand": brand_context(root, project, website),
               "items": [], "source_gaps": copy.deepcopy(source.get("gaps", [])),
               "native_validation": "not_run", "business_acceptance": "not_recorded"}
     for asset in source["assets"]:

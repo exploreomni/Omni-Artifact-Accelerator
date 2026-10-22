@@ -9,7 +9,7 @@ Own the shared visual and interaction contract across the engagement. Work from 
 
 ## Inputs and boundaries
 
-Read the engagement brief, selected surface, accepted brand answers, source artifacts, and existing component or theme system. Reuse established decisions. For standalone use, establish the audience, decision/task, target surface, and available source of truth before designing.
+Read the engagement brief, selected surface, accepted brand answers, source artifacts, and existing component or theme system. Reuse established decisions and the [current design-intent selection](../omni-artifact-accelerator/references/design-intent.md); changes to shared tokens/assets must reach each affected surface and reopen its relevant visual checks. For standalone use, establish the audience, decision/task, target surface, and available source of truth before designing.
 
 Native Omni Apps and native dashboards are distinct targets. External embedded applications require an explicit selection. Read [Omni capabilities](../omni-artifact-accelerator/references/omni-capabilities.md) before promising a control or theme behavior. Vendor OS guidance informs design judgment; it does not establish Omni functionality or require an OS imitation.
 

@@ -9,7 +9,7 @@ Own the brand interview, decision record, and consistent application across sele
 
 ## Inputs and interview
 
-Read the existing engagement brief, brand guidelines/assets, prior accepted theme, target surfaces, audience, and deployment scope before asking questions. Use [the interview and contract](references/brand-contract.md) to consolidate choices. For a standalone request, establish the intended brand and target first. A brand owner's approved source overrides inspiration; use a public site as evidence of observed styling, not proof of licensing or formal brand approval.
+Read the existing engagement brief, brand guidelines/assets, prior accepted theme, target surfaces, audience, and deployment scope before asking questions. Use [the interview and contract](references/brand-contract.md) to consolidate choices, and [saved design intent](../omni-artifact-accelerator/references/design-intent.md) to retain required versus optional decisions, their origin and unresolved/deferred obligations. A website answer alone cannot resolve the logo choice. For a standalone request, establish the intended brand and target first. A brand owner's approved source overrides inspiration; use a public site as evidence of observed styling, not proof of licensing or formal brand approval.
 
 For a branded deliverable, ask for the missing company website and logo choice in the smallest relevant question batch: an approved logo file/URL, or authorization to source it from the official website. Reuse prior answers and sourcing authorization; record an explicit no-logo choice when requested. Review only relevant authorized pages for the selected logo/wordmark, colors, typography and imagery, recording source URLs and proposed theme implications. Reconcile observations with approved guidelines and existing Omni theme choices; keep unresolved fonts, assets and permissions visible. Use the bounded [asset manifest](references/brand-contract.md#purposeful-asset-manifest) for selected reusable assets; research references and eligible assets stay distinct. This is not an automated crawler or permission to collect every image.
 
@@ -25,7 +25,7 @@ For migrations, use the presentation and persona facets in [behavior coverage](.
 
 ## Outputs and boundaries
 
-Return the versioned brand contract, compact unanswered-question list, theme mapping, asset references, preview, and QA evidence. Distinguish approved brand choices, observed source styling, and recommendations.
+Return the versioned brand contract, compact unanswered-question list, theme mapping, asset references, representative preview, and requirement-linked QA evidence. Ensure the current per-surface design selection points to this brand revision and selected asset bytes; preserve older records. Reuse a single specimen for the existing concept loop rather than adding another exercise. Distinguish approved brand choices, observed source styling, and recommendations.
 
 Theme import/save behavior and organization/default/bulk scope must be checked before an authorized write. A design request alone does not authorize applying, replacing, or publishing a shared theme. Stop the affected asset or setting for a conflicting usage restriction, unresolved action scope or unsupported loading path; continue unaffected design. Do not request authorization again when the user has already authorized sourcing/use within this scope. Verify the selected logo is actually visible in the target; palette checks establish neither brand identity nor full accessibility conformance.
 

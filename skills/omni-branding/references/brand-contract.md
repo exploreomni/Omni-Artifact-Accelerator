@@ -14,6 +14,12 @@ Inspect existing sources first and reuse accepted answers across subagents and l
 | Accessibility | What standard, accommodations, and user needs must the experience support? | Target standard/level if stated, keyboard/assistive-technology scenarios, large text, color-vision and motion requirements, known platform constraints. |
 | Voice and interaction | What should the experience sound and feel like? | Plain-language vocabulary, formality, terminology, desired motion restraint, error/empty-state tone. Avoid importing marketing tone into analytical claims. |
 
+## Persist the missing choices
+
+Use [saved design intent](../../omni-artifact-accelerator/references/design-intent.md) alongside the detailed brand contract. Each consequential requirement retains a stable ID, purpose, affected surfaces, required/optional status, origin, disposition, selected value/assets, decision reference and relevant appearances/states. Keep required unanswered or deferred choices visible in the next short interview. Website knowledge is separate from logo selection; sourcing authorization enables selection but does not identify the chosen asset by itself.
+
+For a branded request, combine only missing website/identity decisions in one question. Optional typography or imagery may use a labeled working proposal without holding useful design. Record faithful brand application, analytical adaptation or inspiration when that distinction affects the result. A faithful migration reuses source identity and accepted changes; a focused edit reuses the existing choice.
+
 ## Candidate contract
 
 Use the engagement's existing schema if available; otherwise record these fields in a small human-readable file. This is a design contract, **not an Omni import schema**.
@@ -42,7 +48,7 @@ Hand engineering the selected asset ID, exact file/URL and hash when retained, v
 
 ## Brand-to-composition specimen
 
-For substantial new work or redesign, add `brand characteristic → concrete visual/interaction choice → specimen → target mapping → finding`. For example, a proposed calm editorial identity can mean concise selected-object headings, exact aligned values, thin grouping rules and generous space around the primary result. It need not mean a large marketing hero or green on every surface. Demonstrate the choice using representative labels and states; retain proposed versus accepted status. Use [visual craft](../../omni-design-systems/references/visual-craft.md). A focused correction reuses the existing direction.
+For substantial new work or redesign, add `brand characteristic → concrete visual/interaction choice → specimen → target mapping → finding`. For example, a proposed calm editorial identity can mean concise selected-object headings, exact aligned values, thin grouping rules and generous space around the primary result. It need not mean a large marketing hero or green on every surface. Demonstrate the choice with the selected identity asset, representative labels/values, one useful primary action and its consequential state; use the existing concept or affected screen rather than a separate ceremony. Confirm critical native asset/font/layout mappings with engineering. Record imagery as selected, explicitly omitted or optional, not a universal requirement; retain proposed versus accepted status. Use [visual craft](../../omni-design-systems/references/visual-craft.md). A focused correction reuses the existing direction.
 
 ## Purposeful asset manifest
 

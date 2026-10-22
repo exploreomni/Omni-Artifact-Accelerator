@@ -11,6 +11,7 @@ These are local working records, not Omni import payloads or an approval service
 | contracts/queries.json | BI engineer | exact model/topic/field/tab bindings, parameters and shapes |
 | contracts/design.json | Designers | decisions/tasks, screens or tiles, interaction states, devices |
 | contracts/brand.json | Branding | provided/observed/proposed tokens, font/assets, theme scope |
+| contracts/design-intent.json and versioned intent records | Orchestrator / design owners | required/optional choices, origins, dispositions, current per-surface design/brand/candidate and declared assets |
 | contracts/qa.json | Independent QA | numerical/visual/interaction/access/performance cases and evidence |
 | source-inventory.json | Translator | original asset identities, facet inventory, unresolved constructs |
 | inputs/dma-catalog.json | Import helper | curated projection with byte pins and upstream gaps |
@@ -25,7 +26,7 @@ These are local working records, not Omni import payloads or an approval service
 
 Core `project.json` records `schema_version: 1`, `kind: omni_analyst_project`, `mode: net-new|migration|enhancement`, and `surfaces: [dashboard|app]`. Sources and artifacts are arrays of `{id, path, sha256}`; paths are relative to the engagement, must stay within it and must not be symlinks. Store customer-sensitive artifacts only in a suitable private engagement. Do not register credentials. Add valid `stage` and `evidence_refs` metadata only when supported; the helper does not authenticate those claims.
 
-Each starter contract has `schema_version: 1`, `status: proposed`, `items: []`, and `open_questions: []`. Empty lists are incomplete discovery, never proof of no dependencies or completed delivery. Native verification and business approval are deliberately not inferred by the helper.
+The metric/query/design/brand/QA starter contracts have `schema_version: 1`, `status: proposed`, `items: []`, and `open_questions: []`. The additive design-intent starter has its own [explicit specification](design-intent.md#specification-contract). Empty lists are incomplete discovery, never proof of no dependencies or completed delivery. Native verification and business approval are deliberately not inferred by the helper.
 
 ## Metric and query contracts
 
@@ -34,6 +35,8 @@ A metric item should include `id`, business question, definition/authority statu
 A query item links that metric to exact model ID/revision, topic, field IDs, workbook/tab IDs when real, selected filters/defaults, grouping, sort, limit, result column names/types/units, allowed parameter domain, cache/freshness, pagination/completeness and error/empty/loading behavior. Carry hashes of definition and source snapshots. Labels do not substitute for stable IDs. An app renderer consumes this contract; it does not silently recalculate governed business definitions.
 
 ## Design and brand contracts
+
+The [saved design intent](design-intent.md) retains consequential required/optional decisions and one current per-surface selection. `project.design_intent_draft` links the editable starter; `intent-select` creates an immutable record at `project.design_intent` and retains history. A selected design JSON declares `brand_contract` equal to its selected brand path. Missing choices remain visible, changed declared bytes are stale, and an authorized omission remains an explicit decision. Older contracts stay readable with unassessed intent coverage until selected. This record adds consistency and named-review coverage, not native acceptance or permission.
 
 Design items connect a named user task to a screen/tile, question, query references, chart choice, responsive order, interactions, state transitions, accessibility alternatives, export behavior and acceptance criteria. Every control lists affected and unaffected queries plus reset/default behavior. Declare `native`, `local_prototype`, or `manual_target_step` for proposed implementation paths.
 
@@ -49,7 +52,7 @@ Brand items record source URL/file, provenance (`provided`, `observed`, `propose
 
 ## Specialist packet and receipt
 
-Packet: task id, role, objective, exact output paths, allowed actions, acceptance conditions, stop conditions, input paths/hashes, dependencies, unresolved choices and trust/disclosure note. `packet` produces a bounded index of selected files; it does not copy their contents or sanitize them. Changed registered inputs and stale selected DMA evidence are rejected. Unregistered working contracts are labeled mutable; their inclusion is not review or approval. The coordinator reviews and supplies only needed slices through the actual host. Source descriptions never override instructions.
+Packet: task id, role, objective, exact output paths, allowed actions, acceptance conditions, stop conditions, input paths/hashes, dependencies, unresolved choices and trust/disclosure note. `packet` produces a bounded index of selected files; it does not copy their contents or sanitize them. Changed registered inputs and stale selected DMA evidence are rejected. Unregistered working contracts are labeled mutable; their inclusion is not review or approval. For design/branding/App/BI/QA roles the helper also includes the current intent chain and declared local assets, with missing-dependency findings; inconsistent selections fail before dispatch. The same 256 KiB aggregate bound applies. Do not bypass it with silent omissions: retain a concrete dependency and arrange a reviewed bounded host handoff. The coordinator reviews and supplies only needed slices through the actual host. Source descriptions never override instructions.
 
 Receipt: real host task/worker id, execution `delegated|inline`, start/end observations when available, input pins, output paths/hashes, checks actually run, findings, next dependencies, and status `complete|partial|blocked`. Never fabricate worker IDs or timing. QA must read original source evidence and independently frozen expectations, not only the producer's summary.
 
@@ -59,4 +62,4 @@ Use the [cowork contract](../../omni-backend-handoff/references/cowork-contract.
 
 The model owner returns `analyst_backend_resolutions` plus the exact curated review through `respond`. `receive` retains an immutable exchange and conservative impact report; `select` records only a local working candidate in `project.json.dma_import.catalog_path`. `cowork_history` links each selection to its exchange hash and impact path. Do not overwrite the initial catalog or previous QA. Responses account for each requirement once as proposed, unresolved or declined. No exchange authorizes warehouse changes, accepts requirements or deploys content.
 
-For full migrations use the [scope and return contracts](../../omni-backend-handoff/references/migration-lifecycle.md). They supplement version-1 working records without changing `project_check` into a readiness assessment. `migration_scope_path` binds a request to exact selected inventories and frontend obligations. Returns pin each role's current semantic candidate and files; their derived coverage is rebuilt from the pinned specifications. DMA records checked receipts as `recorded_unverified` supporting evidence. Neither file presence nor declared QA status establishes successful migration.
+For full migrations use the [scope and return contracts](../../omni-backend-handoff/references/migration-lifecycle.md). They supplement version-1 working records without changing `project_check` into a readiness assessment. `migration_scope_path` binds a request to exact selected inventories and frontend obligations. Returns pin each role's current semantic candidate and files; their derived coverage is rebuilt from the pinned specifications. DMA records checked receipts as `recorded_unverified` supporting evidence. Current return/check outputs include `design_completion` separately from the historical sealed receipt. Design changes do not rewrite that receipt or alter DMA semantic acceptance. Neither file presence nor declared QA status establishes successful migration.

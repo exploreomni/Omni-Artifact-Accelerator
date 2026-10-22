@@ -65,7 +65,7 @@ Use a new output directory; initialization does not overwrite an existing engage
 
 > Use $omni-artifact-accelerator for a service operations dashboard and App in this engagement. Reuse our existing Omni Topics. The dashboard should explain current performance; the App should help a viewer inspect an exception and its supporting data. Ask only for missing metric, audience, interaction and brand decisions. Start with a reviewable local design and QA plan. Do not write to the tenant yet.
 
-The initial files and role plan are a starting point, not a built dashboard or App. Continue with [the step-by-step how-to](docs/HOW_TO.md).
+The initial files and role plan are a starting point, not a built dashboard or App. Add `--branding requested --website https://example.com` for a branded engagement, `--branding none` when branding is out of scope, or leave it unknown. The editable design-intent record retains missing required choices; a website alone does not choose a logo. See [saving intent and reviewing named requirements](skills/omni-artifact-accelerator/references/design-intent.md) for current design/brand/asset selection and per-surface completion. Continue with [the step-by-step how-to](docs/HOW_TO.md).
 
 Material new designs include rendered alternatives, a resolved design handoff, and designer review of the actual implementation. The optional [design evidence checker](skills/omni-qa-analyst/references/design-evidence.md) tracks which observations still match the current candidate; it does not certify visual quality or customer acceptance.
 
@@ -127,7 +127,7 @@ The dashboard adapter works on an existing named development draft. The App path
 
 For new documents or a configured credential type outside those adapters, follow the [bounded native authoring guide](skills/omni-artifact-accelerator/references/native-authoring.md). It documents the official tool route, draft/readback requirements, complete tile replacement and App API limits without weakening existing adapter safeguards.
 
-Keep these outcomes distinct: **local consistency → native behavior and access checks → business acceptance → publication**. A screenshot cannot prove the numbers or permissions; an API readback cannot prove the App ran correctly. Selecting both surfaces requires distinct target documents and separate evidence. Publication and operational changes need their own authorization.
+Close out with the selected requirements, what is visible/working on each surface, and any unresolved choice or difference. Publication does not erase an unmet design requirement, and a frontend design summary does not accept DMA semantics. Keep these outcomes distinct: **local consistency → native behavior and access checks → business acceptance → publication**. A screenshot cannot prove the numbers or permissions; an API readback cannot prove the App ran correctly. Selecting both surfaces requires distinct target documents and separate evidence. Publication and operational changes need their own authorization.
 
 Claude and ChatGPT tool support depends on the actual host/account configuration. The included [local host workflow](skills/omni-artifact-accelerator/references/connected-visual-migration.md) does not provision a remote connector or give a web chat access to a local process. A clearly recorded operator-assisted file workflow remains available where direct integration is unavailable.
 

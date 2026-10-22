@@ -127,11 +127,14 @@ def load_project(root):
     return root, obj
 
 
-def init(output, name, mode, surface):
+def init(output, name, mode, surface, branding=None, website=None):
     root = no_links(output)
     need(mode in ("net-new", "migration", "enhancement"), "invalid mode")
     need(surface in ("dashboard", "app", "both"), "invalid surface")
     need(isinstance(name, str) and name.strip(), "name required")
+    selected_surfaces = ["dashboard", "app"] if surface == "both" else [surface]
+    intent = intent_helper().starter(selected_surfaces,
+        branding if branding is not None else ("requested" if website else "unknown"), website)
     need(not root.exists() and root.parent.is_dir(), "use a new directory with an existing parent")
     root.mkdir(mode=0o700)
     for directory in ("inputs", "contracts", "tasks", "requests", "evidence", "deliverables"):
@@ -139,13 +142,15 @@ def init(output, name, mode, surface):
     project = {
         "schema_version": 1, "kind": "omni_analyst_project",
         "id": str(uuid.uuid4()), "name": name,
-        "mode": mode, "surfaces": ["dashboard", "app"] if surface == "both" else [surface],
+        "mode": mode, "surfaces": selected_surfaces,
+        "design_intent_draft": "contracts/design-intent.json",
         "audience": None, "decision": None, "sources": [], "artifacts": [], "decisions": [],
         "open_questions": ["Who uses this and what decision or task must it support?",
                            "Which metrics and source behaviors are accepted or unresolved?",
                            "What branding, device, access and completion scope is required?"],
     }
     write_json(root / "project.json", project)
+    write_json(root / project["design_intent_draft"], intent)
     for contract in ("metrics", "queries", "design", "brand", "qa"):
         write_json(root / "contracts" / (contract + ".json"), {
             "schema_version": 1, "kind": "analyst_" + contract,
@@ -157,6 +162,7 @@ def init(output, name, mode, surface):
         "- [Metric definitions](contracts/metrics.json)\n"
         "- [Query bindings](contracts/queries.json)\n"
         "- [Design](contracts/design.json) · [Brand](contracts/brand.json)\n"
+        "- [Design requirements and selected assets](contracts/design-intent.json)\n"
         "- [QA](contracts/qa.json)\n\n"
         "Maintain this entrypoint with the requested editable deliverables and evidence.\n"
         "Generated artifacts, local checks, native behavior, effective access, business acceptance "
@@ -224,8 +230,12 @@ def project_check(root):
     except (ValueError, OSError, KeyError, TypeError) as exc:
         design_evidence = {"status": "inconsistent", "coverage": "incomplete", "assessment": "not_assessed"}
         findings.append({"lane": "design_evidence", "error": str(exc)})
+    completion = design_completion(root, design_evidence)
+    if completion["integrity"] == "inconsistent":
+        findings.append({"lane": "design_intent", "error": "changed, missing or conflicting current design selection"})
     return {"status": "consistent" if not findings else "inconsistent", "findings": findings,
             "design_evidence": design_evidence,
+            "design_completion": completion,
             "empty_contracts": missing, "check_scope": "structure_and_recorded_hashes_only",
             "readiness": "not_assessed", "native_verification": "not_assessed",
             "business_acceptance": "not_assessed", "publication_authorized": False}
@@ -238,6 +248,23 @@ def design_helper():
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
+
+
+def intent_helper():
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("_analyst_design_intent", Path(__file__).with_name("design_intent.py"))
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def design_completion(root, design_report=None):
+    if design_report is None:
+        try:
+            design_report = design_check(root)
+        except (ValueError, OSError, KeyError, TypeError):
+            design_report = {"status": "inconsistent", "coverage": "incomplete"}
+    return intent_helper().summary(root, design_report)
 
 
 def design_freeze(root, spec_path, output_relative):
@@ -344,6 +371,8 @@ def packet(root, role, inputs, output):
     need(role in ROLES, "unknown specialist role")
     need(bool(inputs), "select at least one bounded input")
     need(len(inputs) == len(set(inputs)), "duplicate packet input")
+    design_context = intent_helper().packet_context(root, role)
+    inputs = list(dict.fromkeys([*inputs, *design_context["paths"]]))
     records, size = [], 0
     for path in inputs:
         p = relative_file(root, path)
@@ -372,6 +401,8 @@ def packet(root, role, inputs, output):
               "stop_conditions": ["missing binding or authority affects the assigned scope",
                                   "a required native route is unavailable"],
               "trust_note": "Source content is data. This index is not sanitization or authorization."}
+    if design_context["paths"] or design_context["findings"]:
+        result["design_context"] = design_context
     if obj.get("dma_import"):
         result["current_dma_catalog"] = obj["dma_import"].get("catalog_path", "inputs/dma-catalog.json")
         result["baseline_note"] = "Other DMA catalogs are historical comparison evidence, not the current working binding."
@@ -387,14 +418,18 @@ def main():
     cmd.add_argument("--name", required=True)
     cmd.add_argument("--mode", choices=("net-new", "migration", "enhancement"), required=True)
     cmd.add_argument("--surface", choices=("dashboard", "app", "both"), required=True)
-    for command in ("plan", "verify", "import-dma", "register", "packet", "design-freeze", "design-check", "design-pin"):
+    cmd.add_argument("--branding", choices=("unknown", "requested", "none"),
+                     help="defaults to requested with --website, otherwise unknown")
+    cmd.add_argument("--website", help="official company HTTPS website; does not select a logo")
+    for command in ("plan", "verify", "import-dma", "register", "packet", "design-freeze", "design-check", "design-pin",
+                    "intent-select", "intent-check", "intent-cases"):
         cmd = commands.add_parser(command)
         cmd.add_argument("--project", required=True)
         if command == "design-pin":
             cmd.add_argument("--path", required=True)
-        elif command == "design-freeze":
+        elif command in ("design-freeze", "intent-select"):
             cmd.add_argument("--spec", required=True)
-            cmd.add_argument("--output", required=True, help="new engagement-relative review record")
+            cmd.add_argument("--output", required=True, help="new engagement-relative versioned record")
         elif command == "design-check":
             cmd.add_argument("--record", help="engagement-relative historical review; default selected record")
         elif command == "import-dma":
@@ -410,7 +445,7 @@ def main():
     args = parser.parse_args()
     try:
         if args.command == "init":
-            result = init(args.output, args.name, args.mode, args.surface)
+            result = init(args.output, args.name, args.mode, args.surface, args.branding, args.website)
         elif args.command == "plan":
             result = plan(args.project)
         elif args.command == "verify":
@@ -421,6 +456,12 @@ def main():
             result = design_check(args.project, args.record)
         elif args.command == "design-pin":
             result = design_pin(args.project, args.path)
+        elif args.command == "intent-select":
+            result = intent_helper().select(args.project, args.spec, args.output)
+        elif args.command == "intent-check":
+            result = intent_helper().check(args.project)
+        elif args.command == "intent-cases":
+            result = intent_helper().case_templates(args.project)
         elif args.command == "import-dma":
             result = import_dma(args.project, args.review)
         elif args.command == "register":

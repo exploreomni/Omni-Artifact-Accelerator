@@ -23,6 +23,13 @@ CHANGES = {"material_new", "material_redesign", "focused_edit", "faithful_migrat
 DESIGNERS = {"app-designer", "dashboard-designer", "design-systems"}
 
 
+def intent_helper():
+    spec = importlib.util.spec_from_file_location("_review_intent", Path(__file__).with_name("design_intent.py"))
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
 def has_text(value):
     return type(value) is str and bool(value.strip())
 
@@ -75,6 +82,11 @@ def validate(spec, project):
            spec["schema_version"] == 1 and spec.get("kind") == "analyst_design_review_spec",
            "unsupported design review spec")
     text(spec.get("id"), "review id")
+    if "intent" in spec:
+        intent = spec["intent"]
+        P.need(type(intent) is dict, "intent pin required")
+        relative(intent.get("path"))
+        P.need(type(intent.get("sha256")) is str and re.fullmatch(r"[a-f0-9]{64}", intent["sha256"]), "intent hash required")
     scope = spec.get("scope")
     P.need(type(scope) is dict and scope.get("change") in CHANGES, "design change scope required")
     text(scope.get("rationale"), "scope rationale")
@@ -135,15 +147,25 @@ def validate(spec, project):
                all(type(i) is str for i in case.get("capture_ids", [])), "capture_ids string list required")
         for key in ("method", "reviewer", "observation", "rationale"):
             P.need(key not in case or type(case[key]) is str, "case " + key + " must be text")
+        if "requirement_id" in case:
+            text(case["requirement_id"], "requirement_id")
+            text(case.get("requirement_context"), "requirement_context")
+            P.need(type(case.get("asset_ids", [])) is list and
+                   all(type(i) is str for i in case.get("asset_ids", [])), "requirement asset_ids list required")
     for key in ("deviations", "findings"):
         for row in spec.get(key, []):
             P.need(row.get("surface") in surfaces, key + " surface outside scope")
     return spec
 
 
-def references(spec):
+def references(spec, root=None):
     """Enumerate every declared file; the frozen manifest cannot omit embedded references."""
     paths = {relative(d["path"]) for d in spec["dependencies"]}
+    if spec.get("intent"):
+        P.need(root is not None, "engagement root required for intent references")
+        intent = intent_helper()
+        record = intent.read_record(root, spec["intent"])
+        paths.update([spec["intent"]["path"], record["spec_file"]["path"], *intent.references(record["spec"])])
     scope = spec["scope"]
     for key in ("scope_change_path", "source_obligations_path", "accepted_differences_path"):
         if scope.get(key):
@@ -250,6 +272,10 @@ def evaluate(root, spec, pins, stale):
         results.append({"id": case["id"], "surface": case["surface"], "lane": case["lane"],
                         "reported_status": case["status"], "recorded_status": effective,
                         "reasons": reasons, "claim_authenticated": False})
+    intent_coverage = None
+    if spec.get("intent"):
+        intent_coverage = intent_helper().review_coverage(root, spec, results)
+        gaps.extend(intent_coverage["gaps"])
     by_id = {r["id"]: r for r in results}
     for deviation in spec.get("deviations", []):
         disposition = deviation.get("disposition")
@@ -291,7 +317,7 @@ def freeze(root, spec_path, output_relative):
     spec_relative = spec_path.relative_to(root).as_posix()
     spec, raw = P.read_json(spec_path)
     validate(spec, project)
-    paths = references(spec)
+    paths = references(spec, root)
     P.need(output_relative not in [*paths, spec_relative], "output cannot replace review input")
     output = root / relative(output_relative)
     pins = [file_pin(root, path) for path in paths]
@@ -329,8 +355,8 @@ def check(root, record_relative=None):
            record.get("project_surfaces") == project["surfaces"], "design review project scope changed")
     spec = validate(record["spec"], project)
     pins = record["pins"]
-    P.need(type(pins) is list and len(pins) == len(references(spec)) and
-           sorted(p["path"] for p in pins) == references(spec), "review pin manifest mismatch")
+    P.need(type(pins) is list and len(pins) == len(references(spec, root)) and
+           sorted(p["path"] for p in pins) == references(spec, root), "review pin manifest mismatch")
     stale = set()
     for pin in [*pins, record["spec_file"]]:
         P.need(type(pin.get("sha256")) is str and re.fullmatch(r"[a-f0-9]{64}", pin["sha256"]), "invalid evidence hash")
@@ -349,8 +375,11 @@ def check(root, record_relative=None):
             case["recorded_status"] = "not_run"
             case["reasons"].append("review_spec_changed")
     gaps.extend({"code": "changed_or_missing_evidence", "path": p} for p in sorted(stale))
-    return {"status": "inconsistent" if stale else "consistent", "coverage": "incomplete" if gaps else "complete",
+    report = {"status": "inconsistent" if stale else "consistent", "coverage": "incomplete" if gaps else "complete",
             "review_id": spec["id"], "scope": spec["scope"], "gaps": gaps, "cases": cases,
             "check_scope": "file_integrity_and_recorded_coverage_only", "assessment": "not_assessed",
             "native_verification": "not_assessed", "business_acceptance": "not_assessed",
             "publication_authorized": False, "claims_authenticated": False}
+    if spec.get("intent"):
+        report["intent_coverage"] = intent_helper().review_coverage(root, spec, cases)
+    return report

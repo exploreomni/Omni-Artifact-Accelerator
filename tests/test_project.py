@@ -55,6 +55,36 @@ class ProjectTests(unittest.TestCase):
         names = {r["role"] for r in result["roles"]}
         self.assertTrue({"artifact-translator", "dashboard-designer", "app-designer", "app-engineer", "qa-analyst"} <= names)
 
+    def test_website_initializes_unresolved_logo_and_packets_retain_design_context(self):
+        root = self.base / "branded"
+        project.init(root, "Synthetic brand", "net-new", "app", website="https://example.com")
+        state = project.intent_helper().check(root)
+        self.assertEqual(state["branding"], "requested")
+        self.assertTrue(any("logo" in q for q in state["open_questions"]))
+        self.assertEqual(state["requirements"][0]["disposition"], "unresolved")
+        packet = project.packet(root, "app-engineer", ["contracts/queries.json"], root / "tasks/app.json")
+        self.assertTrue({"contracts/design-intent.json", "contracts/design.json", "contracts/brand.json"}
+                        <= {p["path"] for p in packet["inputs"]})
+        self.assertEqual(packet["design_context"]["requirements"], state["requirements"])
+        self.assertEqual(project.project_check(root)["design_completion"]["status"], "not_assessed")
+
+    def test_explicitly_unbranded_and_legacy_projects_do_not_gain_logo_requirement(self):
+        root = self.base / "unbranded"
+        project.init(root, "Plain", "net-new", "dashboard", branding="none")
+        self.assertEqual(project.intent_helper().check(root)["requirements"], [])
+        index, _ = project.read_json(self.root / "project.json")
+        del index["design_intent_draft"]
+        project.write_json(self.root / "project.json", index, replace=True)
+        report = project.project_check(self.root)
+        self.assertEqual(report["status"], "consistent")
+        self.assertEqual(report["design_completion"]["status"], "not_assessed")
+
+    def test_invalid_website_does_not_leave_partial_project(self):
+        root = self.base / "invalid"
+        with self.assertRaises(ValueError):
+            project.init(root, "Invalid", "net-new", "app", website="https://user:secret@example.com")
+        self.assertFalse(root.exists())
+
     def test_import_never_inherits_acceptance_and_preserves_unknowns(self):
         path, value = self.dma()
         before = path.read_bytes()

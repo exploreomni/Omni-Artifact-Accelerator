@@ -10,6 +10,8 @@ For a new uncertain composition, render a small number of meaningfully different
 
 ## Resolve the implementation handoff
 
+Use the [current design-intent selection](../../omni-artifact-accelerator/references/design-intent.md) to bind this handoff to its brand, declared assets and surface candidate. The representative screen should contain the selected logo when required, realistic values, typography/fallback, density, primary action and consequential state together. Reuse an existing concept; a focused correction needs only its affected component. An agent's working choice is not customer acceptance.
+
 Provide enough specificity to remove material aesthetic guesswork:
 
 - Screens at the agreed wide and narrow sizes, with a page overview and readable detail; record the actual viewport and appearance.
@@ -32,7 +34,7 @@ craft_case: {candidate_pin: null, viewport: null, appearance: null, state: null,
 
 ## Designer return loop
 
-Engineering returns actual native captures, exact candidate/version pins and material implementation deviations. The designer compares against the selected design, inspects the changed composition and records a disposition. Independent QA evaluates applicable visual/behavior expectations; the implementer's own check is not independent review. Fix material findings and review the changed version. An earlier prototype capture cannot close the native lane.
+Engineering returns actual native captures, exact candidate/version pins and material implementation deviations. The designer compares against the original named requirements and selected design, inspects the changed composition and records a disposition. Requirement-specific observations must identify the current asset/candidate, affected surface and state; a broad craft finding cannot stand in for an omitted logo, type treatment or primary task check. Independent QA evaluates applicable visual/behavior expectations; the implementer's own check is not independent review. Fix material findings and review the changed version. An earlier prototype capture cannot close the native lane.
 
 | Craft question | Concrete evidence or correction |
 | --- | --- |

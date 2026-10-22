@@ -498,6 +498,7 @@ def verify_return(project_path, receipt_relative, migration):
     ap.need(receipt == build_return(root, project, receipt["scope"]["path"], receipt["spec"]["path"], migration),
             "standalone.return_changed")
     return {"status": "consistent", "candidate_coverage": receipt["candidate_coverage"],
+            "design_completion": ap.design_completion(root),
             "native_verification": "recorded_readback_only", "business_acceptance": "not_assessed",
             "remote_freshness": "last_recorded_native_inspection_only",
             "migration_accepted": False, "authorizes_target_write": False}

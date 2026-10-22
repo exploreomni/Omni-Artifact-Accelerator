@@ -73,6 +73,33 @@ class VisualWorkflow(unittest.TestCase):
         self.assertEqual(req["brand"]["open_questions"], ["What is the company website URL?"])
         self.assertTrue(any(c["case_id"].endswith("/access/denied") for i in req["items"] for c in i["required_cases"]))
 
+    def test_website_alone_keeps_logo_choice_open(self):
+        v.prepare(self.root, "inputs/original.json", "inputs/inventory.json", "contracts/branded.json",
+                  website="https://example.com")
+        brand = v.load(self.root, "contracts/branded.json")["brand"]
+        self.assertEqual(brand["company_website_url"], "https://example.com")
+        self.assertTrue(any("logo" in q for q in brand["open_questions"]))
+        self.assertEqual(brand["requirements"][0]["disposition"], "unresolved")
+
+    def test_saved_official_site_authorization_is_reused_without_reasking(self):
+        intent = v.ap.intent_helper().starter(["dashboard"], "requested", "https://example.com")
+        intent["logo_sourcing"] = {"mode": "official_site", "authorization_ref": "customer-answer-1",
+                                  "source": "https://example.com"}
+        self.put("contracts/design-intent.json", intent)
+        v.prepare(self.root, "inputs/original.json", "inputs/inventory.json", "contracts/reused.json")
+        brand = v.load(self.root, "contracts/reused.json")["brand"]
+        self.assertEqual(brand["company_website_url"], "https://example.com")
+        self.assertEqual(brand["open_questions"], [])
+        self.assertTrue(any(f["code"] == "logo_asset_pending" for f in brand["findings"]))
+        self.assertEqual(brand["logo_sourcing"]["authorization_ref"], "customer-answer-1")
+
+    def test_explicit_no_branding_skips_asset_questions(self):
+        self.put("contracts/design-intent.json", v.ap.intent_helper().starter(["dashboard"], "none"))
+        v.prepare(self.root, "inputs/original.json", "inputs/inventory.json", "contracts/plain.json")
+        brand = v.load(self.root, "contracts/plain.json")["brand"]
+        self.assertEqual(brand["requirements"], [])
+        self.assertEqual(brand["open_questions"], [])
+
     def test_omitted_asset_and_removed_required_case_reject(self):
         for mutate in (lambda r: r["items"].pop(), lambda r: r["items"][0]["required_cases"].pop(),
                        lambda r: r["items"][0]["source_facets"].clear()):
