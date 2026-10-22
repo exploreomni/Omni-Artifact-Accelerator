@@ -1,0 +1,4 @@
+interface:
+  display_name: "Omni Branding"
+  short_description: "Align brand, fonts, colors and Omni themes"
+  default_prompt: "Use $omni-branding to complete the selected analyst work with explicit evidence and native delivery boundaries."

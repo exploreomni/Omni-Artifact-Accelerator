@@ -1,0 +1,4 @@
+interface:
+  display_name: "Omni Data Analyst"
+  short_description: "Define metrics, investigate and explain results"
+  default_prompt: "Use $omni-data-analyst to complete the selected analyst work with explicit evidence and native delivery boundaries."

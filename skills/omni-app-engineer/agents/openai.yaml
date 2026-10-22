@@ -1,0 +1,4 @@
+interface:
+  display_name: "Omni App Engineer"
+  short_description: "Build native Omni Apps from reviewed contracts"
+  default_prompt: "Use $omni-app-engineer to complete the selected analyst work with explicit evidence and native delivery boundaries."

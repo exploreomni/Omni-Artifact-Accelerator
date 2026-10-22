@@ -1,0 +1,4 @@
+interface:
+  display_name: "Omni Data Storyteller"
+  short_description: "Turn evidence into clear analytical narratives"
+  default_prompt: "Use $omni-data-storyteller to complete the selected analyst work with explicit evidence and native delivery boundaries."

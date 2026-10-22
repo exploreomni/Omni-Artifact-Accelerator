@@ -1,0 +1,4 @@
+interface:
+  display_name: "Omni Artifact Accelerator"
+  short_description: "Orchestrate Omni artifact design and delivery"
+  default_prompt: "Use $omni-artifact-accelerator to complete the selected analyst work with explicit evidence and native delivery boundaries."

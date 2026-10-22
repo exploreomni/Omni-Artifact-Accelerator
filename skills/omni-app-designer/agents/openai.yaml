@@ -1,0 +1,4 @@
+interface:
+  display_name: "Omni App Designer"
+  short_description: "Design native Omni App flows and interaction"
+  default_prompt: "Use $omni-app-designer to complete the selected analyst work with explicit evidence and native delivery boundaries."

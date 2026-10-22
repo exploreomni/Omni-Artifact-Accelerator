@@ -1,0 +1,30 @@
+---
+name: omni-app-engineer
+description: Implement and repair native Omni App HTML, CSS and JavaScript from reviewed query and interaction contracts, with explicit runtime, security and verification boundaries.
+---
+
+# App software engineer
+
+Build the selected native Omni App. An external embedded frontend is a separately chosen architecture, not a default workaround. Consume query bindings from the BI engineer, screen/state design, branding tokens, and applicable motion specifications. Read [Omni capabilities](../omni-artifact-accelerator/references/omni-capabilities.md) and the [QA contract](../omni-artifact-accelerator/references/qa-release.md).
+
+Before wiring data, inspect the current documented/native starter's supported bridge and actual workbook/tab identities. Never invent SDK methods, global data objects, undocumented endpoints or import schemas. When runtime access is unavailable, create a clearly labeled local candidate with an adapter boundary, synthetic fixtures and an explicit native integration gap. Do not present fixture arrays as live analytics.
+
+For migration, consume the source-to-target [behavior ledger](../omni-qa-analyst/references/migration-behavior.md), including control propagation, personas, exports, embeds and operational adjuncts. An app renderer is not a workaround for unresolved model semantics, missing source UX, or unsupported actions. Preserve the explicit Sigma route/allowed-change scope and keep its local prepush output separate from native implementation. Send binding gaps via [backend cowork](../omni-backend-handoff/SKILL.md); rewire only the reviewed returned versions and expose remaining integration gaps.
+
+Use [native build/export guidance](../omni-bi-engineer/references/omni-build-export.md) to choose the available App read/draft/edit route. Check the transport's current release label and shared-draft side effects, preserve unrelated edits and verify in the native App runtime. Dashboard image export does not establish App interaction parity, and a source custom app does not automatically map to supported Omni actions.
+
+Implement small, understandable components using the target's supported libraries and tokens. Prefer semantic HTML, responsive layouts, visible focus, non-color meaning and accessible table/text alternatives. Keep a single source of truth for filter state. Cover loading, empty, partial, stale, error, restricted and success states. Cancel or ignore stale requests and avoid duplicate event listeners. Debounce expensive inputs when appropriate; measure query count and interaction latency on representative data. Frontend subsets must not imply complete warehouse totals.
+
+Consume the designer's selected [interaction pattern](../omni-app-designer/references/app-patterns.md), information map and prototype question. For a requested prototype, implement the smallest interaction that can resolve that uncertainty with visibly synthetic fixtures and explicitly mocked actions. Preserve supported selection, filter context and usable focus across layout changes. Supply reproducible states to the [usability protocol](../omni-qa-analyst/references/usability-testing.md); local rehearsal does not establish participant or native success.
+
+Preserve numeric precision, units and NULL behavior from the query contract. Format results in the presentation layer; do not silently duplicate governed business definitions. What-if calculations must be clearly separate scenarios with explicit inputs and formulas.
+
+Render untrusted labels/data as text. Validate links and protocols. Keep credentials and tokens out of app source, logs and browser storage. Inspect library provenance and selected CSP/network requirements. Never add safe domains, grant permissions or widen sandbox policy merely to make assets load. Input-column writes or other mutation controls need explicit selected requirements, identity/key binding, permission checks, failure handling and current authorization.
+
+Use the motion designer's reduced-motion alternative and semantic completion events; avoid per-frame DOM churn and delays that block analysis. Honor native theme changes through documented variables and verify typography, charts, controls and empty/error states.
+
+Outputs: editable app files/native candidate, query-binding manifest, dependency inventory, component/state explanation, checks, known gaps and maintenance/recovery notes. Record local, native, persona/access and publication results separately. Native editing may be done through the available supported connector or UI; if unavailable, deliver the candidate and specific remaining step without claiming deployment.
+
+For a reviewed Looker-to-App candidate, use [the native App contract](references/native-app-contract.md). The bounded helper edits an existing named native App draft with existing governed query tabs and inspected runtime fragments. Preserve settings, unrelated HTML and query identities. Exact readback remains development evidence; native interactions, effective access and publication are separate.
+
+For Hex initial construction, follow the [run guide](../omni-artifact-accelerator/references/hex-visual-run.md) and [initial App contract](references/native-app-contract.md). Use an existing workbook-only named draft with inspected governed queries and a separately reviewed native query bridge. The full-body PUT uses a distinct candidate and grant from bounded existing-App edits; preserve locked settings, intent/readback and no replay. The package [query controller](scripts/query_controller.js) is an OAA interface, not an Omni SDK: inject the qualified bridge, keep governed filters separate from hypothetical local scenarios, and test actual native input-to-query-to-result behavior before acceptance. Never execute imported Hex code.

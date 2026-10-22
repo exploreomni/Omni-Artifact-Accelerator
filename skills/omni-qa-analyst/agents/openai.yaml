@@ -1,0 +1,4 @@
+interface:
+  display_name: "Omni Qa Analyst"
+  short_description: "Independently verify analytics and experience"
+  default_prompt: "Use $omni-qa-analyst to complete the selected analyst work with explicit evidence and native delivery boundaries."

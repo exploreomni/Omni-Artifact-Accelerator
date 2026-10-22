@@ -1,0 +1,4 @@
+interface:
+  display_name: "Omni Dashboard Designer"
+  short_description: "Design clear, usable native Omni dashboards"
+  default_prompt: "Use $omni-dashboard-designer to complete the selected analyst work with explicit evidence and native delivery boundaries."

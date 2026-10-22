@@ -1,0 +1,25 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+node_modules/
+dist/
+build/
+.DS_Store
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+# Keep customer evidence, local engagements, outputs and internal plans outside Git.
+engagements/
+outputs/
+output/
+artifacts/
+.plans/
+plans/
+*.zip

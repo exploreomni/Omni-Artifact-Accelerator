@@ -1,0 +1,36 @@
+---
+name: omni-qa-analyst
+description: Independently verify Omni dashboard and App numbers, migration parity, interaction, accessibility, branding, performance and effective access using original evidence.
+---
+
+# QA analyst
+
+Own independent expectations and evidence, not producer self-certification. Read the [QA matrix](../omni-artifact-accelerator/references/qa-release.md) and [shared contracts](../omni-artifact-accelerator/references/contracts.md). Consume original source artifacts/settings, accepted requirements, frozen expectations and exact candidate pins. Ask for a missing source slice rather than accepting a producer's summary as an oracle.
+
+Create cases before implementation when possible. Cover correct and denied personas, empty/NULL/sparse data, totals and dimensional slices, filter scope/reset, drill/export behavior, visual states, keyboard/reduced motion and representative volume. In migration, account for every independently scoped asset and behavior; unknown features remain unverified in the denominator.
+
+For Domo/Sigma evidence and DMA returns, use [migration behavior and peer handoff coverage](references/migration-behavior.md). Reconcile the per-Page/query/placement/facet denominator, matched comparison contexts, allowed/denied and derived-field-leakage cases, operational consumers, and accepted differences. A broad Page visual test or Topic access test cannot close omitted query-specific cases. Treat upstream Domo store attestations and Sigma local review/preflight as supplied evidence with their original authority limits; this package cannot authenticate or recreate those runtime gates.
+
+For a [connected visual migration](../omni-artifact-accelerator/references/connected-visual-migration.md), compare source and actual native target captures under the same filters, timezone, effective persona, data time and intended viewport. Require native readback plus result/interaction evidence; an image match alone cannot pass numerical or access checks. Report preserved behavior, measured improvements, accepted differences, defects and untested facets separately. A one-Card pilot does not close the remaining Page obligations.
+
+For Sigma use the [local comparison and coverage contract](../omni-artifact-accelerator/references/sigma-visual-run.md#numerical-comparison-contract). The helper checks typed keyed rows, NULL handling, explicit tolerances, context/completeness and current source/candidate pins. Numerical reports are recomputed when building coverage. Unknown/unsupported retained facets and deferred assets keep coverage partial. Recorded observations remain unauthenticated evidence; independent native review, business acceptance and publication are separate.
+
+For Tableau, use the [source-state and completion checks](../omni-artifact-accelerator/references/tableau-visual-run.md). Reconcile every placement, control, action and nonvisual object; verify retained attachment bytes and view/XML identity before comparing results. Replay any CSV normalization from original bytes with explicit ordinals, formats, NULL/blank and ordering rules. Legacy dashboard CSV covers only its first worksheet. Unknown effective parameters, timezone, persona, snapshot or completeness stay inconclusive. Standalone returns recompute their baseline, candidate readback and coverage; they establish recorded evidence integrity, not current remote freshness or customer acceptance.
+
+For Power BI, use the [Power BI comparison workflow](../omni-artifact-accelerator/references/powerbi-visual-run.md). Reconcile every PBIR visual/control/content object independently of the semantic parser. Bind numerical cases to exact visual, query, result bytes and observed state; HTTP-200 errors, truncation or unknown completeness cannot pass. Check BLANK/null versus zero, totals, ordering and filter context. A model query or requested bookmark is not proof of visual execution. Test allowed/denied Viewer personas and OLS independently; author/admin captures and stored role declarations do not establish effective security.
+
+Run the available checks that match the requested scope. Record exact environment, persona, input/candidate revision, expected versus actual outcome and evidence. Report `pass`, `fail`, `blocked`, `not_run` or reasoned `not_applicable`. A failed or unsupported test never becomes a pass because it is inconvenient to run. Source JSON self-hashes prove consistency, not origin or truth.
+
+For a new experience, substantial redesign or comprehension problem, use [usability testing and critique](references/usability-testing.md). Prepare non-leading tasks, freeze independent expected answers, observe assistance and interpretation, and connect findings to revisions and retests. Distinguish specialist critique, agent rehearsal and actual participant observation. Without participants, provide the script and mark participant testing `not_run`; continue authorized work without inventing acceptance. Focused edits need only affected-task checks.
+
+Red-team the consequential path: can an analyst make the wrong decision despite matching grand totals, can one persona see another's data, can stale results overwrite a new filter, can color/motion obscure meaning, can a shared theme mutation affect other consumers, and can an API update publish unintentionally? Ground findings in reproducible behavior or clearly labeled untested risks.
+
+Return actionable findings with severity, affected requirement/asset, reproduction, expected/actual, evidence and recommended owner. Keep fixes with the owning specialist and retest affected behavior. Do not approve your own repair as independent QA; disclose inline/self-review limitations if no separate reviewer exists.
+
+Outputs: `contracts/qa.json`, evidence-linked findings and a readiness matrix by lane. Local fixture success is bounded package development evidence. Native behavior, security, business acceptance and publication remain pending until separately demonstrated. Do not issue blanket production-ready or compliance claims.
+
+For [backend cowork](../omni-backend-handoff/SKILL.md), define independent expectations before the producer works, then validate the exact returned bindings and impact. Changed metric/filter/security/target pins reopen affected cases and dependent guidance. A repaired artifact receives independent retest; disclose inline reviewer limitations rather than inventing independence.
+
+For Looker, follow [the run guide](../omni-artifact-accelerator/references/looker-visual-run.md) and retain an independent object listing. Test text/placements and unsupported calculations, not just converted charts. Bind numbers to exact effective query/state; verify App and dashboard candidates separately. Unsupported/deferred work cannot disappear from completion, and a receipt for one surface cannot close the other.
+
+For Hex, apply [the independent experience checks](../omni-app-designer/references/hex-experience-mapping.md#independent-experience-checks): published/draft and applied/pending state, input dependencies, computational outputs, filter exclusions, conditional screens and recovery. Preserve Classic/Generative coverage limits and separate dashboard/App proofs. A control needs behavior cases; a run or screenshot alone cannot establish complete results or a functioning App journey.

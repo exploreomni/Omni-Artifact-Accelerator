@@ -1,0 +1,2 @@
+# Safe parsing of supplied Hex and LookML YAML.
+PyYAML==6.0.3

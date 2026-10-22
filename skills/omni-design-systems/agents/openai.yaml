@@ -1,0 +1,4 @@
+interface:
+  display_name: "Omni Design Systems"
+  short_description: "Apply accessible frontend design practices"
+  default_prompt: "Use $omni-design-systems to complete the selected analyst work with explicit evidence and native delivery boundaries."

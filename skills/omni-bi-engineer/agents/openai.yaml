@@ -1,0 +1,4 @@
+interface:
+  display_name: "Omni Bi Engineer"
+  short_description: "Bind governed queries to native Omni dashboards"
+  default_prompt: "Use $omni-bi-engineer to complete the selected analyst work with explicit evidence and native delivery boundaries."

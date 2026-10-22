@@ -1,0 +1,4 @@
+interface:
+  display_name: "Omni Motion Designer"
+  short_description: "Design purposeful accessible motion for Apps"
+  default_prompt: "Use $omni-motion-designer to complete the selected analyst work with explicit evidence and native delivery boundaries."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Omni Backend Handoff"
+  short_description: "Coordinate analyst and model changes with pinned evidence"
+  default_prompt: "Use $omni-backend-handoff to coordinate this frontend requirement with Data Model Accelerator and reconcile the versioned candidate response."

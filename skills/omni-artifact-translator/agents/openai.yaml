@@ -1,0 +1,4 @@
+interface:
+  display_name: "Omni Artifact Translator"
+  short_description: "Preserve BI artifacts and migration behavior"
+  default_prompt: "Use $omni-artifact-translator to complete the selected analyst work with explicit evidence and native delivery boundaries."
