@@ -217,10 +217,40 @@ def project_check(root):
                 missing.append(contract)
         except (ValueError, OSError) as exc:
             findings.append({"lane": "contract", "error": str(exc)})
+    try:
+        design_evidence = design_check(root)
+        if design_evidence["status"] == "inconsistent":
+            findings.append({"lane": "design_evidence", "error": "changed or missing pinned design evidence"})
+    except (ValueError, OSError, KeyError, TypeError) as exc:
+        design_evidence = {"status": "inconsistent", "coverage": "incomplete", "assessment": "not_assessed"}
+        findings.append({"lane": "design_evidence", "error": str(exc)})
     return {"status": "consistent" if not findings else "inconsistent", "findings": findings,
+            "design_evidence": design_evidence,
             "empty_contracts": missing, "check_scope": "structure_and_recorded_hashes_only",
             "readiness": "not_assessed", "native_verification": "not_assessed",
             "business_acceptance": "not_assessed", "publication_authorized": False}
+
+
+def design_helper():
+    # Load from this installed skill, not an arbitrary module on the host path.
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("_analyst_design_review", Path(__file__).with_name("design_review.py"))
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def design_freeze(root, spec_path, output_relative):
+    return design_helper().freeze(root, spec_path, output_relative)
+
+
+def design_check(root, record_relative=None):
+    return design_helper().check(root, record_relative)
+
+
+def design_pin(root, path):
+    root, _ = load_project(root)
+    return design_helper().file_pin(root, path)
 
 
 def register(root, kind, path, ident):
@@ -357,10 +387,17 @@ def main():
     cmd.add_argument("--name", required=True)
     cmd.add_argument("--mode", choices=("net-new", "migration", "enhancement"), required=True)
     cmd.add_argument("--surface", choices=("dashboard", "app", "both"), required=True)
-    for command in ("plan", "verify", "import-dma", "register", "packet"):
+    for command in ("plan", "verify", "import-dma", "register", "packet", "design-freeze", "design-check", "design-pin"):
         cmd = commands.add_parser(command)
         cmd.add_argument("--project", required=True)
-        if command == "import-dma":
+        if command == "design-pin":
+            cmd.add_argument("--path", required=True)
+        elif command == "design-freeze":
+            cmd.add_argument("--spec", required=True)
+            cmd.add_argument("--output", required=True, help="new engagement-relative review record")
+        elif command == "design-check":
+            cmd.add_argument("--record", help="engagement-relative historical review; default selected record")
+        elif command == "import-dma":
             cmd.add_argument("--review", required=True)
         elif command == "register":
             cmd.add_argument("--kind", choices=("sources", "artifacts"), required=True)
@@ -378,6 +415,12 @@ def main():
             result = plan(args.project)
         elif args.command == "verify":
             result = project_check(args.project)
+        elif args.command == "design-freeze":
+            result = design_freeze(args.project, args.spec, args.output)
+        elif args.command == "design-check":
+            result = design_check(args.project, args.record)
+        elif args.command == "design-pin":
+            result = design_pin(args.project, args.path)
         elif args.command == "import-dma":
             result = import_dma(args.project, args.review)
         elif args.command == "register":
@@ -385,7 +428,8 @@ def main():
         else:
             result = packet(args.project, args.role, args.input, args.output)
         print(json.dumps(result, indent=2))
-        return 1 if result.get("status") == "inconsistent" else 0
+        return 1 if result.get("status") == "inconsistent" or (args.command == "design-check" and
+                    result.get("coverage") == "incomplete") else 0
     except (ValueError, OSError, KeyError, TypeError) as exc:
         parser.exit(2, "error: " + str(exc) + "\n")
 

@@ -33,3 +33,28 @@ Use the engagement's existing schema if available; otherwise record these fields
 Consult the maintained [Omni capability reference](../../omni-artifact-accelerator/references/omni-capabilities.md). Treat these as separate mappings: application theme; dashboard/document theme; native App CSS variables; external host styles only when that surface is selected.
 
 Do not distribute a fabricated theme-import payload. Confirm actual export/import shape and current field behavior. Preserve a snapshot before an authorized change and explicitly account for omitted fields, defaults, document propagation, and save effects. An unavailable font or chart-color feature is a documented gap, not permission to change surfaces or loosen network/security policy.
+
+## Brand-to-composition specimen
+
+For substantial new work or redesign, add `brand characteristic → concrete visual/interaction choice → specimen → target mapping → finding`. For example, a proposed calm editorial identity can mean concise selected-object headings, exact aligned values, thin grouping rules and generous space around the primary result. It need not mean a large marketing hero or green on every surface. Demonstrate the choice using representative labels and states; retain proposed versus accepted status. Use [visual craft](../../omni-design-systems/references/visual-craft.md). A focused correction reuses the existing direction.
+
+## Purposeful asset manifest
+
+Keep a bounded human-readable manifest in the engagement. This records selected candidates; it does not crawl sites or automate downloads. Reuse the official website/brand answer, inspect only relevant authorized pages, and distinguish source observations from reusable bytes. A publicly visible logo, photo or font does not establish usage rights.
+
+```yaml
+asset_id: <stable local ID>
+source: <official page URL / supplied file / original work>
+brand_and_purpose: <identity, orientation, analytical explanation; omit decoration with no value>
+evidence_type: <observed reference / supplied approved asset / original candidate>
+permission: {status: unresolved, evidence_ref: null, permitted_use: null}
+file: {path: null, sha256: null, media_type: null, dimensions: null}
+composition: {focal_point: null, crop: null, aspect_ratio: null, appearance_variant: null}
+accessibility: {alt_text: null, decorative: false}
+runtime: {loading_source: null, network_requirement: none, fallback: null}
+decision: <reference_only / proposed_for_use / eligible_for_scoped_use / rejected>
+```
+
+Retain local bytes/hash only when actually obtained within scope; do not invent a download or permission record. Preserve aspect ratio and relevant crop/focal detail. Include font family/weight, licensing evidence and loading/fallback separately. New hosted assets or external network requirements remain explicit implementation decisions; a useful local/system-font design can proceed without them. Reference screenshots are research evidence, not assets to embed into the customer's App. Public package specimens must be original/synthetic or have suitable redistribution rights.
+
+Return the selected manifest and a rendered brand specimen with actual theme/font/focus/selected-state findings. A brand-source update may invalidate assets/tokens and affected visual checks; it does not automatically reopen unrelated metric definitions or authorize a shared-theme mutation.

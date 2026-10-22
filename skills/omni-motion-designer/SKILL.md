@@ -15,7 +15,7 @@ For migrations, distinguish observed interaction behavior from proposed motion u
 
 ## Work
 
-1. Give each proposed effect an observable purpose: confirm an action, explain a state change, preserve spatial context, or communicate progress. Remove effects without a task benefit.
+1. Start from the selected composition and named state transition; stabilize the static task before adding effects. For material experience work, align with [visual craft](../omni-design-systems/references/visual-craft.md), without forcing animation into a faithful migration or focused correction. Give each proposed effect an observable purpose: confirm an action, explain a state change, preserve spatial context, or communicate progress. Remove effects without a task benefit.
 2. Specify trigger, affected elements, initial/final states, duration/easing as proposed design values, interruption/cancellation, focus behavior, and reduced-motion alternative. Do not present arbitrary timing as a vendor or Omni requirement.
 3. Keep repeated filter changes responsive. Handle late/out-of-order data responses and interrupted navigation with engineering; animation completion must not determine query correctness or gate access to data.
 4. Under reduced motion, use immediate state changes or a restrained static treatment. Preserve labels, focus, completion, and progress information. Avoid chart count-ups, moving baselines, parallax, repeated pulses, and autoplay decoration that obscure exact values or distract from analysis.

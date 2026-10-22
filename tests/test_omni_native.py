@@ -174,6 +174,26 @@ class NativeTests(unittest.TestCase):
         self.assertFalse(candidate["native_verified"])
         self.assertEqual(self.fake.patch_count, 0)
 
+    def test_title_only_query_replacement_is_rejected_before_write(self):
+        self.write("payload.json", {"queryPresentations": {"data": {
+            "2": {"type": "query", "name": "New title"}}}})
+        with self.assertRaisesRegex(native.NativeError, "complete query"):
+            self.prepare()
+        self.assertEqual(self.fake.patch_count, 0)
+
+    def test_query_replacement_cannot_silently_drop_filter_scope(self):
+        self.fake.state["queryPresentations"]["data"]["2"]["query"].update(
+            filters={"orders.region": {"values": ["West"]}}, limit=50, sorts=[])
+        tile = copy.deepcopy(self.fake.state["queryPresentations"]["data"]["2"])
+        tile["name"] = "Readable title"
+        del tile["query"]["filters"]
+        with self.assertRaisesRegex(native.NativeError, "omitted existing properties"):
+            native.expected_state(self.fake.state, {"queryPresentations": {"data": {"2": tile}}}, self.owned)
+        tile["query"]["filters"] = {"orders.region": {"values": ["West"]}}
+        after = native.expected_state(self.fake.state, {"queryPresentations": {"data": {"2": tile}}}, self.owned)
+        self.assertEqual(after["queryPresentations"]["data"]["2"]["query"],
+                         self.fake.state["queryPresentations"]["data"]["2"]["query"])
+
     def test_execute_writes_only_named_draft_and_preserves_other_content(self):
         candidate = self.executed()
         result = json.loads((self.root / f".omni-native/executions/{candidate}/receipt.json").read_text())

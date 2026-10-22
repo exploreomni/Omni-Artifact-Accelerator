@@ -23,6 +23,8 @@ For connected migrations, follow [native build and export](references/omni-build
 
 For Apps, supply the app engineer with a stable query contract and exact workbook/tab bindings, typed values, completeness, errors and allowed parameter domains. Keep analysis logic governed; the renderer owns display and interaction.
 
+Preserve the designer's selected composition and complete chart specification. Return material implementation adaptations with actual native captures for designer review. A newly useful detail view needs a real query and independent analyst/QA expectations, not another rendering of the same row. For net-new tooling and complete presentation replacement, follow [native authoring](../omni-artifact-accelerator/references/native-authoring.md).
+
 Use documented connectors/APIs/CLI/UI within current authorization. Inspect draft/published state and endpoint side effects before any write: some update routes publish. Reconcile conflicts rather than clearing existing drafts. Record payload/diff and returned IDs; reread the actual candidate and compare settings. Do not claim a local JSON file was imported.
 
 Outputs: query contract, field/source crosswalk, native content candidate or explicitly labeled local specification, and validation evidence. Hand independent QA the original settings and expected cases. Stop affected implementation on missing bindings or unsupported security behavior; preserve a reviewable draft and explicit manual steps.

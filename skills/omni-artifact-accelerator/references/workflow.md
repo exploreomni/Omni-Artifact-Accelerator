@@ -53,6 +53,20 @@ For a backend dependency, use the [cowork contract](../../omni-backend-handoff/r
 
 For every page, visual, control, calculation, drill, link, action, bookmark, input and export in scope, record `exact`, `adapted`, `unsupported`, `unknown`, or `retire_proposed`. `Adapted` includes its meaning change and the real decision reference; `retire_proposed` is never deletion authority. Preserve filter scope/evaluation order, totals, sort/top-N, NULL versus zero, formats, timezone/currency, and role-specific behavior. Use screenshot/layout evidence for presentation and source/native tests for behavior. An export cannot certify its own completeness.
 
+## Design completion
+
+For material new work/redesign, retain a short visual-direction brief and at least two visibly different compositions using the same representative data. Compare grouping/task flow rather than palette alone. Resolve the chosen desktop/narrow design, chart encodings and states before calling the handoff complete. Feasibility review can alter the direction; record why. A working agent choice is not customer acceptance.
+
+The implemented candidate returns to the designer with actual captures and deviations from the selected composition. The designer records specific hierarchy, type, spacing, alignment, chart-finish, brand and interaction-value findings. Engineering corrects them and provides a new version for retest. QA independently checks expected behavior; neither the implementer's self-review nor passing numerical tests closes this loop.
+
+Choose completion wording from evidence, not from an overall success flag:
+
+- **Candidate with named gaps:** required cases remain failed, blocked or not run; authorized provisional work can continue.
+- **Design-quality complete:** selected craft, native readability, responsive and interaction cases pass for the exact candidate. This does not certify numbers or access.
+- **Verified selected scope:** every required case in the selected scope passes or has a justified applicability exclusion. A failed required numerical case prevents this claim. Human usability, access, performance and business acceptance retain their own scope and results.
+
+Use the existing contracts and QA lane records; these phrases are reporting guidance, not a second lifecycle. Changed layout/tokens reopen affected visual checks; changed filters/queries also reopen numbers and interactions; changed candidate bytes stale its previous observations. Keep `START_HERE.md`, source/artifact pins and query bindings current as execution advances.
+
 ## User experience of the agent
 
 Keep the analyst in control with small choices and a current artifact. Reuse already answered questions, show reasonable proposals when preferences are optional, and explain only material blockers. Each update should state what changed, what was learned, and the next useful action. Do not force the user to coordinate the specialists or answer twelve separate interviews.

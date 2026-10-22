@@ -288,6 +288,14 @@ def expected_state(before, payload, ownership):
                 old = before.get(section, {}).get("data", {}).get(key)
                 if old and old.get("type") not in {"query", "blank", "linked"}:
                     raise NativeError("Existing tab requires an unsupported conversion")
+                # The API merges presentation keys, not fields inside a presentation.
+                # A title-only replacement otherwise silently resets its query.
+                if value.get("type") == "query":
+                    if not isinstance(query, dict) or not isinstance(query.get("fields"), list) or not query["fields"]:
+                        raise NativeError("Query presentation replacement requires its complete query and fields")
+                    old_query = old.get("query") if old else None
+                    if isinstance(old_query, dict) and set(old_query) - set(query):
+                        raise NativeError("Query replacement omitted existing properties; retain explicit filters, sorts and limits")
             dest["data"][key] = copy.deepcopy(value)
         if "order" in patch:
             order = patch["order"]

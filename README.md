@@ -67,6 +67,8 @@ Use a new output directory; initialization does not overwrite an existing engage
 
 The initial files and role plan are a starting point, not a built dashboard or App. Continue with [the step-by-step how-to](docs/HOW_TO.md).
 
+Material new designs include rendered alternatives, a resolved design handoff, and designer review of the actual implementation. The optional [design evidence checker](skills/omni-qa-analyst/references/design-evidence.md) tracks which observations still match the current candidate; it does not certify visual quality or customer acceptance.
+
 ## Choose a workflow
 
 | Starting point | Next step |
@@ -113,9 +115,17 @@ Each specialist can also be invoked directly. Design guidance draws from officia
 
 ## From a local candidate to native delivery
 
+For a substantial new experience, expect **rendered alternatives → a resolved screen design → native implementation → designer critique → revision**. The dashboard and App should serve distinct tasks even when they share metrics. Ask for the customer's website when it is missing, turn brand characteristics into composition choices, and retain image/font provenance and fallback behavior. A small correction uses focused checks; a faithful migration keeps its original behavior obligations.
+
+> Create a native service-performance dashboard and an exception-investigation App from our existing Omni model. Use our supplied website and brand guide. Compare two visibly different compositions with representative data, resolve desktop and narrow views, and keep the designer involved through the native render. Make detail interactions add useful evidence. Report numerical, craft, native interaction and human-testing results separately.
+
+See [design and implementation](docs/HOW_TO.md#3-design-and-implement-the-selected-scope) for the review workflow and evidence checks. Correct numbers, a saved screenshot and a published document establish different things; none alone establishes a polished, usable experience.
+
 Local planning and source inspection need no Omni credentials. Native work needs separately configured, authorized source/target access, verified API or CLI capabilities and an appropriate development draft. The native helpers and local stdio host use POSIX facilities; macOS/Linux is the supported execution environment described here.
 
 The dashboard adapter works on an existing named development draft. The App path supports reviewed edits to an existing query-backed App, plus a separate initial-construction operation on an existing workbook-only named draft with inspected queries and a reviewed native runtime bridge. It does not automatically create documents, queries or a proprietary browser SDK. See [native dashboard construction](skills/omni-bi-engineer/references/omni-build-export.md) and [the App contract](skills/omni-app-engineer/references/native-app-contract.md).
+
+For new documents or a configured credential type outside those adapters, follow the [bounded native authoring guide](skills/omni-artifact-accelerator/references/native-authoring.md). It documents the official tool route, draft/readback requirements, complete tile replacement and App API limits without weakening existing adapter safeguards.
 
 Keep these outcomes distinct: **local consistency → native behavior and access checks → business acceptance → publication**. A screenshot cannot prove the numbers or permissions; an API readback cannot prove the App ran correctly. Selecting both surfaces requires distinct target documents and separate evidence. Publication and operational changes need their own authorization.
 

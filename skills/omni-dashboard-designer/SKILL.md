@@ -21,12 +21,16 @@ Use the [migration chart mapping guide](references/migration-chart-mapping.md) t
 
 ## Work
 
+For substantial new work, material redesign or an explicit quality problem, use [visual craft](../omni-design-systems/references/visual-craft.md). Render distinct compositions, select a direction, and resolve supported tile geometry, type hierarchy and chart anatomy. Confirm native feasibility before freezing the design; an HTML specimen is not a dashboard capability claim.
+
 1. Translate each business question into a tile purpose and inspectable evidence. Use the analyst's agreed measures, grain, period, comparison, and freshness. Do not invent thresholds or targets. When selecting a composition, read the relevant [dashboard pattern](references/dashboard-patterns.md): executive overview, operational monitoring, diagnostic exploration, or dense analytical table. Treat its examples as candidates, not vendor mandates.
 2. Choose encodings for comparison, trend, distribution, relationship, or precise lookup. For each chart specify source fields, mark, axis, sort, units, precision, labels, legend, null handling, totals, tooltip, and permitted interaction. A table is appropriate when exact values and row-level comparison are the task.
 3. Arrange overview, drivers, exceptions, and detail in the sequence the audience needs. Dense analyst dashboards and executive summaries may need different compositions. Group controls with their effect and show the active scope clearly. For material layout tradeoffs, use the [ideation playbook](../omni-design-systems/references/ideation-playbook.md); retain the selected rationale and rejected alternative without turning every edit into an ideation exercise.
 4. Specify filter defaults, dependencies, reset behavior, empty selections, drill-through, cross-filtering, and export expectations only against supported target behavior. Distinguish appearance parity from calculation, filter, and security parity.
 5. Apply the shared [design system](../omni-design-systems/SKILL.md) and brand contract. Use stable category colors; reserve semantic status colors for their agreed meaning. Provide readable alternatives to color-only encoding.
 6. Hand chart/query bindings and measurable performance hypotheses to the BI engineer and checks to QA. Review actual native renders with the relevant [design QA](../omni-design-systems/references/design-qa.md), including narrow widths, large text, long labels, dense categories, empty results, and source parity for migrations. For a new decision flow or meaningful usability risk, provide task scenarios to [usability testing](../omni-qa-analyst/references/usability-testing.md); distinguish synthetic comprehension checks from observed participant evidence.
+
+Compare the implemented native composition with the selected design, including actual chart labels/ticks and narrow layouts. Record engineering deviations and supported adaptations, then inspect the corrected candidate. Unequal emphasis may express a primary question; equal panels remain appropriate for genuine peer comparison. Do not force a universal hero, tile count or no-scroll rule.
 
 ## Outputs and boundaries
 

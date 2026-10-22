@@ -15,6 +15,8 @@ Native Omni Apps and native dashboards are distinct targets. External embedded a
 
 ## Work
 
+For substantial new work, material redesign or an explicit quality problem, use [visual craft](references/visual-craft.md) for rendered alternatives, resolved specimens and designer return. Record the qualities to borrow/avoid and demonstrate brand-to-composition choices. A small correction uses affected-area review; faithful migration preserves source obligations without mandatory redesign.
+
 1. Select only the relevant principles from [vendor guidance](references/vendor-guidance.md). Preserve the distinction between documented guidance, vendor case studies, and this package's recommendations. Recheck live sources for implementation-sensitive claims. For uncertain new concepts or substantial redesigns, use the [ideation playbook](references/ideation-playbook.md); reuse established decisions for focused edits and fidelity-preserving migrations.
 2. Define a small semantic system for surfaces, text, actions, focus, borders, status, chart series, spacing, density, typography, and motion. Separate brand accents from business meanings such as good/bad and actual/forecast. Keep stable category-to-color assignments across filters and pages.
 3. Map each design token to a documented target setting or app CSS variable. Record unsupported tokens as gaps. Avoid editing native dashboard DOM/CSS to simulate unavailable controls.
@@ -27,7 +29,7 @@ For Hex migrations spanning reporting and computational tasks, use [the shared e
 
 ## Outputs and handoff
 
-Return a versioned design contract containing tokens, role/meaning, target mappings, component state rules, accessibility targets, source references, unresolved decisions, and change rationale. It is a design specification, not an importable Omni configuration unless validated against the actual format.
+Return a versioned design contract containing tokens, role/meaning, target mappings, component state rules, accessibility targets, source references, unresolved decisions, and change rationale. For substantial design work, include rendered concepts/selection, a resolved specimen and exact-version craft findings; use the [applied pattern cards](references/craft-patterns.md) when they fit the task. It is a design specification, not an importable Omni configuration unless validated against the actual format.
 
 [Branding](../omni-branding/SKILL.md) owns brand choices; [app design](../omni-app-designer/SKILL.md) and [dashboard design](../omni-dashboard-designer/SKILL.md) own composition; [motion design](../omni-motion-designer/SKILL.md) owns transition behavior. QA independently verifies the resulting experience.
 

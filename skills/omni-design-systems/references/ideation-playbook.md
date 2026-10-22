@@ -6,7 +6,7 @@ Use for a new app/dashboard concept or a meaningful change to how people work. T
 
 | Assignment | Useful next artifact |
 | --- | --- |
-| New concept or substantial workflow redesign | Brief, important assumptions, a few distinct concepts, and a reasoned prototype choice |
+| New concept or substantial workflow redesign | Brief, important assumptions, visibly distinct representative screens/paths, and a reasoned prototype choice |
 | Focused enhancement | The affected task, the uncertain choice, and a comparison only if alternatives would change the decision |
 | Faithful migration | Source behavior and unknowns, plus target adaptation where necessary; do not manufacture a redesign exercise or retire source functionality |
 | Specified design or small wording/style fix | Make the scoped change and perform relevant checks; reopen discovery only for a consequential conflict |
@@ -27,6 +27,7 @@ user_and_situation: <who, when, available attention, input context>
 task_and_outcome: <what they need to decide or accomplish>
 current_workflow_evidence: <source reference, observation, or unknown>
 friction: <observed difficulty, separate from interpretation>
+visual_direction: <reference qualities to borrow/avoid, focal element, density, brand authority>
 essential_capabilities: <small set tied to the outcome>
 constraints_and_exclusions: <access, definitions, source parity, branding, target limits>
 open_assumptions: <id, claim, evidence, consequence if wrong, smallest useful test>
@@ -39,6 +40,8 @@ Prioritize assumptions with both serious consequences and weak evidence. A seman
 ## Compare concepts before polishing
 
 When uncertainty warrants alternatives, try a small number of meaningfully different approaches, often two or three. Vary information grouping or interaction, not merely colors. State required features, source constraints, and excluded behavior in an agent's assignment so it does not invent capabilities. Preserve rejected ideas and reasons briefly; do not turn an arbitrary scoring total into evidence.
+
+For substantial visual work, render the alternatives with the same representative data/context and wide/narrow states. Resolve the selected screen using [visual craft](visual-craft.md); preserve render references and distinguish mockup, native implementation and human observation. A prose comparison alone does not test typography, proportion or density.
 
 Use a comparison card: `concept → task path → advantages → tradeoffs → unsupported assumptions → prototype decision and rationale`. Assess the relevant criteria: task clarity, faithful coverage, inspection effort, accessibility, target feasibility, and maintainability. Selection for a local prototype is a working decision, not business acceptance or publication permission.
 

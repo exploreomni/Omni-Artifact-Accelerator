@@ -80,6 +80,8 @@ Use supported controls only. Where a needed action is unavailable, record the ca
 
 ## Critique and handoff
 
+For repeatable file/version checks, use the optional [design evidence contract](design-evidence.md). Keep craft critique, native observation and participant testing in their own lanes. Compare the selected rendered design with the exact implemented version; retain annotated captures, actual versus intended behavior, designer disposition and affected retest. Material new/redesign work needs rendered alternatives; a title correction or faithful migration does not require a new concept exercise. A document or screenshot pin proves retained bytes, not reviewer independence or a successful task.
+
 The designer explains the concept choice and tradeoff. The analyst reviews meaning and independent examples; the storyteller reviews claim strength and comparison wording; engineering reviews feasibility; QA owns observations and findings. Branding and motion participate when those choices affect the task. This review can run inline for small changes with its independence limitation stated; it does not require a new team or approval ceremony.
 
 Record actionable findings against task, candidate, evidence and owner. Fixes to layout/copy reopen affected comprehension and accessibility checks; query/filter/metric changes reopen numerical and related interaction checks. Route actual semantic gaps through the existing backend handoff with affected consumers and independent cases. Maintain separate usability, native, access and business-acceptance results in `START_HERE.md`.

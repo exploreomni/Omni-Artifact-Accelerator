@@ -66,9 +66,33 @@ For `both`, assign each requirement to dashboard, App or both. Shared metrics ca
 
 The analyst defines meaning and independent examples. Designers create the chart/layout or task/state specification. Branding and design systems establish shared visual roles; storytelling and motion participate when useful. BI and App engineers bind the approved requirements to actual available target capabilities.
 
+For a substantial new experience or material redesign:
+
+1. Retain a brief describing the audience/task, website/brand authority, density, reference qualities to borrow/avoid and target constraints.
+2. Render two meaningfully different compositions using the same representative content. Include desktop and narrow views; two palettes or prose alternatives are insufficient. Record the selected direction and tradeoffs.
+3. Resolve type/spacing roles, native grid or App geometry, chart axes/labels/units, states, keyboard path and exact query dependencies. Check native feasibility before committing to an unsupported interaction.
+4. Implement the candidate, then return actual captures and material deviations to the designer. Correct concrete hierarchy, alignment, typography, chart-finish or interaction-value findings and repeat affected checks.
+5. Keep independent numerical, craft, native behavior and human-usability evidence separate. Update the engagement index and artifact/query records; missing testing remains visible.
+
+Use a focused review for a narrow correction. Preserve a faithful migration's source obligations and record adaptations rather than imposing a redesign.
+
+For reproducible review evidence, author the scoped specification described in [design evidence](../skills/omni-qa-analyst/references/design-evidence.md), then freeze it after the selected checks:
+
+```sh
+python skills/omni-artifact-accelerator/scripts/analyst_project.py design-freeze \
+  --project "$OAA_RUN" --spec "$OAA_RUN/contracts/design-review-spec-v2.json" \
+  --output contracts/design-review-v2.json
+python skills/omni-artifact-accelerator/scripts/analyst_project.py design-check \
+  --project "$OAA_RUN"
+```
+
+The checker detects missing or stale recorded evidence. It cannot judge visual quality, authenticate a reviewer, or grant customer acceptance. Keep unfinished lanes visible and create a new review after changed inputs and affected retests.
+
 Use the [ideation playbook](../skills/omni-design-systems/references/ideation-playbook.md) for material new concepts, [dashboard patterns](../skills/omni-dashboard-designer/references/dashboard-patterns.md) or [App patterns](../skills/omni-app-designer/references/app-patterns.md) for composition, and [usability testing](../skills/omni-qa-analyst/references/usability-testing.md) for task evaluation. A focused edit need not restart discovery. Mark mock data and unimplemented actions clearly; without participants, provide the test script and retain `not_run` status.
 
 When native construction is requested, inspect the actual target and permissions first. Follow [native build/export](../skills/omni-bi-engineer/references/omni-build-export.md) for dashboards and [the native App contract](../skills/omni-app-engineer/references/native-app-contract.md) for Apps. Initial App construction starts from an operator-created workbook-only named draft, inspected governed queries and a reviewed runtime bridge. The helper does not create those prerequisites or certify an invented browser API.
+
+For net-new provisioning or a tool/authentication configuration outside the migration adapters, use [bounded native authoring](../skills/omni-artifact-accelerator/references/native-authoring.md). Record the exact official tools and capabilities used so the workflow is reproducible. Preserve complete tile definitions for styling/title updates and inspect the exact draft before publishing.
 
 ## Migrate an existing experience
 
