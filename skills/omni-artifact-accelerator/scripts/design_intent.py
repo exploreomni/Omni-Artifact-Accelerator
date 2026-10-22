@@ -291,6 +291,15 @@ def check(root):
         elif project.get('design_intent_draft'):
             draft = project['design_intent_draft']
             spec, _ = P.read_json(P.relative_file(root, draft))
+            # An untouched discovery starter is not a saved surface decision. Existing
+            # migration setup can still choose App/both before defining any design.
+            # Never reproject a selected record or a draft containing customer choices.
+            if (type(spec) is dict and spec.get('surfaces') != project['surfaces']
+                    and not project.get('design_intent_history')
+                    and spec == starter(spec.get('surfaces'))):
+                spec = starter(project['surfaces'])
+                base['findings'].append({'code': 'unselected_starter_scope_refreshed',
+                                         'surfaces': project['surfaces']})
             validate(spec, project)
             base['paths'] = [draft, *references(spec)]
             base['findings'].append({'code': 'missing_current_selection'})

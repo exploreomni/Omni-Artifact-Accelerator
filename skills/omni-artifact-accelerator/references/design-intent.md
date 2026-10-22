@@ -32,6 +32,8 @@ python "$OAA_HELPER" intent-cases --project "$OAA_RUN"
 
 Selection creates immutable `analyst_design_intent` with byte pins and selects it at `project.design_intent`; history remains in `design_intent_history`. Keep the spec and referenced files unchanged after selection: author new versions and select a new record for a revision. A missing candidate can remain null during discovery; selection is not completion. `intent-check` reports consistency, missing selections, unresolved decisions and remote-only asset limitations. A consistent record or exit 0 is not a fulfilled-design or native pass.
 
+An untouched unknown-branding starter can follow a surface change during initial migration setup; the checker reports that projection without rewriting the draft. Once a draft contains a website, authorization, asset or design decision, reconcile its scope explicitly. Selected records always retain their recorded surface scope.
+
 ## Specification contract
 
 Top level: `schema_version: 1`, `kind: analyst_design_intent_spec`, `branding`, `website`, `logo_sourcing`, `surfaces`, `selections`, `assets`, `requirements`.

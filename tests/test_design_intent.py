@@ -79,6 +79,46 @@ class IntentTests(unittest.TestCase):
         self.assertIn('contracts/intent.json', packet['paths'])
         self.assertEqual(D.summary(self.root, {})['status'], 'not_assessed')
 
+    def test_only_pristine_unknown_draft_can_follow_changed_project_surfaces(self):
+        project = D.P.load_project(self.root)[1]
+        project['design_intent_draft'] = 'contracts/scope-draft.json'
+        draft_path = self.root / project['design_intent_draft']
+        pristine = D.starter(['dashboard'])
+        D.P.write_json(draft_path, pristine)
+        original = draft_path.read_bytes()
+        for surfaces in (['app'], ['app', 'dashboard']):
+            with self.subTest(pristine_surfaces=surfaces):
+                project['surfaces'] = surfaces
+                D.P.write_json(self.root / 'project.json', project, replace=True)
+                project_bytes = (self.root / 'project.json').read_bytes()
+                report = D.check(self.root)
+                self.assertEqual(report['status'], 'not_assessed')
+                self.assertEqual([s['surface'] for s in report['selections']], surfaces)
+                self.assertIsNone(report['selected'])
+                self.assertIn('unselected_starter_scope_refreshed', {f['code'] for f in report['findings']})
+                self.assertIn(project['design_intent_draft'], D.packet_context(self.root, 'app-engineer')['paths'])
+                self.assertEqual(draft_path.read_bytes(), original)
+                self.assertEqual((self.root / 'project.json').read_bytes(), project_bytes)
+        decisions = [
+            {'logo_sourcing': copy.deepcopy(self.value['logo_sourcing'])},
+            {'assets': copy.deepcopy(self.value['assets'])},
+            {'website': 'https://brand.example.invalid'},
+            {'selections': [dict(pristine['selections'][0], design_path='contracts/resolved.json')]},
+            {'saved_decision': 'Do not automatically reinterpret this draft'},
+        ]
+        for decision in decisions:
+            with self.subTest(decision=next(iter(decision))):
+                value = copy.deepcopy(pristine)
+                value.update(decision)
+                D.P.write_json(draft_path, value, replace=True)
+                before = draft_path.read_bytes()
+                report = D.check(self.root)
+                self.assertEqual(report['status'], 'inconsistent')
+                self.assertNotIn('unselected_starter_scope_refreshed', {f['code'] for f in report['findings']})
+                with self.assertRaisesRegex(ValueError, 'stale_or_invalid_packet_selection'):
+                    D.packet_context(self.root, 'app-engineer')
+                self.assertEqual(draft_path.read_bytes(), before)
+
     def test_selection_preserves_bytes_and_rejects_stale_brand_link(self):
         self.value['selections'][0]['brand_path'] = 'contracts/brand.json'
         with self.assertRaisesRegex(ValueError, 'design_brand_reference_mismatch'):
