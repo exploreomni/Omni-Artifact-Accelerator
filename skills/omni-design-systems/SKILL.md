@@ -19,6 +19,8 @@ Native Omni Apps and native dashboards are distinct targets. App scaffolding doe
 
 ## Work
 
+For navigation, buttons, choices, search or responsive columns, use [control craft](references/control-craft.md) to resolve behavior and semantic tokens in the existing selected design. Use relevant [focused lessons](references/experience-curriculum.md#focused-control-practice); [dated source/course guidance](references/control-learning.md) is optional study, not a delivery prerequisite. Keep page composition separate from data-column preservation and App primitives separate from native dashboard capabilities.
+
 For substantial new work, material redesign or an explicit quality problem, use [visual craft](references/visual-craft.md) for permitted rendered alternatives, resolved specimens and designer return. Review the first assembled journey before expanding, then account for every consequential destination. Record the qualities to borrow/avoid and demonstrate brand-to-composition choices. A small correction uses affected-area review; faithful migration preserves source obligations without mandatory redesign.
 
 1. Select only the relevant principles from [vendor guidance](references/vendor-guidance.md). Preserve the distinction between documented guidance, vendor case studies, and this package's recommendations. Recheck live sources for implementation-sensitive claims. For uncertain new concepts or substantial redesigns, use the [ideation playbook](references/ideation-playbook.md); reuse established decisions for focused edits and fidelity-preserving migrations.

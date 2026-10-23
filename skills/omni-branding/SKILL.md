@@ -23,6 +23,8 @@ When sample data needs customer-themed names or geography, use [demo presentatio
 
 ## Work
 
+When branding controls, use [semantic control tokens](../omni-design-systems/references/control-craft.md#semantic-tokens-without-a-house-style) with the existing brand/design mapping. Preserve focus, selection, disabled/busy and status meaning while choosing the engagement's type, geometry, density and emphasis. Brand accent is not a universal selected/success color; shared tokens support distinct compositions rather than prescribe a house style. The relevant [focused lesson](../omni-design-systems/references/experience-curriculum.md#focused-control-practice) is optional practice.
+
 Honor an explicit website omission or supplied-authority decision using the [saved website choice](../omni-artifact-accelerator/references/design-intent.md#one-short-interview-persistent-decisions). Keep its origin, affected surfaces and actual decision reference. A supplied logo alone is not that decision; an explicit no-research choice is not permission to infer an official website or omit other brand obligations.
 
 1. Identify the authority for logos, color, typography, and tone; retain asset provenance and unresolved rights. Record the specific selected logo/variant, source, loading path and expected placement using [the logo handoff](references/brand-contract.md#logo-decision-and-handoff). Do not silently replace a requested brand logo with a generic monogram. A temporary placeholder must be labeled and unresolved; optional missing styling choices need not stop provisional design.

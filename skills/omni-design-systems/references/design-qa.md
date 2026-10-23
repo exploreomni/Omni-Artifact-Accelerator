@@ -18,6 +18,8 @@ Select checks relevant to the artifact and its risk. A wording-only change does 
 
 Report each relevant result as **passed, failed, blocked, not run, or not applicable**, with artifact/version, scenario, evidence, and limitations. Separate design review, local prototype, native Omni verification, performance evidence, accessibility audit, and business acceptance. Do not collapse these into “validated.”
 
+For changed controls, select relevant [control-craft cases](control-craft.md#focused-critique-and-verification) instead of multiplying a full state matrix. Independently check that restored input agrees with applied scope, obsolete responses cannot replace newer results, partial omission is not called exclusion, and explicit choice survives pending/error/return where specified. Check page reflow separately from retained comparison columns. Local rehearsals test state/wiring; actual focus, popup clipping, target size and assistive-technology behavior need the corresponding observed lane. A dashboard uses qualified native controls and migration cases, not an App-helper pass.
+
 Designers return to the actual implementation and reconcile material deviations against the selected composition. Independent QA checks applicable expectations separately from the producer. An unresolved material craft defect keeps that case open; human usability, native behavior, access and business acceptance retain their own statuses.
 
 The independent QA analyst owns acceptance evidence; specialists fix their own findings and provide reproducible verification material. The orchestrator resolves scope changes and conflicting requirements.

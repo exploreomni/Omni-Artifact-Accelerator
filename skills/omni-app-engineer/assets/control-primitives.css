@@ -1,0 +1,47 @@
+/* Opt-in control surfaces. Set tokens in the selected design; no page shell. */
+.oaa-controls {
+  --oaa-control-ink: #182629;
+  --oaa-control-muted: #465a60;
+  --oaa-control-surface: #fff;
+  --oaa-control-border: #657b81;
+  --oaa-control-accent: #005e69;
+  --oaa-control-on-accent: #fff;
+  --oaa-control-focus: #a04700;
+  --oaa-control-radius: .4rem;
+  color: var(--oaa-control-ink);
+}
+.oaa-controls .oaa-field {display:grid; gap:.4rem; min-width:0; margin:0; border:0; padding:0}
+.oaa-controls .oaa-label, .oaa-controls legend {font-weight:650; padding:0; margin-bottom:.3rem}
+.oaa-controls .oaa-search {display:flex; align-items:stretch; gap:.5rem; min-width:0}
+.oaa-controls input[type="search"], .oaa-controls select {
+  min-width:0; width:100%; min-height:2.75rem; padding:.6rem .75rem;
+  font:inherit; color:var(--oaa-control-ink); background:var(--oaa-control-surface);
+  border:1px solid var(--oaa-control-border); border-radius:var(--oaa-control-radius);
+}
+.oaa-controls input[type="search"]::-webkit-search-cancel-button {display:none}
+.oaa-controls .oaa-button {
+  min-height:2.75rem; padding:.6rem .9rem; border:1px solid var(--oaa-control-border);
+  border-radius:var(--oaa-control-radius); font:inherit; font-weight:600;
+  color:var(--oaa-control-ink); background:var(--oaa-control-surface); cursor:pointer;
+  transition:background-color 120ms ease, border-color 120ms ease;
+}
+.oaa-controls .oaa-button--primary, .oaa-controls .oaa-button[aria-pressed="true"] {
+  background:var(--oaa-control-accent); color:var(--oaa-control-on-accent); border-color:var(--oaa-control-accent);
+}
+.oaa-controls .oaa-button:disabled {cursor:default; opacity:.62}
+.oaa-controls .oaa-button[aria-busy="true"] {cursor:progress}
+.oaa-controls :is(input,select,button):focus-visible,
+.oaa-controls [tabindex="-1"]:focus-visible {outline:3px solid var(--oaa-control-focus); outline-offset:3px}
+.oaa-controls .oaa-radio-options {display:flex; flex-wrap:wrap; gap:.5rem 1rem}
+.oaa-controls .oaa-radio-options label {display:inline-flex; align-items:center; gap:.45rem; min-height:2.75rem}
+.oaa-controls input[type="radio"] {width:1.1rem; height:1.1rem; accent-color:var(--oaa-control-accent)}
+.oaa-controls .oaa-control-hint, .oaa-controls .oaa-control-summary {color:var(--oaa-control-muted); font-size:.9rem; line-height:1.5}
+.oaa-controls .oaa-control-error {color:var(--oaa-control-ink); font-size:.9rem; font-weight:650; min-height:1.5em}
+.oaa-controls [aria-invalid="true"] {border:2px solid var(--oaa-control-focus)}
+.oaa-controls [hidden] {display:none!important}
+@media(prefers-reduced-motion:reduce) {.oaa-controls .oaa-button {transition:none}}
+@media(forced-colors:active) {
+  .oaa-controls {--oaa-control-ink:CanvasText;--oaa-control-muted:CanvasText;--oaa-control-surface:Canvas;--oaa-control-border:ButtonText;--oaa-control-accent:Highlight;--oaa-control-on-accent:HighlightText;--oaa-control-focus:Highlight}
+  .oaa-controls .oaa-button:disabled {opacity:1;color:GrayText;border-color:GrayText}
+  .oaa-controls input[type="radio"] {accent-color:auto}
+}

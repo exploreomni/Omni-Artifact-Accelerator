@@ -20,6 +20,14 @@ The context cases also exercise resume after a new selection, changed registered
 
 For a substantial skill change, an independent bounded rehearsal can use a different domain, a realistic request and minimal synthetic source files in a private output directory. Give the evaluator the request and relevant skills without prescribing the expected answer. Inspect the actual saved decisions and handoffs for transfer of context. A rehearsal without rendering or native execution cannot establish visual polish, live behavior or user acceptance; the original [context studio](../skills/omni-design-systems/references/experience-context-studio.md) remains a teaching specimen, not a qualification result.
 
+## Control craft checks
+
+For changes to search, native choices, control state or the optional query fields, run `python -m unittest discover -s tests -p test_control_primitives.py -v`. These cases exercise bounded text, composition and clear deduplication, out-of-order results, retry against a newer draft, atomic restoration, cancellation and disposal. They also execute both original [control studio](../skills/omni-app-engineer/assets/control-studio.html) structures with a minimal DOM and controlled timers. Keep the legacy controller case in `test_hex_app.py` when changing `query_controller.js`; preserving its event shape matters to existing callers.
+
+For an actual App, check the assembled candidate's affected search/filter/inspect/return flow, including listener cleanup, stable selection and the selected theme's CSS cascade. Pin the source and candidate bytes. A shared helper passing in isolation cannot establish that the host uses it correctly. Review semantic token overrides and selector precedence together so example colors cannot silently override a customer theme. Recheck the same failed path after correction, rather than adding unrelated tests.
+
+Use [control craft](../skills/omni-design-systems/references/control-craft.md) to review task fit, native dashboard limits, migration fidelity, page columns versus table columns, and supplied-result scope. A design exercise or DOM double cannot qualify real keyboard/focus behavior, responsive rendering, screen readers, native query callbacks or usability. Record those outcomes separately. Course completion is optional and is never a release requirement.
+
 ## Optional producer compatibility tests
 
 Use an inspected, trusted checkout. These tests load upstream code and its maintained fixtures, so do not point the variables at customer projects or arbitrary downloaded repositories.

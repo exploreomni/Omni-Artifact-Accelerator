@@ -19,6 +19,8 @@ For migration, read [behavior coverage](../omni-qa-analyst/references/migration-
 
 ## Work
 
+For control choice, search, restored input or responsive columns, use the relevant [control-craft decisions](../omni-design-systems/references/control-craft.md) in the existing design handoff. Distinguish draft/applied/restored input, local versus governed search, partial versus excluded selection and focus/return. Select the simplest adequate semantics; a styled dropdown does not automatically need a custom combobox. Use [focused curriculum practice](../omni-design-systems/references/experience-curriculum.md#focused-control-practice) only for the demonstrated gap.
+
 For new concepts or material workflow redesigns, use the shared [ideation playbook](../omni-design-systems/references/ideation-playbook.md) to clarify assumptions, compare useful alternatives, and choose proportionate prototype fidelity. Reuse prior discovery. A small edit or faithful migration does not require new ideation or another approval for authorized reversible work.
 
 For composition, navigation, adaptive behavior, or recovery changes, decide the task, evidence relationship and design rationale first, then retrieve only relevant [app patterns](references/app-patterns.md) or examples to resolve a specific uncertainty. A user-selected reference can lead this process. Examples are optional evidence, not a shell to fill. Read the linked usability guide when preparing a task test.

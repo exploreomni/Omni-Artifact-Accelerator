@@ -49,6 +49,21 @@ Each studio has a question, an exercise and a reviewable output. Lesson numbers 
 
 S1–S5 form the shared foundation. S6–S10 are specialization studios. S11–S12 accompany the relevant practical work. Start with an exercise that addresses the demonstrated weakness; do not require experienced agents to repeat a complete foundation for every task.
 
+## Focused control practice
+
+Use these six lessons within the existing studios when controls or responsive behavior are the demonstrated gap. They add no new curriculum stage, schema, role or completion gate. Read the relevant [control-craft section](control-craft.md); [source and course study](control-learning.md) is optional. Each exercise uses original synthetic data or the authorized engagement and persists findings in existing design/QA records.
+
+| Lesson / existing studios | Small reviewable exercise | Primary roles |
+| --- | --- | --- |
+| Choose by task — S2, S6, S7 | Distinguish navigation, action, selection and filtering in one journey. Choose a button/link, visible choice/select or search; explain a rejected alternative and native support boundary. | App/dashboard designer; BI engineer qualifies dashboard controls. |
+| Meaningful control states — S7, S9, S11 | Resolve one consequential control's label, emphasis, focus, selected/pressed, busy and unavailable treatment as applicable. Use semantic tokens without fixing a universal visual style. | Design systems, branding, App designer. |
+| Search and retained intent — S7, S10, S11 | Specify draft/applied/restored input and genuine latest-result correlation; rehearse delayed response, partial omission, failure/retry and explicit-selection supersession where applicable. | App designer/engineer; analyst/BI engineer supplies scope and IDs; independent QA. |
+| Page and evidence columns — S3, S6, S10, S11 | Adapt a content pane and comparison table separately under narrow and short-height constraints. Preserve critical columns, scope, identity and return; justify scrolling/disclosure. | App/dashboard designer, design systems, engineer. |
+| Continuity and feedback — S7, S8, S11 | Specify one meaningful transition with immediate exact data, interruption, focus return, hidden-view cleanup and reduced-motion equivalent. Keep static treatment when motion adds no value. | Motion designer with App designer/engineer; QA checks the affected path. |
+| Critique and transfer — S1, S12 | Review the selected candidate against the task; repair a consequential failure and retest. When transfer is uncertain, use shared behavior in two distinct original treatments and a fresh domain without adopting either as a required shell. | Independent QA and originating designer; translator retains migration obligations. |
+
+For implementation practice, the [control studio](../../omni-app-engineer/assets/control-studio.html) and [primitive contract](../../omni-app-engineer/references/control-primitives.md) are optional local resources. Shared behavior and distinct treatments establish no native, rendered or human-acceptance evidence by themselves. Role routes below remain the dispatch map; choose relevant lessons and retain dashboard versus App and migration scope throughout.
+
 ## Role routes
 
 All 13 roles participate in craft, with different responsibilities. A role may be performed inline; this table does not require spawning 13 agents.

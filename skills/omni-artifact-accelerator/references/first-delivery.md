@@ -15,6 +15,12 @@ An immersive opening, photos, extra destinations and 3D are conditional design c
 
 For each consequential destination, have the experience owner resolve the [destination specimen and state ownership](../../omni-design-systems/references/experience-brief.md#implement-the-selected-experience) before treating implementation as complete. Critique the main evidence's prominence, useful first state, role-appropriate depth and constrained-space journey separately from numerical correctness. A no-rendering restriction leaves visual quality unobserved, but does not prevent an independent source review from finding a buried scene, missing comparison, generic role fallback or lost exceptional selection. Repair those concrete omissions without inventing a visual pass.
 
+## Component quality within the first journey
+
+When controls are new or materially changed, have design systems resolve the relevant [control families](../../omni-design-systems/references/control-craft.md) before the first slice: task-fit choice, emphasis/anatomy, states, density and responsive rules. Carry the shared definition once in the selected design and reference it from affected destinations. Use [optional control primitives](../../omni-app-engineer/references/control-primitives.md) only when they fit the selected implementation. They do not choose the shell, navigation, palette or query semantics.
+
+Review search → refine → inspect → return only when that task exists. Include reset/recovery and preserved identity, distinguish local filtering of supplied rows from a governed warehouse search, and inspect the input and result state together. Remote free text needs a supported reviewed bridge and bounded domain; a DOM input or local controller does not establish native support. Course references are optional learning aids, not an extra discovery or approval step. A focused correction reuses the existing design and reviews only affected obligations while retaining the full inventory.
+
 ## Declare ownership and observable behavior
 
 The existing intent specification accepts optional requirements[].delivery. Use it for material requirements in this workflow, not as another global questionnaire. The helper validates field types and references; missing content remains representable during provisional work.

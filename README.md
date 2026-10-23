@@ -14,6 +14,17 @@ Start with an existing Omni model, bring an exported BI experience, or continue 
 
 This is a skill bundle for an agent host, not a standalone BI service. Skills define roles; the host runs the agent and supplies its tools. The local helpers manage files, evidence and bounded operations—they do not launch a permanent team of agents or connect accounts automatically.
 
+## Control quality without a fixed template
+
+The [control-craft guide](skills/omni-design-systems/references/control-craft.md) helps specialists choose buttons, selects, search, navigation and responsive columns by task. Shared behavior and semantic tokens preserve consistency; each engagement retains its own composition and brand treatment.
+
+1. Reuse the audience, brand, data scope and chosen experience. Identify the affected controls.
+2. Record their purpose, hierarchy, applicable states, scope, keyboard/return behavior and available-space rules in the existing design contract.
+3. Use the [original control studio](skills/omni-app-engineer/assets/control-studio.html) and [implementation reference](skills/omni-app-engineer/references/control-primitives.md) selectively. The examples contain synthetic data and do not connect to Omni.
+4. Bind real queries through the reviewed native adapter; review one complete affected journey before expanding. Retain separate source, rendered and native evidence.
+
+For example: “Build a branded operations App where I can search supplied records, narrow the scope, inspect evidence and return without losing my selection. Choose controls and layout for that task; preserve partial-data and access boundaries.” The same principles guide native dashboard filter placement and labels through supported settings; custom App CSS is not a dashboard extension.
+
 ## Quick start
 
 These commands use a macOS/Linux shell. **Python 3.12 is the recommended, tested runtime.** You also need Git and an agent host that can read skills and local files. Node.js is optional for ordinary Python helper use; controller testing needs Node.js 18 or later. No npm setup is required.
