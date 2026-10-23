@@ -13,6 +13,8 @@ Use for a substantial new App or dashboard, or a material redesign. Reuse the se
 
 An immersive opening, photos, extra destinations and 3D are conditional design choices. Every added region must help the selected task. Richness comes from useful evidence and interaction, not a prescribed number of panels.
 
+For each consequential destination, have the experience owner resolve the [destination specimen and state ownership](../../omni-design-systems/references/experience-brief.md#implement-the-selected-experience) before treating implementation as complete. Critique the main evidence's prominence, useful first state, role-appropriate depth and constrained-space journey separately from numerical correctness. A no-rendering restriction leaves visual quality unobserved, but does not prevent an independent source review from finding a buried scene, missing comparison, generic role fallback or lost exceptional selection. Repair those concrete omissions without inventing a visual pass.
+
 ## Declare ownership and observable behavior
 
 The existing intent specification accepts optional requirements[].delivery. Use it for material requirements in this workflow, not as another global questionnaire. The helper validates field types and references; missing content remains representable during provisional work.

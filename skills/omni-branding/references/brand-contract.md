@@ -37,6 +37,8 @@ Use the engagement's existing schema if available; otherwise record these fields
 
 ## Applying choices to Omni
 
+Separate identity colors from functional foreground/background pairs. An official accent suitable for a logo or large motif may be unsuitable behind small action text. Select and verify a related UI shade when needed, preserve the original identity asset, and retain the adaptation in the existing token contract. A single passing contrast pair does not establish accessibility across the experience.
+
 Consult the maintained [Omni capability reference](../../omni-artifact-accelerator/references/omni-capabilities.md). Treat these as separate mappings: application theme; dashboard/document theme; native App CSS variables; external host styles only when that surface is selected.
 
 Do not distribute a fabricated theme-import payload. Confirm actual export/import shape and current field behavior. Preserve a snapshot before an authorized change and explicitly account for omitted fields, defaults, document propagation, and save effects. An unavailable font or chart-color feature is a documented gap, not permission to change surfaces or loosen network/security policy.

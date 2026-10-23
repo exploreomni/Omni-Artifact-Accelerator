@@ -19,6 +19,10 @@ Select only the analytical depth useful to the task:
 
 Treat missing rows, explicit NULL, observed zero and a separately qualified no-activity group distinctly. Keep presence/qualification when an additive zero is justified; it does not become a measured observation. Separate source periods and populations across sections rather than implying contemporaneous coverage. Result caps and unknown completeness constrain rankings and complete-total claims.
 
+For a selectable entity directory, resolve `role → available measures → eligible denominator → useful comparison/action → unavailable treatment`. A field present in every row may still be meaningless for some roles. Do not fall through to a default role's performance panel. Rates require their actual denominator: a count of records cannot stand in for effort, exposure or attempts. Peer comparisons name the supplied cohort and each entity's coverage; they are not a wider-market rank. A highest-observed period needs a tie rule and does not establish an all-time record.
+
+Give the designer a small set of supported next questions, not a quota of insight panels. A comparison should lead to its original observations while keeping the comparison population clear. If a selection filters its own comparison, specify whether alternatives remain visible and what reset restores. For media companions, confirm exact event identity and period before placing a historical result beside a current story; topical similarity is not a join key.
+
 ## Original synthetic worked example
 
 A library operations analyst asks which branches explain a monthly circulation decline and selects a branch to inspect the evidence. The supplied monthly records are invented for this example:
