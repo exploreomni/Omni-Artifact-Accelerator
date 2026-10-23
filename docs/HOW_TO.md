@@ -77,7 +77,7 @@ Use the [Data Experience Design Studio](../skills/omni-design-systems/references
 For a substantial new experience or material redesign:
 
 1. Retain a brief describing the audience/task, website/brand authority, density, reference qualities to borrow/avoid and target constraints.
-2. Render two meaningfully different compositions using the same representative content. Include desktop and narrow views; two palettes or prose alternatives are insufficient. Record the selected direction and tradeoffs.
+2. Record a reasoned direct direction or compare compositions when that resolves material uncertainty. For comparisons, hold the task/content constant and change grouping or interaction, not only palette. Inspect relevant normal/constrained views and retain the chosen direction and tradeoffs; prose alone is not rendered evidence.
 3. Resolve type/spacing roles, native grid or App geometry, chart axes/labels/units, states, keyboard path and exact query dependencies. Check native feasibility before committing to an unsupported interaction.
 4. Implement the candidate, then return actual captures and material deviations to the designer. Correct concrete hierarchy, alignment, typography, chart-finish or interaction-value findings and repeat affected checks.
 5. Keep independent numerical, craft, native behavior and human-usability evidence separate. Update the engagement index and artifact/query records; missing testing remains visible.
@@ -262,8 +262,20 @@ For package checks, optional integration dependencies and contributor test comma
 
 ## First-delivery quality
 
-For substantial Apps, follow the [first-delivery workflow](../skills/omni-artifact-accelerator/references/first-delivery.md). Extend the existing selected intent with optional delivery annotations and use stable destination IDs in the resolved design. Run `experience-check --project PROJECT`, then `plan --project PROJECT`; reconcile uncovered requirements before claiming completion. The roles are responsibilities, not a request to spawn every specialist. Use the existing scoped assignment route for actual parallel work.
+For substantial Apps and dashboards, follow the [first-delivery workflow](../skills/omni-artifact-accelerator/references/first-delivery.md). Extend the existing selected intent with optional delivery annotations and use stable destination IDs in the resolved design. Run `experience-check --project PROJECT`, then `plan --project PROJECT`; reconcile uncovered requirements before claiming completion. The roles are responsibilities, not a request to spawn every specialist. Use the existing scoped assignment route for actual parallel work.
 
-Build one complete task/detail/return journey and qualify selected data/media/asset boundaries early. The designer reviews the assembled result across all consequential destinations. Keep CLI-only restrictions and unobserved lanes explicit. `ready_for_review` is structural coverage, not native or aesthetic approval.
+Generate review obligations from the selected design/intent before collecting cases. Include each selected destination/context and applicable lane; missing applicability remains open. For a focused change, name the affected obligations and retain the full inventory. Follow the typed fields and example in [design evidence](../skills/omni-qa-analyst/references/design-evidence.md).
+
+Build one complete task slice, including detail/return where selected, and qualify selected data/media/asset boundaries early. The designer reviews the assembled result across all consequential destinations. Keep CLI-only restrictions and unobserved lanes explicit. `ready_for_review` is structural coverage, not native or aesthetic approval. New frozen reviews enforce destination/journey bindings. Historical reviews remain readable with unassessed destination coverage; omitted fields cannot make a new review historical. A retest closes only the matching obligation and current candidate, and endpoint screenshots do not establish interaction.
+
+Keep the initial candidate, internally revised first delivery and a compact prompting/revision log outside the repository. Distinguish necessary clarification, repeated questions, corrections to supplied requirements and new scope. Internal critique should repair routine design gaps before delivery; it must not fabricate rendering or customer feedback to meet a prompting target.
 
 From the repository checkout, `python scripts/install_skills.py --destination "$OAA_SKILLS_DIR" --verify` compares the active directory to the source package without changing it. Exit 0 means exact package-skill parity; exit 1 reports missing/changed/extra files. Retain the version and source manifest hash with rehearsal evidence, and ensure the host loads those files. Do not overwrite customized skills to force parity; use the existing reviewed-baseline upgrade path.
+
+## Reuse behavior without inheriting a layout
+
+Choose the task, surface and working direction before optional example retrieval. Follow the [principle/choice/pattern distinction](../skills/omni-design-systems/references/experience-brief.md). Record a direct direction or useful comparison in the existing per-surface design-review selection; either still needs appropriate implemented-result evidence. Native dashboards and faithful migrations retain their own scope.
+
+For Apps, [behavior controllers](../skills/omni-app-engineer/references/experience-behaviors.md) can supply state and lifecycle while the engagement renderer supplies presentation. The [portable assembly walkthrough](../skills/omni-app-engineer/references/portable-assembly.md) creates a local candidate from explicit source pins without a prescribed shell or native SDK. Keep the manifest and applicable contract files in current-intent dependencies. Use a fresh output directory for each candidate; inspect the resulting journey and bind the actual native inputs separately.
+
+The original [behavior studio](../skills/omni-app-engineer/assets/behavior-studio.html) is an optional same-task comparison. Similarity is acceptable when justified by the user/task; novelty, extra motion and extra screens are not completion criteria. Under CLI-only/no-rendering constraints, report structural and simulated behavior separately from unobserved visual/native quality.

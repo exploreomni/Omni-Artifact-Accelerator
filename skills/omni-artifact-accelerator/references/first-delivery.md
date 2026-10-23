@@ -1,14 +1,15 @@
 # First-delivery workflow
 
-Use for a substantial new App or material redesign. Reuse the selected brief and existing answers; a focused edit needs only affected checks, and a faithful migration retains its source behavior. The target is one customer brief followed by internal design, implementation, critique and repair. It is not a promise of one-generation quality.
+Use for a substantial new App or dashboard, or a material redesign. Reuse the selected brief and existing answers; a focused edit needs only affected checks, and a faithful migration retains its source behavior. The target is one customer brief followed by internal design, implementation, critique and repair. It is not a promise of one-generation quality.
 
 ## Recover, resolve, qualify
 
 1. Identify the installed package used by the host. From the source checkout, run the read-only installer comparison described in the [how-to](../../../docs/HOW_TO.md#installation-and-updates). Retain its version and manifest identity with engagement evidence. Source/install parity does not prove the host reloaded a cached skill.
 2. Read current intent, original request, source/query scope and tooling restrictions. Reuse the company website, approved asset sources, audience and experience decisions. Batch only material missing questions; do not repeatedly ask about authorized logo sourcing or require the user to choose routine CSS.
-3. Translate reference qualities into concrete choices: focal point, hierarchy, imagery role, density, primary action, useful depth, interaction and first/repeat use. Compare the same task through alternative treatments when useful. An agent can recommend a direction; record that recommendation as a proposal rather than inventing user approval.
+3. Translate reference qualities into concrete choices: focal point, hierarchy, imagery role, density, primary action, useful depth, interaction and first/repeat use. Compare the same task through alternative treatments when useful. In design-review selections, record `exploration: {mode: "direct"|"compare", rationale: "..."}` per surface; a direct choice needs no manufactured alternative and still needs actual candidate critique. An agent can recommend a direction; record that recommendation as a proposal rather than inventing user approval.
 4. Map the [analytical questions and evidence](../../omni-data-analyst/references/analytical-coverage.md). Qualify the selected native callback and high-risk asset/media/live-refresh paths before the design depends on them. Follow [native capability checks](../../omni-app-engineer/references/native-capability-checks.md); unavailable observation remains explicit.
-5. Assemble one opening → task → detail → return slice, with default/empty/error states and constrained-layout behavior. Review and repair it before expanding other destinations.
+5. Declare the selected destinations and applicable contexts/lanes before generating review cases. Keep a full inventory even for a focused edit. Choose only combinations needed to assess the actual task; missing applicability remains a gap.
+6. Assemble one complete task slice, with relevant default/empty/error states and constrained-layout behavior. If the task includes detail and return, exercise that path; a static dashboard needs no invented App journey. Review and repair the slice before expanding other destinations.
 
 An immersive opening, photos, extra destinations and 3D are conditional design choices. Every added region must help the selected task. Richness comes from useful evidence and interaction, not a prescribed number of panels.
 
@@ -22,6 +23,7 @@ The existing intent specification accepts optional requirements[].delivery. Use 
 | owner | One existing role name, such as app-designer or data-analyst; null while unresolved. |
 | behavior | Observable result. “Calendar” is insufficient: describe month navigation, actual date placement and selected-day detail. |
 | destinations | Stable IDs in each affected surface's selected resolved design. One screen is valid. |
+| journeys | Optional stable IDs in each affected surface's selected design, for actual state transitions or paths the requirement needs. No journey is needed for a static task. |
 | dependency_paths | Explicit canonical engagement-relative files needed to implement/review this requirement. Automatically pinned with the selected intent and included in relevant packets. |
 | capabilities | Applicable tags: insight, custom-visualization, motion, external-media, live-content, data-binding, brand-assets. |
 
@@ -84,13 +86,17 @@ The command exits 1 for incomplete/not_assessed/inconsistent, 2 for malformed in
 
 plan adds owners and specialists from applicable capabilities, with requirement IDs. Deferred/explicitly omitted requirements do not activate implementation specialists. App-only capabilities on dashboard-only requirements remain findings; they do not silently change the target surface. Custom visualization loads the App engineer's [advanced module](../../omni-app-engineer/references/advanced-visualization.md), not a new permanent role.
 
+For selected reusable App interactions, engineering can load [behavior controllers](../../omni-app-engineer/references/experience-behaviors.md) and [local assembly](../../omni-app-engineer/references/portable-assembly.md). They share state/lifecycle and build mechanics; the selected design still owns composition, visual identity and domain meaning. A valid result may use none of these capabilities.
+
 Role suggestions are responsibilities, not a mandate to spawn one worker per role. For substantial Apps, a lead/integrator, an experience owner and independent verification are often sufficient. Add a bounded data or visualization worker when complexity or independence warrants it. Preserve the host's configured model and effort.
 
 For actual parallel work use [scoped assignments](task-routing.md). Include current input bindings, exact owned output files, dependency readiness, public methods/events, style/state ownership, acceptance conditions and cleanup. Map assignment scope_ids to applicable requirement IDs. Reserve and record actual dispatch separately. Integrate the first working slice early; a packet is not evidence that a worker ran.
 
 ## Review the assembled experience
 
-Return the exact candidate to the designer and an independent verifier. Reuse [experience critique](../../omni-design-systems/references/experience-review.md) and [design evidence](../../omni-qa-analyst/references/design-evidence.md). Inspect all consequential destinations plus a complete detail/return path, not only the opening.
+Generate the required observation set from the current design and intent before collecting evidence. Do not build the denominator from submitted cases or screenshots. Account for every selected destination/context and selected lane, using a justified applicability exclusion only where valid; craft cannot be excluded. A focused review names its affected obligations and reports scoped coverage, not a whole-experience pass.
+
+Return the exact candidate, original brief, selected direction and generated obligations to the designer and an independent verifier. Reuse [experience critique](../../omni-design-systems/references/experience-review.md) and [design evidence](../../omni-qa-analyst/references/design-evidence.md). Inspect all consequential destinations and a complete task slice, including detail/return only when selected.
 
 Give each material request a disposition: implemented and observed in a named evidence lane, implemented but unobserved, blocked with a useful fallback, deferred, or explicitly omitted. A working external link does not fulfill inline playback. An agenda does not fulfill a month calendar. A decorative perspective does not establish camera interaction or measured height.
 
@@ -98,10 +104,16 @@ Tie native/media observations to the candidate, target, relevant settings, date 
 
 When observation is permitted, use representative phone/laptop/wide sizes selected for the task. Review available content height, meaningful defaults, readable labels, no accidental overflow, stable identity/filter state, focus/scroll return and reversible motion. Fix concrete issues, then recheck affected paths. Discover the supported preview/draft route instead of assuming it exists. Do not silently reset existing repair limits when an unavailable capability keeps failing.
 
-Before completion, compare every requirement with the assembled result and list remaining differences. Preserve existing publication authority and readback requirements. Keep the usable entry link and current context in START_HERE.md.
+Give each internal finding the affected obligation, observation, effect on the task, specific repair and evidence needed. Correct it within existing authority and repair limits. A passing retest must cover the same destination/context or journey and exact current candidate; an unrelated screen pass cannot close it. Do not refresh pins to reuse an old observation after the candidate changes.
+
+Before first delivery, the lead checks whether every consequential destination fulfills its purpose and chosen direction; whether detail supplies supported information and return preserves the investigation; whether required brand and responsive treatments were actually observed; and whether every material finding has a matching retest or a clearly stated remaining gap. Compare every requirement with the assembled result and list remaining differences. Preserve existing publication authority and readback requirements. Keep the usable entry link and current context in START_HERE.md.
 
 ## Transfer and qualification
 
 A useful rehearsal gives a fresh worker the installed skills, a raw brief and minimal source artifacts from an unfamiliar domain, without the desired solution. Inspect its actual decisions, handoffs and candidate. Use a small contrasting set: non-spatial App, partial-data/blocked-capability case, and source-faithful or CLI-only migration. Store results outside the package.
 
-Track repeated questions, customer corrective prompts, internal revisions and unresolved blockers. Do not invent a quality score or claim every host was exercised. Package checks and local rehearsals improve confidence; observed native execution and user acceptance remain distinct.
+Retain the initial generated candidate and the internally reviewed first delivery, each with exact hashes. Keep a compact engagement run log linked to review evidence: initial brief/message reference, material clarification batches and their reasons, repeated questions, customer corrective prompts for dropped requirements, new preferences/scope, internal findings, revisions and remaining blockers. Internal revisions are part of the work, not extra customer prompts. Never invent customer feedback or count an agent evaluator as a human participant.
+
+For a bounded qualification trial, aim for zero repeated questions, zero customer corrections for already-supplied requirements, and at most one consolidated material clarification batch. These are trial targets, not a service guarantee; never suppress a necessary question to improve a count. Routine spacing, chart finish and implementation choices stay with the specialists.
+
+Use three original contrasting briefs when qualifying a material revision: a branded exploration App, a native operational dashboard, and a constrained migration/investigation. Supply typed data and independently derived expectations; do not supply an expected layout. Run sequentially, retaining one unseen holdout until the package is stable. Discover permitted rendering/native observation before building around it. If unavailable, complete independent engineering/specification work and report qualification as pending. Keep inputs, generated artifacts and run evidence outside the repository. Do not invent a quality score or claim every host was exercised. Package checks and local rehearsals improve confidence; observed native execution and user acceptance remain distinct.

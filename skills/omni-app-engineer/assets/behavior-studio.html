@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Behavior studio — original synthetic examples</title>
+<style>
+  *{box-sizing:border-box}body{margin:0;background:#faf8f3;color:#242725;font:16px/1.5 system-ui,sans-serif}
+  main{max-width:1100px;margin:auto;padding:24px}h1{font-size:clamp(1.7rem,4vw,3rem);line-height:1.1}h2,h3{line-height:1.2}
+  button,select,input{font:inherit}button,select{padding:9px 12px;border:1px solid #596860;background:#fff;color:#1e3528;border-radius:4px;cursor:pointer}
+  button:focus-visible,select:focus-visible,input:focus-visible,[tabindex="-1"]:focus-visible{outline:3px solid #9a5600;outline-offset:3px}
+  button[aria-pressed="true"]{background:#244333;color:#fff}.controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:16px 0}
+  .notice{padding:12px 16px;border-left:4px solid #98601d;background:#fff3dc}.split{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(240px,1fr);gap:24px}
+  .split>section,.split>aside{min-width:0;background:white;padding:18px;border:1px solid #b8c3ba}.table-scroll{overflow:auto}table{width:100%;border-collapse:collapse}td,th{text-align:left;padding:10px 6px;border-bottom:1px solid #d4ded5;vertical-align:top}
+  .reading{max-width:720px;margin:24px auto;padding:clamp(18px,4vw,40px);background:#203338;color:#edf3eb}.reading h2,.reading h3{font-family:Georgia,serif;font-weight:400;font-size:2rem}.reading button{color:#173539}.reading ol{padding:0;list-style:none}.reading li{padding:18px 0;border-top:1px solid #6d8485}.reading p{max-width:55ch}.reading [aria-pressed="true"]{color:white;background:#355d60}
+  .tools{border-top:2px solid #819087;margin-top:36px;padding-top:20px}.month-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px;max-width:620px}.date{min-height:60px;background:#e6eee6;padding:5px;font-size:.8rem;overflow-wrap:anywhere}.date small{display:block}output{display:block;padding:14px;background:white;border:1px solid #c1cbc3}small{line-height:1.4}.muted{color:#4e5e53}
+  [hidden]{display:none!important}@media(max-width:700px){main{padding:16px}.split{grid-template-columns:1fr}.date{padding:3px;font-size:.7rem}.reading{padding:20px}}
+</style>
+<main>
+  <h1>One behavior, two presentations.</h1>
+  <p>Original synthetic archive records. Switch between a table workspace and a focused reading path. They share selection and per-record choices, not a layout or brand system. No data connection, external content or native runtime is used.</p>
+  <div class="controls" aria-label="Choose a presentation"><button id="show-table" type="button">Table workspace</button><button id="show-reading" type="button">Reading path</button></div>
+  <div class="controls" aria-label="Simulate result coverage"><button id="all" type="button">Complete result</button><button id="partial" type="button">Partial page omits selection</button><button id="excluded" type="button">Complete result excludes selection</button><button id="denied" type="button">Access denied</button></div>
+  <p id="scope-status" class="notice" role="status"></p>
+  <div id="table-presentation" class="split">
+    <section><h2 id="table-results-title" tabindex="-1">Review queue</h2><div class="table-scroll"><table><caption>Supplied identities, no inferred completeness</caption><thead><tr><th>Record</th><th>Material</th><th>Open</th></tr></thead><tbody id="table-records"></tbody></table></div></section>
+    <aside><h2 id="table-detail-title" tabindex="-1">Record detail</h2><div id="table-detail"></div><button id="table-return" type="button">Return to origin</button></aside>
+  </div>
+  <section id="reading-presentation" class="reading" hidden>
+    <div id="reading-index"><h2 id="reading-results-title" tabindex="-1">Choose a record to read</h2><ol id="reading-records"></ol></div>
+    <article id="reading-detail-screen" hidden><h2 id="reading-detail-title" tabindex="-1">Record detail</h2><div id="reading-detail"></div><div class="controls"><button id="reading-return" type="button">Return to origin</button><button id="reading-browse" type="button">Choose another record</button></div></article>
+  </section>
+  <section class="tools" aria-labelledby="time-title"><h2 id="time-title">Dates with explicit meaning</h2><p>A date-only record stays on its stated day. An instant is placed in the selected timezone. Undated work remains outside the grid.</p>
+    <div class="controls"><button id="month-before" type="button">Previous month</button><strong id="month-label"></strong><button id="month-after" type="button">Next month</button><label>Timezone <select id="time-zone"><option value="America/New_York">America/New_York</option><option value="UTC">UTC</option></select></label></div>
+    <p>Monday-first calendar; event labels are illustrative records, not forecasts.</p><div id="dates" class="month-grid" role="list"></div><p id="undated"></p>
+  </section>
+  <section class="tools" aria-labelledby="recording-title"><h2 id="recording-title">Step through a synthetic recording</h2><p>The data are a synthetic recording fixture. Playback reveals only supplied observations; it stops at a declared segment gap. Manual stepping works with reduced motion.</p>
+    <div class="controls"><button id="play" type="button">Play segment</button><button id="pause" type="button">Pause</button><button id="frame-before" type="button">Previous frame</button><button id="frame-after" type="button">Next frame</button><label><input id="reduced" type="checkbox"> Reduced motion</label></div><output id="recording-status" aria-live="polite"></output>
+  </section>
+  <p class="muted">This studio demonstrates local behavior only. Its layouts, color, density and wording are examples; none is required by the shared controllers.</p>
+</main>
+<script src="../scripts/experience_components.js"></script>
+<script src="../scripts/experience_behaviors.js"></script>
+<script src="behavior-studio.js"></script>
+</html>

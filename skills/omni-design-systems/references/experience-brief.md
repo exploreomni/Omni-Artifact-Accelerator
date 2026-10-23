@@ -21,6 +21,18 @@ Retain the user's relevant wording or attributable paraphrase, then translate it
 
 For branded work, reuse the supplied website and logo answer. If missing, ask for the official company website plus an approved logo or official-site sourcing authorization in the existing short question batch. Honor an explicit user decision to omit website research/use supplied authority through the existing `category: website` omission described in [design intent](../../omni-artifact-accelerator/references/design-intent.md#one-short-interview-persistent-decisions); do not invent a URL or keep asking. A logo answer alone does not waive the website question or settle the experience mode. Ask a separate experience question only if the unresolved choice materially changes the work; do not require the user to specify every spacing value or coordinate the specialists.
 
+## Separate behavior from treatment
+
+Keep these decisions distinct in the existing brief, not in a new framework document:
+
+| Layer | Retain or choose |
+| --- | --- |
+| Essential correctness and usability | Truthful scope/units/missingness, stable identity, attributable current results, effective access, usable controls and exact evidence, focus/return/recovery, and readable adaptation. Verify the applicable behavior independently of its renderer. |
+| Engagement-specific treatment | Composition, navigation form, type, density, imagery and motion follow the audience, task, brand and available space. Similar tasks may intentionally look similar; novelty is not a quality metric. |
+| Optional capability patterns | Pinning, narrative steps, maps, camera/3D scenes, calendars, media and other patterns need a task benefit plus qualified data/runtime prerequisites. Omit them or choose a simpler alternative when they do not help. |
+
+The App designer decides the task relationship and rationale before optional example retrieval, unless the user chose a reference. A reusable behavior contract must not prescribe a hero, cards, sidebar, tabs, scene, destination count or concept count. Native dashboards and faithful migrations retain their own supported controls and source obligations; App scaffolding is not their default implementation.
+
 ## Resolve the choices in one place
 
 Use stable named requirements such as `experience-mode`, `entry-return-journey` and `art-direction` **when justified by the brief**. Record their structured values in existing `requirements[].value`, with surface-specific contexts and decision references. Keep detailed composition/state decisions in the selected design JSON and assets in the linked brand contract. Use the [requirement examples](../../omni-artifact-accelerator/references/design-intent.md#experience-requirements) rather than a second decision ledger.
@@ -37,7 +49,7 @@ For example, a justified `usable-space` requirement can keep `{width: 1024, heig
 
 ## Compare the same task
 
-For frontend alternatives, hold audience, business question, data and primary action constant. Vary opening composition, navigation, type/image balance, density or disclosure. If the task itself is uncertain, resolve that uncertainty separately before treating a different business question as a visual alternative.
+Record a reasoned direct choice when the brief and constraints establish a useful direction, or compare alternatives when a material choice remains. No alternatives ceremony is required. For a comparison, hold audience, business question, data and primary action constant; vary composition, navigation, type/image balance, density or disclosure. Resolve task uncertainty separately from visual uncertainty.
 
 Record `reference quality → concrete choice → expected benefit → tradeoff → observation needed`. Compare rendered treatments when permitted; prose can establish structural intent but not visual quality. The original [context studio](experience-context-studio.md) demonstrates three different treatments of one task and an annotated failure. Reuse the reasoning, not its layout as a house style.
 
@@ -71,7 +83,7 @@ Native dashboards retain their own reading path, supported layout and control ca
 
 For substantial new work, select one representative `entry → primary action → useful evidence/detail → return` path and assemble it before expanding the rest of the experience. Include the selected assets, real query contract and one consequential loading/error or constrained-layout state. Engineering qualifies the critical callback, asset, media or live-refresh path before the whole composition depends on it; metadata, configured allowlists and a local fixture are not observed target behavior. When a capability is unresolved, keep the path useful with its declared fallback and open requirement.
 
-The experience owner critiques the assembled path; QA independently checks its relevant outcomes. Repair concrete findings within the existing authorization, then apply the resolved relationships to other destinations without making them identical. Use only permitted observation methods. Internal comparison and reversible correction do not require a customer selection unless a consequential preference remains unresolved. A small edit reuses the current path and examines only affected behavior.
+The experience owner critiques the assembled path; QA independently checks its relevant outcomes. Repair concrete findings within the existing authorization, then carry useful behavior to other destinations while choosing their treatment deliberately; consistent or repeated composition is valid when the task warrants it. Use only permitted observation methods. Internal comparison and reversible correction do not require a customer selection unless a consequential preference remains unresolved. A small edit reuses the current path and examines only affected behavior.
 
 ## Review against the original request
 

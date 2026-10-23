@@ -20,19 +20,45 @@ def present(value):
 
 def validate(spec, need, relative, roles):
     """Optional annotations stay backward compatible; incomplete work remains representable."""
+    lanes = {"craft", "numerical", "native_behavior", "responsive", "accessibility", "access",
+             "performance", "human_usability", "business_acceptance"}
     for requirement in spec["requirements"]:
+        for context in requirement.get("contexts", []):
+            if "applicability" not in context:
+                continue
+            applications = context["applicability"]
+            need(type(applications) is list, "context_applicability_list_required")
+            identities = set()
+            for item in applications:
+                need(type(item) is dict and item.get("kind") in {"destination", "journey"}
+                     and isinstance(item.get("id"), str) and bool(item["id"].strip()), "context_target_invalid")
+                need("surface" not in item or item["surface"] in requirement["surfaces"], "context_surface_invalid")
+                identity = (item["kind"], item["id"], item.get("surface"))
+                need(identity not in identities, "context_target_duplicate")
+                # An unscoped row overlaps every surface-specific row for the same target.
+                need(not any(k[:2] == identity[:2] and (k[2] is None or identity[2] is None)
+                             for k in identities), "context_target_overlap")
+                identities.add(identity)
+                rules = item.get("lanes")
+                need(type(rules) is dict and set(rules) <= lanes, "context_lanes_invalid")
+                for lane, rule in rules.items():
+                    need(type(rule) is dict and rule.get("status") in {"required", "not_applicable"},
+                         "context_lane_status_invalid")
+                    if rule["status"] == "not_applicable":
+                        need(lane != "craft" and all(isinstance(rule.get(k), str) and rule[k].strip()
+                             for k in ("rationale", "decision_ref")), "context_lane_exclusion_unjustified")
         if "delivery" not in requirement:
             continue
         delivery = requirement["delivery"]
         need(type(delivery) is dict, "delivery_object_required")
         need(set(delivery) <= {"source_ref", "owner", "behavior", "destinations",
-                              "dependency_paths", "capabilities"}, "delivery_unknown_field")
+                              "dependency_paths", "capabilities", "journeys"}, "delivery_unknown_field")
         for key in ("source_ref", "behavior"):
             if key in delivery:
                 need(isinstance(delivery[key], str), "delivery_" + key + "_text_required")
         if "owner" in delivery:
             need(delivery["owner"] is None or (type(delivery["owner"]) is str and delivery["owner"] in roles), "delivery_owner_invalid")
-        for key in ("destinations", "dependency_paths", "capabilities"):
+        for key in ("destinations", "journeys", "dependency_paths", "capabilities"):
             if key not in delivery:
                 continue
             values = delivery[key]
@@ -93,7 +119,8 @@ def inspect(root, state, project_api):
                 for dest in delivery.get("destinations", []):
                     item = destinations.get((surface, dest))
                     if item is None:
-                        gaps.append("destination_missing:" + surface + "/" + dest)
+                        if not any((s, dest) in destinations for s in req["surfaces"]):
+                            gaps.append("destination_missing:" + surface + "/" + dest)
                     else:
                         gaps.extend("destination_" + key + "_missing:" + surface + "/" + dest
                                     for key in DESTINATION_FIELDS if not present(item.get(key)))

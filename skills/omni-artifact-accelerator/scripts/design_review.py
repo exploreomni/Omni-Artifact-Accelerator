@@ -30,6 +30,13 @@ def intent_helper():
     return module
 
 
+def destination_helper():
+    spec = importlib.util.spec_from_file_location("_review_destinations", Path(__file__).with_name("destination_coverage.py"))
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
 def has_text(value):
     return type(value) is str and bool(value.strip())
 
@@ -100,6 +107,13 @@ def validate(spec, project):
         P.need(scope.get("scope_change_path"), "migration redesign requires explicit scope_change_path")
     if scope["change"] == "faithful_migration":
         P.need(project["mode"] == "migration", "faithful_migration requires migration project")
+    if "coverage" in scope:
+        coverage = scope["coverage"]
+        P.need(type(coverage) is dict and coverage.get("mode") in {"whole_experience", "focused"},
+               "destination coverage mode required")
+        affected = coverage.get("affected_obligation_ids", [])
+        P.need(type(affected) is list and all(has_text(i) for i in affected) and
+               len(affected) == len(set(affected)), "affected_obligation_ids must be unique strings")
     deps = rows(spec.get("dependencies"), "dependencies")
     for dep in deps:
         P.need(dep.get("kind") in EFFECTS and dep.get("surface") in [*surfaces, "shared"],
@@ -116,6 +130,10 @@ def validate(spec, project):
     for key in ("concepts", "captures", "deviations", "findings", "cases"):
         rows(spec.get(key, []), key)
         for row in spec.get(key, []):
+            if "obligation_ids" in row:
+                ids = row["obligation_ids"]
+                P.need(type(ids) is list and all(has_text(i) for i in ids) and len(ids) == len(set(ids)),
+                       "obligation_ids must be unique strings")
             for field in ("candidate_id", "case_id", "retest_case_id"):
                 if field in row:
                     text(row[field], key + " " + field)
@@ -124,6 +142,12 @@ def validate(spec, project):
         P.need(type(selection) is dict, "selection row must be an object")
         if "concept_id" in selection:
             text(selection["concept_id"], "selection concept_id")
+        if "exploration" in selection:
+            exploration = selection["exploration"]
+            P.need(type(exploration) is dict and type(exploration.get("mode")) is str and
+                   exploration["mode"] in {"direct", "compare"},
+                   "exploration mode must be direct or compare")
+            text(exploration.get("rationale"), "exploration rationale")
     for concept in spec.get("concepts", []):
         P.need(concept.get("surface") in surfaces, "concept surface outside scope")
         for key in ("task", "composition", "tradeoffs"):
@@ -131,6 +155,9 @@ def validate(spec, project):
         P.need(type(concept.get("render_paths")) is list, "concept render_paths list required")
     for capture in spec.get("captures", []):
         P.need(capture.get("kind") in {"native", "prototype"}, "capture kind required")
+        for key in ("destination_id", "requirement_id", "requirement_context"):
+            if key in capture:
+                text(capture[key], "capture " + key)
         context = capture.get("context")
         P.need(type(context) is dict, "capture context required")
         viewport = context.get("viewport")
@@ -147,11 +174,30 @@ def validate(spec, project):
                all(type(i) is str for i in case.get("capture_ids", [])), "capture_ids string list required")
         for key in ("method", "reviewer", "observation", "rationale"):
             P.need(key not in case or type(case[key]) is str, "case " + key + " must be text")
+        P.need(type(case.get("asset_ids", [])) is list and all(has_text(i) for i in case.get("asset_ids", [])),
+               "case asset_ids must be strings")
+        if "expected" in case:
+            P.need(type(case["expected"]) is str, "case expected must be text")
         if "requirement_id" in case:
             text(case["requirement_id"], "requirement_id")
             text(case.get("requirement_context"), "requirement_context")
             P.need(type(case.get("asset_ids", [])) is list and
                    all(type(i) is str for i in case.get("asset_ids", [])), "requirement asset_ids list required")
+        observations = case.get("journey_observations", [])
+        P.need(type(observations) is list, "journey_observations must be a list")
+        seen = set()
+        for observation in observations:
+            P.need(type(observation) is dict, "journey observation object required")
+            ident = observation.get("obligation_id")
+            text(ident, "journey obligation_id")
+            P.need(ident not in seen, "duplicate journey observation")
+            seen.add(ident)
+            P.need(type(observation.get("path")) is list and len(observation["path"]) >= 2 and
+                   all(has_text(i) for i in observation["path"]), "journey path required")
+            for field in ("action", "start_state", "end_state", "retained_context", "return_behavior", "observation"):
+                text(observation.get(field), "journey " + field)
+            P.need(observation.get("method") in {"local_execution", "native_execution", "participant_observation"},
+                   "journey execution method required")
     for key in ("deviations", "findings"):
         for row in spec.get(key, []):
             P.need(row.get("surface") in surfaces, key + " surface outside scope")
@@ -179,6 +225,10 @@ def references(spec, root=None):
             values = row.get("evidence_paths", [])
             P.need(type(values) is list, "evidence_paths must be a list")
             paths.update(relative(p) for p in values)
+            for observation in row.get("journey_observations", []):
+                values = observation.get("evidence_paths", [])
+                P.need(type(values) is list, "journey evidence_paths must be a list")
+                paths.update(relative(p) for p in values)
             if row.get("accepted_difference_path"):
                 paths.add(relative(row["accepted_difference_path"]))
     return sorted(paths)
@@ -191,7 +241,7 @@ def image_file(root, path):
             (raw.startswith(b"RIFF") and raw[8:12] == b"WEBP"))
 
 
-def evaluate(root, spec, pins, stale):
+def evaluate(root, spec, pins, stale, destination_version=None):
     gaps, results = [], []
     deps = {d["id"]: d for d in spec["dependencies"]}
     captures = {c["id"]: c for c in spec.get("captures", [])}
@@ -204,7 +254,10 @@ def evaluate(root, spec, pins, stale):
     for surface in scope["surfaces"]:
         concepts = [c for c in spec.get("concepts", []) if c["surface"] == surface]
         if material:
-            if len(concepts) < 2:
+            # Preserve old recorded comparisons; new selections explicitly choose
+            # whether comparison resolves a real uncertainty. Neither mode waives craft.
+            exploration = spec.get("selection", {}).get(surface, {}).get("exploration", {})
+            if exploration.get("mode", "compare") == "compare" and len(concepts) < 2:
                 gap("rendered_alternatives_missing", surface=surface)
             selection = spec.get("selection", {}).get(surface, {})
             if (selection.get("concept_id") not in {c["id"] for c in concepts} or
@@ -272,10 +325,16 @@ def evaluate(root, spec, pins, stale):
         results.append({"id": case["id"], "surface": case["surface"], "lane": case["lane"],
                         "reported_status": case["status"], "recorded_status": effective,
                         "reasons": reasons, "claim_authenticated": False})
-    intent_coverage = None
-    if spec.get("intent"):
-        intent_coverage = intent_helper().review_coverage(root, spec, results)
-        gaps.extend(intent_coverage["gaps"])
+    destination_coverage = None
+    if destination_version == 1:
+        intent = intent_helper()
+        destination_coverage = destination_helper().evaluate(root, spec, intent.check(root), results, P, image_file, stale)
+        gaps.extend(destination_coverage["gaps"])
+        # Native requirement fulfillment stays distinct from valid local evidence.
+        if spec.get("intent"):
+            intent.review_coverage(root, spec, results, destination_coverage)
+    elif spec.get("intent"):
+        gaps.extend(intent_helper().review_coverage(root, spec, results)["gaps"])
     by_id = {r["id"]: r for r in results}
     for deviation in spec.get("deviations", []):
         disposition = deviation.get("disposition")
@@ -302,12 +361,14 @@ def evaluate(root, spec, pins, stale):
         if (not original or not has_text(finding.get("problem")) or not has_text(finding.get("owner")) or
                 not (corrected or accepted) or any(p in stale for p in finding.get("evidence_paths", []))):
             gap("open_design_finding", finding=finding["id"], surface=finding.get("surface"))
-    for surface in scope["surfaces"]:
+    # Historical surface-level semantics remain readable. New reviews use the
+    # derived sparse denominator, including typed exclusions and focused scope.
+    for surface in scope["surfaces"] if destination_version is None else []:
         for lane in scope["required_lanes"]:
             cases = [r for r in results if r["surface"] == surface and r["lane"] == lane]
             if not cases or any(r["recorded_status"] not in {"pass", "not_applicable"} for r in cases):
                 gap("required_lane_incomplete", surface=surface, lane=lane)
-    return gaps, results
+    return gaps, results, destination_coverage
 
 
 def freeze(root, spec_path, output_relative):
@@ -325,10 +386,10 @@ def freeze(root, spec_path, output_relative):
     value = {"schema_version": 1, "kind": "analyst_design_review", "project_id": project["id"],
              "project_mode": project["mode"], "project_surfaces": project["surfaces"],
              "spec": spec, "spec_file": {"path": spec_relative, "sha256": P.digest(raw), "bytes": len(raw)},
-             "pins": pins, "authority": "recorded_evidence_only"}
+             "pins": pins, "authority": "recorded_evidence_only", "destination_coverage_version": 1}
     value["content_sha256"] = P.digest(P.canonical(value))
     # Reject malformed declarations before committing a new record or selecting it.
-    evaluate(root, spec, {p["path"]: p for p in pins}, set())
+    evaluate(root, spec, {p["path"]: p for p in pins}, set(), 1)
     P.write_json(output, value)
     record = file_pin(root, output_relative)
     project.setdefault("design_review_history", []).append(record)
@@ -343,7 +404,8 @@ def check(root, record_relative=None):
     if not record_relative and not selected:
         return {"status": "not_assessed", "coverage": "incomplete", "gaps": [{"code": "design_evidence_missing"}],
                 "cases": [], "assessment": "not_assessed", "native_verification": "not_assessed",
-                "business_acceptance": "not_assessed"}
+                "business_acceptance": "not_assessed", "destination_coverage": {
+                    "status": "not_assessed", "mode": None, "inventory": [], "obligations": [], "gaps": []}}
     path = record_relative or selected["path"]
     record, raw = P.read_json(P.relative_file(root, path))
     if selected and path == selected["path"]:
@@ -369,7 +431,9 @@ def check(root, record_relative=None):
         original, _ = P.read_json(P.relative_file(root, record["spec_file"]["path"]))
         P.need(P.canonical(original) == P.canonical(spec), "embedded spec differs from pinned original")
     indexed = {p["path"]: p for p in pins}
-    gaps, cases = evaluate(root, spec, indexed, stale)
+    version = record.get("destination_coverage_version")
+    P.need(version is None or (type(version) is int and version == 1), "unsupported destination coverage version")
+    gaps, cases, destination_coverage = evaluate(root, spec, indexed, stale, version)
     if record["spec_file"]["path"] in stale:
         for case in cases:
             case["recorded_status"] = "not_run"
@@ -380,6 +444,16 @@ def check(root, record_relative=None):
             "check_scope": "file_integrity_and_recorded_coverage_only", "assessment": "not_assessed",
             "native_verification": "not_assessed", "business_acceptance": "not_assessed",
             "publication_authorized": False, "claims_authenticated": False}
+    report["destination_coverage"] = destination_coverage or {
+        "status": "not_assessed", "mode": None, "inventory": [], "obligations": [], "gaps": [],
+        "reason": "Historical review predates destination coverage; original recorded result preserved."}
+    if destination_coverage and record["spec_file"]["path"] in stale:
+        destination_coverage["status"] = "incomplete"
+        for obligation in destination_coverage["obligations"]:
+            if obligation["in_scope"] and obligation["status"] == "pass":
+                obligation.update(status="not_run", native_recorded=False)
+    if destination_coverage and not gaps and destination_coverage["status"] == "scoped_complete":
+        report["coverage"] = "scoped_complete"
     if spec.get("intent"):
-        report["intent_coverage"] = intent_helper().review_coverage(root, spec, cases)
+        report["intent_coverage"] = intent_helper().review_coverage(root, spec, cases, destination_coverage)
     return report

@@ -10,22 +10,24 @@ Weak: “Make it pop; it looks generic.”
 
 Useful: “The four equal summaries occupy the opening viewport, while the contributor comparison answering the stated question is below it. Give the comparison the primary region, subordinate the totals and put the period beside the finding. Review the revised opening view with long labels and the same data.”
 
-Name the failure mechanism: competing focal points, unclear comparison, redundant interaction, dishonest scale, arbitrary decoration, weak grouping, poor optical alignment, unreadable annotation, lost context, unsupported narrative or motion without a useful relationship. A reviewer should propose a correction, not prescribe personal taste as a universal requirement.
+Name the failure mechanism: competing focal points, unclear comparison, redundant interaction, dishonest scale, arbitrary decoration, weak grouping, poor optical alignment, unreadable annotation, lost context, unsupported narrative or motion without a useful relationship. A reviewer should propose a correction, not prescribe personal taste as a universal requirement. Separate essential behavior from the selected composition/type/density/imagery/motion. Familiarity, cards or repeated layouts are not defects by themselves; intentional similarity may improve the task, and novelty is not a metric.
 
 ## Anchored craft rubric
 
 Before judging finish, reconcile the [experience brief](experience-brief.md). In the existing review, trace each consequential choice as `user requirement → selected design → implemented behavior → actual observation`. Start with the opening promise, primary action, working view, useful detail, context-preserving return and relevant narrow state. Record a missing choice separately from a supplied requirement the implementation dropped. A larger header, exact logo or functioning filter does not by itself satisfy an immersive-entry request.
 
-Review the first assembled journey early, then give each consequential destination a disposition before claiming the whole experience complete. Ask what new evidence its primary action reveals and whether return preserves the investigation. A polished entry cannot compensate for a generic or unusable working view. Check named behavior directly: a calendar label does not prove a month grid, a projected scene does not prove camera exploration, and an iframe load does not prove playback. A useful fallback preserves the original unfulfilled requirement and its explanation.
+Derive review obligations from the complete selected design and requirement/context applicability before looking at submitted captures. Inspect each named destination and any applicable state transition; missing cases do not reduce the scope. The same screen can have a meaningful journey, and a static dashboard can require none. A focused edit names the affected obligations and cannot claim whole-experience coverage.
 
-For each material departure, retain intended/actual behavior, reason and disposition using existing deviation records. Source-only critique may establish architecture and identify omissions, but must leave unobserved craft/native cases open. A rendered still supports composition; a behavior claim needs exercised interaction. Keep positive user feedback attributable and separate from formal usability or production acceptance. Never mechanically score aesthetic quality or infer compliance from the presence of a CSS class, image or button.
+Review the first assembled journey early, then give each consequential destination a disposition before claiming the whole experience complete. Ask what new evidence its primary action reveals and whether return preserves the investigation. A polished entry cannot compensate for an unusable working view or one that fails the stated task. Check named behavior directly: a calendar label does not prove a month grid, a projected scene does not prove camera exploration, and an iframe load does not prove playback. A useful fallback preserves the original unfulfilled requirement and its explanation.
+
+For each material departure, retain intended/actual behavior, reason and disposition using existing deviation records. Bind the finding and retest to the same destination/context or ordered journey and current candidate. Distinguish an endpoint image from exercised transition evidence; still images cannot establish focus restoration, retained filters, playback or interruption. Source-only critique may establish architecture and identify omissions, but must leave unobserved craft/native cases open. A rendered still supports composition; a behavior claim needs exercised interaction. Keep positive user feedback attributable and separate from formal usability or production acceptance. Never mechanically score aesthetic quality or infer compliance from the presence of a CSS class, image or button.
 
 Use qualitative anchors: **unresolved**, **functional**, **considered**, **resolved in the observed case**. Record `not_observed` when the evidence type cannot support judgment. Never total these into an objective quality score.
 
 | Dimension | Functional but elementary | Considered / resolved evidence |
 | --- | --- | --- |
 | Analytical point of view | Charts display available fields but the key comparison is buried. | The thesis explains the question and comparison; the composition exposes it, and the reviewer can trace the claim to scope and data. |
-| Composition | Uniform cards, weak grouping, no intentional dominance. | Hierarchy, proportion, alignment and density follow the task; alternatives differ structurally, and the chosen screen's tradeoff is explicit. |
+| Composition | Containment, grouping or emphasis makes the relevant comparison harder to find. | Hierarchy, proportion, alignment and density follow the task; the direct choice or comparison rationale and tradeoff are explicit. Similarity alone neither passes nor fails. |
 | Encoding and chart finish | A plausible chart with default labels/axes and difficult comparison. | Suitable grammar, defensible scale, deliberate ordering, legible direct labels/units, meaningful missingness and an exact-value path. Complexity earns analytical value. |
 | Brand and typography | Logo and color applied to an otherwise unchanged template. | Recognizable direction through type roles, rhythm, grouping, assets and interaction tone; actual logo/font/fallback requirements observed where applicable. |
 | Narrative | Generic titles, unsupported positive claims or stale filtered commentary. | Evidence-bound finding, useful annotation and honest limitation; prose remains valid across the tested scope changes. |
@@ -59,7 +61,7 @@ Keep a role-scoped practice record in the engagement, using ordinary design/QA e
 1. **Available:** the installed skill can find the relevant lessons. This is documentation coverage.
 2. **Practiced:** a worker produced an original exercise artifact for a named competency.
 3. **Reviewed and revised:** a separate reviewer identified specific findings and observed the affected revision. Declare whether the evidence is specification, local render, local interaction or native target.
-4. **Transferred:** the worker applied the reasoning to another domain, data shape or constraint without simply reusing the first layout; the new artifact received a scoped review.
+4. **Transferred:** a fresh-context task in another domain, data shape or constraint applies the reasoning and receives a scoped review. The designer chooses treatment from that brief; intentional reuse is acceptable when justified, and a changed skin alone does not establish transfer.
 
 For explicit training, record `role`, `competency`, `brief`, `artifact/version`, `evidence type`, `reviewer`, `findings`, `revision`, `retest` and `remaining limits`. A compact table is sufficient. Do not mark untouched roles practiced because they share a reference. A successful mock exercise does not certify native delivery. Independent agent critique is useful, but it is not a customer interview or human usability study.
 
@@ -70,7 +72,9 @@ The orchestrator can evaluate a fresh worker with one of these prompts without g
 - “Use Studio D to handle the requested advanced visuals using only the supplied monthly aggregates. Continue useful work and prepare only the missing backend requirements.”
 - “Apply the relevant studio to a faithful native-dashboard migration with an unsupported animated source interaction. Preserve the user's surface and document the adaptation.”
 
-Evaluate the returned work against the brief, not against keyword presence. Prefer a small number of meaningful rehearsals to broad phrase-matching tests. Do not present a rehearsed specification as an implemented or visually reviewed specimen.
+For reusable App behavior, assess the same state/interaction contract through different renderers: keep source scope and expected outcomes constant, vary presentation, and review each actual journey and constrained layout. Also use a fresh-context domain brief without a prescribed layout. This checks whether reuse preserves behavior while leaving composition to the designer; it does not require every customer engagement to build multiple renderers.
+
+Evaluate work against its brief, not keyword presence, novelty or distance from an example. Prefer bounded meaningful rehearsals over phrase-matching tests. A specification, helper pass or structural rehearsal cannot establish rendered polish; keep prohibited or unavailable rendering unobserved.
 
 ## Motion and accessibility basis
 

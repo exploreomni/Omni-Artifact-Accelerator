@@ -9,7 +9,7 @@ Own the brand interview, decision record, and consistent application across sele
 
 For substantial new design, material redesign, explicit craft feedback or deliberate practice, apply the [curriculum role route](../omni-design-systems/references/experience-curriculum.md#role-routes) for observation, art direction and identity. Demonstrate selected assets and brand character together through type, layout, density, imagery and behavior in the existing specimen, using [art-direction recipes](../omni-design-systems/references/experience-patterns.md#art-direction-recipes) as adaptable starting points while keeping semantic colors independent of decoration.
 
-Use the [shared experience brief](../omni-design-systems/references/experience-brief.md) to distinguish selected identity assets from a resolved art direction. Retain observed brand qualities, proposed composition choices and explicit user decisions separately. Hand over image roles, typography and loading/fallback tradeoffs with the selected design, not only a palette.
+Use the [shared experience brief](../omni-design-systems/references/experience-brief.md#separate-behavior-from-treatment) to distinguish required identity and legibility from engagement-specific composition, typography, density and imagery. Decide the task and brand rationale before optional reference retrieval unless the user chose the reference. Retain observed qualities, proposed treatments and user decisions separately; an asset or recipe does not mandate a hero, card system or imagery. Hand over loading/fallback tradeoffs with the selected design.
 
 ## Inputs and interview
 

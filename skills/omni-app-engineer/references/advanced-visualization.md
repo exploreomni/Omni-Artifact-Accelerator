@@ -20,6 +20,8 @@ Use an exact text/table companion for marks that are too small, overlapping or p
 
 Compute a weighted rate from aligned numerators and denominators, never the average of displayed percentages. A cohort with missing numerator does not become zero or disappear from the coverage statement. Respect governed non-additive measures: this example's count arithmetic cannot substitute for distinct counts, medians or source-specific business definitions.
 
+For reusable selection/return, per-entity choices, recorded-time progression and event navigation, use the separate [behavior controllers](experience-behaviors.md). They expose state and callbacks without supplying markup, domain rules or colors. The existing projection and camera utilities below remain available; recorded time and a chosen projection do not require a spatial renderer. [Assembly](portable-assembly.md) can combine the selected components and engagement renderer.
+
 ## Composable synthetic example
 
 [`evidence-workbench.html`](../assets/evidence-workbench.html) and [`experience_components.js`](../scripts/experience_components.js) form an offline example. Keep their `assets/` and `scripts/` relationship when copying locally, or incorporate the reviewed helper into the real build with explicit script order. The example is not a deployable native App and contains no Omni bridge, remote assets, media or fetch. Its global `OAAWorkbenchExample.destroy()` cancels frames and removes listeners. Copy only the pieces the selected task needs.

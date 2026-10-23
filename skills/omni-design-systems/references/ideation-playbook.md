@@ -6,7 +6,7 @@ Use for a new app/dashboard concept or a meaningful change to how people work. T
 
 | Assignment | Useful next artifact |
 | --- | --- |
-| New concept or substantial workflow redesign | Brief, important assumptions, visibly distinct representative screens/paths, and a reasoned prototype choice |
+| New concept or substantial workflow redesign | Brief, important assumptions and a reasoned direct prototype choice, or comparative treatments when they resolve a material uncertainty |
 | Focused enhancement | The affected task, the uncertain choice, and a comparison only if alternatives would change the decision |
 | Faithful migration | Source behavior and unknowns, plus target adaptation where necessary; do not manufacture a redesign exercise or retire source functionality |
 | Specified design or small wording/style fix | Make the scoped change and perform relevant checks; reopen discovery only for a consequential conflict |
@@ -17,7 +17,7 @@ For migrations, an attractive concept is not authority to change calculations, i
 
 For a material experience, retain the [shared experience brief](experience-brief.md) in the current design/intent records. Separate missing context from stated expectations lost in translation. A user asking for an expressive frontend has supplied a requirement even when exact typography or geometry still needs design work; do not reset that ambition to the default analytical layout.
 
-Start with the decision or task, not a list of screens. Use actual conversations or supplied evidence to establish the present workflow. If no user evidence is available, label the concept a hypothesis rather than fabricating interviews or user preferences.
+Start with the decision or task, not a list of screens. The designer states the evidence relationship, proposed task path and rationale before retrieving optional examples; a user-selected reference is the exception. Use actual conversations or supplied evidence to establish the workflow. If that evidence is absent, label the concept a hypothesis. Examples can test a choice, not dictate a shell; intentional similarity is acceptable when justified.
 
 Reusable output card; shorten or omit fields that add no value:
 
@@ -43,9 +43,9 @@ Prioritize assumptions with both serious consequences and weak evidence. A seman
 
 If the uncertainty is frontend treatment, hold audience, question, data and key action constant while changing composition, navigation, type/image balance or disclosure. Comparing different business tasks can settle product scope, but cannot by itself resolve the original visual question. Use the [same-task context studio](experience-context-studio.md) to practice this distinction.
 
-When uncertainty warrants alternatives, try a small number of meaningfully different approaches, often two or three. Vary information grouping or interaction, not merely colors. State required features, source constraints, and excluded behavior in an agent's assignment so it does not invent capabilities. Preserve rejected ideas and reasons briefly; do not turn an arbitrary scoring total into evidence.
+Choose direct or comparative exploration with a brief rationale. A direct choice still needs rendered review of the selected candidate when permitted. When uncertainty warrants comparison, vary information grouping, composition or interaction rather than merely colors, using only enough alternatives to resolve that uncertainty. State required features, source constraints and excluded behavior; preserve rejected choices briefly. There is no fixed concept count or novelty score.
 
-For substantial visual work, render the alternatives with the same representative data/context and wide/narrow states. Resolve the selected screen using [visual craft](visual-craft.md); preserve render references and distinguish mockup, native implementation and human observation. A prose comparison alone does not test typography, proportion or density.
+Render the selected treatment, and any alternatives being compared, using representative data/context and relevant constrained layouts. Use [visual craft](visual-craft.md) to resolve the screen; preserve render references and distinguish prototype, native and human observations. The optional [design evidence record](../../omni-qa-analyst/references/design-evidence.md#specification) records the direct/compare choice. Prose and structure checks cannot establish typography, proportion, density or polish.
 
 Use a comparison card: `concept → task path → advantages → tradeoffs → unsupported assumptions → prototype decision and rationale`. Assess the relevant criteria: task clarity, faithful coverage, inspection effort, accessibility, target feasibility, and maintainability. Selection for a local prototype is a working decision, not business acceptance or publication permission.
 

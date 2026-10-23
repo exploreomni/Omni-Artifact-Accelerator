@@ -63,7 +63,51 @@ class DesignReviewTests(unittest.TestCase):
     def sha(self, path):
         return P.digest((self.root / path).read_bytes())
 
+    def prepare_coverage(self):
+        """Build valid new-format declarations for the existing focused review tests."""
+        D = P.intent_helper()
+        surfaces = P.load_project(self.root)[1]['surfaces']
+        intent = D.starter(surfaces, 'none')
+        lanes = self.value['scope']['required_lanes']
+        self.value['scope'].setdefault('coverage', {'mode': 'whole_experience'})
+        for selection in intent['selections']:
+            surface = selection['surface']
+            candidate = next(d for d in self.value['dependencies'] if d['kind'] == 'candidate' and d['surface'] == surface)
+            design = next(d for d in self.value['dependencies'] if d['kind'] == 'design' and d['surface'] in {surface, 'shared'})
+            design_value = json.loads((self.root / design['path']).read_text())
+            design_value.update(brand_contract='contracts/tokens.json', destinations=[{'id': 'entry'}])
+            (self.root / design['path']).write_text(json.dumps(design_value))
+            selection.update(design_path=design['path'], brand_path='contracts/tokens.json',
+                             candidate_path=candidate['path'], target=copy.deepcopy(candidate['target']))
+            if not any(d['kind'] == 'brand' and d['surface'] in {surface, 'shared'} for d in self.value['dependencies']):
+                self.value['dependencies'].append({'id': surface + '-brand', 'kind': 'brand',
+                                                   'surface': surface, 'path': 'contracts/tokens.json'})
+        rules = {lane: getattr(self, 'coverage_exclusions', {}).get(lane, {'status': 'required'}) for lane in lanes}
+        intent['requirements'] = [{'id': 'review-scope', 'category': 'experience', 'purpose': 'Synthetic inspection',
+            'required': True, 'surfaces': surfaces, 'origin': 'user', 'disposition': 'selected', 'value': {'mode': 'single'},
+            'decision_ref': 'synthetic brief', 'asset_ids': [], 'delivery': {'destinations': ['entry']},
+            'contexts': [{'id': 'default', 'appearance': 'light', 'state': 'ready', 'applicability': [
+                {'kind': 'destination', 'id': 'entry', 'lanes': rules}]}]}]
+        serial = getattr(self, 'intent_serial', 0) + 1
+        self.intent_serial = serial
+        path = self.root / f'contracts/fixture-intent-{serial}.json'
+        path.write_text(json.dumps(intent))
+        self.value['intent'] = D.select(self.root, path, f'contracts/fixture-selected-{serial}.json')['selection']
+        for case in self.value['cases']:
+            case.setdefault('expected', 'Inspect synthetic evidence')
+            case.setdefault('obligation_ids', [f"review-scope/{case['surface']}/destination/entry/default/{case['lane']}"])
+            case['reviewed_dependencies'].update({d['id']: self.sha(d['path']) for d in self.value['dependencies']
+                                                if d['kind'] in {'design', 'brand'} and d['surface'] in {case['surface'], 'shared'}
+                                                and (d['kind'] == 'brand' or d['id'] in case['reviewed_dependencies'])})
+        for capture in self.value['captures']:
+            capture.update(destination_id='entry', requirement_id='review-scope', requirement_context='default')
+        for key in ('deviations', 'findings'):
+            for row in self.value.get(key, []):
+                row.setdefault('obligation_ids', [f"review-scope/{row['surface']}/destination/entry/default/craft"])
+
     def freeze(self, name="v1"):
+        if 'intent' not in self.value or getattr(self, 'intent_serial', 0):
+            self.prepare_coverage()
         path = self.root / f"contracts/spec-{name}.json"
         path.write_text(json.dumps(self.value))
         return P.design_freeze(self.root, path, f"contracts/review-{name}.json")["report"]
@@ -91,6 +135,24 @@ class DesignReviewTests(unittest.TestCase):
         report = self.freeze()
         self.assertIn("concept_render_missing", self.codes(report))
         self.assertEqual(report["coverage"], "incomplete")
+
+    def test_direct_direction_does_not_require_a_manufactured_alternative(self):
+        self.value["concepts"] = self.value["concepts"][:1]
+        self.assertIn("rendered_alternatives_missing", self.codes(self.freeze("legacy")))
+        self.value["selection"]["app"]["exploration"] = {
+            "mode": "direct", "rationale": "The supplied design already resolves the composition."}
+        self.assertEqual(self.freeze("direct")["coverage"], "complete")
+        self.value["cases"][0]["executed"] = False
+        self.assertEqual(self.freeze("unobserved")["coverage"], "incomplete")
+
+    def test_comparison_choice_and_rationale_are_explicit(self):
+        self.value["selection"]["app"]["exploration"] = {
+            "mode": "compare", "rationale": "Compare disclosure for the same task."}
+        self.value["concepts"] = self.value["concepts"][:1]
+        self.assertIn("rendered_alternatives_missing", self.codes(self.freeze()))
+        self.value["selection"]["app"]["exploration"] = {"mode": "direct", "rationale": "  "}
+        with self.assertRaisesRegex(ValueError, "exploration rationale"):
+            self.freeze("invalid")
 
     def test_text_claim_cannot_replace_image(self):
         self.value["concepts"][1]["render_paths"] = ["evidence/review.txt"]
@@ -121,7 +183,8 @@ class DesignReviewTests(unittest.TestCase):
         self.value["cases"] = [self.value["cases"][1]]
         report = self.freeze()
         self.assertEqual(report["cases"][0]["recorded_status"], "pass")
-        self.assertIn({"code": "required_lane_incomplete", "surface": "app", "lane": "craft"}, report["gaps"])
+        self.assertTrue(any(o['lane'] == 'craft' and o['status'] == 'missing'
+                            for o in report['destination_coverage']['obligations']))
 
     def test_unexecuted_or_self_review_does_not_close_craft(self):
         self.value["cases"][0]["executed"] = False
@@ -160,6 +223,8 @@ class DesignReviewTests(unittest.TestCase):
         report = self.freeze()
         self.assertIn("applicability_unjustified", report["cases"][1]["reasons"])
         self.value["cases"][1]["rationale"] = "Synthetic layout-only scope; no metric or query changes."
+        self.coverage_exclusions = {'numerical': {'status': 'not_applicable',
+            'rationale': 'Synthetic layout-only scope', 'decision_ref': 'synthetic scope decision'}}
         self.assertEqual(self.freeze("justified")["coverage"], "complete")
         self.value["cases"][0]["observation"] = "   "
         self.assertIn("executed_review_evidence_missing", self.freeze("blank-review")["cases"][0]["reasons"])
@@ -200,6 +265,7 @@ class DesignReviewTests(unittest.TestCase):
     def test_focused_edit_does_not_require_concepts(self):
         self.value["scope"]["change"] = "focused_edit"
         self.value["scope"]["required_lanes"] = ["craft"]
+        self.value["cases"] = self.value["cases"][:1]
         self.value["concepts"] = []
         self.value.pop("selection")
         self.assertEqual(self.freeze()["coverage"], "complete")

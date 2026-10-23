@@ -65,7 +65,7 @@ For every page, visual, control, calculation, drill, link, action, bookmark, inp
 
 ## Design completion
 
-For material new work/redesign, retain a short visual-direction brief and at least two visibly different compositions using the same representative data. Compare grouping/task flow rather than palette alone. Resolve the chosen desktop/narrow design, chart encodings and states before calling the handoff complete. Feasibility review can alter the direction; record why. A working agent choice is not customer acceptance.
+For material new work/redesign, retain a short visual-direction brief and record a reasoned direct choice or comparison. When composition remains materially uncertain, compare visibly different treatments using the same representative data and task; vary grouping/task flow rather than palette alone. Resolve the chosen desktop/narrow design, chart encodings and states before calling the handoff complete. Feasibility review can alter the direction; record why. A working agent choice is not customer acceptance.
 
 The implemented candidate returns to the designer with actual captures and deviations from the selected composition. The designer records specific hierarchy, type, spacing, alignment, chart-finish, brand and interaction-value findings. Engineering corrects them and provides a new version for retest. QA independently checks expected behavior; neither the implementer's self-review nor passing numerical tests closes this loop.
 

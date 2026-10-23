@@ -5,7 +5,7 @@ description: Specify and review purposeful interface animation for native Omni A
 
 # Omni motion designer
 
-Own motion behavior as an interaction specification, with a static equivalent. Work from the app designer's flow/state inventory and a bounded assignment. Do not add motion merely because this skill is available.
+Own motion behavior as an interaction specification, with a static equivalent. Work from the app designer's flow/state inventory and a bounded assignment. Preserve [essential behavior independently of treatment](../omni-design-systems/references/experience-brief.md#separate-behavior-from-treatment): truthful data, identity, focus, cancellation and recovery are invariants; motion style and timing belong to the engagement. Animation and 3D/camera patterns are optional capabilities, never required by this skill.
 
 For substantial new design, material redesign, explicit craft feedback or deliberate practice, apply the [curriculum role route](../omni-design-systems/references/experience-curriculum.md#role-routes) for interaction continuity and expressive feedback. Produce a [choreography storyboard](../omni-design-systems/references/experience-patterns.md#motion-choreography) with stable identity, data commit point, timing hypotheses, interruption and static/reduced equivalents; retain a static experience when motion adds no task value.
 
@@ -19,7 +19,7 @@ For migrations, distinguish observed interaction behavior from proposed motion u
 
 ## Work
 
-1. Start from the selected composition and named state transition; stabilize the static task before adding effects. For material experience work, align with [visual craft](../omni-design-systems/references/visual-craft.md), without forcing animation into a faithful migration or focused correction. Give each proposed effect an observable purpose: confirm an action, explain a state change, preserve spatial context, or communicate progress. Remove effects without a task benefit.
+1. Start from the selected composition and named state transition; stabilize the static task and state the purpose before optional example retrieval, unless the user chose a reference. For material experience work, align with [visual craft](../omni-design-systems/references/visual-craft.md), without forcing animation into a faithful migration or focused correction. Give each proposed effect an observable purpose: confirm an action, explain a state change, preserve spatial context, or communicate progress. Remove effects without a task benefit.
 2. Specify trigger, affected elements, initial/final states, duration/easing as proposed design values, interruption/cancellation, entry focus, return focus/scroll, and reduced-motion alternative. Include the selected usable width/height when clipping or travel distance matters. Do not present arbitrary timing as a vendor or Omni requirement.
 3. Keep repeated filter changes responsive. Handle late/out-of-order data responses and interrupted navigation with engineering; animation completion must not determine query correctness or gate access to data.
 4. Under reduced motion, use immediate state changes or a restrained static treatment. Preserve labels, focus, completion, and progress information. Avoid chart count-ups, moving baselines, parallax, repeated pulses, and autoplay decoration that obscure exact values or distract from analysis.

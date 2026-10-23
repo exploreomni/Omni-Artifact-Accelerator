@@ -8,7 +8,7 @@ python scripts/check_package.py
 python -m unittest discover -s tests -v
 ```
 
-`check_package.py` checks declared skills, metadata, local documentation links and excluded repository artifacts. It is not a general secret scanner or an approval authenticator. The tests use synthetic fixtures and mock source/Omni transports. No customer credentials, live service connection or Omni CLI login is needed. Node.js is required for the App controller and template tests; without it, those cases skip explicitly.
+`check_package.py` checks declared skills, metadata, local documentation links and excluded repository artifacts. It is not a general secret scanner or an approval authenticator. The tests use synthetic fixtures and mock source/Omni transports. No customer credentials, live service connection or Omni CLI login is needed. Node.js is required for the App controller and template tests. Some older cases skip when Node is absent; the reusable behavior checks fail with an explicit runtime requirement.
 
 The normal test run also skips optional integration cases that require separately obtained source engines. CI runs this self-contained configuration; a green job does not mean every optional producer was tested.
 
@@ -58,3 +58,19 @@ Local checks, candidate readback, native rendering/query behavior, effective acc
 `test_experience_quality.py` covers requirement-based routing, declared runtime dependency invalidation, provisional/incomplete destination coverage, CLI status and assigned/legacy packet compatibility. `test_experience_components.py` exercises the reusable local primitives and the synthetic lab using explicit simulated inputs; it does not render or verify Omni. Installer tests cover read-only parity and preservation of customizations. Run affected checks first; cross-cutting helper integration warrants the repository's self-contained suite once.
 
 For behavioral qualification, use fresh-context workers on a few contrasting raw briefs and synthetic artifacts. Capture the candidate and actual decisions rather than matching headings. Keep private rehearsal outputs outside the repository. Distinguish the installed files exercised, source/local behavior, actual host rendering and customer acceptance; do not claim Claude/ChatGPT portability from a single host run.
+
+## Reusable experience mechanics
+
+`test_experience_assembly.py` checks actual local assembly from independently structured authored shells, source hashes, order/collision declarations, inert input handling, output budgets and non-overwrite behavior. `test_experience_behaviors.py` exercises the actual headless controllers and the original example's selected journey under a stated local harness. `test_design_review.py` checks reasoned direct versus comparison exploration without weakening candidate-bound craft evidence. Run focused cases during implementation and the repository suite for integration.
+
+A shared mechanism should preserve identity, values and recovery in different presentations. Fresh-domain qualification must supply the raw brief and inputs without an expected layout. Evaluate task fitness and implemented behavior; color changes, similarity thresholds or novelty quotas cannot establish design flexibility. Local/controller checks do not establish rendered polish, native integration or human usability.
+
+## Whole-experience review and qualification
+
+Newly frozen reviews derive their destination/context/lane and journey obligations from the current selected design and intent, before considering submitted evidence. `test_destination_coverage.py` and the existing design-intent/review cases cover missing secondary destinations, wrong binding/context/target, exercised transitions versus still captures, matching correction retests, exact-byte staleness, shared numerical evidence, justified exclusions, historical reads, focused scope and faithful migrations. All fixture observations are explicitly synthetic declarations; their passing results test the checker, not the quality of an App.
+
+Exercise the existing CLI case-generation and check/verify paths as part of these focused checks. `experience-check` remains structural. A historical complete review without destination bindings remains readable and unassessed at the destination level; a new freeze cannot opt into that behavior by omitting fields.
+
+For a material qualification run, use three original raw briefs sequentially: an exploration App, a native operational dashboard, and a constrained migration/investigation. Retain one unseen holdout until the package is stable. Supply typed source data and independently derived expectations without a proposed layout. Verify installed/source parity first, then record which actual files the host read. Discover permitted observation routes; a dashboard must not become custom App HTML to obtain a preview, and a headless browser must not bypass a browser restriction.
+
+Store brief/message references, source/helper/candidate hashes, initial and internally reviewed candidates, findings, corrections and matching retests outside the package. Track material clarification batches, repeated questions, customer corrective prompts, new scope and internal revisions separately. No customer follow-up in a synthetic run means customer correction/acceptance is unobserved, not evidence of zero real-world corrections. Report source/local execution, rendered craft, native behavior and participant evidence separately, including blocked observation routes. A failed or unavailable visual lane cannot be repaired by more unit tests.

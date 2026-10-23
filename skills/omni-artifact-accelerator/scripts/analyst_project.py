@@ -555,6 +555,8 @@ def main():
         elif command in ("design-freeze", "intent-select"):
             cmd.add_argument("--spec", required=True)
             cmd.add_argument("--output", required=True, help="new engagement-relative versioned record")
+        elif command == "intent-cases":
+            cmd.add_argument("--review-spec", help="engagement-relative review spec defining scope and required lanes")
         elif command == "design-check":
             cmd.add_argument("--record", help="engagement-relative historical review; default selected record")
         elif command == "import-dma":
@@ -599,7 +601,7 @@ def main():
         elif args.command == "intent-check":
             result = intent_helper().check(args.project)
         elif args.command == "intent-cases":
-            result = intent_helper().case_templates(args.project)
+            result = intent_helper().case_templates(args.project, args.review_spec)
         elif args.command == "import-dma":
             result = import_dma(args.project, args.review)
         elif args.command == "register":

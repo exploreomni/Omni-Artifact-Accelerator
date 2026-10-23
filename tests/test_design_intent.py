@@ -31,10 +31,18 @@ class IntentTests(unittest.TestCase):
         (self.root / 'evidence/logo.png').write_bytes(fixture.PNG)
         self.value['selections'][0].update(design_path='contracts/resolved.json', brand_path='contracts/tokens.json',
             candidate_path='deliverables/app.html', target=copy.deepcopy(self.fixture.value['dependencies'][0]['target']))
-        (self.root / 'contracts/resolved.json').write_text(json.dumps({'task': 'inspect', 'brand_contract': 'contracts/tokens.json'}))
+        (self.root / 'contracts/resolved.json').write_text(json.dumps({'task': 'inspect', 'brand_contract': 'contracts/tokens.json', 'destinations': [{'id': 'workspace'}]}))
         self.value['requirements'][0].update(disposition='selected', asset_ids=['logo'], decision_ref='synthetic-working-choice',
-            contexts=[{'id': 'default', 'appearance': 'light', 'state': 'ready'}])
-        self.fixture.value['cases'][0]['reviewed_dependencies']['design'] = self.fixture.sha('contracts/resolved.json')
+            delivery={'destinations': ['workspace']},
+            contexts=[{'id': 'default', 'appearance': 'light', 'state': 'ready', 'applicability': [
+                {'kind': 'destination', 'id': 'workspace', 'lanes': {'craft': {'status': 'required'},
+                                                                  'numerical': {'status': 'required'}}}]}])
+        self.fixture.value['scope']['coverage'] = {'mode': 'whole_experience'}
+        self.fixture.value['captures'][0].update(destination_id='workspace', requirement_id='brand-logo', requirement_context='default')
+        for case in self.fixture.value['cases']:
+            case['obligation_ids'] = ['brand-logo/app/destination/workspace/default/' + case['lane']]
+            case.update(expected='Synthetic logo and evidence inspection', asset_ids=['logo'] if case['lane'] == 'craft' else [])
+            case['reviewed_dependencies']['design'] = self.fixture.sha('contracts/resolved.json')
 
     def tearDown(self):
         self.fixture.tearDown()
@@ -48,6 +56,8 @@ class IntentTests(unittest.TestCase):
         if not (self.root / 'contracts/selected-one.json').exists():
             self.select()
         self.fixture.value['intent'] = D.check(self.root)['selected']
+        self.fixture.value['cases'][0]['obligation_ids'] = (
+            ['brand-logo/app/destination/workspace/default/craft'] if named else [])
         if named:
             case = copy.deepcopy(self.fixture.value['cases'][0])
             case.update(id='logo-review', requirement_id='brand-logo', requirement_context='default', asset_ids=['logo'],
@@ -60,7 +70,10 @@ class IntentTests(unittest.TestCase):
                 'purpose': 'Choose the opening and repeat-use journey for the investigation.',
                 'surfaces': ['app'], 'required': True, 'origin': 'user', 'disposition': 'selected',
                 'decision_ref': 'synthetic-user-choice: branded entry and focused workspace',
-                'asset_ids': [], 'contexts': [{'id': 'entry', 'appearance': 'light', 'state': 'ready'}],
+                'asset_ids': [], 'delivery': {'destinations': ['workspace']},
+                'contexts': [{'id': 'entry', 'appearance': 'light', 'state': 'ready', 'applicability': [
+                    {'kind': 'destination', 'id': 'workspace', 'lanes': {'craft': {'status': 'required'},
+                                                                      'numerical': {'status': 'required'}}}]}],
                 'value': {'mode': 'branded-entry-workspace',
                     'first_use': {'promise': 'Find the change', 'action': 'Open investigation'},
                     'returning_use': {'route': 'Open workspace directly', 'retained_state': ['scope', 'selection']},
@@ -168,7 +181,7 @@ class IntentTests(unittest.TestCase):
         report = self.review()
         case = next(c for c in report['cases'] if c['id'] == 'logo-review')
         self.assertEqual(case['recorded_status'], 'not_run')
-        self.assertIn('requirement_capture_context_mismatch', case['reasons'])
+        self.assertTrue(any(r.startswith('destination_capture_context_mismatch:') for r in case['reasons']))
 
     def test_packet_context_cannot_be_changed_under_an_unchanged_selection_pin(self):
         self.value['requirements'].append(self.experience_requirement())
@@ -233,6 +246,7 @@ class IntentTests(unittest.TestCase):
         self.fixture.value['captures'] = []
         case = copy.deepcopy(self.fixture.value['cases'][0])
         case.update(id='experience-source-review', requirement_id=req['id'], requirement_context='entry',
+                    obligation_ids=['experience-mode/app/destination/workspace/entry/craft'],
                     asset_ids=[], expected=req['purpose'], method='source_review', capture_ids=[],
                     evidence_paths=[path], observation='Source review completed; no native rendering or interaction observed.')
         self.fixture.value['cases'][0] = case
@@ -240,7 +254,7 @@ class IntentTests(unittest.TestCase):
         result = next(c for c in report['cases'] if c['id'] == case['id'])
         self.assertEqual(result['reported_status'], 'pass')
         self.assertEqual(result['recorded_status'], 'not_run')
-        self.assertIn('requirement_native_observation_missing', result['reasons'])
+        self.assertIn('capture_missing', result['reasons'])
         row = next(r for r in report['intent_coverage']['requirements'] if r['requirement_id'] == req['id'])
         self.assertNotEqual(row['status'], 'recorded_fulfilled')
         self.assertEqual(row['observations'][0]['evidence_paths'], [path])
@@ -390,7 +404,7 @@ class IntentTests(unittest.TestCase):
     def test_generic_craft_cannot_close_logo_but_named_review_can(self):
         report = self.review('generic', named=False)
         self.assertEqual(report['coverage'], 'incomplete')
-        self.assertIn('design_requirement_unfulfilled', {g['code'] for g in report['gaps']})
+        self.assertIn('design_requirement_unfulfilled', {g['code'] for g in report['intent_coverage']['gaps']})
         report = self.review('named')
         self.assertEqual(report['coverage'], 'complete')
         summary = D.summary(self.root, report)
@@ -415,8 +429,9 @@ class IntentTests(unittest.TestCase):
         cases = {c['id']: c for c in report['cases']}
         self.assertEqual(cases['craft']['recorded_status'], 'pass')
         self.assertEqual(cases['numerical']['recorded_status'], 'pass')
-        self.assertEqual(cases['logo-review']['recorded_status'], 'not_run')
-        self.assertIn('requirement_native_observation_missing', cases['logo-review']['reasons'])
+        self.assertEqual(cases['logo-review']['recorded_status'], 'pass')
+        self.assertEqual(report['destination_coverage']['status'], 'complete')
+        self.assertTrue(all(not o['native_recorded'] for o in report['destination_coverage']['obligations']))
         self.assertEqual(report['intent_coverage']['status'], 'incomplete')
 
     def test_selected_logo_needs_size_accessible_name_and_fallback(self):

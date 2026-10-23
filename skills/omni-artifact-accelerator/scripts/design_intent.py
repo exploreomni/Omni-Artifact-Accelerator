@@ -387,25 +387,40 @@ def packet_context(root, role):
             'findings': state['findings'] if relevant else [], 'open_questions': state['open_questions'] if relevant else []}
 
 
-def case_templates(root):
+def case_templates(root, review_spec=None):
+    root, project = P.load_project(root)
     state = check(root)
     need(state['status'] != 'inconsistent', 'stale_or_invalid_case_selection')
+    review = P.design_helper()
+    if review_spec is not None:
+        spec, _ = P.read_json(P.relative_file(root, relative(review_spec)))
+        review.validate(spec, project)
+    else:
+        spec = {'intent': state['selected'], 'scope': {'surfaces': project['surfaces'],
+                'required_lanes': ['craft'], 'coverage': {'mode': 'whole_experience'}}}
+    coverage = review.destination_helper().derive(root, spec, state, P)
+    selections = {s['surface']: s for s in state['selections']}
+    requirements = {r['id']: r for r in state['requirements']}
     templates = []
-    for req in state['requirements']:
-        if req['required'] and req['disposition'] == 'selected':
-            for surface in req['surfaces']:
-                for context in req['contexts']:
-                    templates.append({'id': req['id'] + '/' + surface + '/' + context['id'], 'surface': surface,
-                        'lane': 'craft', 'requirement_id': req['id'], 'requirement_context': context['id'],
-                        'asset_ids': req.get('asset_ids', []), 'status': 'not_run', 'executed': False,
-                        'expected': req['purpose'], 'capture_ids': [], 'evidence_paths': [],
-                        'candidate_id': None, 'reviewed_dependencies': {},
-                        'target': next(s['target'] for s in state['selections'] if s['surface'] == surface)})
-    return {'intent': state['selected'], 'cases': templates, 'status': state['status'],
-            'note': 'Draft templates; fill the actual candidate ID, dependency pins, reviewer and observed evidence.'}
+    for obligation in coverage['obligations']:
+        if not obligation['in_scope'] or obligation['applicability'].get('status') != 'required':
+            continue
+        req = requirements[obligation['requirement_id']]
+        row = {'id': obligation['id'], 'surface': obligation['surface'], 'lane': obligation['lane'],
+               'obligation_ids': [obligation['id']], 'asset_ids': req.get('asset_ids', []),
+               'expected': req['purpose'], 'status': 'not_run', 'executed': False, 'capture_ids': [],
+               'evidence_paths': [], 'candidate_id': None, 'reviewed_dependencies': {},
+               'target': selections.get(obligation['surface'], {}).get('target')}
+        if obligation['kind'] == 'journey':
+            row['journey_observations'] = []
+        templates.append(row)
+    return {'intent': state['selected'], 'cases': templates, 'destination_coverage': coverage,
+            'required_lanes': spec['scope']['required_lanes'], 'status': 'not_run',
+            'note': ('Templates only; actual scope and lanes come from --review-spec. Without it only craft is generated. '
+                     'No review, execution or native observation has occurred.')}
 
 
-def review_coverage(root, spec, results):
+def review_coverage(root, spec, results, destination_coverage=None):
     """Reconcile named visual requirements with already validated review cases, in place."""
     state = check(root)
     binding = spec.get('intent')
@@ -424,10 +439,10 @@ def review_coverage(root, spec, results):
     for case in spec.get('cases', []):
         result = indexed[case['id']]
         reasons = []
-        if case['lane'] in VISUAL and not good:
+        if destination_coverage is None and case['lane'] in VISUAL and not good:
             reasons.append('intent_selection_stale_or_changed')
         req_id = case.get('requirement_id')
-        if req_id is not None:
+        if req_id is not None and destination_coverage is None:
             req = requirements.get(req_id)
             selected = selection.get(case['surface'], {})
             candidate = deps.get(case.get('candidate_id'), {})
@@ -462,10 +477,24 @@ def review_coverage(root, spec, results):
         for surface in req['surfaces']:
             contexts = req['contexts'] if req['disposition'] == 'selected' else [{'id': None}]
             for context in contexts:
+                if destination_coverage is not None and context.get('applicability') and not any(
+                        a.get('surface', surface) == surface for a in context['applicability']):
+                    continue
                 matches = [r for r in results if r.get('requirement_id') == req['id'] and r['surface'] == surface
                            and r.get('requirement_context') == context['id']]
+                fulfilled = good and matches and all(r['recorded_status'] == 'pass' for r in matches)
+                observed = []
+                if destination_coverage is not None:
+                    observed = [o for o in destination_coverage['obligations'] if o['requirement_id'] == req['id']
+                                and o['surface'] == surface and o['context_id'] == context['id']]
+                    case_ids = {ident for o in observed for ident in o.get('case_ids', [])}
+                    matches = [r for r in results if r['id'] in case_ids]
+                    fulfilled = (good and destination_coverage['status'] == 'complete' and bool(observed) and
+                                 all(o['status'] in {'pass', 'not_applicable'} for o in observed) and
+                                 all(o.get('native_recorded') for o in observed if o['lane'] in
+                                     {'craft', 'native_behavior', 'responsive', 'accessibility'} and o['status'] == 'pass'))
                 status = 'explicitly_omitted' if req['disposition'] == 'explicitly_omitted' else (
-                    'recorded_fulfilled' if good and matches and all(r['recorded_status'] == 'pass' for r in matches)
+                    'recorded_fulfilled' if fulfilled
                     else req['disposition'] if req['disposition'] in {'unresolved', 'deferred'} else 'not_assessed')
                 row = {'requirement_id': req['id'], 'surface': surface, 'context_id': context['id'],
                        'required': req['required'], 'status': status, 'case_ids': [r['id'] for r in matches],
@@ -480,6 +509,10 @@ def review_coverage(root, spec, results):
                             'recorded_status': indexed[c['id']]['recorded_status'],
                             'captures': [captures[i] for i in c.get('capture_ids', []) if i in captures]}
                             for c in spec.get('cases', []) if c['id'] in {r['id'] for r in matches}]}
+                if destination_coverage is not None:
+                    row['obligation_ids'] = [o['id'] for o in observed]
+                    row['destination_status'] = ('recorded_complete' if observed and
+                        all(o['status'] in {'pass', 'not_applicable'} for o in observed) else 'incomplete')
                 report.append(row)
                 if req['required'] and status not in {'recorded_fulfilled', 'explicitly_omitted'}:
                     gaps.append({'code': 'design_requirement_unfulfilled', **row})
