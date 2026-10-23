@@ -100,17 +100,38 @@ def material(state):
                           "design": workflow.get("design")})
 
 
-def export(run_dir, output, *, dma_scripts):
+def scoped_material(state, domain_id, *, dma_scripts):
+    """Use only the explicitly trusted DMA runtime's scoped-context contract."""
+    need(domain_id is None or type(domain_id) is str and domain_id.strip(), "invalid explicit domain id")
+    scripts = path(dma_scripts)
+    module_path = path(scripts / "frontend_continuation.py")
+    need(module_path.is_file(), "DMA runtime does not support scoped frontend context")
+    spec = importlib.util.spec_from_file_location("_dma_scoped_frontend_context", module_path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    need(callable(getattr(module, "scoped_context", None)), "DMA runtime does not support scoped frontend context")
+    value = module.scoped_context(state, domain_id)
+    need(type(value) is dict and {"domain", "entity_ids", "design", "inputs", "source_coverage", "naming"} <= set(value),
+         "unsupported DMA scoped context shape")
+    need(value["domain"] is None if domain_id is None else
+         type(value["domain"]) is dict and value["domain"].get("id") == domain_id,
+         "DMA scoped context returned another domain")
+    return copy.deepcopy(value)
+
+
+def export(run_dir, output, *, dma_scripts, domain_id=None, scoped=False):
     gw = trusted_dma(dma_scripts)
     state = gw.load_engagement(path(run_dir))
-    snapshot = material(state)
+    scoped = scoped or domain_id is not None
+    snapshot = scoped_material(state, domain_id, dma_scripts=dma_scripts) if scoped else material(state)
     value = seal({"schema_version": 1, "kind": "analyst_dma_context",
         "engagement_id": state["engagement_id"], "revision": state["revision"],
         "state_sha256": state["state_sha256"], "migration_scope": state["answers"].get("migration_scope"),
-        "selected_domain": snapshot["selected_domain"], "material": snapshot,
+        "selected_domain": snapshot["domain"] if scoped else snapshot["selected_domain"], "material": snapshot,
         "material_sha256": digest(canonical(snapshot)),
         "authority": "supporting_evidence_only", "origin_authenticated": False,
-        "authorizes_target_write": False, "migration_accepted": False})
+        "authorizes_target_write": False, "migration_accepted": False,
+        **({"snapshot_contract": "dma-scoped-context-v1", "domain_id": domain_id} if scoped else {})})
     raw = json.dumps(value, indent=2, ensure_ascii=False, allow_nan=False).encode() + b"\n"
     need(len(raw) <= MAX_BYTES, "context exceeds 16 MiB; use a bounded engagement")
     destination = path(output)
@@ -124,16 +145,23 @@ def export(run_dir, output, *, dma_scripts):
             "assurance": "saved_state_snapshot_only", "authorizes_target_write": False}
 
 
-def check_context(context, state):
+def check_context(context, state, *, dma_scripts=None):
     check_seal(context, "analyst_dma_context")
     need(context.get("authority") == "supporting_evidence_only" and
          all(context.get(k) is False for k in ("origin_authenticated", "authorizes_target_write", "migration_accepted")),
          "context cannot confer authority")
     need(context.get("engagement_id") == state["engagement_id"], "context belongs to another DMA engagement")
     need(context.get("material_sha256") == digest(canonical(context.get("material"))), "invalid material fingerprint")
-    need(context.get("selected_domain") == context["material"].get("selected_domain"), "inconsistent selected domain")
+    if "snapshot_contract" in context:
+        need(context["snapshot_contract"] == "dma-scoped-context-v1" and dma_scripts is not None,
+             "scoped context requires its supported trusted DMA runtime")
+        current = scoped_material(state, context.get("domain_id"), dma_scripts=dma_scripts)
+        need(context.get("selected_domain") == context["material"].get("domain"), "inconsistent selected domain")
+    else:
+        current = material(state)
+        need(context.get("selected_domain") == context["material"].get("selected_domain"), "inconsistent selected domain")
     need(context.get("migration_scope") == state["answers"].get("migration_scope"), "DMA migration scope changed")
-    need(context["material_sha256"] == digest(canonical(material(state))), "DMA material or selected domain changed")
+    need(context["material_sha256"] == digest(canonical(current)), "DMA material or selected domain changed")
 
 
 def check_receipt(receipt, kind, context, raw_context):
@@ -206,7 +234,7 @@ def record(run_dir, receipt_path, context_path, kind, *, dma_scripts, frontend_p
     context, raw_context = read_json(context_path)
     receipt, raw_receipt = read_json(receipt_path)
     state = gw.load_engagement(path(run_dir))
-    check_context(context, state)
+    check_context(context, state, dma_scripts=dma_scripts)
     check_receipt(receipt, kind, context, raw_context)
     if kind == "analyst_frontend_return":
         _registered_scope(state, receipt, raw_context)
@@ -214,7 +242,7 @@ def record(run_dir, receipt_path, context_path, kind, *, dma_scripts, frontend_p
     # Refresh actual source/catalogue bytes through DMA's existing local scanner.
     # This may add an audit revision; no receipt is registered if drift is found.
     state = gw.assess_engagement(path(run_dir))
-    check_context(context, state)
+    check_context(context, state, dma_scripts=dma_scripts)
     if kind == "analyst_frontend_return":
         _registered_scope(state, receipt, raw_context)
     check_frontend(frontend_project, receipt_path, receipt, state, dma_scripts)
@@ -222,7 +250,7 @@ def record(run_dir, receipt_path, context_path, kind, *, dma_scripts, frontend_p
          "frontend inputs changed during review")
     state = gw.record_evidence(path(run_dir), path(receipt_path), kind,
                                depends_on=("source", "catalogue", "target", "runtime", "discovery"))
-    check_context(context, state)
+    check_context(context, state, dma_scripts=dma_scripts)
     evidence = state["evidence"][-1]
     need(evidence.get("receipt", {}).get("sha256") == digest(raw_receipt),
          "receipt changed during registration; evidence remains unverified")
@@ -238,6 +266,8 @@ def main(argv=None):
     command = commands.add_parser("export")
     command.add_argument("--run", required=True)
     command.add_argument("--output", required=True)
+    command.add_argument("--domain-id", help="Explicit current or completed domain; requires scoped-context capability")
+    command.add_argument("--scoped", action="store_true", help="Use scoped-context capability even without a domain selector")
     command = commands.add_parser("record")
     command.add_argument("--run", required=True)
     command.add_argument("--receipt", required=True)
@@ -246,7 +276,7 @@ def main(argv=None):
     command.add_argument("--kind", choices=sorted(KINDS), required=True)
     args = parser.parse_args(argv)
     try:
-        result = (export(args.run, args.output, dma_scripts=args.dma_scripts) if args.command == "export" else
+        result = (export(args.run, args.output, dma_scripts=args.dma_scripts, domain_id=args.domain_id, scoped=args.scoped) if args.command == "export" else
                   record(args.run, args.receipt, args.context, args.kind,
                          dma_scripts=args.dma_scripts, frontend_project=args.frontend_project))
         print(json.dumps(result, sort_keys=True))

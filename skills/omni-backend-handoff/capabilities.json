@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "kind": "omni_frontend_capabilities",
+  "continuation_protocol_versions": [1],
+  "semantic_handoff_versions": ["omni-handoff-v1"],
+  "entrypoint": "scripts/continuation.py",
+  "commands": ["initiate"],
+  "scoped_dma_context": true,
+  "authorizes_target_write": false
+}

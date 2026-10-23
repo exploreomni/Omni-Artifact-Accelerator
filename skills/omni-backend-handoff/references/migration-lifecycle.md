@@ -2,6 +2,8 @@
 
 Use this workflow when the selected delivery includes the backend and a native dashboard or App. It connects saved work; it does not automate source acquisition, native conversion or acceptance. The host orchestrator dispatches specialists and owns the shared decisions. DMA owns its model workflow and finalizer. The source migrator retains its capture, route and release controls.
 
+For a DMA-initiated opt-in, first use the [continuation helper](dma-continuation.md). It validates the complete installed bundle and packet, imports an available candidate once and retains a resumable project. Explicit completed-domain selection uses DMA’s dependency-complete scoped context, regardless of its active domain. Preparation is not dispatch, frozen scope or live Topic verification; continue with the scope and evidence steps below.
+
 ## Start or resume one domain
 
 1. Reuse the original engagement, selected domain, source platform, target, decisions and authorization. Select a bounded pilot before scaling. Preserve DMA's `model_only`, `model_semantic`, `full_dashboard` and assessment execution mode. A semantic-only engagement may inform an independent frontend project without acquiring a new DMA obligation. Register an integrated frontend obligation only for explicitly selected `full_dashboard` scope. An App must also be an explicitly selected frontend surface; DMA's dashboard checks do not qualify Apps.

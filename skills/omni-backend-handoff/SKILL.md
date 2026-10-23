@@ -13,6 +13,8 @@ Read [the cowork contract](references/cowork-contract.md). For a fresh frontend,
 
 For end-to-end migrations, read [migration lifecycle](references/migration-lifecycle.md). Use `dma_frontend.py` to export the selected backend context, `migration.py` to freeze every supplied source-asset disposition, and scope-linked cowork requests for model gaps. Return candidate-bound frontend artifacts and separate QA lanes, then register the checked scope/return through DMA's existing supporting-evidence API. Assessment may proceed without a semantic candidate. Preserve backend-only scope; an independent frontend is not an implicit expansion of DMA's delivery.
 
+For an explicitly requested DMA follow-up, use the [opt-in continuation protocol](references/dma-continuation.md). Discover the complete installed companion, retain the disclosure-reviewed packet, then invoke `continuation.py initiate`. Select a completed domain explicitly when appropriate. `prepare_handoff` retains the assignment; `continue_now` still requires actual host dispatch after preparation. Neither choice deploys Topics, proves live availability or upgrades a semantic-only engagement to full-dashboard scope. Resume exact retained inputs; use a new version or cowork cycle for changed material.
+
 ## Scope and route first
 
 Honor the source migrator's existing route and authority:
