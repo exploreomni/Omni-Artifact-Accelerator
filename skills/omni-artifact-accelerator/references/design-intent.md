@@ -8,6 +8,8 @@ Read existing decisions first. Ask only the missing consequential choices togeth
 
 Keep each required unanswered or deferred choice open. A working recommendation can guide reversible prototyping but remains `origin: proposal`; it must not become a user decision by implication. A placeholder is visibly provisional and cannot satisfy the requested identity. Optional photography, exact corporate fonts or animation are not universal requirements. If the user chooses no logo, record an explicit omission with its decision reference and skip unrelated asset research.
 
+If the user explicitly excludes website research or chooses a supplied brand authority without a website, retain that choice as a requirement with `category: website`, `disposition: explicitly_omitted`, `origin: user` or `reused`, its actual `decision_ref` and affected `surfaces`. Omission records covering every selected surface suppress the generic missing-website question. An agent proposal, partial-surface omission, supplied logo alone or missing URL does not. This changes the interview prompt only; logo selection, provenance, unresolved required choices and native evidence still apply. A free-text note or arbitrary ID is not a structured website omission.
+
 ## Record and select
 
 Run the helper from an installed bundle or this checkout. `OAA_HELPER` below points to its `skills/omni-artifact-accelerator/scripts/analyst_project.py`; `OAA_RUN` is a private engagement outside the package.
@@ -34,7 +36,25 @@ Selection creates immutable `analyst_design_intent` with byte pins and selects i
 
 An untouched unknown-branding starter can follow a surface change during initial migration setup; the checker reports that projection without rewriting the draft. Once a draft contains a website, authorization, asset or design decision, reconcile its scope explicitly. Selected records always retain their recorded surface scope.
 
+## Current context and resume
+
+`intent-check` includes a derived `current_context`: the selected intent pin, historical intent pins, unresolved required IDs and integrity status. The actual decisions remain in `requirements` and `selections`; the index is not a second authority or a claim that all linked documents are current. It does not read historical files or authenticate user decisions.
+
+Maintain a concise current-context section in the engagement's `START_HERE.md`: selected intent/design, source/query/runtime references, brand and content mode, usable viewport, tooling and remaining verification gaps. Identify older proposals by path and the selection that supersedes them. Frozen reviews and evidence remain unchanged; a historical document saying “current” does not outrank the selected record or new user feedback. Record new consequential feedback in a new intent version before dependent work resumes.
+
+After preparing a task packet, and again before resuming it, run:
+
+```sh
+python "$OAA_HELPER" packet-check --project "$OAA_RUN" --packet tasks/app-engineer-v1.json
+```
+
+The read-only check compares the saved packet's selected intent, decisions, current DMA catalog, fixed generated fields and declared input hashes/sizes with the current engagement. It reuses path, registration, DMA freshness and aggregate-size checks. Both declared input bytes and serialized packet metadata have a 256 KiB ceiling; history entries retain compact path/hash/size pins. Host-specific objectives, outputs and acceptance notes can be added as separate fields such as `host_context`; do not rewrite the generated role, authority or trust fields. Those additions remain untrusted descriptive context, not permission. Exit 1 reports inconsistent/stale context; regenerate a new packet after reconciling the affected dependencies. Malformed paths/inputs may exit 2. It never dispatches a worker, rewrites the packet, grants permission or establishes native behavior. Older packets without the optional derived index remain usable if their actual decisions and inputs are current. Independent numerical/backend work can continue when its own inputs are unaffected.
+
+Declare runtime, callback evidence, aliases and other required files explicitly with repeated packet `--input` arguments and applicable review dependencies. Register reviewed versions with the existing `register` helper when appropriate. Descriptive paths inside `requirements[].value`, and nested runtime `evidence_paths`, are **not** crawled by the packet helper. A consistent packet only verifies declared inputs; dependency completeness and source authenticity still require scoped review. The optional `delivery.dependency_paths` field is an explicit alternative to repeated inputs for required files; it is pinned and automatically carried to relevant specialists. Retain the 256 KiB bound and existing host-arranged handoff for larger dependencies.
+
 ## Specification contract
+
+For substantial experiences, optional `requirements[].delivery` adds observable behavior, responsibility, named destinations and explicit dependency paths. See [first-delivery coverage](first-delivery.md). These declared paths are pinned and carried into packets; arbitrary nested prose links remain uncrawled. Existing records without these annotations remain valid.
 
 Top level: `schema_version: 1`, `kind: analyst_design_intent_spec`, `branding`, `website`, `logo_sourcing`, `surfaces`, `selections`, `assets`, `requirements`.
 
@@ -51,6 +71,45 @@ Top level: `schema_version: 1`, `kind: analyst_design_intent_spec`, `branding`, 
 A selected requirement needs a decision reference, value or asset IDs, and at least one context. A selected logo needs assets. Explicit omission needs `user` or `reused` origin and its decision reference. Requested branding needs a required logo obligation covering every surface, even if the user explicitly omits it. A previously required obligation cannot simply disappear in the next selection; retain its explicit disposition.
 
 All file paths are canonical engagement-relative regular files, no symlinks or path traversal, within existing file bounds. The helper pins declared local bytes only; it does not crawl, fetch remote assets or execute them. Remote-only assets retain an unverified-byte limitation. Source/use authorization is recorded evidence, not authenticated rights or endorsement. Do not widen App network permissions to repair an asset-loading problem.
+
+## Experience requirements
+
+For substantial new work or material design correction, apply the [shared experience brief](../../omni-design-systems/references/experience-brief.md). Preserve the user's quality expectations and translate them into concrete choices. Add only requirements warranted by the task; do not change every starter or reopen discovery for a faithful migration or focused edit. Version 1 already accepts structured `value` content, so no new lifecycle or schema is needed.
+
+The following are illustrative entries inside an existing specification's `requirements` list. They are proposals for an original library investigation, not real user decisions, an import payload or a mandatory layout. Change their origins/references only when actual evidence warrants it. A selected proposal remains a proposal.
+
+```json
+[
+  {
+    "id": "experience-mode", "category": "experience",
+    "purpose": "Resolve how a library operations analyst first enters the branch-change investigation.",
+    "surfaces": ["app"], "required": true, "origin": "proposal", "disposition": "selected",
+    "value": {"mode": "branded_entry_to_workspace", "opening_promise": "Find which branches explain the monthly circulation change.", "primary_action": "Inspect branch changes", "repeat_use": "Open the investigation directly from persistent navigation"},
+    "asset_ids": [], "decision_ref": "Synthetic studio working direction; not user approval",
+    "contexts": [{"id": "entry", "appearance": "light", "state": "ready-entry"}]
+  },
+  {
+    "id": "entry-return-journey", "category": "interaction",
+    "purpose": "Keep the selected branch and period while moving between introduction, investigation and evidence.",
+    "surfaces": ["app"], "required": true, "origin": "proposal", "disposition": "selected",
+    "value": {"destinations": ["Introduction", "Investigation"], "useful_detail": "Selected branch monthly observations and contribution to total change", "retain": ["comparison months", "selected branch"], "return": "Restore the selected branch trigger or the list heading", "narrow": "Stage list and detail when both no longer fit", "motion": "Brief interruptible detail transition; exact values immediate; static reduced-motion equivalent"},
+    "asset_ids": [], "decision_ref": "Synthetic studio working direction; not user approval",
+    "contexts": [{"id": "return", "appearance": "light", "state": "detail-return"}]
+  },
+  {
+    "id": "art-direction", "category": "composition",
+    "purpose": "Express an editorial library identity while keeping exact branch evidence readable.",
+    "surfaces": ["app"], "required": true, "origin": "proposal", "disposition": "selected",
+    "value": {"reference_quality": "Clear editorial hierarchy with a direct route into work", "avoid": "Equal emphasis on every summary and an obligatory tour", "typography": "Display hierarchy for the invitation; system body and aligned tabular values", "imagery": {"decision": "omitted", "reason": "Typography and an original abstract motif establish the selected character"}, "density": "Spacious introduction; focused branch list and evidence workspace", "resolved_geometry": "Values and responsive rules live inline in the selected design JSON"},
+    "asset_ids": [], "decision_ref": "Synthetic studio working direction; not user approval",
+    "contexts": [{"id": "workspace", "appearance": "light", "state": "ready-investigation"}]
+  }
+]
+```
+
+An unresolved consequential requirement keeps `value: null`, `disposition: unresolved` and no invented decision reference; the existing checker then surfaces its purpose as an open question. Reuse an explicit user/reused answer before asking. A direct single-screen workspace can resolve `experience-mode` without adding an introduction, image or motion obligation. `art-direction` being required does not make every optional image or font required.
+
+Keep detailed choices inline or inside the selected design JSON. Paths nested within `value` are descriptive only and are not automatically pinned; declare additional references through selected files, explicit packet inputs and review dependencies/evidence. Preserve earlier required IDs/dispositions when versioning rather than dropping inconvenient requirements. The checker validates structure and freshness, not the aesthetic merit of these choices.
 
 ## Representative treatment and bounded handoff
 
@@ -76,7 +135,7 @@ For example, the original [Harbor Works specimen](../../omni-design-systems/asse
 
 This fragment belongs in `requirements`, not a standalone specification. In a private example engagement, copy the original SVG to a declared local asset path; set its asset metadata to `sourcing_mode: original`, `variant: symbol`, `placement: beside workspace name`, `appearance: light`, the actual chosen loading method, `size: 40 × 40 CSS pixels`, `accessible_name: adjacent Harbor Works text names identity; symbol decorative`, and `fallback: none; retain unresolved identity gap if unavailable`. Record the original-work provenance and scoped use reference; do not invent a customer website or claim approval. A native dashboard may use a supported identity placement different from the App; preserve the purpose and record the adaptation.
 
-For `branding`, `design-systems`, App/dashboard designers, App/BI engineers and QA, `packet` adds the selected intent, spec, design/brand/candidate files and declared local assets to the named inputs. Missing selections/decisions are exposed; stale/conflicting selections reject the packet. Files remain subject to disclosure review and the existing **256 KiB aggregate packet bound**. An index does not sanitize contents or bypass that bound. If a required asset makes a packet too large, report the dependency and arrange a reviewed bounded handoff through the host; never silently omit it or invent a smaller replacement. Legacy projects without a selection stay readable and receive available working design/brand contracts with unassessed intent coverage.
+For `branding`, `design-systems`, App/dashboard designers, App/BI engineers, `motion-designer`, `data-storyteller` and QA, `packet` adds the selected intent, spec, design/brand/candidate files and declared local assets to the named inputs. `design_context.selected_intent` exposes the exact governing selection pin, or null while unselected. Missing selections/decisions are exposed; stale/conflicting selections reject the packet. On dispatch or resume, reconcile that pin with the current `intent-check` result and recheck input hashes; packets do not update or revalidate themselves after creation. Regenerate stale handoffs. Files remain subject to disclosure review and the existing **256 KiB aggregate packet bound**. An index does not sanitize contents or bypass that bound. If a required asset makes a packet too large, report the dependency and arrange a reviewed bounded handoff through the host; never silently omit it or invent a smaller replacement. Legacy projects without a selection stay readable and receive available working design/brand contracts with unassessed intent coverage.
 
 ## Review and closeout
 

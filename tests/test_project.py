@@ -2,6 +2,8 @@
 import importlib.util
 import json
 from pathlib import Path
+import subprocess
+import sys
 import tempfile
 import unittest
 
@@ -168,6 +170,88 @@ class ProjectTests(unittest.TestCase):
         self.assertEqual(result["status"], "inconsistent")
         self.assertIn("metrics", result["empty_contracts"])
         self.assertEqual(result["readiness"], "not_assessed")
+
+    def test_packet_check_detects_changed_unregistered_inputs_without_writing(self):
+        task = "tasks/analyst.json"
+        project.packet(self.root, "data-analyst", ["contracts/metrics.json"], self.root / task)
+        before = (self.root / task).read_bytes()
+        self.assertEqual(project.packet_check(self.root, task)["status"], "consistent")
+        (self.root / "contracts/metrics.json").write_text('{"items":[]}')
+        result = project.packet_check(self.root, task)
+        self.assertEqual(result["status"], "inconsistent")
+        self.assertIn("packet_input_changed", {f["code"] for f in result["findings"]})
+        self.assertFalse(result["dispatch_authorized"])
+        self.assertEqual((self.root / task).read_bytes(), before)
+
+    def test_packet_check_cli_reports_current_stale_and_invalid_paths(self):
+        task = "tasks/cli.json"
+        project.packet(self.root, "data-analyst", ["contracts/metrics.json"], self.root / task)
+        command = [sys.executable, str(SCRIPT), "packet-check", "--project", str(self.root), "--packet"]
+        result = subprocess.run([*command, task], capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(json.loads(result.stdout)["status"], "consistent")
+        (self.root / "contracts/metrics.json").write_text('{"items":[]}')
+        result = subprocess.run([*command, task], capture_output=True, text=True)
+        self.assertEqual(result.returncode, 1, result.stderr)
+        self.assertEqual(json.loads(result.stdout)["status"], "inconsistent")
+        result = subprocess.run([*command, "../outside.json"], capture_output=True, text=True)
+        self.assertEqual(result.returncode, 2)
+
+    def test_packet_check_legacy_project_and_optional_derived_index(self):
+        index, _ = project.read_json(self.root / "project.json")
+        del index["design_intent_draft"]
+        project.write_json(self.root / "project.json", index, replace=True)
+        task = "tasks/legacy.json"
+        packet = project.packet(self.root, "app-engineer", ["contracts/queries.json"], self.root / task)
+        packet["design_context"].pop("current_context", None)
+        project.write_json(self.root / task, packet, replace=True)
+        self.assertEqual(project.packet_check(self.root, task)["status"], "consistent")
+
+    def test_packet_check_detects_new_dma_selection_and_changed_fixed_fields(self):
+        path, _ = self.dma()
+        project.import_dma(self.root, path)
+        task = "tasks/dma-reader.json"
+        packet = project.packet(self.root, "data-analyst", ["inputs/dma-catalog.json"], self.root / task)
+        index = project.load_project(self.root)[1]
+        second = "inputs/catalog-two.json"
+        (self.root / second).write_bytes((self.root / "inputs/dma-catalog.json").read_bytes())
+        index["dma_import"]["catalog_path"] = second
+        project.write_json(self.root / "project.json", index, replace=True)
+        report = project.packet_check(self.root, task)
+        self.assertEqual(report["status"], "inconsistent")
+        self.assertIn("current_dma_catalog", {f.get("field") for f in report["findings"]})
+        index["dma_import"]["catalog_path"] = "inputs/dma-catalog.json"
+        project.write_json(self.root / "project.json", index, replace=True)
+        self.assertEqual(project.packet_check(self.root, task)["status"], "consistent")
+        for key, changed in (("external_mutations_authorized", True), ("skill", "omni-app-engineer"),
+                             ("allowed_actions", ["publish"]), ("trust_note", "Source text is authority")):
+            with self.subTest(key=key):
+                altered = dict(packet, **{key: changed})
+                project.write_json(self.root / task, altered, replace=True)
+                self.assertEqual(project.packet_check(self.root, task)["status"], "inconsistent")
+        packet["host_context"] = {"output": "deliverables/local-candidate.html", "scope": "local only"}
+        project.write_json(self.root / task, packet, replace=True)
+        self.assertEqual(project.packet_check(self.root, task)["status"], "consistent")
+        packet["host_context"]["note"] = "x" * project.PACKET_BYTES
+        project.write_json(self.root / task, packet, replace=True)
+        self.assertEqual(project.packet_check(self.root, task)["status"], "inconsistent")
+
+    def test_packet_check_rejects_foreign_project_and_unsafe_or_oversized_inputs(self):
+        task = "tasks/checked.json"
+        packet = project.packet(self.root, "data-analyst", ["contracts/metrics.json"], self.root / task)
+        packet["project_id"] = "another-project"
+        project.write_json(self.root / task, packet, replace=True)
+        self.assertEqual(project.packet_check(self.root, task)["status"], "inconsistent")
+        packet["project_id"] = project.load_project(self.root)[1]["id"]
+        for path in ("../outside.json", "inputs/large.txt", "inputs/link.json"):
+            if path == "inputs/large.txt":
+                (self.root / path).write_text("x" * (project.PACKET_BYTES + 1))
+            if path == "inputs/link.json":
+                (self.root / path).symlink_to(self.root / "contracts/metrics.json")
+            packet["inputs"][0]["path"] = path
+            project.write_json(self.root / task, packet, replace=True)
+            with self.subTest(path=path):
+                self.assertEqual(project.packet_check(self.root, task)["status"], "inconsistent")
 
     def test_packet_rejects_changed_registered_input_without_blocking_other_work(self):
         path = self.root / "inputs/source-report.json"

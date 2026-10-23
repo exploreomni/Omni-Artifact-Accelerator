@@ -69,6 +69,24 @@ The initial files and role plan are a starting point, not a built dashboard or A
 
 Material new designs include rendered alternatives, a resolved design handoff, and designer review of the actual implementation. The optional [design evidence checker](skills/omni-qa-analyst/references/design-evidence.md) tracks which observations still match the current candidate; it does not certify visual quality or customer acceptance.
 
+For an App, describe the intended experience as well as the metrics. For example: “Create an immersive branded entry that leads into a focused product investigation workspace, with persistent scope and a separate comparison view.” The [experience-mode guide](skills/omni-app-designer/references/app-patterns.md#choose-the-experience-mode) helps distinguish this from a direct workspace or a guided data story. If rendering is unavailable, the agent should retain that visual-review gap explicitly.
+
+Give the usable App width **and height** when known, including space occupied by Omni controls. For branded demos, specify whether source names should remain original or may use explicitly fictional aliases; logo permission alone does not decide that. The [data-input guide](skills/omni-app-engineer/references/native-data-input.md) keeps exported rows distinct from the native callback contract, while [presentation naming](skills/omni-branding/references/demo-presentation.md) preserves original IDs and arithmetic. See [context and resume](docs/HOW_TO.md#keep-context-current) for checking an older handoff before work continues.
+
+## Start from one useful brief
+
+> Create a polished investigation App from our existing Omni model for regional operations leaders. Use our supplied company website and approved assets. Give returning users a direct path to investigate a change and inspect its evidence. Choose an appropriate visual direction, preserve data scope through navigation, and adapt to phone, laptop and wide screens. Reuse our prior answers; ask one short batch only for material missing context. Build and critique a complete journey before expanding it, then review every working destination. Keep unavailable runtime capabilities explicit. Prepare the candidate in our existing development workflow.
+
+The [first-delivery workflow](skills/omni-artifact-accelerator/references/first-delivery.md) turns that brief into named behavior, owners and dependencies. The agent refines the result internally; a single prompt does not mean a single generation. `experience-check` reports declared coverage and `plan` routes capabilities to existing roles. The App engineer can load an [advanced visualization module](skills/omni-app-engineer/references/advanced-visualization.md) for custom scenes. It is conditional, not a requirement to use 3D or add more agents.
+
+Before evaluating a new package version, verify the installed files:
+
+```sh
+python scripts/install_skills.py --destination "$OAA_SKILLS_DIR" --verify
+```
+
+A matching result identifies the compared source version and file manifest. Missing, changed and extra files stay visible; the command makes no changes and does not prove the host has reloaded cached skills.
+
 ## Choose a workflow
 
 | Starting point | Next step |
@@ -117,6 +135,8 @@ Each specialist can also be invoked directly. Design guidance draws from officia
 
 The [Data Experience Design Studio](skills/omni-design-systems/references/experience-curriculum.md) gives all 13 roles a shared curriculum for analytical judgment, art direction, advanced visual encoding, storytelling, dashboard composition, App interactions, motion, branding, implementation and critique. It teaches agents through worked choices and revision instead of prescribing one house layout.
 
+The installed [experience brief](skills/omni-design-systems/references/experience-brief.md) carries quality expectations into named design choices, first/returning-use journeys and specialist handoffs. Try the [context-transfer studio](skills/omni-design-systems/references/experience-context-studio.md) and its [interactive synthetic specimen](skills/omni-design-systems/assets/experience-context-studio.html) to compare three frontend treatments of the same library investigation. These are original local teaching artifacts, not native Omni content or a required house layout.
+
 Start with one relevant exercise:
 
 1. Read the curriculum's role route and choose the competency the task needs.
@@ -128,6 +148,8 @@ Start with one relevant exercise:
 > Use the Data Experience Design Studio for a performance dashboard and an investigation App. Develop distinct tasks and compositions from the same governed metrics. Compare a change-and-contribution design with a comparison atlas, resolve a clear visual direction, and propose one useful App interaction with purposeful motion and a reduced-motion equivalent. Reuse our brand answers. Keep native capability gaps explicit and have the designer critique the implemented result.
 
 The curriculum uses neutral pattern names and original practice data. Its guidance supports polished static dashboards and expressive Apps without treating animation or unusual chart types as requirements. Load only the relevant lessons for normal work. If a user limits the workflow to CLI/MCP and prohibits browser rendering, continue the authorized work and report visual/native interaction checks as unrun.
+
+Read [design context and decisions](docs/design-context-and-decisions.md) for a worked account of why a branded App still felt like a generic dashboard, how an explicit experience choice changed its composition and navigation, and what every specialist needs to preserve. It distinguishes missing decisions from requirements that were already supplied but lost during the handoff.
 
 ## From a local candidate to native delivery
 

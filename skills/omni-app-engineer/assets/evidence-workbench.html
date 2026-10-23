@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Evidence workbench — synthetic component example</title>
+<style>
+  :root{color-scheme:light;font:16px/1.5 system-ui,sans-serif;color:#18302d;background:#f6f4ee}
+  *{box-sizing:border-box}body{margin:0}main{max-width:1100px;margin:auto;padding:clamp(16px,4vw,44px)}
+  h1{font-size:clamp(2rem,4vw,3.6rem);line-height:1.04;max-width:18ch;margin:.4em 0}h2{line-height:1.2}
+  .eyebrow{font-weight:700;letter-spacing:.1em;text-transform:uppercase;font-size:.8rem}
+  .intro{max-width:65ch}.workspace{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(240px,1fr);gap:24px;margin:28px 0}
+  section,aside{min-width:0}.panel{background:#fff;border:1px solid #c5d4ca;padding:20px;border-radius:12px}
+  .controls{display:flex;align-items:center;gap:12px;flex-wrap:wrap}button,select,input{font:inherit}button,select{padding:8px 12px}
+  button{color:#173c34;background:#eff5ef;border:1px solid #497669;border-radius:6px;cursor:pointer}
+  button[aria-pressed=true]{background:#174e40;color:white}button:focus-visible,select:focus-visible,input:focus-visible,a:focus-visible{outline:3px solid #9a5100;outline-offset:3px}
+  svg{display:block;width:100%;height:clamp(200px,32vh,320px);background:#edf3ed;border-radius:8px;margin:16px 0}
+  svg text{font-size:15px;font-weight:700;fill:#173c34}.metric{font-size:2.6rem;font-weight:700;line-height:1.2;margin:16px 0}
+  .muted{color:#425b53}.notice{border-left:4px solid #a66416;padding-left:12px}.table-wrap{overflow:auto}
+  table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}td,th{text-align:left;padding:10px 8px;border-bottom:1px solid #d4dfd6;vertical-align:top}
+  .calendar{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;margin:16px 0}.day{min-height:64px;padding:6px;background:#edf3ed;overflow-wrap:anywhere}.day small{display:block;font-size:.7rem}.weekday{text-align:center;font-size:.75rem;font-weight:700}
+  .lower{display:grid;grid-template-columns:1.4fr 1fr;gap:24px}a{color:#174e40}.status{min-height:3em}
+  @media(max-width:720px){.workspace,.lower{grid-template-columns:1fr}.panel{padding:14px}.day{min-height:56px;padding:3px}}
+  @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto}}
+</style>
+<main>
+  <header><p class="eyebrow">Synthetic component example · no native connection</p><h1>Inspect the evidence behind the picture.</h1>
+    <p class="intro">Three fictional sampling stations demonstrate stable scene framing, an exact-value companion and honest missingness. Schematic position is decorative; neither distance nor height encodes a measurement.</p>
+  </header>
+  <div class="workspace">
+    <section class="panel" aria-labelledby="scene-title"><h2 id="scene-title">Sampling stations</h2>
+      <div class="controls"><button id="front" type="button">Front view</button><button id="angle" type="button">Angled view</button><button id="reset" type="button">Reset camera</button>
+        <label>Rotation <input id="yaw" type="range" min="-90" max="90" value="0" step="1"></label></div>
+      <svg id="scene" viewBox="0 0 600 300" aria-hidden="true"></svg>
+      <p class="muted">Use the rotation range with arrow keys. Escape resets the camera. No scroll capture, automatic rotation or hidden drag gesture. Exact values and selection are available below.</p>
+      <div class="table-wrap"><table><caption>Declared synthetic population · one row per station</caption><thead><tr><th>Station</th><th>Eligible</th><th>Passed</th><th>Action</th></tr></thead><tbody id="station-rows"></tbody></table></div>
+    </section>
+    <aside class="panel" aria-labelledby="detail-title"><p class="eyebrow">Exact evidence</p><h2 id="detail-title" tabindex="-1">Select a station</h2><div id="detail"></div><button id="back" type="button">Back to stations</button>
+      <h3>Population check</h3><p id="population"></p><p class="notice">A missing pass count is unknown, not zero. No complete-population rate can be asserted. The measured subset rate must name its narrower denominator.</p>
+    </aside>
+  </div>
+  <div class="lower">
+    <section class="panel" aria-labelledby="calendar-title"><h2 id="calendar-title">Inspection appointments</h2><p>Separate synthetic date records; calendar dates do not predict future outcomes.</p><div class="controls"><button id="previous" type="button" aria-label="Previous month">Previous</button><strong id="month" aria-live="polite"></strong><button id="next" type="button" aria-label="Next month">Next</button></div><div id="calendar" class="calendar" role="list" aria-label="Month dates and appointments"></div></section>
+    <section class="panel" aria-labelledby="media-title"><h2 id="media-title">Media boundary rehearsal</h2><p>No external content or playback is loaded. These controls simulate states, not provider support.</p><div class="controls"><button id="media-load" type="button">Simulate frame load</button><button id="media-block" type="button">Simulate blocked</button></div><p id="media-status" class="status" role="status"></p><p>Fallback: explain the missing capability and offer the reviewed original source when one exists. No invented source URL is supplied here.</p></section>
+  </div>
+  <p class="muted">Source: example-fixture-v1 · illustrative 2030-02 snapshot · not live, observed, published, or customer data. This page is a composable reference, not a mandatory App layout.</p>
+</main>
+<script src="../scripts/experience_components.js"></script>
+<script>
+(function () {
+  "use strict";
+  const C = globalThis.OAAExperience;
+  const byId = id => document.getElementById(id);
+  const stations = [
+    {id:"s-a",name:"Aster",eligible:90,passed:72,x:0,y:0},
+    {id:"s-b",name:"Beryl",eligible:10,passed:9,x:3,y:1},
+    {id:"s-c",name:"Cedar",eligible:20,passed:null,x:1,y:3}
+  ];
+  const evidence = "example-fixture-v1";
+  const population = C.weightedRate(stations);
+  const percent = n => n === null ? "Unknown" : `${(n * 100).toFixed(1)}%`;
+  byId("population").textContent = `Measured subset: ${population.passed}/${population.measuredEligible} = ${percent(population.measuredRate)}. Coverage: ${population.measuredEligible}/${population.eligible} eligible units (${percent(population.coverage)}). Complete-population rate: ${percent(population.rate)}. Source: ${evidence}.`;
+  let selected = null, camera = {yaw:0,tilt:35}, month = 2, year = 2030;
+  let cameraTarget = {...camera}, disposed = false;
+  const removals = [];
+  const listen = (node, event, fn) => { node.addEventListener(event, fn); removals.push(() => node.removeEventListener(event, fn)); };
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)");
+  function draw() {
+    const svg = byId("scene"); svg.replaceChildren();
+    const points = C.projectScene(stations, {width:600,height:300,...camera,padding:56,bounds:{xMin:-1,xMax:4,yMin:-1,yMax:4}});
+    for (const point of points) {
+      const row = stations.find(r => r.id === point.id);
+      const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      circle.setAttribute("cx", point.x); circle.setAttribute("cy", point.y); circle.setAttribute("r", row.id === selected ? 15 : 11);
+      circle.setAttribute("fill", row.passed === null ? "#a66416" : "#174e40");
+      const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      label.setAttribute("x", point.x + 18); label.setAttribute("y", point.y + 5); label.textContent = row.name + (row.passed === null ? " · unknown" : "");
+      svg.append(circle, label);
+    }
+  }
+  const motion = C.createCameraMotion({frame:requestAnimationFrame,cancelFrame:cancelAnimationFrame,
+    now:() => performance.now(),onFrame:next => { camera = next; draw(); }});
+  function move(next, immediate = false) {
+    cameraTarget = {...next}; byId("yaw").value = String(next.yaw);
+    motion.move(camera, next, immediate || reduced.matches);
+  }
+  listen(byId("front"), "click", () => move({yaw:0,tilt:80}));
+  listen(byId("angle"), "click", () => move({yaw:35,tilt:35}));
+  listen(byId("reset"), "click", () => move({yaw:0,tilt:35}));
+  listen(byId("yaw"), "input", event => move({yaw:Number(event.target.value),tilt:cameraTarget.tilt}, true));
+  listen(byId("scene-title").parentElement, "keydown", event => {
+    if (event.key === "Escape") { move({yaw:0,tilt:35}, true); byId("reset").focus(); }
+  });
+  listen(reduced, "change", () => { if (reduced.matches) move(cameraTarget, true); });
+  const buttons = new Map();
+  function select(id) {
+    const row = stations.find(r => r.id === id); if (!row) throw new Error("unknown station");
+    selected = id;
+    for (const [key, button] of buttons) button.setAttribute("aria-pressed", String(key === id));
+    byId("detail-title").textContent = row.name;
+    const peers = C.weightedRate(stations.filter(r => r.id !== id));
+    const detail = byId("detail"); detail.replaceChildren();
+    const rate = document.createElement("p"); rate.className = "metric";
+    rate.textContent = percent(C.weightedRate([row]).rate);
+    const description = document.createElement("p");
+    description.textContent = `${row.passed === null ? "Unknown" : row.passed} passed / ${row.eligible} eligible. Other measured stations: ${peers.passed}/${peers.measuredEligible}, ${percent(peers.measuredRate)}; their full-population rate is ${percent(peers.rate)}. Source: ${evidence}. No cause is established.`;
+    detail.append(rate, description); draw(); byId("detail-title").focus();
+  }
+  for (const row of stations) {
+    const tr = document.createElement("tr");
+    for (const value of [row.name, row.eligible, row.passed === null ? "Unknown" : row.passed]) {
+      const td = document.createElement("td"); td.textContent = String(value); tr.append(td);
+    }
+    const cell = document.createElement("td"), button = document.createElement("button");
+    button.type = "button"; button.textContent = `Inspect ${row.name}`; button.setAttribute("aria-pressed", "false");
+    listen(button, "click", () => select(row.id)); buttons.set(row.id, button); cell.append(button); tr.append(cell); byId("station-rows").append(tr);
+  }
+  listen(byId("back"), "click", () => { if(selected)buttons.get(selected).focus();else buttons.values().next().value.focus(); });
+  const appointments = {"2030-02-04":"Aster", "2030-02-21":"Beryl"};
+  function renderMonth() {
+    byId("month").textContent = new Intl.DateTimeFormat("en", {month:"long",year:"numeric",timeZone:"UTC"}).format(new Date(Date.UTC(year,month-1,1)));
+    const grid = byId("calendar"); grid.replaceChildren();
+    for (const name of ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"]) { const label=document.createElement("div"); label.className="weekday"; label.textContent=name; label.setAttribute("aria-hidden","true"); grid.append(label); }
+    for (const date of C.monthCells(year,month)) {
+      const day = document.createElement("div"); day.className="day";
+      if (date) {
+        day.setAttribute("role","listitem"); day.setAttribute("aria-label",`${date}: ${appointments[date] || "No appointment in this fixture"}`);
+        day.textContent = String(Number(date.slice(-2)));
+        if (appointments[date]) { const label=document.createElement("small"); label.textContent=appointments[date]; day.append(label); }
+      } else day.setAttribute("aria-hidden","true");
+      grid.append(day);
+    }
+  }
+  const shiftMonth = offset => { const date=new Date(Date.UTC(year,month-1+offset,1)); const nextYear=date.getUTCFullYear(); if(nextYear<1900||nextYear>2200)return; year=nextYear;month=date.getUTCMonth()+1;renderMonth(); };
+  listen(byId("previous"),"click",()=>shiftMonth(-1)); listen(byId("next"),"click",()=>shiftMonth(1));
+  const media = C.createMediaState({onState:state => { byId("media-status").textContent = `${state.phase}: ${state.frameLoadObserved ? "frame load alone does not establish player readiness. " : ""}${state.reason || "Provider behavior is unobserved."}`; }});
+  let mediaTicket = null;
+  listen(byId("media-load"),"click",()=>{mediaTicket=media.begin("synthetic-source");media.frameLoaded(mediaTicket);});
+  listen(byId("media-block"),"click",()=>{mediaTicket ||= media.begin("synthetic-source");media.unavailable(mediaTicket,"blocked","Synthetic host denial; use the reviewed fallback when available.");mediaTicket=null;});
+  function destroy() { if(disposed)return; disposed=true;motion.dispose();media.dispose();for(const remove of removals)remove(); }
+  listen(window,"pagehide",destroy);
+  globalThis.OAAWorkbenchExample = Object.freeze({destroy});
+  byId("detail").textContent="Choose Inspect to see exact values. No first entity is silently selected.";
+  byId("media-status").textContent="idle: no media source loaded.";
+  draw(); renderMonth();
+})();
+</script>
+</html>

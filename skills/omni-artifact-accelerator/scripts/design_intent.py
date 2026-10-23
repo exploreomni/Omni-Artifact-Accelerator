@@ -12,7 +12,8 @@ SPEC = 'analyst_design_intent_spec'
 KIND = 'analyst_design_intent'
 BRANDING = {'requested', 'none', 'unknown'}
 VISUAL = {'craft', 'native_behavior', 'responsive', 'accessibility', 'human_usability'}
-ROLES = {'branding', 'design-systems', 'app-designer', 'dashboard-designer', 'app-engineer', 'bi-engineer', 'qa-analyst'}
+ROLES = {'branding', 'design-systems', 'app-designer', 'dashboard-designer', 'app-engineer', 'bi-engineer',
+         'qa-analyst', 'motion-designer', 'data-storyteller'}
 
 
 def text(value):
@@ -150,6 +151,7 @@ def validate(spec, project):
                 for asset_id in ids:
                     for field in ('size', 'accessible_name', 'fallback'):
                         need(text(assets_by_id[asset_id].get(field)), 'logo_asset_' + field + '_required')
+    P.experience_helper().validate(spec, need, relative, P.ROLES)
     if spec['branding'] == 'requested':
         covered = {s for req in requirements if req['category'] == 'logo' and req['required'] for s in req['surfaces']}
         need(covered == set(spec['surfaces']), 'required_logo_surfaces_missing')
@@ -161,6 +163,7 @@ def references(spec):
     for selection in spec['selections']:
         paths.update(selection[k] for k in ('design_path', 'brand_path', 'candidate_path') if selection.get(k))
     paths.update(a['local_path'] for a in spec['assets'] if a.get('local_path'))
+    paths.update(path for req in spec['requirements'] for path in req.get('delivery', {}).get('dependency_paths', []))
     return sorted(paths)
 
 
@@ -251,7 +254,12 @@ def load_selected(root):
 
 def choice_report(spec):
     questions, findings = [], []
-    if spec['branding'] == 'requested' and not spec.get('website'):
+    website_omitted = {surface for req in spec['requirements']
+                       if req.get('category') == 'website' and req.get('disposition') == 'explicitly_omitted'
+                       and req.get('origin') in {'user', 'reused'} and text(req.get('decision_ref'))
+                       for surface in req.get('surfaces', [])}
+    if (spec['branding'] == 'requested' and not spec.get('website')
+            and not set(spec['surfaces']) <= website_omitted):
         questions.append('What is the official company website?')
     for req in spec['requirements']:
         if req['required'] and req['disposition'] in {'unresolved', 'deferred'}:
@@ -270,6 +278,31 @@ def choice_report(spec):
     return list(dict.fromkeys(questions)), findings
 
 
+def context_index(project, state):
+    """Derived orientation only; historical files are neither loaded nor rewritten."""
+    history = project.get('design_intent_history', [])
+    history = history if type(history) is list else []
+    return {'authority': 'index_of_recorded_selection_only', 'integrity': state['status'],
+            'selected_intent': copy.deepcopy(state['selected']),
+            'historical_intents': [{k: p.get(k) for k in ('path', 'sha256', 'bytes')} for p in history
+                                   if history_pin_valid(p) and p != state['selected']],
+            'unresolved_requirement_ids': [r['id'] for r in state['requirements']
+                                           if r['required'] and r['disposition'] in {'unresolved', 'deferred'}],
+            'note': 'Use current requirements and selections below. Historical records are comparison evidence; '
+                    'new user decisions require a new selection. Descriptive links are not pinned dependencies.'}
+
+
+def history_pin_valid(value):
+    if type(value) is not dict or set(value) != {'path', 'sha256', 'bytes'}:
+        return False
+    try:
+        relative(value['path'])
+        return (type(value['sha256']) is str and re.fullmatch('[a-f0-9]{64}', value['sha256']) is not None
+                and type(value['bytes']) is int and 0 <= value['bytes'] <= P.MAX_BYTES)
+    except ValueError:
+        return False
+
+
 def check(root):
     root, project = P.load_project(root)
     selected = project.get('design_intent')
@@ -277,6 +310,8 @@ def check(root):
             'branding': 'unknown', 'website': None, 'logo_sourcing': {}, 'open_questions': [], 'findings': [],
             'paths': [], 'files': [], 'stale_paths': [], 'publication_authorized': False, 'claims_authenticated': False}
     try:
+        need(type(project.get('design_intent_history', [])) is list, 'history_list_required')
+        need(all(history_pin_valid(p) for p in project.get('design_intent_history', [])), 'history_pin_metadata_invalid')
         if selected:
             record = read_record(root, selected)
             spec = record['spec']
@@ -305,6 +340,7 @@ def check(root):
             base['findings'].append({'code': 'missing_current_selection'})
         else:
             base['findings'].append({'code': 'missing_current_selection'})
+            base['current_context'] = context_index(project, base)
             return base
         base.update({k: copy.deepcopy(spec.get(k)) for k in ('requirements', 'assets', 'selections', 'branding', 'website', 'logo_sourcing')})
         questions, findings = choice_report(spec)
@@ -317,13 +353,19 @@ def check(root):
     except (ValueError, OSError, KeyError, TypeError) as exc:
         base['status'] = 'inconsistent'
         base['findings'].append({'code': 'invalid_current_selection', 'detail': str(exc)})
+    base['current_context'] = context_index(project, base)
     return base
 
 
 def packet_context(root, role):
-    if role not in ROLES:
-        return {'paths': [], 'requirements': [], 'findings': [], 'open_questions': []}
     state = check(root)
+    relevant = role in ROLES or any(
+        req.get('delivery', {}).get('owner') == role or any(
+            role in P.experience_helper().CAPABILITIES.get(tag, ())
+            for tag in req.get('delivery', {}).get('capabilities', []))
+        for req in state['requirements'] if req['disposition'] not in {'deferred', 'explicitly_omitted'})
+    if not relevant:
+        return {'selected_intent': None, 'paths': [], 'requirements': [], 'findings': [], 'open_questions': []}
     if state['status'] == 'inconsistent':
         details = []
         for finding in state['findings']:
@@ -331,16 +373,18 @@ def packet_context(root, role):
                 affected = finding.get('path') or finding.get('design_path') or finding.get('detail')
                 details.append(finding['code'] + (': ' + str(affected) if affected else ''))
         need(False, 'stale_or_invalid_packet_selection; ' + '; '.join(details[:8]))
-    paths = state['paths'] if role in ROLES else []
-    if role in ROLES and not state['selected']:
+    paths = state['paths'] if relevant else []
+    if relevant and not state['selected']:
         root, _ = P.load_project(root)
         for name in ('design', 'brand'):
             path = 'contracts/' + name + '.json'
             if (root / path).is_file():
                 P.relative_file(root, path)
                 paths.append(path)
-    return {'paths': sorted(set(paths)), 'requirements': state['requirements'] if role in ROLES else [],
-            'findings': state['findings'] if role in ROLES else [], 'open_questions': state['open_questions'] if role in ROLES else []}
+    return {'selected_intent': copy.deepcopy(state['selected']),
+            'current_context': copy.deepcopy(state['current_context']),
+            'paths': sorted(set(paths)), 'requirements': state['requirements'] if relevant else [],
+            'findings': state['findings'] if relevant else [], 'open_questions': state['open_questions'] if relevant else []}
 
 
 def case_templates(root):

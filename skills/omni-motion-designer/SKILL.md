@@ -9,6 +9,8 @@ Own motion behavior as an interaction specification, with a static equivalent. W
 
 For substantial new design, material redesign, explicit craft feedback or deliberate practice, apply the [curriculum role route](../omni-design-systems/references/experience-curriculum.md#role-routes) for interaction continuity and expressive feedback. Produce a [choreography storyboard](../omni-design-systems/references/experience-patterns.md#motion-choreography) with stable identity, data commit point, timing hypotheses, interruption and static/reduced equivalents; retain a static experience when motion adds no task value.
 
+Read the [current design intent](../omni-artifact-accelerator/references/design-intent.md) and [experience brief](../omni-design-systems/references/experience-brief.md), including on direct invocation or resume. Reconcile the selected packet pin. Tie useful motion to the chosen primary journey and repeat-use behavior; an optional comparison animation alone cannot resolve an expressive-opening requirement.
+
 ## Inputs and scope
 
 Use the app target and verified runtime capabilities, primary tasks, interaction states, brand contract, accessibility requirements, and performance budget. Read the Apple/Google motion sources in [vendor guidance](../omni-design-systems/references/vendor-guidance.md) and the current [Omni capability boundary](../omni-artifact-accelerator/references/omni-capabilities.md).
@@ -18,11 +20,15 @@ For migrations, distinguish observed interaction behavior from proposed motion u
 ## Work
 
 1. Start from the selected composition and named state transition; stabilize the static task before adding effects. For material experience work, align with [visual craft](../omni-design-systems/references/visual-craft.md), without forcing animation into a faithful migration or focused correction. Give each proposed effect an observable purpose: confirm an action, explain a state change, preserve spatial context, or communicate progress. Remove effects without a task benefit.
-2. Specify trigger, affected elements, initial/final states, duration/easing as proposed design values, interruption/cancellation, focus behavior, and reduced-motion alternative. Do not present arbitrary timing as a vendor or Omni requirement.
+2. Specify trigger, affected elements, initial/final states, duration/easing as proposed design values, interruption/cancellation, entry focus, return focus/scroll, and reduced-motion alternative. Include the selected usable width/height when clipping or travel distance matters. Do not present arbitrary timing as a vendor or Omni requirement.
 3. Keep repeated filter changes responsive. Handle late/out-of-order data responses and interrupted navigation with engineering; animation completion must not determine query correctness or gate access to data.
 4. Under reduced motion, use immediate state changes or a restrained static treatment. Preserve labels, focus, completion, and progress information. Avoid chart count-ups, moving baselines, parallax, repeated pulses, and autoplay decoration that obscure exact values or distract from analysis.
 5. When supported by the runtime, honor `prefers-reduced-motion` at startup and when preferences change. The app engineer implements the verified mechanism. Do not assume a platform-managed native dashboard exposes animation hooks.
 6. Validate normal and reduced variants, rapid repeated actions, error/empty/loading transitions, slow responses, keyboard use, and actual performance where measurable. A video proves appearance; it does not prove operability or performance.
+
+If an expressive spatial scene is selected, state which position, size or connector encodes real data and which is decorative. Animation must not invent flow, geography or progress. Give any drag/rotate/zoom interaction an explicit entry/exit, keyboard/static alternative and page-scroll policy; avoid capturing scroll before the user engages it. A scene, multiple destinations or motion is never a universal App requirement.
+
+For selected camera, drill/return or media transitions, use [scene choreography](references/scene-choreography.md) with the App engineer's advanced visualization module. Its synthetic storyboard and finite camera utility demonstrate cancellation, immediate reduced-motion state and cleanup; they are not native performance or rendered-quality evidence. Keep exact data commits independent of animation completion.
 
 ## Outputs and boundaries
 

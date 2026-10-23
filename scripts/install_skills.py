@@ -323,17 +323,47 @@ def install(destination, apply=False, source=ROOT, upgrade_from=None):
                                                         "publisher_authenticated": False}}
 
 
+def verify(destination, source=ROOT):
+    """Read-only comparison, including added files; package identity is not publisher trust."""
+    destination, source = canonical_path(destination), canonical_path(source)
+    need(destination.is_dir(), "destination directory must already exist")
+    package_raw = read_regular(source / "package.json")
+    package = package_info(package_raw)
+    records, source_trees = [], {}
+    for name in package["skills"]:
+        expected = tree(source / "skills" / name)
+        source_trees[name] = expected
+        actual = existing_tree(destination / name)
+        actual = {} if actual is None else actual
+        records.append({"skill": name,
+                        "missing": sorted(set(expected) - set(actual)),
+                        "changed": sorted(p for p in expected.keys() & actual.keys() if expected[p] != actual[p]),
+                        "extra": sorted(set(actual) - set(expected))})
+    matching = all(not any(r[k] for k in ("missing", "changed", "extra")) for r in records)
+    identity = {"package_sha256": hashlib.sha256(package_raw).hexdigest(), "skills": source_trees}
+    return {"status": "matching" if matching else "drift", "applied": False,
+            "package": package["name"], "version": package["version"],
+            "source_manifest_sha256": hashlib.sha256(json.dumps(identity, sort_keys=True).encode()).hexdigest(),
+            "destination": str(destination), "skills": records, "publisher_authenticated": False,
+            "host_activation_verified": False}
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--destination", required=True)
-    parser.add_argument("--apply", action="store_true")
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument("--apply", action="store_true")
+    mode.add_argument("--verify", action="store_true", help="Read-only exact source/install comparison; exit 1 on drift")
     parser.add_argument("--upgrade-from", type=Path, help="Exact previous bundle ZIP with a verified file manifest")
     args = parser.parse_args()
     try:
-        print(json.dumps(install(args.destination, args.apply, upgrade_from=args.upgrade_from), indent=2))
+        need(not (args.verify and args.upgrade_from), "verify does not use an upgrade baseline")
+        result = verify(args.destination) if args.verify else install(args.destination, args.apply, upgrade_from=args.upgrade_from)
+        print(json.dumps(result, indent=2))
+        return 1 if args.verify and result["status"] != "matching" else 0
     except (ValueError, OSError, KeyError, TypeError, RuntimeError) as exc:
         parser.exit(2, "error: " + str(exc) + "\n")
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

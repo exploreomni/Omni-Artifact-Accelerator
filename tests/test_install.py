@@ -87,6 +87,25 @@ class InstallTests(unittest.TestCase):
         self.assertTrue(all(row["action"] == "unchanged" for row in again["skills"]))
         self.assertEqual(len(list(self.destination.iterdir())), count)
 
+    def test_verify_detects_missing_changed_and_extra_files_without_writing(self):
+        source = self.make_source("verify-source", "0.17.0", {"omni-alpha": "Source skill"})
+        self.assertEqual(installer.verify(self.destination, source)["status"], "drift")
+        installer.install(self.destination, apply=True, source=source)
+        good = installer.verify(self.destination, source)
+        self.assertEqual(good["status"], "matching")
+        self.assertFalse(good["host_activation_verified"])
+        skill = self.destination / "omni-alpha"
+        (skill / "SKILL.md").write_text("Local customization")
+        (skill / "extra.txt").write_text("Retain this")
+        (skill / "references/context.md").unlink()
+        drift = installer.verify(self.destination, source)
+        self.assertEqual(drift["status"], "drift")
+        self.assertEqual(drift["skills"][0]["changed"], ["SKILL.md"])
+        self.assertEqual(drift["skills"][0]["missing"], ["references/context.md"])
+        self.assertEqual(drift["skills"][0]["extra"], ["extra.txt"])
+        self.assertEqual((skill / "extra.txt").read_text(), "Retain this")
+        self.assertEqual(drift["source_manifest_sha256"], good["source_manifest_sha256"])
+
     def test_existing_different_skill_leaves_everything_unchanged(self):
         skill = self.destination / "omni-qa-analyst"
         skill.mkdir()

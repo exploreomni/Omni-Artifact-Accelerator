@@ -7,6 +7,10 @@ description: Inventory and map existing BI dashboards, reports and data apps for
 
 Give the orchestrator a traceable analyst inventory and a proposed source-to-target mapping. Preserve what the analyst experiences: page hierarchy, metric meaning, filters, default states, interactions, visual intent, annotations, accessibility, responsive behavior and access boundaries. The data engineering inventory alone does not establish these.
 
+Retain the source reading path and interaction intent in the relevant [experience brief](../omni-design-systems/references/experience-brief.md). Distinguish source evidence, required fidelity and selected redesign choices; a more expressive frontend does not silently waive original behavior or require a new interview for a faithful migration.
+
+Preserve original names and locations by default. An authorized [demo presentation map](../omni-branding/references/demo-presentation.md) is a separate exact-key artifact and accepted presentation difference; it never replaces source identity, inventory or semantic evidence. Retain source/export transport shapes separately from [native App input](../omni-app-engineer/references/native-data-input.md); parsing or re-keying a source result does not qualify the target callback contract.
+
 For substantial target design, authorized material redesign, explicit craft feedback or deliberate practice, apply the [curriculum role route](../omni-design-systems/references/experience-curriculum.md#role-routes) for visual observation and experience mapping. Add the source's visual grammar, hierarchy, navigation and narrative intent to the existing crosswalk, then distinguish preserved behavior, supported adaptation and authorized redesign when considering [alternative patterns](../omni-design-systems/references/experience-patterns.md).
 
 ## Intake and extraction

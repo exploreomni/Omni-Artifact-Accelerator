@@ -14,6 +14,12 @@ Name the failure mechanism: competing focal points, unclear comparison, redundan
 
 ## Anchored craft rubric
 
+Before judging finish, reconcile the [experience brief](experience-brief.md). In the existing review, trace each consequential choice as `user requirement → selected design → implemented behavior → actual observation`. Start with the opening promise, primary action, working view, useful detail, context-preserving return and relevant narrow state. Record a missing choice separately from a supplied requirement the implementation dropped. A larger header, exact logo or functioning filter does not by itself satisfy an immersive-entry request.
+
+Review the first assembled journey early, then give each consequential destination a disposition before claiming the whole experience complete. Ask what new evidence its primary action reveals and whether return preserves the investigation. A polished entry cannot compensate for a generic or unusable working view. Check named behavior directly: a calendar label does not prove a month grid, a projected scene does not prove camera exploration, and an iframe load does not prove playback. A useful fallback preserves the original unfulfilled requirement and its explanation.
+
+For each material departure, retain intended/actual behavior, reason and disposition using existing deviation records. Source-only critique may establish architecture and identify omissions, but must leave unobserved craft/native cases open. A rendered still supports composition; a behavior claim needs exercised interaction. Keep positive user feedback attributable and separate from formal usability or production acceptance. Never mechanically score aesthetic quality or infer compliance from the presence of a CSS class, image or button.
+
 Use qualitative anchors: **unresolved**, **functional**, **considered**, **resolved in the observed case**. Record `not_observed` when the evidence type cannot support judgment. Never total these into an objective quality score.
 
 | Dimension | Functional but elementary | Considered / resolved evidence |
@@ -39,8 +45,10 @@ Use qualitative anchors: **unresolved**, **functional**, **considered**, **resol
 | Buried narrative | Replace a generic chart title with a scoped question/finding; place one precise annotation beside the relevant marks. | Claim validity under filtering, readable density and exact-value access. |
 | Motion feels noisy | Use one focal transition, shorten delay, preserve context and remove unrelated effects. | Interruption, rapid input, reduced motion and target performance. |
 | Pleasant but unhelpful detail | Add a justified decomposition, comparison or operation; otherwise remove the interaction. | Actual information gain, query scope and return path. |
+| More panels, little new evidence | Use the [analytical coverage map](../../omni-data-analyst/references/analytical-coverage.md) to select a valid trend, comparison or exception; remove duplication. | Population/denominator consistency, unavailable facts and whether detail changes understanding. |
+| Scenery overwhelms the analysis | Fit stable analytical bounds, crop decoration and provide readable selected evidence outside tiny marks. | Actual usable width/height, selected values, scale stability and unobstructed controls. |
 | Dashboard feels like a landing page | Bring evidence into the working view and reduce decorative identity space. | Question/answer visibility without losing required brand identity. |
-| App feels like a dashboard wrapper | Design the actual investigation or decision sequence and state model. | Useful action outcomes and preserved analytical context. |
+| App feels like a dashboard wrapper | Reconcile the selected experience mode, actual destinations and first encounter. For an immersive entry → workspace request, give each a distinct composition and useful connecting action. | Opening promise, destination changes, imagery roles, useful evidence and preserved context. A larger header alone is insufficient. |
 
 Prioritize the defect with the largest consequence for the stated task. For a focused change, inspect affected elements and dependent cases only. A small documentation or styling edit does not require an unrelated regression suite. An existing native behavior, metric or access gate still applies when the change affects it.
 

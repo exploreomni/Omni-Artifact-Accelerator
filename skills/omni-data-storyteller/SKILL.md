@@ -9,9 +9,15 @@ Own the connection between the evidence, what it means for this audience, and a 
 
 For substantial new design, material redesign, explicit craft feedback or deliberate practice, apply the [curriculum role route](../omni-design-systems/references/experience-curriculum.md#role-routes) for analytical intent and editorial storytelling. Produce an evidence-bound message hierarchy, annotation layer and narrative steps that earn their place in the [selected experience](../omni-design-systems/references/experience-patterns.md#experience-structures), with explicit conditions for changing or withholding claims after filtering.
 
+Read the [current design intent](../omni-artifact-accelerator/references/design-intent.md) and relevant [experience brief](../omni-design-systems/references/experience-brief.md), including on direct invocation or resume. Reconcile the selected packet pin; carry the opening promise, action vocabulary and working-view hierarchy into truthful copy, without treating brand atmosphere as data evidence.
+
 ## Inputs
 
 Use verified findings, query/metric references, comparison baseline, timeframe/timezone, scope, caveats, audience, and the current screen/tile specification. Read the relevant chart and content guidance in [vendor guidance](../omni-design-systems/references/vendor-guidance.md). If results are missing, produce a labeled narrative structure; never fabricate a finding to complete the design.
+
+For substantial experiences, use the analyst's [coverage map](../omni-data-analyst/references/analytical-coverage.md) to give each consequential destination a purpose, supported finding or question, useful evidence and action into detail. A compelling opening does not supply interpretation for every working view. Reuse the same claim ledger rather than adding narrative panels to satisfy a request for more content.
+
+For customer-themed sample data, consume the [selected presentation mode](../omni-branding/references/demo-presentation.md), aliases and location qualifications. Disclose fictional names and approximate/manual locations in useful language; never turn them into claims about actual customer sites, menu equivalence, physical flow or performance. A source/query check or [simulated App callback](../omni-app-engineer/references/native-data-input.md) does not justify “working live” or native-verification claims.
 
 ## Work
 
@@ -27,6 +33,8 @@ Use verified findings, query/metric references, comparison baseline, timeframe/t
 ## Outputs and review
 
 Return a narrative outline, chart/section titles, annotations, state copy, and a claim ledger linking each substantive statement to evidence and conditions. Include any proposed action's assumptions and owner/timing only when stated.
+
+Review copy on the first assembled journey and after affected changes: entry promise, actual evidence gained, detail/return labels and missing/stale/fallback language. Preserve source era and population distinctions. “Live,” “playable,” “complete” and “current” require the corresponding runtime/data evidence; an external link or dated snapshot can be useful without fulfilling a requested live/in-App behavior. Record observations with the current candidate; source review does not establish rendered legibility.
 
 For migration change maps, training or handoffs, read [behavior and documentation coverage](../omni-qa-analyst/references/migration-behavior.md). Explain equivalent behavior, accepted redesign and unresolved differences separately for each audience. Keep provisional guidance labeled; accepted operational guidance must bind exact target versions and current QA, with real role/support ownership. Do not turn a Domo attestation, Sigma preflight, or DMA return into a claim of tenant acceptance. Refresh affected copy when its metric, filter, persona or target evidence changes.
 

@@ -4,6 +4,16 @@ Use this optional record for substantial new experiences, material redesigns, or
 
 The design owner critiques composition, hierarchy, type, chart finish and task value against the selected design. QA independently checks outcomes and the evidence versions. The implementer supplies deviations and fixes; its own review cannot close an independent craft case. Keep numerical, craft, native behavior, responsive, accessibility, access, performance, participant and business evidence distinct. No numerical beauty score is used.
 
+## Early journey and whole-experience review
+
+For substantial work, review one exact assembled `entry → primary action → useful detail/evidence → return` path before scaling to other destinations. Use original source expectations for the primary result and a consequential malformed/missing or changed-scope case. Record whether the receive path used an observed native payload or a labeled simulation. The experience owner critiques hierarchy and task usefulness; QA tests the relevant outcomes independently. Reuse accepted expectations when a revision changes only presentation.
+
+Before claiming the whole experience complete, reconcile each consequential destination with its stable design ID and original requirement: purpose, dominant subject, primary action, supporting evidence, drill/return, retained state and relevant constrained layout. Use existing cases/deviations/evidence files, not a new evidence lane. The optional [delivery coverage check](../../omni-artifact-accelerator/references/first-delivery.md) finds declared omissions/pin issues; it cannot establish that a destination is useful or that the requirements are complete.
+
+Inspect observable behavior, not component names or element existence. A calendar case exercises the selected date navigation and correct placement/detail, including unknown dates; an exploration case checks camera/selection/reset without altering measured values; a playback case requires actual provider controls and playback when authorized. An iframe load, nonzero dimensions, successful metadata response or configured allowlist does not prove playback. A dated snapshot or external watch link may satisfy its selected fallback while the original live/in-App requirement remains open. Engineering owns capability qualification and permitted recovery; QA must not widen policy to obtain a pass.
+
+Choose a few task-relevant phone, short-laptop or wide contexts by usable width/height and permitted methods. Check a real drill/return journey, not just disconnected screenshots; native behavior requires actual exercise. Under prohibited rendering/native observation, retain independent assembled/source findings and leave the affected visual/native cases unrun. Fix material findings within existing authorization, retest only affected behavior, and name remaining differences in closeout rather than treating publication or matching readback as experience acceptance.
+
 ## Commands and authority
 
 From an engagement, author a JSON specification using the schema below. All file references are canonical engagement-relative paths, confined to the engagement, without symlinks; files are bounded to 10 MiB each. Keep secrets and unnecessary personal information out of these records.
@@ -51,6 +61,10 @@ A visual review of a remote draft or published candidate requires `kind:"native"
 App and dashboard candidates may intentionally share one Omni document and draft. Keep distinct surface-specific candidate IDs, target `surface`, case records and capture bindings. Sharing the document does not permit an App capture to close the dashboard's review or vice versa. A whole-window image may be referenced by separately bound captures only when each surface is actually visible and independently reviewed.
 
 ## Named design requirements
+
+The existing requirement binding also supports named experience choices such as `experience-mode`, `entry-return-journey` and `art-direction`; see [examples](../../omni-artifact-accelerator/references/design-intent.md#experience-requirements). Inspect their intended outcome, not just an asset or control's existence. Keep `user requirement → selected design → implementation → observation/gap` in the case expectation, observation and linked deviation evidence. This does not add a new lane or relax native named-requirement rules.
+
+Under a no-rendering constraint, retain the independent source-review report in the case's declared `evidence_paths` and as an explicit packet input when relevant. Keep craft/native cases `not_run` if their required observations were not performed. A report may identify architecture or continuity defects without establishing polish; no source-only pass category is introduced. Never fabricate a capture to satisfy coverage. For positive user feedback, retain the actual response and its scope separately from unperformed usability or acceptance cases.
 
 When a [design-intent selection](../../omni-artifact-accelerator/references/design-intent.md) exists, bind this review with `intent: {path, sha256}` matching `project.design_intent`. Use `intent-cases --project "$ENGAGEMENT"` for not-run templates; these are not complete cases or observations. Each named case adds `requirement_id`, `requirement_context` (the intent context ID), the exact requirement `asset_ids`, a nonblank `expected` outcome, and candidate-bound `capture_ids`. Complete the ordinary case reviewer/method/evidence fields too.
 

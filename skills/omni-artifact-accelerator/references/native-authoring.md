@@ -43,6 +43,8 @@ Use the official App routes where the installed CLI lacks App commands. App cont
 
 Inspect the actual native starter/query bridge before implementation. Keep runtime evidence tied to the tested instance/version; do not package undocumented methods as a universal SDK. Preserve existing network/navigation/clipboard/download settings. Optional images and fonts need their own supported loading path and rights; a design repair does not expand permissions.
 
+Qualify the selected high-risk boundary before full composition using [native capability checks](../../omni-app-engineer/references/native-capability-checks.md): exact callback input, actual asset loading, provider controls/playback or refresh/failure/freshness, as applicable. Retain the target/candidate/settings identity and observation method in existing runtime evidence; declare the file as a selected requirement dependency. Configured domains, a reachable URL, iframe load or readback are not effective-host verification. Under source-only restrictions, preserve the gap and fallback without browser activity or policy changes. Custom scenes/calendars/dossiers can reuse the [advanced visualization module](../../omni-app-engineer/references/advanced-visualization.md) without rewriting the governed data contract.
+
 Use controlled local fixtures only in a clearly marked preview/test adapter. Production HTML must consume its governed queries. Test filter scope, pending/error/empty states, stale response handling, completeness, focus and responsive transitions in the actual App. An image export cannot establish interactive behavior.
 
 ## Publication and recovery

@@ -164,6 +164,12 @@ def init(output, name, mode, surface, branding=None, website=None):
         "- [Design](contracts/design.json) · [Brand](contracts/brand.json)\n"
         "- [Design requirements and selected assets](contracts/design-intent.json)\n"
         "- [QA](contracts/qa.json)\n\n"
+        "## Current context\n\n"
+        "Selection: pending. Use intent-check for the current selected design, decisions and historical intent index.\n"
+        "After revisions, link the selected experience, source/query/runtime references, brand/content mode, "
+        "usable viewport and remaining evidence gaps here. List replaced proposals as historical with their "
+        "superseding selection; leave frozen evidence unchanged. Recheck saved handoffs with packet-check "
+        "before dispatch or resume.\n\n"
         "Maintain this entrypoint with the requested editable deliverables and evidence.\n"
         "Generated artifacts, local checks, native behavior, effective access, business acceptance "
         "and publication are separate evidence lanes.\n").encode())
@@ -180,10 +186,38 @@ def plan(root):
     if "app" in obj["surfaces"]:
         roles.extend(["app-designer", "app-engineer"])
     roles.append("qa-analyst")
+    coverage = experience_check(root)
+    for role in coverage["role_requirements"]:
+        if role not in roles:
+            roles.append(role)
     return {"kind": "suggested_role_plan", "agents_dispatched": False,
-            "note": "Select the smallest useful team; dependencies and real dispatch belong to the host.",
-            "roles": [{"role": r, "skill": "omni-" + r, "objective": ROLES[r]} for r in roles],
-            "optional_roles": ["design-systems", "data-storyteller", "motion-designer", "backend-handoff"]}
+            "note": "Select the smallest useful team; one worker may own several disciplines. Dependencies and actual dispatch belong to the host.",
+            "roles": [{"role": r, "skill": "omni-" + r, "objective": ROLES[r],
+                       "requirement_ids": coverage["role_requirements"].get(r, []),
+                       "modules": (["references/advanced-visualization.md"] if r == "app-engineer" and any(
+                           "custom-visualization" in q["capabilities"] and "app" in q["surfaces"]
+                           for q in coverage["requirements"]) else [])} for r in roles],
+            "optional_roles": [r for r in ("design-systems", "data-storyteller", "motion-designer", "backend-handoff") if r not in roles],
+            "delivery_coverage": coverage}
+
+
+def experience_helper():
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("oaa_experience_quality", Path(__file__).with_name("experience_quality.py"))
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def experience_check(root):
+    root, _ = load_project(root)
+    # Callers may load this module by spec without inserting it in sys.modules.
+    class API:
+        pass
+    api = API()
+    api.read_json, api.relative_file = read_json, relative_file
+    return experience_helper().inspect(root, intent_helper().check(root), api)
+
 
 
 def project_check(root):
@@ -375,7 +409,8 @@ def routing_helper(name='task_routing'):
     return module
 
 
-def packet(root, role, inputs, output, assignment=None):
+def packet_data(root, role, inputs, assignment=None):
+    """Build a bounded handoff view without writing or dispatching it."""
     root, obj = load_project(root)
     need(role in ROLES, "unknown specialist role")
     need(bool(inputs), "select at least one bounded input")
@@ -430,9 +465,67 @@ def packet(root, role, inputs, output, assignment=None):
         del result['host_must_supply']
     else:
         result['assignment_status'] = 'legacy_untracked'
+    need(len(json.dumps(result, indent=2, ensure_ascii=True, allow_nan=False).encode()) + 1 <= PACKET_BYTES,
+         "packet metadata exceeds 256 KiB; provide a smaller reviewed handoff")
+    return result
+
+
+def packet(root, role, inputs, output, assignment=None):
+    result = packet_data(root, role, inputs, assignment)
     if output is not None:
         write_json(output, result)
     return result
+
+
+def packet_check(root, packet_relative):
+    """Recheck a saved handoff against current selected context and input bytes."""
+    root, obj = load_project(root)
+    saved, _ = read_json(relative_file(root, packet_relative))
+    findings = []
+    try:
+        need(len(json.dumps(saved, indent=2, ensure_ascii=True, allow_nan=False).encode()) + 1 <= PACKET_BYTES,
+             "packet metadata exceeds 256 KiB")
+        need(type(saved) is dict and type(saved.get("schema_version")) is int and
+             saved["schema_version"] == 1 and saved.get("kind") == "analyst_task_packet",
+             "unsupported packet")
+        need(saved.get("project_id") == obj["id"], "packet belongs to another engagement")
+        records = saved.get("inputs")
+        need(type(records) is list and records and all(type(r) is dict for r in records),
+             "packet inputs required")
+        current = packet_data(root, saved.get("role"), [r.get("path") for r in records], saved.get("assignment"))
+        if saved.get("assignment") is not None:
+            need(saved.get("task_id") == current.get("task_id"), "assigned task identity changed")
+        for key in ("skill", "objective", "allowed_actions", "external_mutations_authorized",
+                    "host_must_supply", "stop_conditions", "trust_note", "current_dma_catalog", "baseline_note",
+                    "assignment", "assignment_sha256"):
+            if saved.get(key) != current.get(key):
+                findings.append({"code": "packet_context_changed", "field": key})
+        old_context, new_context = saved.get("design_context", {}), current.get("design_context", {})
+        need(type(old_context) is dict, "packet design context must be an object")
+        if old_context.get("selected_intent") != new_context.get("selected_intent"):
+            findings.append({"code": "selected_intent_changed", "action": "regenerate_packet"})
+        # Compare the actual decisions as well as their pin. A modified index must
+        # not carry different instructions under an otherwise current selection.
+        for key in ("paths", "requirements", "findings", "open_questions"):
+            if old_context.get(key, []) != new_context.get(key, []):
+                findings.append({"code": "design_context_changed", "field": key})
+        # Older packets have no derived index; it is optional and never authority.
+        if "current_context" in old_context and old_context["current_context"] != new_context.get("current_context"):
+            findings.append({"code": "current_context_index_changed"})
+        expected = {r["path"]: r for r in current["inputs"]}
+        for record in records:
+            if any(record.get(k) != expected[record["path"]].get(k) for k in ("sha256", "bytes", "pin_status")):
+                findings.append({"code": "packet_input_changed", "path": record["path"]})
+        for path in set(expected) - {r["path"] for r in records}:
+            findings.append({"code": "current_dependency_missing", "path": path})
+        if saved.get("input_bytes") != sum(r.get("bytes", 0) for r in current["inputs"]):
+            findings.append({"code": "packet_input_size_changed"})
+    except (ValueError, OSError, KeyError, TypeError) as exc:
+        findings.append({"code": "packet_not_current", "detail": str(exc)})
+    return {"status": "inconsistent" if findings else "consistent", "packet": packet_relative,
+            "findings": findings, "scope": "declared inputs and recorded context only",
+            "dependency_completeness": "not_assessed", "dispatch_authorized": False,
+            "native_verification": "not_assessed", "claims_authenticated": False}
 
 
 def main():
@@ -448,13 +541,15 @@ def main():
     cmd.add_argument("--website", help="official company HTTPS website; does not select a logo")
     for command in ("plan", "verify", "import-dma", "register", "packet", "packet-bindings", "design-freeze", "design-check", "design-pin",
                     "intent-select", "intent-check", "intent-cases", "claim-work", "prepare-dispatch", "record-dispatch",
-                    "checkpoint-work", "work-status", "review-work"):
+                    "checkpoint-work", "work-status", "review-work", "packet-check", "experience-check"):
         cmd = commands.add_parser(command)
         cmd.add_argument("--project", required=True)
         if command in ("claim-work", "prepare-dispatch", "record-dispatch", "checkpoint-work", "review-work"):
             cmd.add_argument('--request', required=True)
         elif command == 'work-status':
             cmd.add_argument('--html', help='new or existing generated project-local status HTML')
+        elif command == "packet-check":
+            cmd.add_argument("--packet", required=True, help="engagement-relative saved task packet")
         elif command == "design-pin":
             cmd.add_argument("--path", required=True)
         elif command in ("design-freeze", "intent-select"):
@@ -487,6 +582,8 @@ def main():
                 function = {'claim-work': operations.claim, 'prepare-dispatch': operations.prepare_dispatch, 'record-dispatch': operations.record_dispatch,
                             'checkpoint-work': operations.checkpoint, 'review-work': operations.review_work}[args.command]
                 result = function(args.project, request)
+        elif args.command == "experience-check":
+            result = experience_check(args.project)
         elif args.command == "plan":
             result = plan(args.project)
         elif args.command == "verify":
@@ -511,11 +608,14 @@ def main():
             preview = packet(args.project, args.role, args.input, None)
             result = {'role': args.role, 'input_bindings': {r['path']: r['sha256'] for r in preview['inputs']},
                       'input_bytes': preview['input_bytes'], 'agents_dispatched': False}
+        elif args.command == "packet-check":
+            result = packet_check(args.project, args.packet)
         else:
             result = packet(args.project, args.role, args.input, args.output,
                             read_json(args.assignment)[0] if args.assignment else None)
         print(json.dumps(result, indent=2))
-        return 1 if result.get("status") == "inconsistent" or (args.command == "design-check" and
+        return 1 if result.get("status") == "inconsistent" or (args.command == "experience-check" and
+                    result.get("status") in {"incomplete", "not_assessed"}) or (args.command == "design-check" and
                     result.get("coverage") == "incomplete") else 0
     except (ValueError, OSError, KeyError, TypeError) as exc:
         parser.exit(2, "error: " + str(exc) + "\n")

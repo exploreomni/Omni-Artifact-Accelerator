@@ -31,6 +31,7 @@ Use the engagement's existing schema if available; otherwise record these fields
 - Typography: roles, font source and rights, fallback, number formatting considerations, measured overflow/fallback findings.
 - Data color: palette purpose, ordered categories, business semantics, non-color encodings, behavior for unknown/new categories.
 - Experience: density, layout rhythm, component states, motion policy, accessibility target.
+- Presentation identity, when relabeling is requested: original/verified-customer/authorized-fictional mode, actual decision reference, pinned exact-key alias/location maps, collisions, scope disclosure and unchanged metric semantics. Follow [demo presentation](demo-presentation.md); logo sourcing permission alone does not authorize data renaming.
 - Scope: proposed theme destination, intended users/documents, current settings snapshot if available, effects requiring review.
 - Evidence: official product references, preview paths, QA results, unresolved decisions, and acceptance record when explicitly given.
 
@@ -48,6 +49,8 @@ Hand engineering the selected asset ID, exact file/URL and hash when retained, v
 
 ## Brand-to-composition specimen
 
+Use the selected mode and first/returning-use journey from the [experience brief](../../omni-design-systems/references/experience-brief.md). For each important brand quality, retain the observed source separately from the chosen adaptation: `source quality → type/image/layout/action choice → tradeoff → observation needed`. A resolved logo is one identity decision, not proof of a resolved opening. Discuss font/image byte and loading budgets with engineering before freezing a composition; retain a usable no-image/system-font fallback when applicable.
+
 For substantial new work or redesign, add `brand characteristic → concrete visual/interaction choice → specimen → target mapping → finding`. For example, a proposed calm editorial identity can mean concise selected-object headings, exact aligned values, thin grouping rules and generous space around the primary result. It need not mean a large marketing hero or green on every surface. Demonstrate the choice with the selected identity asset, representative labels/values, one useful primary action and its consequential state; use the existing concept or affected screen rather than a separate ceremony. Confirm critical native asset/font/layout mappings with engineering. Record imagery as selected, explicitly omitted or optional, not a universal requirement; retain proposed versus accepted status. Use [visual craft](../../omni-design-systems/references/visual-craft.md). A focused correction reuses the existing direction.
 
 ## Purposeful asset manifest
@@ -60,13 +63,20 @@ source: <official page URL / supplied file / original work>
 brand_and_purpose: <identity, orientation, analytical explanation; omit decoration with no value>
 evidence_type: <observed reference / supplied approved asset / original candidate>
 permission: {status: unresolved, evidence_ref: null, permitted_use: null}
-file: {path: null, sha256: null, media_type: null, dimensions: null}
+file: {path: null, sha256: null, bytes: null, media_type: null, dimensions: null}
 composition: {focal_point: null, crop: null, aspect_ratio: null, appearance_variant: null, expected_placement: null}
+display_suitability: {intended_size: null, pixel_observation: null, source_date_or_era: null, limitations: null}
 accessibility: {alt_text: null, decorative: false}
-runtime: {loading_source: null, network_requirement: none, fallback: null}
+runtime: {loading_source: null, network_requirement: none, assembled_budget_ref: null, fallback: null}
 decision: <reference_only / proposed_for_use / eligible_for_scoped_use / rejected>
 ```
 
 Retain local bytes/hash only when actually obtained within scope; do not invent a download or permission record. Preserve aspect ratio and relevant crop/focal detail. Include font family/weight, licensing evidence and loading/fallback separately. New hosted assets or external network requirements remain explicit implementation decisions; a useful local/system-font design can proceed without them. Reference screenshots are research evidence, not assets to embed into the customer's App. Public package specimens must be original/synthetic or have suitable redistribution rights.
 
+Before the selected composition depends on an asset, compare its actual resolution and permitted pixel inspection with the intended display size and crop. Inspect for blurred/lazy-load placeholders, destructive cropping, illegible logo variants and unsuitable upscaling; metadata alone cannot establish sharpness. A synthetic example: a 240px portrait may fit a compact identity card, while an editorial feature needs a suitably resolved image or a different composition. Record unknown source date/era; an archival image cannot establish current personnel, facilities or data. Respect no-rendering restrictions and label whichever pixel/native observations remain unperformed.
+
+Resolve the total assembled asset/font budget with engineering, including the chosen embedding overhead, before freezing the handoff. Preserve exact selected bytes and permitted transformations; reduce optional assets/weights or choose another authorized source when necessary. A source URL, successful download and valid hash establish different facts from native loading and visible suitability. Selected media also needs engineering's runtime qualification; an official watch page is not proof of an embeddable player.
+
 Return the selected manifest and a rendered brand specimen with actual theme/font/focus/selected-state findings. A brand-source update may invalidate assets/tokens and affected visual checks; it does not automatically reopen unrelated metric definitions or authorize a shared-theme mutation.
+
+Selected demo aliases and geography are separate presentation dependencies, not logo assets or source facts. Keep their current versions in the same handoff, with original source identity and precise location qualifications. Use the [alias and geography guide](demo-presentation.md) only when that change is requested; faithful migrations preserve names, locations and semantics by default.

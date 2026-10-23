@@ -15,6 +15,8 @@ For migrations, an attractive concept is not authority to change calculations, i
 
 ## Brief and assumptions
 
+For a material experience, retain the [shared experience brief](experience-brief.md) in the current design/intent records. Separate missing context from stated expectations lost in translation. A user asking for an expressive frontend has supplied a requirement even when exact typography or geometry still needs design work; do not reset that ambition to the default analytical layout.
+
 Start with the decision or task, not a list of screens. Use actual conversations or supplied evidence to establish the present workflow. If no user evidence is available, label the concept a hypothesis rather than fabricating interviews or user preferences.
 
 Reusable output card; shorten or omit fields that add no value:
@@ -35,15 +37,19 @@ success_observation: <what an observer could see during the task>
 status: proposed
 ```
 
-Prioritize assumptions with both serious consequences and weak evidence. A semantic assumption goes to the analyst/BI engineer or [backend handoff](../../omni-backend-handoff/SKILL.md); a visual prototype cannot settle it. A usability assumption may be explored with a task test. Do not conflate a user's requested feature, observed problem, inferred explanation, and selected solution.
+Prioritize assumptions with both serious consequences and weak evidence. A semantic assumption goes to the analyst/BI engineer or [backend handoff](../../omni-backend-handoff/SKILL.md); a visual prototype cannot settle it. A selected runtime dependency such as a native callback, media player or remote refresh goes to engineering for a bounded qualification before composing the whole experience around it. A usability assumption may be explored with a task test. Do not conflate a user's requested feature, observed problem, inferred explanation, and selected solution.
 
 ## Compare concepts before polishing
+
+If the uncertainty is frontend treatment, hold audience, question, data and key action constant while changing composition, navigation, type/image balance or disclosure. Comparing different business tasks can settle product scope, but cannot by itself resolve the original visual question. Use the [same-task context studio](experience-context-studio.md) to practice this distinction.
 
 When uncertainty warrants alternatives, try a small number of meaningfully different approaches, often two or three. Vary information grouping or interaction, not merely colors. State required features, source constraints, and excluded behavior in an agent's assignment so it does not invent capabilities. Preserve rejected ideas and reasons briefly; do not turn an arbitrary scoring total into evidence.
 
 For substantial visual work, render the alternatives with the same representative data/context and wide/narrow states. Resolve the selected screen using [visual craft](visual-craft.md); preserve render references and distinguish mockup, native implementation and human observation. A prose comparison alone does not test typography, proportion or density.
 
 Use a comparison card: `concept → task path → advantages → tradeoffs → unsupported assumptions → prototype decision and rationale`. Assess the relevant criteria: task clarity, faithful coverage, inspection effort, accessibility, target feasibility, and maintainability. Selection for a local prototype is a working decision, not business acceptance or publication permission.
+
+Make a reasoned working selection when the brief supports it; do not turn every internal alternative into a customer question. Before expanding a substantial App, follow the [first complete journey](experience-brief.md#build-the-first-complete-journey-early) through the actual assembled candidate. This tests how the entry, working view and detail connect; an attractive opening alone leaves the rest of the experience unresolved. Under no-rendering constraints, source/interaction rehearsal can expose structural faults while visual judgment remains unobserved.
 
 ### Synthetic worked example: inventory investigation
 

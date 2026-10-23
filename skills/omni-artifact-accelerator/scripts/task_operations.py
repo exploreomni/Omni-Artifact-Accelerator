@@ -87,6 +87,9 @@ def read_packet(root, project, path):
     ap.need(not rules.outputs_overlap(assignment['outputs'], list(inputs)) and
             not any(p.casefold().startswith(('inputs/', 'contracts/', 'tasks/', 'evidence/')) for p in assignment['outputs']), 'Outputs overlap retained evidence')
     ap.need(not rules.outputs_overlap(assignment['outputs'], [r['path'] for r in project['sources']]), 'Outputs overlap registered source evidence')
+    report = ap.packet_check(root, path)
+    ap.need(report["status"] == "consistent",
+            "Task packet changed or context changed; prepare a revised assignment: " + str(report["findings"]))
     return assignment, ap.digest(raw)
 
 

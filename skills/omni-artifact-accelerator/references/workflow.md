@@ -32,6 +32,16 @@ Apps suit guided tools and bespoke interactions. Dashboards suit monitoring, com
 
 Workers can run concurrently when their inputs are stable. Analyst and brand discovery can overlap; app/dashboard designs share a frozen metric and token contract. BI bindings precede data wiring. Motion consumes named interaction states. QA can define tests early from original sources, then test final outputs independently. Coordinator resolves conflicts with explicit decisions rather than a majority vote.
 
+## Experience continuity
+
+For substantial new experience work or a design-quality correction, apply the [shared experience brief](../../omni-design-systems/references/experience-brief.md). Reconcile the user's already stated quality expectations before asking for missing choices. Resolve first encounter, returning-user route, art direction, primary action and relevant constraints in the existing selected design and [named intent requirements](design-intent.md#experience-requirements). Optional imagery, motion and exact fonts remain optional unless the brief makes them consequential requirements.
+
+Design, branding, engineering, storytelling, motion and QA use the same selected intent, including on direct invocation. At dispatch/resume compare the packet's `design_context.selected_intent` with the current `intent-check` selection and recheck its inputs; an old packet is not updated automatically. New feedback creates a versioned decision and affected work, not a second interview for every specialist. Independently useful analyst/backend work can proceed without the visual asset bundle.
+
+Use the read-only [packet-check command](design-intent.md#current-context-and-resume) to perform that comparison for issued handoffs. Keep `START_HERE.md` aligned with the derived current-context index and list superseded proposals as historical. Supply runtime inputs, callback evidence and authorized demo aliases explicitly when the assigned task depends on them. A descriptive path is not a pinned input, and a consistent handoff is not proof that omitted dependencies are unnecessary.
+
+Keep one trace in the design/review records: `user requirement → selected composition/behavior → implementation → observation/gap`. Hold task and data constant across frontend alternatives. Record material engineering substitutions and return them for designer critique. The [context studio](../../omni-design-systems/references/experience-context-studio.md) demonstrates this with original synthetic content; it is not the required layout for future work.
+
 ## Stages and evidence
 
 For a new experience or material redesign, the preferred design loop is **brief → distinct concepts → reasoned selection → prototype the critical task → observe → revise**. Use the [ideation playbook](../../omni-design-systems/references/ideation-playbook.md), the selected designer's pattern library and [usability protocol](../../omni-qa-analyst/references/usability-testing.md). Adapt the effort to the uncertainty; a known layout correction or faithful migration does not require a new concept exercise. Unavailable participants leave an explicit testing gap while authorized work continues.
@@ -70,3 +80,7 @@ Use the existing contracts and QA lane records; these phrases are reporting guid
 ## User experience of the agent
 
 Keep the analyst in control with small choices and a current artifact. Reuse already answered questions, show reasonable proposals when preferences are optional, and explain only material blockers. Each update should state what changed, what was learned, and the next useful action. Do not force the user to coordinate the specialists or answer twelve separate interviews.
+
+## First-delivery integration
+
+For substantial App work, use [requirement coverage and the first-delivery loop](first-delivery.md) before scaling the implementation. `plan` assigns applicable capabilities to existing roles; `experience-check` checks declared requirement/destination coverage, not visual quality. Bring the first assembled journey back to the designer, then review every consequential destination. Retain runtime limitations and unchanged migration/DMA authority.

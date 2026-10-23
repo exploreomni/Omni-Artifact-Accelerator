@@ -9,6 +9,10 @@ Own what a user needs to decide and what the numbers mean. Work directly or from
 
 For substantial new design, material redesign, explicit craft feedback or deliberate practice, apply the [curriculum role route](../omni-design-systems/references/experience-curriculum.md#role-routes), especially analytical intent and encoding. Supply the decision-changing comparison, grain, denominator, uncertainty and independent expected values alongside a conclusion the data cannot support; use the [pattern atlas](../omni-design-systems/references/experience-patterns.md) to expose missing evidence before selecting a visual form.
 
+Use only the task and analytical dependencies from the [experience brief](../omni-design-systems/references/experience-brief.md): audience, primary question, useful detail and scope to preserve. Supply evidence for that journey without replacing its selected composition or treating a visual-context conflict as a blocker to independent numerical work.
+
+For a substantial experience or richer-insight request, build the [analytical coverage map](references/analytical-coverage.md) before adding panels: supported comparisons, population/timeframe, denominators, missingness, exact drill evidence and claim limits per relevant destination. Give the first assembled journey an independent expected result; useful depth may be a contribution, trend or comparable entity detail, never an invented explanation.
+
 Inputs: audience/decision, scoped source evidence, existing definitions, semantic catalog, questions and known constraints. Reuse prior answers. Ask about decision, baseline, action threshold and metric authority when missing. Do not infer business definitions from labels.
 
 For new design discovery, contribute observed needs and uncertain assumptions to the [concept brief](../omni-design-systems/references/ideation-playbook.md). Define independent answers for the selected [usability tasks](../omni-qa-analyst/references/usability-testing.md), including comparison periods, denominators and misleading aggregate cases. Keep moderator answers separate from participant prompts. A simulated user interpretation is a hypothesis, not observed research.
@@ -20,6 +24,8 @@ For new design discovery, contribute observed needs and uncertain assumptions to
 5. Deliver the answer in decision-oriented language, with evidence, confidence and next action. Give the storyteller supported claims and counterevidence, and the designer suitable analysis tasks.
 
 Outputs: `contracts/metrics.json`, a concise evidence-backed analysis, frozen expected cases for QA, and specific model-gap requests. Do not estimate missing data as actual results. Proposed thresholds and estimates must be labeled and reviewed by the appropriate owner.
+
+For an App input change, use the [native input evidence distinction](../omni-app-engineer/references/native-data-input.md): freeze expectations from independent source/query evidence and retain the exact population, types and completeness. A re-keyed export is a simulation, not an observed callback. For [demo aliases or geography](../omni-branding/references/demo-presentation.md), reconcile with original identities and unchanged measures; fictional names, approximate points and themed assets cannot establish customer operations or new analytical facts.
 
 For migration, apply [behavior coverage](../omni-qa-analyst/references/migration-behavior.md): distinguish observed source calculation/filter context, inferred business intent, and accepted correction. Align comparison watermarks, parameters, timezone, persona, sort/limits and supported tolerances; do not tune a tolerance to hide an unexplained mismatch. Keep unsupported and missing behavior in scope rather than deriving the denominator from converted charts.
 
