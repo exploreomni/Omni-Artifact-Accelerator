@@ -366,7 +366,16 @@ def import_dma(root, review):
     return {"status": "imported_candidate", "path": str(destination), "native_verified": False}
 
 
-def packet(root, role, inputs, output):
+def routing_helper(name='task_routing'):
+    import importlib.util
+    need(name in {'task_routing', 'task_operations'}, 'unknown routing helper')
+    spec = importlib.util.spec_from_file_location('oaa_' + name, Path(__file__).with_name(name + '.py'))
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def packet(root, role, inputs, output, assignment=None):
     root, obj = load_project(root)
     need(role in ROLES, "unknown specialist role")
     need(bool(inputs), "select at least one bounded input")
@@ -406,7 +415,23 @@ def packet(root, role, inputs, output):
     if obj.get("dma_import"):
         result["current_dma_catalog"] = obj["dma_import"].get("catalog_path", "inputs/dma-catalog.json")
         result["baseline_note"] = "Other DMA catalogs are historical comparison evidence, not the current working binding."
-    write_json(output, result)
+    if assignment is not None:
+        routing = routing_helper()
+        assignment = routing.bind_assignment(assignment, task_id=assignment.get('task_id'), role=role,
+                                             bindings={r['path']: r['sha256'] for r in records})
+        need(set(assignment['dependencies'].values()) <= set(assignment['input_bindings'].values()),
+             'Dependency versions must be represented in the selected input files')
+        need(not routing.outputs_overlap(assignment['outputs'], list(assignment['input_bindings'])),
+             'Candidate outputs cannot overwrite selected evidence')
+        need(not any(p.casefold().startswith(('inputs/', 'contracts/', 'tasks/', 'evidence/')) for p in assignment['outputs']),
+             'Specialist candidates belong outside retained input and contract directories')
+        result.update(task_id=assignment['task_id'], assignment=assignment,
+                      assignment_sha256=routing.fingerprint(assignment), objective=assignment['objective'])
+        del result['host_must_supply']
+    else:
+        result['assignment_status'] = 'legacy_untracked'
+    if output is not None:
+        write_json(output, result)
     return result
 
 
@@ -421,11 +446,16 @@ def main():
     cmd.add_argument("--branding", choices=("unknown", "requested", "none"),
                      help="defaults to requested with --website, otherwise unknown")
     cmd.add_argument("--website", help="official company HTTPS website; does not select a logo")
-    for command in ("plan", "verify", "import-dma", "register", "packet", "design-freeze", "design-check", "design-pin",
-                    "intent-select", "intent-check", "intent-cases"):
+    for command in ("plan", "verify", "import-dma", "register", "packet", "packet-bindings", "design-freeze", "design-check", "design-pin",
+                    "intent-select", "intent-check", "intent-cases", "claim-work", "prepare-dispatch", "record-dispatch",
+                    "checkpoint-work", "work-status", "review-work"):
         cmd = commands.add_parser(command)
         cmd.add_argument("--project", required=True)
-        if command == "design-pin":
+        if command in ("claim-work", "prepare-dispatch", "record-dispatch", "checkpoint-work", "review-work"):
+            cmd.add_argument('--request', required=True)
+        elif command == 'work-status':
+            cmd.add_argument('--html', help='new or existing generated project-local status HTML')
+        elif command == "design-pin":
             cmd.add_argument("--path", required=True)
         elif command in ("design-freeze", "intent-select"):
             cmd.add_argument("--spec", required=True)
@@ -438,14 +468,25 @@ def main():
             cmd.add_argument("--kind", choices=("sources", "artifacts"), required=True)
             cmd.add_argument("--path", required=True)
             cmd.add_argument("--id", required=True)
-        elif command == "packet":
+        elif command in ("packet", "packet-bindings"):
             cmd.add_argument("--role", choices=tuple(ROLES), required=True)
             cmd.add_argument("--input", action="append", required=True)
-            cmd.add_argument("--output", required=True)
+            if command == 'packet':
+                cmd.add_argument("--output", required=True)
+                cmd.add_argument('--assignment', help='explicit versioned specialist assignment JSON')
     args = parser.parse_args()
     try:
         if args.command == "init":
             result = init(args.output, args.name, args.mode, args.surface, args.branding, args.website)
+        elif args.command in ('claim-work', 'prepare-dispatch', 'record-dispatch', 'checkpoint-work', 'review-work', 'work-status'):
+            operations = routing_helper('task_operations')
+            if args.command == 'work-status':
+                result = operations.status(args.project, args.html)
+            else:
+                request, _ = read_json(args.request)
+                function = {'claim-work': operations.claim, 'prepare-dispatch': operations.prepare_dispatch, 'record-dispatch': operations.record_dispatch,
+                            'checkpoint-work': operations.checkpoint, 'review-work': operations.review_work}[args.command]
+                result = function(args.project, request)
         elif args.command == "plan":
             result = plan(args.project)
         elif args.command == "verify":
@@ -466,8 +507,13 @@ def main():
             result = import_dma(args.project, args.review)
         elif args.command == "register":
             result = register(args.project, args.kind, args.path, args.id)
+        elif args.command == 'packet-bindings':
+            preview = packet(args.project, args.role, args.input, None)
+            result = {'role': args.role, 'input_bindings': {r['path']: r['sha256'] for r in preview['inputs']},
+                      'input_bytes': preview['input_bytes'], 'agents_dispatched': False}
         else:
-            result = packet(args.project, args.role, args.input, args.output)
+            result = packet(args.project, args.role, args.input, args.output,
+                            read_json(args.assignment)[0] if args.assignment else None)
         print(json.dumps(result, indent=2))
         return 1 if result.get("status") == "inconsistent" or (args.command == "design-check" and
                     result.get("coverage") == "incomplete") else 0
