@@ -185,9 +185,10 @@ requirements ledger. Maintain the chain:
 Advance only when the stage's evidence is sufficient; continue unrelated work when
 one branch is blocked. Use the [executable stage gates](stage-gates.md) before
 dispatch, authoring and candidate review, alongside startup/ownership and delivery
-checks. Supported entrypoints reject missing or stale predecessors and require a
-trusted host verifier for the actual option choice. The stock CLI stops at choice;
-no production host adapter is shipped. Local files cannot authenticate effective
+checks. Supported entrypoints reject missing or stale predecessors. Explicit chat
+workflow configuration records the actual user response against the exact options;
+strict host verification remains available without automatic fallback. Chat choice
+evidence is agent-attested and cannot authorize privileged operations. Local files cannot authenticate effective
 access or certify design quality. Raw shell/file writes outside the package require
 host enforcement; they are not constrained by a Python helper.
 

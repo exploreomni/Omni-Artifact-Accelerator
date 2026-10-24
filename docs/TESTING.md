@@ -39,7 +39,10 @@ The [harness qualification contract](../harness/SECURITY.md) identifies those ou
 The `stage-gates` and `stage-gate-integration` source cases cover A–F ordering,
 exactly three options, host-verifier absence/revocation, stale evidence, role/output
 bypasses, automatic candidate freezing, candidate-bound reviews and interrupted
-commit recovery. Synthetic host providers stay in tests. Passing these cases does
+commit recovery. The `conversation-choice` case checks actual-response record shape,
+exact option binding, explicit policy adoption, evidence freshness and design/review
+ordering. `native-stage-gates` also proves conversation mode cannot reach the
+three legacy native mutation transports. Synthetic host providers stay in tests. Passing these cases does
 not qualify a production host, prove that evidence claims are true or constrain
 agents with unrestricted access outside the guarded entrypoints.
 

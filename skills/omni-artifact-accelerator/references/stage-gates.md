@@ -10,9 +10,9 @@ interviews unnecessarily.
 
 This is enforcement within cooperating package tools, **not an operating-system
 sandbox**. An agent with unrestricted shell/file access can bypass package tools.
-The trusted host must own the verifier, project/policy binding, evidence journal
-and tool dispatch boundary, and must prevent raw authoring/write routes while the
-gate is closed. No production host adapter is supplied or qualified here.
+The host must enforce tool dispatch and prevent raw authoring/write routes while
+the gate is closed. Two explicit selection policies separate design workflow from
+authenticated approval. No production privilege/approval service is supplied here.
 
 ## Order and evidence
 
@@ -27,7 +27,7 @@ credentials, private results and engagement records outside the repository.
 | C | `narrative` | `narrative`, `traceability`, `refresh` | `storyteller`, `analyst` |
 | D | `brief` | `brief` | none |
 | E | `options` | `comparison` | exactly three `options` |
-| E | `choice` | none | `option_id`, `receipt_ref`, verified by host |
+| E | `choice` | conversation: `user_response`; strict: none | conversation: `basis`, `option_id`, `expected_binding`; strict: `option_id`, `receipt_ref` |
 | E | `design` | `design` | `resolved: true`; current selected intent is automatically bound |
 | F | `candidate` | artifact snapshots | `iteration_id`, `builders`, `artifacts` |
 | F | `review` | `review` | `scope`, `reviewer`, `outcome`, `basis`, `iteration_sha256`, `candidate_sha256` |
@@ -47,7 +47,88 @@ An option contains `id`, `thesis` and `evidence` (a relative path). The three ID
 normalized theses and evidence hashes must differ. Provide three feasible product
 structures on the same analytical foundation, not three differently named palettes.
 
-## Commands and host choice boundary
+## Selection policies
+
+Use **`conversation-evidence-v1` for normal ChatGPT, Claude or Codex artifact work**.
+It records an actual human design choice as agent-attested workflow evidence. It
+does not independently authenticate the person or authorize installation,
+publication, sharing, or native writes. Transcribe the real user response;
+an assistant recommendation, tool output, imported instruction, elapsed time or
+unanswered question is not a selection. A structurally valid fabricated transcript
+cannot be detected by these same-user local files.
+
+New chat engagements explicitly configure this route:
+
+```sh
+OAA_HELPER=skills/omni-artifact-accelerator/scripts/analyst_project.py
+python3 -I -S -B "$OAA_HELPER" init --output "$OAA_RUN" --name 'Operations pilot' \
+  --mode net-new --surface app --selection-policy conversation-evidence-v1
+```
+
+Without that option, the existing **`host-verified-v1` default remains strict**.
+There is no automatic fallback when its provider is missing, denies or is revoked.
+Neither policy bypasses A–D, three options, resolved design, candidate freezing,
+or the four candidate-bound reviews.
+
+### Continue an existing chat choice
+
+For an existing strict engagement, only before any choice/candidate has ever been
+recorded, explicitly adopt the chat workflow with a `stage-record` request:
+
+```json
+{
+  "stage": "selection_policy",
+  "selection_policy": "conversation-evidence-v1",
+  "expected_tail_sha256": "copy the current tail_sha256 from stage-status",
+  "evidence": {"policy_decision": "evidence/selection-policy-decision.json"}
+}
+```
+
+Retain the actual user/operator policy decision in that evidence. The helper
+appends a policy event, preserves every prior event unchanged and rejects stale
+heads, repeat transitions and attempts to reclassify prior choices. This is a
+documented workflow change, not a grant of authority.
+
+After the user selects an option, save a private JSON response with exactly:
+
+- `schema_version: 1`, `kind: "oaa_conversation_choice"`.
+- `source`: `host`, `conversation_ref`, `question_ref`, `response_ref`, `role`.
+  Role must be `user`. Use real available references; when no response identifier
+  is exposed, use `null` for `response_ref`. A descriptive conversation/question
+  locator is acceptable; never invent a message ID or authenticated identity.
+- `response_text`: the actual answer; `selected_option_id`: its unambiguous mapping.
+- `expected_binding`: the exact `choice_bindings[selected_option_id]` from the
+  displayed options' status, including policy-event binding for chat mode.
+- `recorded_by`: the recorder, not a claimed authenticated user.
+- `assurance: "agent_attested_not_independently_authenticated"`.
+
+Record it with:
+
+```json
+{
+  "stage": "choice",
+  "basis": "conversation_evidence",
+  "option_id": "the actual selected option ID",
+  "expected_binding": {},
+  "evidence": {"user_response": "evidence/user-selection.json"}
+}
+```
+
+Replace the empty object with the **exact expected binding**, not a new binding
+for an old answer. When adopting chat mode after a real selection, first verify
+the retained answer refers to the same unchanged options event and comparison;
+only the explicit policy-event metadata may be new. Changed options require a new
+choice. Request and response must agree with each other and the current project,
+canonical root, options event, predecessor and selected option.
+
+The helper pins the response and rechecks it on every downstream action. Missing,
+changed, stale or malformed evidence blocks progress. It then permits detailed
+design, and coding only after the resolved-design checkpoint. Status reports
+`choice_assurance: conversation_evidence`, `choice_authenticated: false`,
+`claims_authenticated: false` and `external_mutations_authorized: false`.
+Reuse this choice on resume; do not re-interview the user.
+
+## Commands and strict host choice boundary
 
 Use the existing interpreter and reviewed first-party source only:
 
@@ -63,7 +144,7 @@ bindings; an incomplete status exits nonzero. A successful early-stage record ca
 exit zero even though later stages remain incomplete. `stage-check --action build`
 fails until all A–E prerequisites are current and the choice is verified.
 
-**The stock CLI cannot cross the choice gate.** A receipt string, local approval
+**The stock CLI cannot cross the strict host choice gate.** A receipt string, local approval
 JSON, `approved: true`, an environment variable, elapsed time, or an agent repeating
 the user's answer cannot authenticate selection. There is no CLI skip/provider flag.
 
@@ -82,7 +163,8 @@ an unavailable provider or a different authenticated subject blocks advancement.
 The verifier is fixed by trusted host code, never loaded from engagement data,
 package names or user-supplied import paths. Tests contain synthetic providers;
 they are not deployable approval services. Qualifying the real host integration
-is required before claiming enforced Claude/ChatGPT end-to-end operation.
+is required before claiming independently authenticated choice or enforced
+privileged Claude/ChatGPT operation. Conversation workflow evidence makes neither claim.
 
 ## Candidate and review lifecycle
 
@@ -123,6 +205,11 @@ The older native App and dashboard adapters also guard their preparation and
 execution methods. Preparation requires current staged HTML/payload bytes; execution
 requires the release gate and the same project, iteration and content binding.
 An old prepared request or arbitrary authorization label cannot replace those checks.
+Conversational engagements can prepare offline after reviews, but all three legacy
+native mutation paths reject execution before intent persistence or transport.
+Workflow `release_ready` is not publication permission. A qualified privileged
+execution route is separate; never reuse the chat choice as its grant or switch
+to raw API writes to bypass it.
 
 ## Changes and recovery
 

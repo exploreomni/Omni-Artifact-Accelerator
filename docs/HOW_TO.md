@@ -27,9 +27,12 @@ then resolve design and implement with security/UI/UX/PO/QA feedback each iterat
 The setup commands create a gated engagement; they do not perform the analysis or
 authenticate access. [Executable gates](../skills/omni-artifact-accelerator/references/stage-gates.md)
 enforce order at package entrypoints. All new modes are gated, including enhancement
-and migration. Existing evidence can be reused when current. The stock CLI stops
-at option selection until a trusted host verifier is integrated; no production
-adapter ships, and local approval files cannot authorize coding.
+and migration. Existing evidence can be reused when current. For normal chat,
+explicitly configure `--selection-policy conversation-evidence-v1` at initialization
+and follow the [chat-choice handoff](../skills/omni-artifact-accelerator/references/stage-gates.md#continue-an-existing-chat-choice).
+It retains the actual reply for local design/coding without claiming authenticated
+approval. Strict engagements never fall back automatically; native writes and
+dependency use retain separate controls.
 
 ### 1. Create a private engagement
 
@@ -38,9 +41,10 @@ Keep the output outside both the repository and skill installation. The parent d
 ```sh
 mkdir -p "$HOME/omni-artifact-runs"
 OAA_RUN="$HOME/omni-artifact-runs/operations-pilot"
-python skills/omni-artifact-accelerator/scripts/analyst_project.py init \
-  --output "$OAA_RUN" --name 'Operations pilot' --mode net-new --surface both
-python skills/omni-artifact-accelerator/scripts/analyst_project.py plan \
+python3 -I -S -B skills/omni-artifact-accelerator/scripts/analyst_project.py init \
+  --output "$OAA_RUN" --name 'Operations pilot' --mode net-new --surface both \
+  --selection-policy conversation-evidence-v1
+python3 -I -S -B skills/omni-artifact-accelerator/scripts/analyst_project.py plan \
   --project "$OAA_RUN"
 ```
 
@@ -48,7 +52,7 @@ Choose `dashboard`, `app` or `both`. Use `--mode enhancement` for a change to an
 
 After each A–F checkpoint, use `stage-record --project "$OAA_RUN" --request <request.json>`
 and `stage-status --project "$OAA_RUN"`. Before coding, the host must pass
-`stage-check --project "$OAA_RUN" --action build` through its trusted choice verifier.
+`stage-check --project "$OAA_RUN" --action build` through its configured selection policy; native mutation authority remains separate.
 See the [record schemas and host contract](../skills/omni-artifact-accelerator/references/stage-gates.md).
 Do not work around a blocked gate by using a raw file writer or another authoring helper.
 

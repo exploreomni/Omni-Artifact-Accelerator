@@ -184,6 +184,26 @@ class NativeStageGateTests(unittest.TestCase):
         if outcome:
             fixture.gates.reviews(outcome)
 
+    def conversation_design(self, fixture):
+        """Record synthetic conversation evidence without a verification provider."""
+        P.stage_record(fixture.root, {'stage': 'selection_policy',
+            'selection_policy': 'conversation-evidence-v1',
+            'expected_tail_sha256': P.stage_status(fixture.root)['tail_sha256'],
+            'evidence': {'policy_decision': fixture.gates.evidence('conversation-policy')}})
+        fixture.gates.through('options')
+        binding = P.stage_status(fixture.root)['choice_bindings']['option-1']
+        response = {'schema_version': 1, 'kind': 'oaa_conversation_choice',
+            'source': {'host': 'codex', 'conversation_ref': 'synthetic-conversation',
+                'question_ref': 'synthetic-question', 'response_ref': None, 'role': 'user'},
+            'response_text': 'I choose option-1', 'selected_option_id': 'option-1',
+            'expected_binding': binding, 'recorded_by': 'fixture-agent',
+            'assurance': 'agent_attested_not_independently_authenticated'}
+        evidence = fixture.gates.evidence('conversation-response', json.dumps(response))
+        P.stage_record(fixture.root, {'stage': 'choice', 'basis': 'conversation_evidence',
+            'option_id': 'option-1', 'expected_binding': binding,
+            'evidence': {'user_response': evidence}})
+        fixture.gates.stage('design')
+
     def test_fresh_projects_and_missing_project_block_all_authoring_before_transport(self):
         for kind in ('dashboard', 'patch', 'initial'):
             with self.subTest(kind=kind):
@@ -241,6 +261,28 @@ class NativeStageGateTests(unittest.TestCase):
                     receipt = self.execute(fixture, candidate)
                 self.assertEqual(receipt['status'], 'readback_matched')
                 self.assertEqual(fixture.fake.patch_count, 1)
+
+    def test_conversation_choice_allows_preparation_but_blocks_every_native_write(self):
+        for kind in ('dashboard', 'patch', 'initial'):
+            with self.subTest(kind=kind):
+                fixture = self.fixture(kind)
+                self.conversation_design(fixture)
+                self.stage(fixture, self.artifact(fixture))
+                status = P.stage_require(fixture.root, 'release')
+                self.assertEqual(status['selection_policy'], 'conversation-evidence-v1')
+                self.assertEqual(status['choice_assurance'], 'conversation_evidence')
+                self.assertFalse(status['choice_authenticated'])
+                candidate = self.prepare(fixture)
+                self.assertEqual(fixture.adapter._candidate(candidate)['engagement']['candidate_sha256'],
+                                 status['candidate_sha256'])
+                # The actual capability probe remains available in this mode.
+                fixture.adapter.capabilities()
+                self.clear_calls(fixture)
+                with self.assertRaisesRegex(ValueError, 'Conversation evidence cannot authorize native mutation'):
+                    self.execute(fixture, candidate)
+                self.assertFalse((fixture.adapter.store / 'execution.lock').exists())
+                self.assertFalse((fixture.adapter.store / 'executions').exists())
+                self.no_transport(fixture)
 
     def test_unresolved_review_blocks_execute_without_transport_or_intent(self):
         for kind in ('dashboard', 'patch', 'initial'):

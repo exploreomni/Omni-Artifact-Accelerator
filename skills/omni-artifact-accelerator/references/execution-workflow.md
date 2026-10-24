@@ -9,8 +9,10 @@ Record startup first, then verify source/user access, analyze governed queries a
 complete the reusable narrative before artifact discovery. Present three viable
 options and obtain the user's selection before detailed design/full implementation.
 The [executable stage gates](stage-gates.md) enforce that sequence at supported
-entrypoints and require a trusted host verifier for actual option selection. The
-stock CLI stops at choice. No production host adapter ships; hosts must also guard
+entrypoints. For ordinary chat, initialize with `--selection-policy conversation-evidence-v1`
+and record the actual reply against the exact option set. Existing strict host
+engagements never fall back automatically. This is workflow evidence, not
+independently authenticated approval; hosts must also guard
 raw authoring routes, and local evidence does not authenticate effective access.
 It adds no universal layout, approval interview or permanent agent team. Focused
 repairs retain their current engagement and inspect only affected obligations.
@@ -28,8 +30,9 @@ Use only already authorized tools and original helpers. An inaccessible reposito
 is a startup gap; do not improvise a design-complete claim from engineering snippets.
 If local helper execution is unavailable, retain the same records as attachments
 and label checks `not_run`. Do not install a runtime or connector to close the gap.
-Gated implementation remains blocked until a capable trusted host can execute the
-checks and verify the actual choice; attachments and prose are not a bypass.
+Gated implementation requires a host that can execute the checks and retain the
+actual choice through the explicit conversation or strict verification route.
+Attachments and prose are not a bypass for an unrun check.
 
 For a repository-only blind trial, use only the selected checkout and supplied
 inputs. Do not compare installed copies or read previous apps, outputs or memory.

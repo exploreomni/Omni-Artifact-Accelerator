@@ -16,7 +16,8 @@ Run the helper from an installed bundle or this checkout. `OAA_HELPER` below poi
 
 ```sh
 python "$OAA_HELPER" init --output "$OAA_RUN" --name 'Operations pilot' \
-  --mode net-new --surface both --branding requested --website https://example.com
+  --mode net-new --surface both --branding requested --website https://example.com \
+  --selection-policy conversation-evidence-v1
 python "$OAA_HELPER" intent-check --project "$OAA_RUN"
 ```
 

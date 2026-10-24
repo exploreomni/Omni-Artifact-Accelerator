@@ -15,8 +15,10 @@ for the selected experience. Preserve existing dependency and publication author
 
 Pass the [executable build gate](../omni-artifact-accelerator/references/stage-gates.md)
 before any artifact code. Use guarded assembly/freeze and current candidate-bound
-reviews; raw file/API writes are not a fallback for blocked user selection. The
-standalone CLI stops without a trusted host choice verifier.
+reviews; raw file/API writes are not a fallback for blocked user selection.
+Explicit conversation-evidence engagements can continue local coding after the
+actual reply and resolved design are recorded. Strict host verification remains
+separate, and a chat choice never grants dependency or native-write permission.
 
 Consume the current [product-intent handoff](../omni-artifact-accelerator/references/product-intent.md)
 alongside the selected design. Return requirement coverage, unsupported methods and

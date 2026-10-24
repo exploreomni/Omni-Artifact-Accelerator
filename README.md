@@ -28,9 +28,12 @@ sets the order, while leaving the product's visual design open:
 
 Existing selected products and focused fixes reuse prior evidence and decisions.
 Publication follows its own authorization and verification. The [executable stage gates](skills/omni-artifact-accelerator/references/stage-gates.md)
-block missing/stale predecessors in package entrypoints and require host-verified
-selection before coding. **The stock CLI stops at selection: no production host
-choice verifier ships yet.** A local approval file cannot unlock it. Hosts must also
+block missing/stale predecessors in package entrypoints. In the explicit
+**conversation-evidence workflow**, your actual chat reply is recorded against the
+exact three options; resolved design is still required before coding. This is
+agent-attested workflow evidence, not independently authenticated approval. The
+strict host-verifier policy remains available and never falls back automatically.
+Conversation evidence cannot authorize installations or native writes. Hosts must also
 control direct shell/file/API routes; these helpers are not a sandbox or proof of
 visual quality. Using Omni's CLI/API does not implicitly invoke
 Omni AI/Blobby.
@@ -61,7 +64,8 @@ preserve source provenance, named responsibilities, first candidate bytes and
 current evidence. These augment existing intent and QA records. They do not run
 specialists, approve a dependency, or turn a published candidate into a polished,
 runtime-verified artifact. A host without gate execution can collect evidence and
-present options, but implementation needs a capable trusted host. An unrun gate is
+present options; a host with the helpers can continue local implementation using
+the recorded chat-choice workflow. Native execution retains separate controls. An unrun gate is
 not a passing gate.
 
 ## Preserve product intent through the workflow
@@ -146,7 +150,8 @@ python3 -I -S skills/omni-artifact-accelerator/scripts/analyst_project.py --help
 mkdir -p "$HOME/omni-artifact-runs"
 OAA_RUN="$HOME/omni-artifact-runs/operations-pilot"
 python3 -I -S skills/omni-artifact-accelerator/scripts/analyst_project.py init \
-  --output "$OAA_RUN" --name 'Operations pilot' --mode net-new --surface both
+  --output "$OAA_RUN" --name 'Operations pilot' --mode net-new --surface both \
+  --selection-policy conversation-evidence-v1
 python3 -I -S skills/omni-artifact-accelerator/scripts/analyst_project.py plan \
   --project "$OAA_RUN"
 ```

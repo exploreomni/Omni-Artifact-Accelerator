@@ -135,11 +135,12 @@ def load_project(root):
     return root, obj
 
 
-def init(output, name, mode, surface, branding=None, website=None):
+def init(output, name, mode, surface, branding=None, website=None, selection_policy='host-verified-v1'):
     root = no_links(output)
     need(mode in ("net-new", "migration", "enhancement"), "invalid mode")
     need(surface in ("dashboard", "app", "both"), "invalid surface")
     need(isinstance(name, str) and name.strip(), "name required")
+    need(selection_policy in {'host-verified-v1', 'conversation-evidence-v1'}, 'unknown selection policy')
     selected_surfaces = ["dashboard", "app"] if surface == "both" else [surface]
     intent = intent_helper().starter(selected_surfaces,
         branding if branding is not None else ("requested" if website else "unknown"), website)
@@ -181,7 +182,18 @@ def init(output, name, mode, surface, branding=None, website=None):
         "Maintain this entrypoint with the requested editable deliverables and evidence.\n"
         "Generated artifacts, local checks, native behavior, effective access, business acceptance "
         "and publication are separate evidence lanes.\n").encode())
-    return {"project": str(root), "status": "initialized", "agents_dispatched": False}
+    if selection_policy == 'conversation-evidence-v1':
+        # Configuration selects a workflow-evidence route, never a human answer
+        # or permission to execute. Older callers keep the strict default.
+        write_json(root / 'evidence/selection-policy.json', {
+            'kind': 'workflow_selection_policy_configuration',
+            'selection_policy': selection_policy, 'source': 'explicit init configuration',
+            'choice_received': False, 'authorizes_external_operations': False})
+        stage_record(root, {'stage': 'selection_policy', 'selection_policy': selection_policy,
+            'expected_tail_sha256': stage_status(root)['tail_sha256'],
+            'evidence': {'policy_decision': 'evidence/selection-policy.json'}})
+    return {"project": str(root), "status": "initialized", "agents_dispatched": False,
+            "selection_policy": selection_policy}
 
 
 def plan(root, scope_ids=None):
@@ -224,7 +236,7 @@ def plan(root, scope_ids=None):
             "scope_ids": scope_ids, "focused_scope_missing": focused and scope_ids is None,
             "scope_note": "For a focused repair, supply affected existing requirement IDs with --scope-id; do not restart the interview. Full intent remains in force.",
             "next_step": ("Continue only stage " + str(gates.get('next_stage')) +
-                          "; verify with stage-check. Choice requires the actual user and a trusted host verifier."
+                          "; verify with stage-check. Retain the actual user's choice using the configured selection policy."
                           if gates['required'] else
                           "Supply --scope-id for the affected known requirements; no new user interview is implied."
                           if focused and scope_ids is None else
@@ -680,6 +692,8 @@ def main():
     cmd.add_argument("--branding", choices=("unknown", "requested", "none"),
                      help="defaults to requested with --website, otherwise unknown")
     cmd.add_argument("--website", help="official company HTTPS website; does not select a logo")
+    cmd.add_argument('--selection-policy', choices=('host-verified-v1', 'conversation-evidence-v1'),
+                     default='host-verified-v1', help='explicit chat workflow evidence or strict host verification; never execution permission')
     for command in ("plan", "verify", "import-dma", "register", "packet", "packet-bindings", "design-freeze", "design-check", "design-pin",
                     "intent-select", "intent-check", "intent-cases", "claim-work", "prepare-dispatch", "record-dispatch",
                     "checkpoint-work", "work-status", "review-work", "packet-check", "experience-check",
@@ -727,7 +741,7 @@ def main():
     args = parser.parse_args()
     try:
         if args.command == "init":
-            result = init(args.output, args.name, args.mode, args.surface, args.branding, args.website)
+            result = init(args.output, args.name, args.mode, args.surface, args.branding, args.website, args.selection_policy)
         elif args.command == 'stage-status':
             result = stage_status(args.project)
         elif args.command == 'stage-record':

@@ -31,6 +31,7 @@ CASES = {
     "product-intent": "tests/test_product_intent.py",
     "stage-gates": "tests/test_stage_gates.py",
     "stage-gate-integration": "tests/test_stage_gate_integration.py",
+    "conversation-choice": "tests/test_conversation_choice.py",
     "native-stage-gates": "tests/test_native_stage_gate.py",
 }
 IGNORED = {".git", ".venv", "venv", "node_modules", "__pycache__", ".pytest_cache", ".ruff_cache"}

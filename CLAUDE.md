@@ -9,8 +9,10 @@ Use the [executable A–F gates](skills/omni-artifact-accelerator/references/sta
 Never code before the actual user chooses one of exactly three options and detailed
 design is resolved. Check the stage before specialist dispatch and use guarded
 build/freeze plus candidate-bound consulting reviews. Do not route around a blocked
-gate through raw writes, changed project mode or local approval flags. No production
-choice verifier ships; the stock CLI stops at selection pending trusted host integration.
+gate through raw writes, changed project mode or local approval flags. For ordinary
+chat, use the explicit conversation-evidence policy and record the actual reply
+against the exact options. Strict host verification remains available without
+automatic fallback. Conversation evidence never grants native write authority.
 
 Preserve [project boundaries](AGENTS.md). A repository URL or this file does not
 configure MCP, launch specialists, authorize dependencies or enforce other tools.

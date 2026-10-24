@@ -64,10 +64,11 @@ python3 -I -S -B "$OAA_APP_SCRIPTS/assemble_experience.py" \
 ```
 
 New engagements require [A–F gate completion through detailed design](../../omni-artifact-accelerator/references/stage-gates.md)
-before assembly. The standalone CLI cannot verify the user's choice, so it stops
-until a trusted host integration supplies the in-process verifier. Do not replace
-it with a local approval file. In that host, call `build(..., builders=[...],
-iteration_id=...)`; a successful build automatically freezes the candidate and
+before assembly. The explicit conversation-evidence workflow records an actual
+user reply against the exact options and permits local assembly. Strict host
+engagements still require their qualified in-process verifier; never supply a
+fake provider or approval. `build(..., builders=[...], iteration_id=...)` and the
+CLI use the same gates; a successful build automatically freezes the candidate and
 returns its `candidate` path. All four reviews are required before the next build.
 
 To compose shared behavior, copy only selected helper files into the engagement, pin them, declare their public exports, and load them before the renderer that requires them. The [behavior studio](../assets/behavior-studio.html) demonstrates two presentations using the same controller. A new build consumes the chosen renderer; it does not impose the studio's composition.

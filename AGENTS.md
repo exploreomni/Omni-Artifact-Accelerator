@@ -10,8 +10,11 @@ Inspect stage status before dispatch; never code a new product before the actual
 user selects one of exactly three options and detailed design is resolved. Use
 guarded assembly/freeze and candidate-bound reviews. A blocked gate is not permission
 to switch to raw shell/file/API authoring, change mode, delete policy or synthesize
-an approval. The stock CLI has no trusted choice verifier and stops at selection.
-The host must qualify its trusted adapter and enforce routes outside package helpers.
+an approval. For ordinary chat, explicitly configure the conversation-evidence
+selection policy and retain the actual user reply against the exact options.
+This permits local design/coding; it does not authenticate an approval or authorize
+native writes. Existing strict engagements never fall back automatically. The
+host must qualify privileged execution and enforce routes outside package helpers.
 
 Follow the workspace instructions and the [dependency policy](skills/omni-artifact-accelerator/references/dependency-policy.md).
 

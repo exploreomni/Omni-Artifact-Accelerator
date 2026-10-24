@@ -411,7 +411,8 @@ class NativeAdapter:
     def _stage_gate(self, action, content=None, *, expected=None, execution=False):
         """Bind native authoring to the cooperating project's current iteration.
 
-        The host supplies the trusted choice verifier in process. Neither an
+        Conversation-backed selection permits preparation, never native mutation.
+        The strict path uses the host's choice verifier in process. Neither an
         authorization label nor a local prepared candidate supplies that authority.
         Historical pre-policy projects retain their existing authorization path.
         """
@@ -420,6 +421,11 @@ class NativeAdapter:
             gate = WORKFLOW.ap.stage_require(self.root, action)
         except (ValueError, OSError, KeyError, TypeError) as exc:
             raise NativeError("Native authoring stage gate rejected: " + str(exc)) from exc
+        # Every native execute route calls this before lock/intent/transport and
+        # again before its write. Workflow release readiness is not write authority.
+        if action == "release" and (gate.get("selection_policy") == "conversation-evidence-v1" or
+                                    gate.get("choice_assurance") == "conversation_evidence"):
+            raise NativeError("Conversation evidence cannot authorize native mutation")
         if not gate["required"]:
             if expected is not None:
                 raise NativeError("Prepared candidate stage policy changed")

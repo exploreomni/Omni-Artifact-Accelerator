@@ -4,7 +4,9 @@ The host supplies an already qualified in-process provider with
 ``verify_choice(binding, receipt_ref) -> authenticated_subject | None``. It must
 authenticate an actual user's selection of these exact options in this engagement.
 No provider is loaded from requests, paths, environment variables or CLI arguments.
-Stored subjects/receipts are never sufficient: current choice is reverified.
+Stored subjects/receipts are never sufficient for the strict host policy.
+The explicit conversation-evidence policy records an actual user reply as
+workflow evidence only. It does not authenticate a person or grant execution.
 
 Evidence is hash pinned, not semantically authenticated. This module cannot stop
 arbitrary file/code edits, qualify a host, certify real access, prove how/when work
@@ -23,6 +25,8 @@ import secrets
 import stat
 
 POLICY = 'data-first-v1'
+HOST_SELECTION = 'host-verified-v1'
+CHAT_SELECTION = 'conversation-evidence-v1'
 JOURNAL = 'stage-gates.json'
 LOCK = '.stage-gates.lock'
 KIND = 'oaa_stage_gate_journal'
@@ -32,6 +36,7 @@ MAX_EVENTS = 256
 MAX_JOURNAL_BYTES = 2 * 1024 * 1024
 SOURCE_ROOT = Path(__file__).resolve().parents[3]
 EVIDENCE = {
+    'selection_policy': {'policy_decision'},
     'access': {'data', 'user_access'},
     'analysis': {'profile', 'queries', 'insights', 'expectations'},
     'narrative': {'narrative', 'traceability', 'refresh'},
@@ -39,6 +44,7 @@ EVIDENCE = {
     'review': {'review'},
 }
 EXTRA = {
+    'selection_policy': {'selection_policy', 'expected_tail_sha256'},
     'access': {'source_scope', 'user_identity'},
     'analysis': {'analyst', 'bi_engineer'},
     'narrative': {'storyteller', 'analyst'}, 'brief': set(),
@@ -48,7 +54,8 @@ EXTRA = {
 }
 LIMITS = (
     'Evidence integrity and recorded order only; no semantic/access/chronology authentication.',
-    'Choice requires a qualified host provider; no production provider ships here.',
+    'Conversation choices are agent-attested workflow evidence, not independently authenticated approval.',
+    'Strict host choices require a qualified provider; no production provider ships here.',
     'Raw file/code edits outside this API are not constrained.',
     'Review readiness does not authorize publication or certify native/rendered/human acceptance.',
 )
@@ -235,13 +242,25 @@ def _context(root, fd, P):
 
 def _payload_shape(stage, payload, saved=True):
     expected = set(EXTRA[stage]) | ({'evidence'} if stage in EVIDENCE else set())
-    if saved and stage == 'choice':
+    conversation = stage == 'choice' and payload.get('basis') == 'conversation_evidence'
+    if conversation:
+        expected = {'basis', 'option_id', 'expected_binding', 'evidence'}
+    elif saved and stage == 'choice':
         expected.add('subject')
     if saved and stage == 'design':
         expected.add('selected_intent')
     if saved and stage == 'candidate':
         expected.update({'prior_iteration_sha256', 'prior_reviews_sha256', 'candidate_sha256'})
     _need(type(payload) is dict and set(payload) == expected, 'stage_gate_invalid_' + stage + '_fields')
+    if stage == 'selection_policy':
+        _need(payload['selection_policy'] == CHAT_SELECTION and _hash(payload['expected_tail_sha256']),
+              'stage_gate_invalid_selection_policy')
+    if conversation:
+        _need(type(payload['evidence']) is dict and set(payload['evidence']) == {'user_response'},
+              'stage_gate_user_response_required')
+        value = payload['evidence']['user_response']
+        _pin_shape(value) if saved else _relative(value)
+        _need(type(payload['expected_binding']) is dict, 'stage_gate_expected_choice_binding_required')
     if stage in EVIDENCE:
         evidence = payload['evidence']
         _need(type(evidence) is dict and set(evidence) == EVIDENCE[stage], 'stage_gate_' + stage + '_evidence_required')
@@ -314,7 +333,8 @@ def _replay(root, project, journal, P):
     _need(type(events) is list and len(events) <= MAX_EVENTS, 'stage_gate_history_limit')
     current, reviews, last_reviews, iterations = {}, {}, {}, set()
     iteration_dependencies = []
-    candidate = last_candidate = None
+    candidate = last_candidate = selection_policy = None
+    choice_seen = False
     previous = P.digest(P.canonical({'project_id': project['id'], 'engagement': str(root), 'policy': POLICY}))
     for sequence, event in enumerate(events, 1):
         _need(type(event) is dict and set(event) == {'sequence', 'stage', 'previous_sha256',
@@ -332,14 +352,26 @@ def _replay(root, project, journal, P):
             raise ValueError('stage_gate_invalid_timestamp') from exc
         stage, payload = event['stage'], event['payload']
         _payload_shape(stage, payload)
-        if stage in STAGES:
+        if stage == 'selection_policy':
+            _need(selection_policy is None and not choice_seen and last_candidate is None,
+                  'stage_gate_selection_policy_already_fixed')
+            _need(payload['expected_tail_sha256'] == previous, 'stage_gate_selection_policy_tail_mismatch')
+            predecessor = previous
+            selection_policy = event
+        elif stage in STAGES:
             i = STAGES.index(stage)
             _need(all(s in current for s in STAGES[:i]), 'stage_gate_skipped_predecessor')
             _need(candidate is None or _complete(reviews), 'stage_gate_iteration_reviews_required')
             predecessor = current[STAGES[i - 1]]['sha256'] if i else None
             if stage == 'choice':
+                choice_seen = True
                 _need(payload['option_id'] in {o['id'] for o in current['options']['payload']['options']},
                       'stage_gate_choice_not_current_option')
+                _need((payload.get('basis') == 'conversation_evidence') == (selection_policy is not None),
+                      'stage_gate_choice_policy_mismatch')
+                if selection_policy is not None:
+                    _need(payload['expected_binding'] == _binding(root, project, current['options'],
+                          payload['option_id'], selection_policy), 'stage_gate_choice_binding_mismatch')
             for later in STAGES[i:]:
                 current.pop(later, None)
             current[stage] = event
@@ -372,13 +404,39 @@ def _replay(root, project, journal, P):
         previous = event['sha256']
     return {'current': current, 'candidate': candidate, 'reviews': reviews,
             'last_candidate': last_candidate, 'last_reviews': last_reviews,
-            'iteration_dependencies': iteration_dependencies, 'tail': previous}
+            'iteration_dependencies': iteration_dependencies, 'tail': previous,
+            'selection_policy': selection_policy, 'choice_seen': choice_seen}
 
 
-def _binding(root, project, options, option_id):
-    return {'policy': POLICY, 'project_id': project['id'], 'engagement': str(root),
+def _binding(root, project, options, option_id, selection_policy=None):
+    binding = {'policy': POLICY, 'project_id': project['id'], 'engagement': str(root),
             'options_sha256': options['sha256'], 'predecessor_sha256': options['predecessor_sha256'],
             'option_id': option_id}
+    if selection_policy is not None:
+        binding.update(selection_policy=CHAT_SELECTION, selection_policy_sha256=selection_policy['sha256'])
+    return binding
+
+
+def _conversation_response(fd, payload, P):
+    """Check provenance shape and exact binding, never authenticate a transcript."""
+    raw = _read(fd, payload['evidence']['user_response']['path'], 64 * 1024)
+    value = _json(raw, P)
+    _need(type(value) is dict and set(value) == {'schema_version', 'kind', 'source', 'response_text',
+          'selected_option_id', 'expected_binding', 'recorded_by', 'assurance'}, 'stage_gate_invalid_conversation_evidence')
+    _need(type(value['schema_version']) is int and value['schema_version'] == 1 and
+          value['kind'] == 'oaa_conversation_choice' and
+          value['assurance'] == 'agent_attested_not_independently_authenticated' and
+          _text(value['recorded_by'], 256), 'stage_gate_invalid_conversation_evidence')
+    source = value['source']
+    _need(type(source) is dict and set(source) == {'host', 'conversation_ref', 'question_ref', 'response_ref', 'role'} and
+          source['role'] == 'user' and all(_text(source[k], 1024) for k in ('host', 'conversation_ref', 'question_ref')) and
+          (source['response_ref'] is None or _text(source['response_ref'], 1024)), 'stage_gate_user_response_provenance_required')
+    answer = value['response_text']
+    _need(type(answer) is str and 0 < len(answer.strip()) <= 16384 and
+          not any(ord(c) < 32 and c not in '\n\r\t' for c in answer), 'stage_gate_user_response_text_required')
+    _need(value['selected_option_id'] == payload['option_id'] and
+          value['expected_binding'] == payload['expected_binding'], 'stage_gate_response_binding_mismatch')
+    return value
 
 
 def _subject(provider, binding, receipt_ref):
@@ -396,8 +454,15 @@ def _report(root, fd, project, required, state, P, provider):
               'status': 'not_applicable', 'next_stage': None, 'completed_stages': [], 'stage_bindings': {},
               'findings': [], 'choice_bindings': {}, 'candidate': None, 'candidate_sha256': None, 'reviews': {},
               'release_ready': False, 'claims_authenticated': False,
+              'selection_policy': CHAT_SELECTION if state['selection_policy'] else HOST_SELECTION,
+              'selection_policy_event_sha256': state['selection_policy']['sha256'] if state['selection_policy'] else None,
+              'tail_sha256': state['tail'], 'choice_assurance': None, 'choice_authenticated': False,
               'external_mutations_authorized': False, 'limits': list(LIMITS)}
     if not required:
+        return report
+    if state['selection_policy'] is not None and not _fresh(fd, state['selection_policy'], P):
+        report.update(status='blocked', next_stage='repair_selection_policy')
+        report['findings'].append('stale_evidence:selection_policy')
         return report
     current = state['current']
     for stage in STAGES:
@@ -415,16 +480,21 @@ def _report(root, fd, project, required, state, P, provider):
             report['next_stage'] = stage
             break
         if stage == 'choice':
-            subject = _subject(provider, _binding(root, project, current['options'],
-                               event['payload']['option_id']), event['payload']['receipt_ref'])
-            if subject is None or subject != event['payload']['subject']:
-                report['findings'].append('trusted_choice_unverified')
-                report['next_stage'] = 'choice'
-                break
+            if state['selection_policy'] is not None:
+                _conversation_response(fd, event['payload'], P)
+                report['choice_assurance'] = 'conversation_evidence'
+            else:
+                subject = _subject(provider, _binding(root, project, current['options'],
+                                   event['payload']['option_id']), event['payload']['receipt_ref'])
+                if subject is None or subject != event['payload']['subject']:
+                    report['findings'].append('trusted_choice_unverified')
+                    report['next_stage'] = 'choice'
+                    break
+                report.update(choice_assurance='host_verified', choice_authenticated=True)
         report['completed_stages'].append(stage)
         report['stage_bindings'][stage] = event['sha256']
     if 'options' in report['completed_stages']:
-        report['choice_bindings'] = {o['id']: _binding(root, project, current['options'], o['id'])
+        report['choice_bindings'] = {o['id']: _binding(root, project, current['options'], o['id'], state['selection_policy'])
                                     for o in current['options']['payload']['options']}
     last = state['last_candidate']
     if last:
@@ -466,6 +536,8 @@ def inspect(root, *, P=None, provider=None):
         return {'required': True, 'policy': POLICY, 'status': 'invalid', 'next_stage': 'repair_state',
                 'completed_stages': [], 'stage_bindings': {}, 'findings': ['stage_gate_invalid_state'], 'choice_bindings': {},
                 'candidate': None, 'candidate_sha256': None, 'reviews': {}, 'release_ready': False, 'claims_authenticated': False,
+                'selection_policy': None, 'selection_policy_event_sha256': None, 'tail_sha256': None,
+                'choice_assurance': None, 'choice_authenticated': False,
                 'external_mutations_authorized': False, 'limits': list(LIMITS)}
 
 
@@ -488,14 +560,18 @@ def candidate_commit_status(root, iteration_id, *, P=None):
 
 
 def _require(report, action, provider):
-    _need(action in {*STAGES, 'choose', 'build', 'candidate', 'review', 'release'}, 'stage_gate_unknown_action')
+    _need(action in {*STAGES, 'selection_policy', 'choose', 'build', 'candidate', 'review', 'release'}, 'stage_gate_unknown_action')
     if not report['required']:
         return
     _need(report['status'] != 'invalid', 'stage_gate_invalid_state')
+    _need('stale_evidence:selection_policy' not in report['findings'], 'stage_gate_stale_selection_policy')
+    if action == 'selection_policy':
+        _need(report['selection_policy'] == HOST_SELECTION, 'stage_gate_selection_policy_already_fixed')
+        return
     stage = {'choose': 'choice', 'build': 'candidate'}.get(action, action)
     needed = STAGES[:STAGES.index(stage)] if stage in STAGES else STAGES
     _need(set(needed) <= set(report['completed_stages']), 'stage_gate_predecessor_incomplete:' + action)
-    if stage in {'choice', 'design', 'candidate', 'review', 'release'}:
+    if stage in {'choice', 'design', 'candidate', 'review', 'release'} and report['selection_policy'] == HOST_SELECTION:
         _need(provider is not None and callable(getattr(provider, 'verify_choice', None)),
               'stage_gate_trusted_provider_required')
     if stage not in {'review', 'release'}:
@@ -552,8 +628,9 @@ def record(root, request, *, P=None, provider=None):
 
     Common requests: {stage, evidence: {required_name: relative_path}, ...}.
     EXTRA/EVIDENCE document the complete schema. review.basis defaults to source.
-    Choice accepts only option_id and opaque receipt_ref, authenticated by the
-    supplied provider. Review requests must name the expected iteration_sha256
+    Strict choice uses option_id and receipt_ref authenticated by the provider.
+    Explicit conversational choice uses a pinned response and caller-supplied
+    exact binding; it is not an approval grant. Review requests name iteration_sha256
     and candidate_sha256; they are checked, never silently restamped. Generated
     event/subject fields cannot be supplied. No host adapter or approval-minting
     command is included.
@@ -575,6 +652,11 @@ def record(root, request, *, P=None, provider=None):
         state = _replay(root, project, journal, P)
         before = _report(root, fd, project, required, state, P, provider)
         _require(before, stage, provider)
+        if stage == 'selection_policy':
+            _need(not state['choice_seen'] and state['last_candidate'] is None,
+                  'stage_gate_selection_policy_already_fixed')
+            _need(payload['expected_tail_sha256'] == before['tail_sha256'],
+                  'stage_gate_selection_policy_tail_mismatch')
         if stage == 'review':
             _need(payload['iteration_sha256'] == state['candidate']['sha256'] and
                   payload['candidate_sha256'] == state['candidate']['payload']['candidate_sha256'],
@@ -585,8 +667,16 @@ def record(root, request, *, P=None, provider=None):
             payload['options'] = [dict(o, evidence=_pin(fd, o['evidence'], P)) for o in payload['options']]
         if stage == 'choice':
             _need(payload['option_id'] in before['choice_bindings'], 'stage_gate_choice_not_current_option')
-            payload['subject'] = _subject(provider, before['choice_bindings'][payload['option_id']], payload['receipt_ref'])
-            _need(payload['subject'] is not None, 'stage_gate_trusted_choice_unverified')
+            if before['selection_policy'] == CHAT_SELECTION:
+                _need(payload.get('basis') == 'conversation_evidence', 'stage_gate_conversation_evidence_required')
+                _need(payload['expected_binding'] == before['choice_bindings'][payload['option_id']],
+                      'stage_gate_choice_binding_mismatch')
+                payload['evidence'] = {k: _pin(fd, v, P) for k, v in payload['evidence'].items()}
+                _conversation_response(fd, payload, P)
+            else:
+                _need('basis' not in payload, 'stage_gate_choice_policy_mismatch')
+                payload['subject'] = _subject(provider, before['choice_bindings'][payload['option_id']], payload['receipt_ref'])
+                _need(payload['subject'] is not None, 'stage_gate_trusted_choice_unverified')
         if stage == 'design':
             payload['selected_intent'] = project.get('design_intent')
         if stage == 'candidate':
@@ -597,7 +687,8 @@ def record(root, request, *, P=None, provider=None):
             payload['prior_reviews_sha256'] = _reviews_hash(state['last_reviews'], P) if last else None
         _payload_shape(stage, payload)
         _need(len(journal['events']) < MAX_EVENTS, 'stage_gate_history_limit')
-        predecessor = (state['current'][STAGES[STAGES.index(stage) - 1]]['sha256']
+        predecessor = (state['tail'] if stage == 'selection_policy' else
+                       state['current'][STAGES[STAGES.index(stage) - 1]]['sha256']
                        if stage in STAGES and stage != 'access' else
                        state['current']['design']['sha256'] if stage == 'candidate' else
                        state['candidate']['sha256'] if stage == 'review' else None)
@@ -608,9 +699,11 @@ def record(root, request, *, P=None, provider=None):
         journal['events'].append(event)
         updated = _replay(root, project, journal, P)
         report = _report(root, fd, project, True, updated, P, provider)
-        _need(stage in report['completed_stages'] if stage in STAGES else
+        _need(report['selection_policy_event_sha256'] == event['sha256'] if stage == 'selection_policy' else
+              stage in report['completed_stages'] if stage in STAGES else
               report['candidate'] is not None, 'stage_gate_evidence_changed_during_record')
         _need('stale_iteration_evidence' not in report['findings'], 'stage_gate_evidence_changed_during_record')
+        _need('stale_evidence:selection_policy' not in report['findings'], 'stage_gate_evidence_changed_during_record')
         _atomic(fd, journal, P)
         report['recorded'] = {'stage': stage, 'sequence': event['sequence'], 'sha256': event['sha256']}
         return report
