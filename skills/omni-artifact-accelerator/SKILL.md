@@ -17,6 +17,10 @@ viable options and obtain the user's selection, then resolve detailed design →
 implement and obtain security, UI/UX, product-owner and independent QA feedback on
 every iteration**. This ordering supersedes generic direct-design shortcuts below.
 Retain supplied preferences early, but do not begin product design before A–C.
+At D, route the tailored experience-family menu and conditional comparison styling
+question through [visual discovery](../omni-product-owner/references/visual-experience-discovery.md).
+Carry current answers/delegation into all three E concepts and their representative
+visuals; a treatment preference never substitutes for the actual product choice.
 
 Enforce the [executable stage gates](references/stage-gates.md) at dispatch,
 authoring and review. Inspect current status; use only the current permitted action.

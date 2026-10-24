@@ -52,6 +52,9 @@ Once selected, product context and the attribution of required product requireme
 cannot silently disappear in a later selection. Reconcile the scope and explicit
 requirement dispositions; a focused repair can reuse that context without a new interview.
 
+For guided visual discovery, also use the optional [visual experience index](#visual-experience-index).
+It is required by new D checkpoints; historical selected engagements remain readable.
+
 Add this fragment to the existing intent specification, using real private notes:
 
 ```json
@@ -103,6 +106,78 @@ Source references point to declared note paths, optionally with attributable
 fragments. The helper checks the path relationship, not the truth of a citation.
 Acceptance statements and suggested existing roles are nonempty lists. Existing
 technical requirements may remain unannotated; they do not disappear from scope.
+
+## Visual experience index
+
+Use the [guided questions](../../omni-product-owner/references/visual-experience-discovery.md)
+after A–C. This index references the existing `requirements` list; it does not store
+a second copy of user answers. The outer intent/product schema remains version 1.
+
+```json
+{
+  "visual_experience": {
+    "schema_version": 1,
+    "family_requirement_ids": ["comparison-experience"],
+    "follow_up": {
+      "disposition": "answered",
+      "requirement_ids": ["comparison-treatment"]
+    }
+  }
+}
+```
+
+Add this fragment inside `product`; referenced complete requirement rows need the
+usual purpose, surfaces, contexts, origin, disposition, decision reference and
+product attribution/acceptance. Their values are:
+
+| Requirement | Exact value shape |
+| --- | --- |
+| Experience family | `{"family":"compare_track"}`; other names: `locations`, `objects_environments`, `movement_flow`, `atmosphere_context` |
+| User-defined family | `{"family":"custom","custom_label":"...","includes_comparisons":true}`; the boolean explicitly determines the conditional styling question |
+| Answered or reused comparison treatment | `{"treatment":"dimensional_styling"}`, `interactive_3d`, or `refined_2d` |
+| Explicit treatment delegation | `{"treatment":"delegated","delegation_scope":"comparison_treatment"}` |
+| Not-applicable rationale | `{"rationale":"User selected an illustrative object inspection, with no comparative charts."}` |
+| Optional explicit family delegation | `{"delegation_scope":"visual_families"}` |
+
+`follow_up.disposition` is `answered`, `reused`, `delegated`, `not_applicable` or
+`unresolved`. Answered rows require user-statement attribution; reused rows require
+reused-decision attribution; delegated rows require an actual user/reused source.
+The selected decision reference must be one of the row's source references. The
+helper checks structure, not whether a note truly records a human answer.
+
+An unresolved follow-up can have no referenced row yet, or open rows with a null
+value or a proposed supported treatment. A not-applicable rationale must reference
+source notes and is invalid while a non-omitted comparison family exists. Active
+comparison proposals also trigger the question. Treatment coverage must include
+each affected surface; an App answer does not silently cover a dashboard.
+
+To let the designer recommend families, add optional
+`family_delegation_requirement_id` to the index, pointing to the separately
+attributed family-delegation requirement. Proposed family rows remain proposals;
+they become usable for discovery only within the explicit delegation's scope.
+Choosing “recommend a mix” for families alone does not delegate chart styling.
+
+All active recognized visual family and treatment rows must be indexed. A prior
+row may leave the index only when retained as an explicit omission backed by a
+user or reused source. Unknown nested fields/versions, dangling
+references, mismatched attribution and false not-applicable decisions fail. New
+requirements preserve current intent history; explicit removal uses an attributable
+omission rather than deleting a prior requirement. The North Star and worker
+packets include the current visual-discovery state without forwarding all raw notes.
+
+Use the versioned [D checkpoint](stage-gates.md#visual-discovery-at-d) to pin the
+specification and its sources. Ready visual discovery permits new concepts, not
+coding: E still needs exactly three concepts and the user's actual choice.
+
+D compares discovery decisions and their attribution: requirement identity,
+category, purpose, value, surfaces, required status, origin, disposition, decision
+reference, priority, basis, sources, acceptance and any outcome-preserving
+alternative. Record substantive user constraints in those canonical fields.
+Later delivery ownership, suggested roles, asset/runtime bindings, review
+annotations and implementation contexts (such as viewport and loading states)
+do not reopen D. They still participate in full intent, detailed-design and
+candidate freshness checks; this narrower D comparison does not waive those
+checks. Actual visual preference or scope changes require a new D checkpoint.
 
 For an unavailable method, the optional requirement `product.alternative` contains
 exactly `unavailable_method`, `preserved_outcome`, `feasible_alternative` and

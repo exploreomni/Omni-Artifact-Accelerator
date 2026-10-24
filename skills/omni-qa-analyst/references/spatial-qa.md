@@ -19,6 +19,13 @@ The implementer may self-review but cannot claim independent assessment. A desig
 
 For the curriculum terminal sample, derive each ratio from its numerator/denominator; retain an unknown result when the numerator is absent. A complete fleet or all-assembly coverage result is unsupported. Keep independent expectations separate from modeler/compiler computations so a shared implementation mistake cannot validate itself.
 
+For dimensional bars, trends and layered comparisons, use the affected obligations
+in [dimensional visualization craft](../../omni-design-systems/references/dimensional-visualization-craft.md):
+shared scales, signs/zero/ties, gaps, actual/target/forecast meaning and constant
+decorative depth. Include missing-value labels and a long-label case at constrained
+width/height. Source mapping checks cannot establish perspective, occlusion or
+legibility; exact tooltips do not excuse misleading marks.
+
 ## Keep evidence lanes truthful
 
 - **Specification/source review:** can identify missing intent, faulty mappings, unreachable states or inadequate lifecycle logic. It cannot prove execution or appearance.

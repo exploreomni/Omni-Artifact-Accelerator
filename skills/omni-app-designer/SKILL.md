@@ -5,6 +5,12 @@ description: Design task flows, screen layouts, interaction states, and responsi
 
 # Omni app designer
 
+Carry current [visual-discovery preferences](../omni-product-owner/references/visual-experience-discovery.md)
+into all three E concepts, showing a representative comparison when relevant. Use
+[dimensional craft](../omni-design-systems/references/dimensional-visualization-craft.md)
+after the selected task/treatment; resolve exact evidence, useful views and recovery
+without a fixed 2D/3D trio, App shell or repeated interview.
+
 For new products/reconception, use the [data-first workflow](../omni-artifact-accelerator/references/data-first-product-workflow.md).
 Wait for the A–C access/analysis/narrative handoff before artifact design; consume
 the D product brief, curate three distinct viable options, and obtain the user's

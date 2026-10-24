@@ -5,6 +5,11 @@ description: Design original 3D objects, products, vehicles and environments for
 
 # Omni 3D modeler
 
+For a selected [dimensional visual](../omni-design-systems/references/dimensional-visualization-craft.md),
+own justified geometry, hierarchy, fidelity and useful inspection views. Ordinary
+bar/trend design remains with the designers. Separate constant decorative depth
+from measured axes; a rendered illustration is not a data-linked chart runtime.
+
 Own the spatial model and its design rationale. Work from a bounded assignment or a standalone brief. Select 3D when shape, adjacency, assembly, movement or spatial context helps the task; ordinary charts remain with the analyst and dashboard/App designers. An attractive scene alone does not establish analytical value or an expert modeling result.
 
 ## Start from the task

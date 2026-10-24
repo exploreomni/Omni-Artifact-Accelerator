@@ -4,6 +4,14 @@ Use this additive record when carrying design decisions through an App/dashboard
 
 ## One short interview, persistent decisions
 
+For a new product, conduct artifact discovery after A–C and use the
+[visual-experience questions](../../omni-product-owner/references/visual-experience-discovery.md).
+Store family and comparison-style decisions in existing requirements and the
+[versioned visual index](product-intent.md#visual-experience-index). Pin the D
+snapshot before offering three E concepts. Changing adopted discovery requires
+reconciliation; a later design path alone need not reopen unchanged answers.
+Historical selected products remain usable without inventing interview evidence.
+
 Read existing decisions first. Ask only the missing consequential choices together: intended task/audience, selected surfaces, required identity and the requested completion stage. Separate required choices from optional preferences. For branded work, combine the missing company website with an approved logo file/URL, authorization to source the official website, or an explicit no-logo choice. Reuse prior answers and authorization. A website does not select a logo; authorization to source one is not the asset selection itself.
 
 Keep each required unanswered or deferred choice open. A working recommendation can guide reversible prototyping but remains `origin: proposal`; it must not become a user decision by implication. A placeholder is visibly provisional and cannot satisfy the requested identity. Optional photography, exact corporate fonts or animation are not universal requirements. If the user chooses no logo, record an explicit omission with its decision reference and skip unrelated asset research.

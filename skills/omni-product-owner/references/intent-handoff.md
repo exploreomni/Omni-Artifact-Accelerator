@@ -25,6 +25,13 @@ semantics; do not introduce a parallel priority or acceptance ledger. During ear
 discovery, identify the draft as provisional until the orchestrator selects it.
 Preserve required IDs and historical versions when a decision changes.
 
+For [visual discovery](visual-experience-discovery.md), retain experience families,
+comparison treatment, source and delegation scope in those requirements. The current
+versioned discovery index references them; it is not another authority. Keep the
+conditional follow-up resolved, explicitly delegated, unresolved or not applicable
+as supported by the actual evidence. A family-only recommendation cannot silently
+close the treatment question, and new intent cannot silently drop adopted context.
+
 The readable North Star summarizes:
 
 - Audience, situation, desired outcomes and experience promise.

@@ -51,6 +51,17 @@ Each studio has a question, an exercise and a reviewable output. Lesson numbers 
 
 S1–S5 form the shared foundation. S6–S10 are specialization studios. S11–S12 accompany the relevant practical work. Start with an exercise that addresses the demonstrated weakness; do not require experienced agents to repeat a complete foundation for every task.
 
+## Focused dimensional-comparison practice
+
+Use [dimensional visualization craft](dimensional-visualization-craft.md) with S2–S5,
+S8 and S10–S12 when the current brief selects or explicitly delegates that treatment.
+Take one supported comparison and express it in two task-appropriate art directions
+while preserving the same scales, values, unknowns and exact-value route. Use the
+original static specimens to study signed bars, gapped trends, layered series and
+useful inspection views; they are source-only teaching examples, not product options
+or proof of rendering. Explain when refined 2D would be stronger. For a net-new
+product, this exercise supports the required three concepts rather than replacing E.
+
 ## Focused control practice
 
 Use these six lessons within the existing studios when controls or responsive behavior are the demonstrated gap. They add no new curriculum stage, schema, role or completion gate. Read the relevant [control-craft section](control-craft.md); [source and course study](control-learning.md) is optional. Each exercise uses original synthetic data or the authorized engagement and persists findings in existing design/QA records.

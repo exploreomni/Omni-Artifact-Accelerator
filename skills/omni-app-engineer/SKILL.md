@@ -5,6 +5,11 @@ description: Implement and repair native Omni App HTML, CSS and JavaScript from 
 
 # App software engineer
 
+For a selected [dimensional visual](../omni-design-systems/references/dimensional-visualization-craft.md),
+implement the resolved encoding, exact-value route, controls/views, resizing and
+recovery through a qualified rendering path. Static illustrative images cannot
+stand in for a working chart, and a style answer grants no engine/dependency authority.
+
 For new products/reconception, consume the [data-first A–F handoff](../omni-artifact-accelerator/references/data-first-product-workflow.md):
 scoped access evidence, qualified queries/analysis, dynamic narrative rules, artifact
 requirements, attributable selection from three options and resolved design. Do

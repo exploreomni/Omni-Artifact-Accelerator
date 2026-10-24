@@ -21,6 +21,16 @@ The designer chooses the task and rationale before optional pattern/example retr
 | **Equal-space regional atlas** | Compare regions without land-area weighting; region IDs and comparable time series. | Equal panels and shared grammar, optionally schematic geography; loses geographic scale. | Poor for distance/adjacency. Use a real map or nonspatial small multiples; tile size implies neither population nor real area. | Verify shared scales and identities; inspect schematic labels and row reflow. |
 | **Evidence ribbon** | Inspect ordered verification states; stable unit IDs, complete population and independent evidence. | Categorical strip with text/symbols and detail; compactness hides reasoning until inspected. | Unknown is not success/failure; cells are not effort/duration. Use a labeled status table when detail dominates. | Reconcile all units including unknowns; exercise selected evidence and non-color reading. |
 
+## Dimensional comparisons
+
+When selected by current intent, use [dimensional craft](dimensional-visualization-craft.md)
+for sculpted bars, gapped trend ribbons, layered series and useful 3D inspection.
+The same metrics may support warm mineral, dark instrument, pale layered or refined
+flat treatments. Constant decorative depth is not a third measure; camera freedom
+is not automatically useful. The linked original SVG/JSON specimens include exact
+synthetic values, poor fits and fallback routes. Adapt the reasoning without adopting
+a fixed App shell or claiming native chart support.
+
 ## Experience structures
 
 ### Annotated evidence essay

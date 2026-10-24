@@ -15,6 +15,9 @@ spec = importlib.util.spec_from_file_location(
 S = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(S)
 P = S._helpers(None)
+fixture_spec = importlib.util.spec_from_file_location('visual_gate_fixture', ROOT / 'tests/stage_gate_fixture.py')
+G = importlib.util.module_from_spec(fixture_spec)
+fixture_spec.loader.exec_module(G)
 
 
 class FixtureHost:
@@ -53,6 +56,7 @@ class StageGateTests(unittest.TestCase):
         }
         for stage, body in self.requests.items():
             body.update(stage=stage, evidence={k: 'evidence/' + k + '.txt' for k in S.EVIDENCE[stage]})
+        self.requests['brief'] = G.discovery_request(self.root, P, 'evidence/brief.txt')
 
     def write(self, path, value):
         p = self.root / path
@@ -105,9 +109,8 @@ class StageGateTests(unittest.TestCase):
         return json.loads((self.root / S.JOURNAL).read_text())
 
     def select_actual_intent(self, version):
-        spec = P.intent_helper().starter(['app'], 'none')
-        spec['product'] = {'schema_version': 1, 'scope': 'new_experience', 'discovery': 'sufficient',
-                           'note_paths': ['inputs/notes.json']}
+        spec = json.loads((self.root / 'contracts/design-intent.json').read_text())
+        spec['product']['note_paths'] = sorted(set([*spec['product']['note_paths'], 'inputs/notes.json']))
         self.write('inputs/notes.json', {'text': 'Original synthetic request'})
         path = 'contracts/spec-' + version + '.json'
         self.write(path, spec)
@@ -313,6 +316,7 @@ class StageGateTests(unittest.TestCase):
         # every mode retain the policy; production exposes no opt-out operation.
         del project['stage_gate_policy']
         self.write('project.json', project)
+        self.write('contracts/design-intent.json', P.intent_helper().starter(['app'], 'none'))
         report = S.require_action(self.root, 'build', P=P)
         self.assertEqual(report['status'], 'not_applicable')
         self.assertFalse(report['release_ready'])
@@ -374,6 +378,9 @@ class StageGateTests(unittest.TestCase):
     def test_selected_design_brand_and_original_spec_dependencies_must_remain_current(self):
         self.through('choice')
         spec = P.intent_helper().starter(['app'], 'requested')
+        discovery = json.loads((self.root / 'contracts/design-intent.json').read_text())
+        spec['product'] = discovery['product']
+        spec['requirements'].extend(discovery['requirements'])
         spec['selections'][0].update(design_path='contracts/chosen-design.json',
                                      brand_path='contracts/chosen-brand.json')
         self.write('contracts/chosen-design.json', {'brand_contract': 'contracts/chosen-brand.json',

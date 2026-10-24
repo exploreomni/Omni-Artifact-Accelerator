@@ -22,6 +22,12 @@ For substantial new design, material redesign, explicit craft feedback or delibe
 
 Use the [shared experience brief](references/experience-brief.md) to connect the original request to observable behavior, destination purpose/action/evidence and responsible roles. Carry brand qualities into concrete composition, type/image hierarchy and state rules. Keep the selected direction in the existing design/intent records; use the [context-transfer studio](references/experience-context-studio.md) when the gap is losing those choices during handoff.
 
+For selected dimensional comparisons or explicitly delegated visual treatment, use
+[dimensional visualization craft](references/dimensional-visualization-craft.md).
+Resolve materials, light and depth around truthful encodings; retain refined 2D as
+a valid direction. The original static specimens teach alternatives, not a house
+template, renderer choice or native capability.
+
 ## Inputs and boundaries
 
 Carry the current [product-intent handoff](../omni-artifact-accelerator/references/product-intent.md)

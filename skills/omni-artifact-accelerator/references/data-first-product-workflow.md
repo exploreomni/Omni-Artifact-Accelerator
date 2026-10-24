@@ -60,6 +60,11 @@ Resolve metric definitions and build governed queries; inspect results and verif
 important totals independently. Retain query identities/definitions, source scope,
 filters, period, denominators and observed results in the private engagement.
 
+Identify supported comparison, time, location, entity identity, geometry and movement
+evidence in the existing source inventory/query contracts. Record missing coordinates,
+dimensions or ordered observations explicitly. These are opportunities and limits
+for discovery, not a chosen layout, invented distribution or implied 3D capability.
+
 **Exit:** a source-capability inventory, reusable query/metric contracts, supported
 findings and a question map: what can be answered, what needs qualification, and
 what the data cannot answer. Distinguish observations, inference and hypotheses.
@@ -82,6 +87,11 @@ explicit. Snapshot evidence proves the current observation, while reusable rules
 recompute or suppress claims as new data arrives. A refresh intention is not a
 configured refresh job or working live connection.
 
+Explain useful reading and investigation paths from that evidence: where comparison,
+spatial context, movement or imagery could help understanding and where it would
+mislead. Distinguish measured evidence from illustrative context without selecting
+the product or its visual treatment.
+
 **Exit:** a traceable narrative and question hierarchy with dynamic claim rules,
 supported drill paths and monitoring needs. Have the analyst check it before the
 artifact interview. Changes in definitions or data context reopen affected claims.
@@ -94,6 +104,14 @@ desired product/surface, experience ambition, first/repeat use, devices, brandin
 interaction and delivery constraints. Recover existing answers instead of asking
 again. When branding is wanted, obtain the company website and approved logo/asset
 source or reuse existing authorization.
+
+Use [guided visual discovery](../../omni-product-owner/references/visual-experience-discovery.md)
+for the two layers: how people should explore the supported data, then a conditional
+comparison/trend styling question. Reuse attributable answers and explicit delegation;
+family recommendations alone do not delegate styling. Missing material treatment
+holds affected new concepts; no-comparison scope retains a reasoned not-applicable
+disposition. Keep this in current requirements and the versioned D evidence, not a
+second preference ledger.
 
 **Exit:** an evidence-informed product brief retaining the user's own requirements,
 the analytical narrative and unresolved material choices. Agent proposals remain
@@ -108,7 +126,10 @@ same core analytical narrative and truthful evidence. Differentiate the experien
 structure, investigation path, focal visualization or interaction model, not just
 colors or names. Each must honor the requested ambition; do not make two weak
 options to steer the user toward a predetermined choice. Do not prescribe the same
-three archetypes for every engagement.
+three archetypes for every engagement. Current required visual preferences apply
+to every option; when comparisons are in scope, show a representative comparison
+treatment in each. Style choices are not a fixed “2D / dimensional / 3D” trio and
+do not constitute the product selection.
 
 For each option present:
 
@@ -132,7 +153,10 @@ After selection, resolve the complete design: app/dashboard architecture; backgr
 and wallpaper; typography and imagery; buttons and controls; columns/splits, scroll
 and page transitions; tabs/navigation; embedded artifacts; 3D models or custom
 visuals/charts; exports; responsive behavior; UX, accessibility and motion states.
-For each relevant capability record its purpose, bindings and fallback. Record
+For each relevant visual, resolve task, fields/grain, scales/units, narrative claim,
+surface, geometry/materials, controls/camera when applicable, state/recovery,
+responsiveness, exports and exact-value fallback. Use [dimensional craft](../../omni-design-systems/references/dimensional-visualization-craft.md)
+when that treatment is selected. Record
 unselected/not-applicable treatments with rationale rather than installing every
 feature. Preserve the selected ambition without inventing data or loading unapproved
 dependencies. Review security and native feasibility before implementation depends

@@ -5,6 +5,11 @@ description: Independently verify Omni dashboard and App numbers, migration pari
 
 # QA analyst
 
+For [dimensional comparisons](../omni-design-systems/references/dimensional-visualization-craft.md),
+check original scale/value semantics independently, then perspective, occlusion,
+labels, controls and constrained-space behavior only in permitted observation lanes.
+A static specimen or successful source check leaves rendered/native quality unrun.
+
 For new products, follow the [data-first workflow](../omni-artifact-accelerator/references/data-first-product-workflow.md).
 Check A's source/access evidence against the intended user rather than equating
 administrator success with user access. Retain independent expectations from B/C.

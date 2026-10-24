@@ -5,6 +5,11 @@ description: Establish a reusable brand and theme contract for Omni dashboards a
 
 # Omni branding
 
+For [dimensional comparison treatments](../omni-design-systems/references/dimensional-visualization-craft.md),
+translate the retained style answer into materials, light, type and contrast while
+preserving semantic colors. Futuristic need not mean neon or dark mode; official
+asset authority still does not approve fonts, engines or imports.
+
 For new products, follow the [data-first workflow](../omni-artifact-accelerator/references/data-first-product-workflow.md):
 retain volunteered brand preferences at intake, conduct artifact/brand discovery
 after the A–C analytical narrative, help distinguish the three viable concepts,

@@ -22,7 +22,7 @@ sets the order, while leaving the product's visual design open:
 1. **Verify data and access.** Establish that the requested data exists and the user can access it.
 2. **Analyze.** Profile relevant sources, build governed queries and derive supported insights and questions.
 3. **Create the analytical story.** Link claims to evidence and define how they update or disappear when data, filters or freshness change.
-4. **Discover the artifact requirements.** Use those findings to ask focused product, brand and experience questions.
+4. **Discover the artifact requirements.** Use those findings for product/brand needs, a tailored visual-experience question and a conditional comparison-style follow-up; reuse answers already supplied.
 5. **Choose among three products.** Review three distinct, feasible options and select one; specialists then resolve its detailed design.
 6. **Build and refine.** Implement a cohesive candidate and obtain security, UI/UX, product-owner and independent QA feedback after every iteration.
 
@@ -85,6 +85,35 @@ separate. After user selection, build an ambitious representative journey as par
 of the cohesive implementation; unsupported technology must not silently reduce
 the intended outcome. The product choice does not confer installation or
 publication authority, and no fixed visual template or visual certification is implied.
+
+## Guide the visual experience
+
+After analysis and narrative, the [guided interview](skills/omni-product-owner/references/visual-experience-discovery.md)
+asks how people should explore the supported data: compare/track, locations, objects
+or environments, movement/flow, imagery, or a useful mix. If comparisons or trends
+are included and styling is unanswered, it asks about dimensional styling, interactive
+3D, refined 2D, or an explicitly designer-recommended mix. You need not choose an
+engine or prescribe every chart. Existing answers are reused; a family recommendation
+alone does not delegate styling.
+
+For example:
+
+- “Create an operations App for comparing service delays and monthly trends. Use a light, futuristic dimensional treatment with exact values and visible missing observations.” This supplies a treatment preference before discovery; the agent should reuse it.
+- “Recommend the experience families and choose all visual treatments within our brand and native dashboard capabilities. Bring me three product concepts.” This explicitly delegates treatment while retaining the actual product-choice step.
+- “Use refined 2D for the comparisons. Prioritize typography, annotation and quick drill/return.” Depth and camera controls are not required for a premium result.
+
+The agent shows **exactly three distinct feasible products**, each honoring current
+preferences and the same analytical story, then waits for your choice before detailed
+design and coding. A styling answer does not choose the product, install a renderer
+or authorize a different surface. The selected experience receives the existing four
+candidate reviews.
+
+[Dimensional craft](skills/omni-design-systems/references/dimensional-visualization-craft.md)
+and [original SVG/JSON specimens](skills/omni-design-systems/assets/dimensional-specimens/specimens.json)
+make the options concrete through signed bars, gapped trends, layered series and
+inspection storyboards in different art directions. These are source-only synthetic
+illustrations, not built chart runtimes or observed visual/native quality. CLI/API-only
+work retains those unobserved lanes; no browser, package or Blender workaround is implied.
 
 ## Control quality without a fixed template
 

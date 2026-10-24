@@ -15,6 +15,7 @@ Retain the user's relevant wording or attributable paraphrase, then translate it
 | First encounter and repeat use | Opening promise, focal content, primary action and direct route back to work. A returning user should not have to repeat an introduction unless the actual task requires it. |
 | Reference qualities | Qualities to borrow and avoid, their sources and evidence limits. Translate “elegant” into hierarchy, proportion, image/type relationship or interaction; a famous brand name is not a specification. |
 | Art direction | Display/body/number hierarchy, composition, density, spacing rhythm, semantic colors, imagery role or deliberate omission, and narrow treatment. Resolve actual values in the chosen design. |
+| Visual discovery | Supported experience families, comparison/trend treatment and its actual answer or delegation scope. Reuse the [D interview](../../omni-product-owner/references/visual-experience-discovery.md); an unanswered material choice remains visible. |
 | Journey | Destinations, entry/exit, meaningful detail, scope and identity to retain, focus/return and recovery. Distinguish navigation from filtering and scrolling. |
 | Motion | Primary-journey change explained, stable identity, interruption, immediate data commit and static/reduced equivalent. Select no motion when it adds no task value. |
 | Constraints and observation | Native surface, source obligations, available data, tooling, asset/font/runtime budgets, usable content width **and height**, host-chrome/zoom assumptions and permitted review methods. Label assumed dimensions; do not report a nominal laptop screen as an observed App viewport. |
@@ -50,6 +51,11 @@ For example, a justified `usable-space` requirement can keep `{width: 1024, heig
 ## Compare the same task
 
 For new products/reconception, follow stage E of the [data-first workflow](../../omni-artifact-accelerator/references/data-first-product-workflow.md): after A–C and artifact discovery, present exactly three viable product options and obtain the user's selection. Hold the core analytical narrative and truthful evidence constant; vary experience structure, investigation path, focal visualization or interaction. Resolve task uncertainty separately from visual uncertainty. Direct choices remain appropriate for focused work or implementation within an already selected product; they do not bypass the new-product choice.
+
+Each option carries current required visual preferences and a representative
+comparison treatment when relevant. Use [dimensional craft](dimensional-visualization-craft.md)
+for the selected encoding, material and inspection decisions; preferences do not
+force depth or supply a new surface/runtime.
 
 Record `reference quality → concrete choice → expected benefit → tradeoff → observation needed`. Compare rendered treatments when permitted; prose can establish structural intent but not visual quality. The original [context studio](experience-context-studio.md) demonstrates three different treatments of one task and an annotated failure. Reuse the reasoning, not its layout as a house style.
 

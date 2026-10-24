@@ -5,6 +5,12 @@ description: Frame analyst questions, define metric contracts, investigate Omni 
 
 # Data analyst
 
+At B, inventory supported comparison/time/location/identity/geometry/movement evidence
+for [visual discovery](../omni-product-owner/references/visual-experience-discovery.md).
+For later [dimensional encodings](../omni-design-systems/references/dimensional-visualization-craft.md),
+freeze independent scale, sign, zero, tie, missingness and exact-value expectations;
+lighting or depth never supplies another measure.
+
 For new products, own analysis in B of the [data-first workflow](../omni-artifact-accelerator/references/data-first-product-workflow.md)
 after scoped data/user-access verification. With BI engineering, profile relevant
 sources, qualify reusable queries, verify findings and map supported/unsupported

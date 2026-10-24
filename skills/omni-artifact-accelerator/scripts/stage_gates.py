@@ -176,6 +176,7 @@ def _pin_shape(value, allow_empty=False):
 
 def _pins(payload):
     result = list(payload.get('evidence', {}).values())
+    result.extend(payload.get('discovery_dependencies', []))
     result.extend(option['evidence'] for option in payload.get('options', []))
     result.extend(payload.get('artifacts', []))
     if payload.get('selected_intent') is not None:
@@ -240,8 +241,45 @@ def _context(root, fd, P):
     return project, required, journal
 
 
+def _current_spec(fd, project, P):
+    """Read the current canonical working spec; _context verifies selected pins."""
+    selected = project.get('design_intent')
+    if selected:
+        return _json(_read(fd, selected['path'], P.MAX_BYTES), P)['spec']
+    return _json(_read(fd, _relative(project['design_intent_draft']), P.MAX_BYTES), P)
+
+
+def _discovery_snapshot(fd, project, payload, P, *, current=True):
+    """Validate D's immutable spec and source dependencies, not user authenticity."""
+    spec = _json(_read(fd, payload['evidence']['intent']['path'], P.MAX_BYTES), P)
+    P.intent_helper().validate(spec, project)
+    helper = P.routing_helper('product_intent')
+    context = helper.visual_context(spec)
+    _need(context is not None, 'stage_gate_visual_discovery_required')
+    paths = sorted(spec['product']['note_paths'])
+    inventory = spec['product'].get('source_inventory_path')
+    if inventory:
+        paths = sorted(set([*paths, inventory]))
+    if 'discovery_dependencies' in payload:
+        _need([p['path'] for p in payload['discovery_dependencies']] == paths,
+              'stage_gate_discovery_dependency_manifest_mismatch')
+    if current:
+        live = _current_spec(fd, project, P)
+        P.intent_helper().validate(live, project)
+        _need(helper.visual_context(live) == context and
+              live['product']['scope'] == spec['product']['scope'] and
+              live['product'].get('source_inventory_path') == inventory,
+              'stage_gate_visual_discovery_changed_reopen_brief')
+    return helper.visual_report(spec), paths
+
+
 def _payload_shape(stage, payload, saved=True):
     expected = set(EXTRA[stage]) | ({'evidence'} if stage in EVIDENCE else set())
+    discovery = stage == 'brief' and 'discovery_version' in payload
+    if discovery:
+        expected.add('discovery_version')
+        if saved:
+            expected.add('discovery_dependencies')
     conversation = stage == 'choice' and payload.get('basis') == 'conversation_evidence'
     if conversation:
         expected = {'basis', 'option_id', 'expected_binding', 'evidence'}
@@ -252,6 +290,17 @@ def _payload_shape(stage, payload, saved=True):
     if saved and stage == 'candidate':
         expected.update({'prior_iteration_sha256', 'prior_reviews_sha256', 'candidate_sha256'})
     _need(type(payload) is dict and set(payload) == expected, 'stage_gate_invalid_' + stage + '_fields')
+    if discovery:
+        _need(type(payload['discovery_version']) is int and payload['discovery_version'] == 1,
+              'stage_gate_unknown_discovery_version')
+        if saved:
+            dependencies = payload['discovery_dependencies']
+            _need(type(dependencies) is list and 0 < len(dependencies) <= 33,
+                  'stage_gate_discovery_dependencies_required')
+            for pin in dependencies:
+                _pin_shape(pin)
+            paths = [p['path'] for p in dependencies]
+            _need(paths == sorted(set(paths)), 'stage_gate_duplicate_discovery_dependency')
     if stage == 'selection_policy':
         _need(payload['selection_policy'] == CHAT_SELECTION and _hash(payload['expected_tail_sha256']),
               'stage_gate_invalid_selection_policy')
@@ -263,7 +312,8 @@ def _payload_shape(stage, payload, saved=True):
         _need(type(payload['expected_binding']) is dict, 'stage_gate_expected_choice_binding_required')
     if stage in EVIDENCE:
         evidence = payload['evidence']
-        _need(type(evidence) is dict and set(evidence) == EVIDENCE[stage], 'stage_gate_' + stage + '_evidence_required')
+        expected_evidence = {'brief', 'intent'} if discovery else EVIDENCE[stage]
+        _need(type(evidence) is dict and set(evidence) == expected_evidence, 'stage_gate_' + stage + '_evidence_required')
         for value in evidence.values():
             _pin_shape(value) if saved else _relative(value)
     for key in {'source_scope', 'user_identity', 'analyst', 'bi_engineer', 'storyteller',
@@ -457,7 +507,8 @@ def _report(root, fd, project, required, state, P, provider):
               'selection_policy': CHAT_SELECTION if state['selection_policy'] else HOST_SELECTION,
               'selection_policy_event_sha256': state['selection_policy']['sha256'] if state['selection_policy'] else None,
               'tail_sha256': state['tail'], 'choice_assurance': None, 'choice_authenticated': False,
-              'external_mutations_authorized': False, 'limits': list(LIMITS)}
+              'external_mutations_authorized': False, 'limits': list(LIMITS),
+              'visual_discovery': {'status': 'not_assessed', 'version': None}}
     if not required:
         return report
     if state['selection_policy'] is not None and not _fresh(fd, state['selection_policy'], P):
@@ -475,6 +526,25 @@ def _report(root, fd, project, required, state, P, provider):
             report['findings'].append('stale_evidence:' + stage)
             report['next_stage'] = stage
             break
+        if stage == 'brief':
+            if event['payload'].get('discovery_version') == 1:
+                try:
+                    discovery, _ = _discovery_snapshot(fd, project, event['payload'], P)
+                except (ValueError, OSError, KeyError, TypeError) as exc:
+                    report['findings'].append(str(exc) if isinstance(exc, ValueError) else 'stage_gate_invalid_discovery')
+                    report['next_stage'] = 'brief'
+                    break
+                report['visual_discovery'] = dict(discovery, version=1)
+                if discovery['status'] != 'ready':
+                    report['completed_stages'].append(stage)
+                    report['stage_bindings'][stage] = event['sha256']
+                    report['findings'].append('visual_discovery_unresolved')
+                    report['next_stage'] = 'brief'
+                    break
+            elif P.routing_helper('product_intent').visual_context(_current_spec(fd, project, P)) is not None:
+                report['findings'].append('visual_discovery_checkpoint_required')
+                report['next_stage'] = 'brief'
+                break
         if stage == 'design' and event['payload']['selected_intent'] != project.get('design_intent'):
             report['findings'].append('selected_intent_changed')
             report['next_stage'] = stage
@@ -571,6 +641,10 @@ def _require(report, action, provider):
     stage = {'choose': 'choice', 'build': 'candidate'}.get(action, action)
     needed = STAGES[:STAGES.index(stage)] if stage in STAGES else STAGES
     _need(set(needed) <= set(report['completed_stages']), 'stage_gate_predecessor_incomplete:' + action)
+    if stage in {'options', 'choice'}:
+        discovery = report.get('visual_discovery', {})
+        _need(discovery.get('version') == 1, 'stage_gate_upgrade_visual_discovery_before_options')
+        _need(discovery.get('status') == 'ready', 'stage_gate_visual_discovery_unresolved')
     if stage in {'choice', 'design', 'candidate', 'review', 'release'} and report['selection_policy'] == HOST_SELECTION:
         _need(provider is not None and callable(getattr(provider, 'verify_choice', None)),
               'stage_gate_trusted_provider_required')
@@ -652,6 +726,8 @@ def record(root, request, *, P=None, provider=None):
         state = _replay(root, project, journal, P)
         before = _report(root, fd, project, required, state, P, provider)
         _require(before, stage, provider)
+        if stage == 'brief':
+            _need(payload.get('discovery_version') == 1, 'stage_gate_visual_discovery_required')
         if stage == 'selection_policy':
             _need(not state['choice_seen'] and state['last_candidate'] is None,
                   'stage_gate_selection_policy_already_fixed')
@@ -663,6 +739,19 @@ def record(root, request, *, P=None, provider=None):
                   'stage_gate_review_candidate_mismatch')
         if stage in EVIDENCE:
             payload['evidence'] = {k: _pin(fd, v, P) for k, v in payload['evidence'].items()}
+        if stage == 'brief':
+            _, paths = _discovery_snapshot(fd, project, payload, P)
+            payload['discovery_dependencies'] = [_pin(fd, p, P) for p in paths]
+            # Adoption can precede a selected intent. Keep prior D requirements
+            # accountable even after an upstream checkpoint invalidates current D.
+            prior = next((e for e in reversed(journal['events']) if e['stage'] == 'brief'
+                          and e['payload'].get('discovery_version') == 1), None)
+            if prior:
+                pin = prior['payload']['evidence']['intent']
+                _need(_pin(fd, pin['path'], P) == pin, 'stage_gate_prior_discovery_snapshot_changed')
+                old_spec = _json(_read(fd, pin['path'], P.MAX_BYTES), P)
+                new_spec = _json(_read(fd, payload['evidence']['intent']['path'], P.MAX_BYTES), P)
+                P.routing_helper('product_intent').validate_visual_transition(old_spec, new_spec)
         if stage == 'options':
             payload['options'] = [dict(o, evidence=_pin(fd, o['evidence'], P)) for o in payload['options']]
         if stage == 'choice':

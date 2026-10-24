@@ -211,6 +211,8 @@ def select(root, spec_path, output_relative):
              'product_context_removed_reconcile_scope_instead')
         need(not previous['spec'].get('product', {}).get('source_inventory_path') or
              spec.get('product', {}).get('source_inventory_path'), 'source_inventory_removed_reconcile_instead')
+        P.routing_helper('product_intent').V.validate_transition(
+            previous['spec'], spec, lambda ok, message: need(ok, 'visual_experience.' + message))
         current = {r['id']: r for r in spec['requirements']}
         for req in previous['spec']['requirements']:
             if req['required']:
@@ -297,6 +299,12 @@ def choice_report(spec):
     for asset in spec['assets']:
         if asset.get('remote_url'):
             findings.append({'code': 'remote_asset_bytes_unverified', 'asset_id': asset['id'], 'url': asset['remote_url']})
+    visual = P.routing_helper('product_intent').visual_report(spec)
+    findings.extend(visual['findings'])
+    if any(f['code'].startswith('visual_family_') for f in visual['findings']):
+        questions.append('Which visual experiences should be used, or has the user explicitly delegated the family recommendation?')
+    if any(f['code'] == 'visual_treatment_follow_up_unresolved' for f in visual['findings']):
+        questions.append('Resolve the comparison treatment with an attributable answer, reused decision, scoped delegation, or valid not-applicable rationale.')
     return list(dict.fromkeys(questions)), findings
 
 
@@ -304,7 +312,7 @@ def context_index(project, state):
     """Derived orientation only; historical files are neither loaded nor rewritten."""
     history = project.get('design_intent_history', [])
     history = history if type(history) is list else []
-    return {'authority': 'index_of_recorded_selection_only', 'integrity': state['status'],
+    result = {'authority': 'index_of_recorded_selection_only', 'integrity': state['status'],
             'selected_intent': copy.deepcopy(state['selected']),
             'historical_intents': [{k: p.get(k) for k in ('path', 'sha256', 'bytes')} for p in history
                                    if history_pin_valid(p) and p != state['selected']],
@@ -312,6 +320,10 @@ def context_index(project, state):
                                            if r['required'] and r['disposition'] in {'unresolved', 'deferred'}],
             'note': 'Use current requirements and selections below. Historical records are comparison evidence; '
                     'new user decisions require a new selection. Descriptive links are not pinned dependencies.'}
+    if state.get('visual_context') is not None:
+        result['visual_context'] = copy.deepcopy(state['visual_context'])
+        result['visual_experience'] = copy.deepcopy(state['visual_experience'])
+    return result
 
 
 def history_pin_valid(value):
@@ -365,6 +377,9 @@ def check(root):
             base['current_context'] = context_index(project, base)
             return base
         base.update({k: copy.deepcopy(spec.get(k)) for k in ('requirements', 'assets', 'selections', 'branding', 'website', 'logo_sourcing')})
+        visual = P.routing_helper('product_intent')
+        base['visual_experience'] = visual.visual_report(spec)
+        base['visual_context'] = visual.visual_context(spec)
         questions, findings = choice_report(spec)
         base['open_questions'] = questions
         base['findings'].extend(findings)
@@ -413,10 +428,14 @@ def packet_context(root, role):
             if (root / path).is_file():
                 P.relative_file(root, path)
                 paths.append(path)
-    return {'selected_intent': copy.deepcopy(state['selected']),
+    result = {'selected_intent': copy.deepcopy(state['selected']),
             'current_context': copy.deepcopy(state['current_context']),
             'paths': sorted(set(paths)), 'requirements': state['requirements'] if relevant else [],
             'findings': state['findings'] if relevant else [], 'open_questions': state['open_questions'] if relevant else []}
+    if state.get('visual_context') is not None:
+        result['visual_context'] = copy.deepcopy(state['visual_context'])
+        result['visual_experience'] = copy.deepcopy(state['visual_experience'])
+    return result
 
 
 def case_templates(root, review_spec=None):

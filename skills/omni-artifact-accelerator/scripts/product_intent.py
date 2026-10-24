@@ -8,9 +8,19 @@ from pathlib import Path
 _s = importlib.util.spec_from_file_location('product_project', Path(__file__).with_name('analyst_project.py'))
 P = importlib.util.module_from_spec(_s)
 _s.loader.exec_module(P)
+_v = importlib.util.spec_from_file_location('visual_intent', Path(__file__).with_name('visual_experience.py'))
+V = importlib.util.module_from_spec(_v)
+_v.loader.exec_module(V)
+visual_context = V.visual_context
+visual_report = V.visual_report
 SCOPES = {'new_experience', 'material_redesign', 'migration', 'focused_repair'}
 BASES = {'user_statement': 'user', 'reused_decision': 'reused', 'inference': 'proposal',
          'recommendation': 'proposal', 'unresolved': 'proposal'}
+
+
+def validate_visual_transition(previous, current):
+    """Preserve adopted discovery at either a D checkpoint or an intent selection."""
+    return V.validate_transition(previous, current)
 
 
 def validate(spec, need, relative, roles):
@@ -20,7 +30,8 @@ def validate(spec, need, relative, roles):
         need(not any('product' in r for r in spec['requirements']), 'product_context_required')
         return
     need(type(product) is dict and {'schema_version', 'scope', 'discovery', 'note_paths'} <= set(product)
-         and set(product) <= {'schema_version', 'scope', 'discovery', 'note_paths', 'source_inventory_path'},
+         and set(product) <= {'schema_version', 'scope', 'discovery', 'note_paths', 'source_inventory_path',
+                             'visual_experience'},
          'product_fields_invalid')
     need(type(product['schema_version']) is int and product['schema_version'] == 1, 'product_version_invalid')
     need(product['scope'] in SCOPES and product['discovery'] in
@@ -58,6 +69,7 @@ def validate(spec, need, relative, roles):
             need(type(alt) is dict and set(alt) == {'unavailable_method', 'preserved_outcome', 'feasible_alternative', 'remaining_gap'}
                  and all(type(v) is str and 0 < len(v.strip()) <= 8192 for v in alt.values()),
                  'product_alternative_must_preserve_outcome_and_gap')
+    V.validate(spec, lambda ok, message: need(ok, 'visual_experience.' + message))
 
 
 def clean(value):
@@ -87,6 +99,16 @@ def render(project, state, generated_at):
         rows.extend(['', 'Source capability inventory: ' + clean(product['source_inventory_path']),
                      'Inventory dispositions describe usable depth and gaps; they do not approve scope or prove source completeness.'])
     rows.extend(['', '## Requirements, experience promise and success criteria', ''])
+    visual = visual_report(spec)
+    if visual['status'] != 'not_assessed':
+        rows.extend(['Visual discovery: ' + visual['status'],
+                     'Experience families: ' + clean(visual['families']),
+                     'Comparison treatment follow-up: ' + clean(visual['follow_up']),
+                     'Indexed requirements: ' + clean(visual['requirement_ids']),
+                     'This records preferences or scoped delegation; it does not select a product concept '
+                     'or authorize runtime, access, dependency or publication actions.', ''])
+        rows.extend('- Open visual decision: ' + clean(finding) for finding in visual['findings'])
+        rows.append('')
     for req in spec['requirements']:
         item = req.get('product', {})
         rows.extend(['### ' + clean(req['id']) + ': ' + clean(req['purpose']), '',
@@ -154,6 +176,9 @@ def check(root):
             return result
         P.need(state['status'] != 'inconsistent', 'current_intent_inconsistent')
         result.update(enabled=True, scope=spec['product']['scope'], discovery=spec['product']['discovery'], requirements=spec['requirements'])
+        if visual_context(spec) is not None:
+            result['visual_experience'] = visual_report(spec)
+            result['visual_context'] = visual_context(spec)
         receipt = project.get('product_brief')
         P.need(type(receipt) is dict and set(receipt) == {'schema_version', 'kind', 'source_intent', 'generated_at', 'brief'},
                'product_projection_missing_or_invalid')

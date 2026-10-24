@@ -31,6 +31,13 @@ class ProductIntentTests(unittest.TestCase):
                                      self.requirement('journey', 'recommendation', 'proposal')]
         self.gates = G.Lifecycle(self.root, P)
         self.gates.through('brief')
+        # Preserve the shared fixture's actual recorded discovery while adding
+        # this test's independent product requirements.
+        discovery = json.loads((self.root / 'contracts/design-intent.json').read_text())
+        self.spec['product']['visual_experience'] = discovery['product']['visual_experience']
+        self.spec['product']['note_paths'] += discovery['product']['note_paths']
+        visual_ids = set(N.visual_report(discovery)['requirement_ids'])
+        self.spec['requirements'] += [r for r in discovery['requirements'] if r['id'] in visual_ids]
 
     def write(self, path, value):
         (self.root / path).write_text(json.dumps(value) if not isinstance(value, str) else value)
@@ -87,7 +94,9 @@ class ProductIntentTests(unittest.TestCase):
         self.assertFalse(po['external_mutations_authorized'])
         self.brief()
         packet = P.packet(self.root, 'app-designer', ['inputs/notes-v1.json'], self.root / 'tasks/designer.json')
-        self.assertEqual(len(packet['product_context']['role_slice']), 2)
+        self.assertEqual(len(packet['product_context']['role_slice']), 4)
+        self.assertEqual(packet['product_context']['visual_experience']['status'], 'ready')
+        self.assertEqual(packet['design_context']['visual_context'], N.visual_context(self.spec))
         self.assertEqual(P.packet_check(self.root, 'tasks/designer.json')['status'], 'consistent')
 
     def test_notes_are_pinned_without_automatic_disclosure_to_every_specialist(self):
@@ -179,11 +188,12 @@ class ProductIntentTests(unittest.TestCase):
 
     def test_dashboard_migration_retains_surface_and_focused_repair_scope(self):
         # A genuine existing migration, not relabeling a gated new-product project.
-        notes = (self.root / 'inputs/notes-v1.json').read_text()
+        notes = {path: (self.root / path).read_text() for path in self.spec['product']['note_paths']}
         self.root = Path(self.folder.name).resolve() / 'migration'
         P.init(self.root, 'Existing dashboard repair', 'migration', 'dashboard', 'none')
         G.pre_policy_project(self.root, P)
-        self.write('inputs/notes-v1.json', notes)
+        for path, content in notes.items():
+            self.write(path, content)
         self.spec['surfaces'] = ['dashboard']
         self.spec['selections'][0]['surface'] = 'dashboard'
         self.spec['product'].update(scope='focused_repair', discovery='focused_repair')
@@ -198,7 +208,28 @@ class ProductIntentTests(unittest.TestCase):
         self.assertFalse(plan['focused_scope_missing'])
         packet = P.packet(self.root, 'artifact-translator', ['inputs/notes-v1.json'], None)
         self.assertEqual(packet['design_context']['requirements'][0]['surfaces'], ['dashboard'])
-        self.assertEqual(len(packet['product_context']['role_slice']), 2)
+        self.assertEqual(len(packet['product_context']['role_slice']), 4)
+
+    def test_adopted_visual_index_cannot_disappear_or_drop_optional_decisions(self):
+        self.select(); self.brief()
+        self.assertIn('Visual discovery: ready', (self.root / 'deliverables/north-star-one.md').read_text())
+        metadata = self.spec['product'].pop('visual_experience')
+        with self.assertRaisesRegex(ValueError, 'visual_experience.context_removed'):
+            self.select('stripped-visual')
+        self.spec['product']['visual_experience'] = metadata
+        selected = P.intent_helper().check(self.root)
+        self.assertEqual(selected['visual_experience']['status'], 'ready')
+        self.assertEqual(selected['current_context']['visual_context'], N.visual_context(self.spec))
+
+    def test_visual_answer_change_invalidates_projection_and_retains_prior_snapshot(self):
+        self.select(); self.brief()
+        old_record = (self.root / 'contracts/selected-one.json').read_bytes()
+        treatment = next(r for r in self.spec['requirements'] if r['id'] == 'visual-fixture-treatment')
+        treatment['value'] = {'treatment': 'dimensional_styling'}
+        self.select('changed-treatment')
+        self.assertEqual(old_record, (self.root / 'contracts/selected-one.json').read_bytes())
+        self.assertEqual(N.check(self.root)['status'], 'inconsistent')
+        self.assertIn('product_projection_stale', N.check(self.root)['findings'])
 
 
 if __name__ == '__main__':

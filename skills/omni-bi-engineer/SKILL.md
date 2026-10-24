@@ -5,6 +5,11 @@ description: Bind reviewed analyst requirements to Omni topics, workbook queries
 
 # BI engineer
 
+For the [visual-discovery handoff](../omni-product-owner/references/visual-experience-discovery.md),
+qualify requested comparison/time/spatial evidence and surface capabilities. Bind
+the selected visual to exact fields, grain, units and completeness; a styled App
+specimen does not prove native-dashboard support or authorize switching surfaces.
+
 For new products, support A and B of the [data-first workflow](../omni-artifact-accelerator/references/data-first-product-workflow.md)
 before product design: verify source availability and scoped intended-user query
 access, then build inspected governed queries with the analyst. Preserve principal,

@@ -5,6 +5,11 @@ description: Specify and review purposeful interface animation for native Omni A
 
 # Omni motion designer
 
+For selected [dimensional comparisons](../omni-design-systems/references/dimensional-visualization-craft.md),
+resolve only task-serving transitions, camera changes or playback. Preserve exact
+values and identity through interruption and reduced motion; animated thickness,
+smoothing or travel must not invent measurements or uncertainty.
+
 For spatial work, hand off the [single-session camera contract](../omni-app-engineer/references/native-scene-framework.md#compose-the-modules): meaningful named views, bounded transition/dwell, immediate wheel/pointer/key interruption, no competing autorotation and no clocks while hidden/offscreen. Return remains paused until user intent; live reduced-motion changes cancel movement and retain instant static views. Specify recovery, transcript and non-canvas equivalents. A timer/renderer double does not establish motion comfort or native frame rate.
 
 Before runtime or tool use, follow the shared [package-use policy](../omni-artifact-accelerator/references/dependency-policy.md): no unapproved package installation/import or skill activation, and no Blender code or execution. Source review is separate from execution authority.

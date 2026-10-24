@@ -19,7 +19,10 @@ For new products, use the [data-first workflow](../omni-artifact-accelerator/ref
 Before artifact discovery, require the A–C handoff: scoped data/user-access evidence,
 qualified analysis and the reusable narrative. Intake may recover volunteered
 preferences and clarify source/decision scope; do not start a design questionnaire
-before that handoff. At D, interview using supported insights and questions. At E,
+before that handoff. At D, use [visual-experience discovery](references/visual-experience-discovery.md)
+for the tailored family menu and conditional comparison treatment, alongside the
+existing artifact/brand questions. Reuse actual answers; explicit styling delegation
+is scoped and never inferred from silence. At E,
 coordinate exactly three distinct viable options, recommend with reasons and wait
 for the user's selection before detailed design/full coding. Preserve attributable
 selection in current intent; do not let an agent's working proposal substitute for

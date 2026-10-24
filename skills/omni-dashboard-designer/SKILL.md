@@ -5,6 +5,12 @@ description: Design or redesign native Omni dashboard layouts, chart specificati
 
 # Omni dashboard designer
 
+Reuse current [visual-discovery preferences](../omni-product-owner/references/visual-experience-discovery.md)
+and [dimensional craft](../omni-design-systems/references/dimensional-visualization-craft.md)
+when relevant. Show the requested comparison treatment in each E concept within
+verified native capabilities; retain any unsupported difference explicitly rather
+than substituting an App or treating a static SVG as a native chart.
+
 Before runtime or tool use, follow the shared [package-use policy](../omni-artifact-accelerator/references/dependency-policy.md): no unapproved package installation/import or skill activation, and no Blender code or execution. Source review is separate from execution authority.
 
 Own native dashboard composition and analytical usability. Support a Data Model Accelerator handoff, a migration inventory, or a standalone dashboard brief without requiring the other modes.

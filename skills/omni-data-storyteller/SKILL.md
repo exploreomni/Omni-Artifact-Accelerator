@@ -5,6 +5,11 @@ description: Turn verified analysis into clear dashboard or app narratives, char
 
 # Omni data storyteller
 
+At C, explain where supported comparisons, time, spatial context, movement or imagery
+help the investigation for [D discovery](../omni-product-owner/references/visual-experience-discovery.md),
+without choosing the product. For dimensional treatments, keep annotation meaning,
+actual/target/forecast identity and withholding rules independent of decoration.
+
 For a net-new product, own stage C of the [data-first workflow](../omni-artifact-accelerator/references/data-first-product-workflow.md):
 create the reusable analytical narrative after verified access and analyst/BI work,
 before artifact discovery or screen design. This work is required on that route.

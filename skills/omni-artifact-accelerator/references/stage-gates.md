@@ -25,7 +25,7 @@ credentials, private results and engagement records outside the repository.
 | A | `access` | `data`, `user_access` | `source_scope`, `user_identity` |
 | B | `analysis` | `profile`, `queries`, `insights`, `expectations` | `analyst`, `bi_engineer` |
 | C | `narrative` | `narrative`, `traceability`, `refresh` | `storyteller`, `analyst` |
-| D | `brief` | `brief` | none |
+| D | `brief` | `brief`, `intent` | `discovery_version: 1`; note dependencies are automatically pinned |
 | E | `options` | `comparison` | exactly three `options` |
 | E | `choice` | conversation: `user_response`; strict: none | conversation: `basis`, `option_id`, `expected_binding`; strict: `option_id`, `receipt_ref` |
 | E | `design` | `design` | `resolved: true`; current selected intent is automatically bound |
@@ -46,6 +46,57 @@ fields in the table. Unknown fields are rejected.
 An option contains `id`, `thesis` and `evidence` (a relative path). The three IDs,
 normalized theses and evidence hashes must differ. Provide three feasible product
 structures on the same analytical foundation, not three differently named palettes.
+
+## Visual discovery at D
+
+After A–C, follow the [visual interview](../../omni-product-owner/references/visual-experience-discovery.md).
+Retain families and comparison styling in existing intent requirements using the
+[visual experience index](product-intent.md#visual-experience-index). The draft can
+have unresolved design/candidate paths: D records requirements, not an E selection.
+Save an immutable raw intent-specification snapshot separate from the mutable draft:
+
+```json
+{
+  "stage": "brief",
+  "discovery_version": 1,
+  "evidence": {
+    "brief": "evidence/discovery-v1.md",
+    "intent": "contracts/discovery-spec-v1.json"
+  }
+}
+```
+
+The snapshot must match the current canonical discovery context (selected intent
+when present, otherwise the current draft). The helper records the snapshot and
+all declared product-note dependencies, plus the source inventory when declared.
+Do not supply `discovery_dependencies`; it is generated and rechecked. Preserve
+snapshot and note bytes. A revised answer uses new files and a new D event.
+
+Status includes `visual_discovery` with its version, families, follow-up state,
+requirement IDs and unresolved findings. D may retain a valid unanswered draft;
+new options/choices require `status: ready`. Compare-and-track (including a custom
+family marked as containing comparisons) requires an answered, attributable reused,
+or explicitly delegated treatment. A family recommendation is not a user's answer;
+it requires explicit family delegation. Neither delegation supplies the E choice.
+
+Changing or removing adopted discovery blocks dependent work until D is reconciled.
+Re-recording D invalidates subsequent options, choice, design and candidate state.
+Later design paths and implementation annotations may change without changing
+the discovery decisions. D uses the [discovery field projection](product-intent.md#visual-experience-index),
+excluding delivery ownership, runtime/asset bindings, review annotations and
+implementation contexts. The normal full-intent, detailed-design and candidate
+gates still bind those changes. Prior adopted requirement IDs remain accountable
+even before an intent was selected: retain an attributable explicit omission
+instead of deleting a decision from a later D snapshot.
+
+Historical D events with only `evidence.brief` remain readable without rehashing.
+Existing selected historical products may continue and report visual discovery as
+`not_assessed`. Recording new D, options, or choices requires the upgraded contract;
+reuse attributable answers when upgrading pending work. Once visual discovery is
+adopted, a historical D event cannot stand in for its current checkpoint. There is
+no production flag to create new legacy D events or waive the interview evidence.
+This does not add a stage, authenticate notes, certify visual quality, or change
+dependency/publication authority.
 
 ## Selection policies
 

@@ -1,0 +1,295 @@
+{
+  "kind": "original_static_craft_specimens",
+  "purpose": "Teaching source only; not an executable intent,scene or native-query contract.",
+  "specimens": [
+    {
+      "id": "mineral-ledger",
+      "svg": "mineral-ledger.svg",
+      "purpose": "Compare signed contributions without losing zero,ties or missingness.",
+      "inputs": [
+        {
+          "id": "aster",
+          "label": "Aster",
+          "value": -8
+        },
+        {
+          "id": "birch",
+          "label": "Birch",
+          "value": 0
+        },
+        {
+          "id": "cedar",
+          "label": "Cedar",
+          "value": 12
+        },
+        {
+          "id": "elm",
+          "label": "Elm",
+          "value": 12
+        },
+        {
+          "id": "fir",
+          "label": "Fir",
+          "value": null
+        }
+      ],
+      "unit": "synthetic contribution units",
+      "encoding": {
+        "baseline_y": 350,
+        "pixels_per_unit": 12,
+        "front_width": 48,
+        "relief": [
+          8,
+          -8
+        ],
+        "relief_semantics": "constant decorative offset"
+      },
+      "poor_fit": [
+        "Non-additive totals",
+        "Perspective hides quantitative front edges",
+        "Too many categories for direct labels"
+      ],
+      "controls_intent": [
+        "Select category by pointer or keyboard",
+        "Inspect exact value and source"
+      ],
+      "exact_value_fallback": "Visible keyed values including unknown; a missing mark is not zero.",
+      "treatment": {
+        "art_direction": "mineral ledger",
+        "appearance": "warm light",
+        "material": "restrained relief"
+      },
+      "review": [
+        "Check signed front-face mapping,zero,tie,unknown",
+        "Observe labels/contrast/occlusion at real size before any visual claim"
+      ],
+      "evidence_limits": {
+        "source": "Original authored static SVG and synthetic inputs only.",
+        "rendered": "Not observed.",
+        "native": "No native runtime or interaction implemented or verified.",
+        "rights": "Original package specimen; no customer/vendor imagery or fonts.",
+        "execution": "No scripts, external assets, engines or imports in SVG.",
+        "adaptation": "Transfer encoding and task reasoning; this is not a product template or fixed option set."
+      }
+    },
+    {
+      "id": "signal-trace",
+      "svg": "signal-trace.svg",
+      "purpose": "Read temporal change while preserving a missing observation.",
+      "inputs": [
+        {
+          "period": "2026-01",
+          "label": "Jan",
+          "value": 20
+        },
+        {
+          "period": "2026-02",
+          "label": "Feb",
+          "value": 25
+        },
+        {
+          "period": "2026-03",
+          "label": "Mar",
+          "value": null
+        },
+        {
+          "period": "2026-04",
+          "label": "Apr",
+          "value": 18
+        },
+        {
+          "period": "2026-05",
+          "label": "May",
+          "value": 30
+        }
+      ],
+      "unit": "synthetic monthly units",
+      "encoding": {
+        "x": [
+          130,
+          310,
+          490,
+          670,
+          850
+        ],
+        "baseline_y": 430,
+        "pixels_per_unit": 6,
+        "segments": [
+          [
+            0,
+            1
+          ],
+          [
+            3,
+            4
+          ]
+        ],
+        "depth": [
+          7,
+          -7
+        ],
+        "depth_semantics": "constant decoration,not uncertainty"
+      },
+      "poor_fit": [
+        "Data lacking ordered periods",
+        "Smoothing would invent observations",
+        "Depth obscures exact line position"
+      ],
+      "controls_intent": [
+        "Inspect period",
+        "Navigate exact observations without hover"
+      ],
+      "exact_value_fallback": "Visible month/value list; March unknown; no inferred bridge.",
+      "treatment": {
+        "art_direction": "signal trace",
+        "appearance": "dark instrument",
+        "light": "selective edge,not glow on every mark"
+      },
+      "review": [
+        "Independent point/segment mapping",
+        "Observe missing-gap readability,labels and reduced-motion equivalent if animated later"
+      ],
+      "evidence_limits": {
+        "source": "Original authored static SVG and synthetic inputs only.",
+        "rendered": "Not observed.",
+        "native": "No native runtime or interaction implemented or verified.",
+        "rights": "Original package specimen; no customer/vendor imagery or fonts.",
+        "execution": "No scripts, external assets, engines or imports in SVG.",
+        "adaptation": "Transfer encoding and task reasoning; this is not a product template or fixed option set."
+      }
+    },
+    {
+      "id": "porcelain-layers",
+      "svg": "porcelain-layers.svg",
+      "purpose": "Compare actual,target and supplied forecast without conflating their meanings.",
+      "inputs": [
+        {
+          "id": "aster",
+          "label": "Aster",
+          "actual": 28,
+          "target": 25,
+          "forecast": 29
+        },
+        {
+          "id": "birch",
+          "label": "Birch",
+          "actual": 22,
+          "target": 25,
+          "forecast": null
+        },
+        {
+          "id": "cedar",
+          "label": "Cedar",
+          "actual": 31,
+          "target": 25,
+          "forecast": 32
+        }
+      ],
+      "unit": "synthetic units",
+      "encoding": {
+        "value_axis": "horizontal",
+        "x_origin": 190,
+        "pixels_per_unit": 15,
+        "domain": [
+          0,
+          40
+        ],
+        "series": [
+          "solid actual dot",
+          "dashed target tick",
+          "outline forecast diamond"
+        ],
+        "planes": "decorative grouping only"
+      },
+      "poor_fit": [
+        "Too many overlapping series",
+        "Forecast meaning or source unqualified",
+        "Independent scales would misstate differences"
+      ],
+      "controls_intent": [
+        "Select a series/entity",
+        "Inspect same-scale exact evidence"
+      ],
+      "exact_value_fallback": "Visible actual/target/forecast values; missing forecast retained.",
+      "treatment": {
+        "art_direction": "porcelain layers",
+        "appearance": "pale",
+        "material": "opaque quiet planes"
+      },
+      "review": [
+        "Check shared scale/series mapping",
+        "Observe occlusion,legend and keyboard access if interaction implemented"
+      ],
+      "evidence_limits": {
+        "source": "Original authored static SVG and synthetic inputs only.",
+        "rendered": "Not observed.",
+        "native": "No native runtime or interaction implemented or verified.",
+        "rights": "Original package specimen; no customer/vendor imagery or fonts.",
+        "execution": "No scripts, external assets, engines or imports in SVG.",
+        "adaptation": "Transfer encoding and task reasoning; this is not a product template or fixed option set."
+      }
+    },
+    {
+      "id": "technical-specimen",
+      "svg": "technical-specimen.svg",
+      "purpose": "Specify useful analytical/inspection views while retaining selected identity.",
+      "inputs": [
+        {
+          "id": "A",
+          "value": 6
+        },
+        {
+          "id": "B",
+          "value": 10
+        },
+        {
+          "id": "C",
+          "value": 4
+        }
+      ],
+      "selected_id": "B",
+      "unit": "synthetic units",
+      "encoding": {
+        "baseline_y": 386,
+        "pixels_per_unit": 16,
+        "front_width": 52,
+        "default_relief": 0,
+        "inspection_relief": [
+          18,
+          -18
+        ],
+        "third_axis": "illustrative constant depth,not measured"
+      },
+      "poor_fit": [
+        "Free rotation adds no inspection value",
+        "Three-dimensional evidence is absent but claimed",
+        "Occlusion makes default comparison ambiguous"
+      ],
+      "controls_intent": [
+        "Front view",
+        "Inspect selected",
+        "Reset front",
+        "Keyboard/list equivalent",
+        "Preserve camera and selection on ordinary refresh"
+      ],
+      "exact_value_fallback": "Visible A6 B10 C4; selection must reach the same evidence outside any future canvas.",
+      "treatment": {
+        "art_direction": "technical specimen",
+        "appearance": "muted light",
+        "geometry": "original simple extrusions"
+      },
+      "review": [
+        "Check identical value/identity across views",
+        "Actual camera/reset/resize/reduced-motion/return require implemented runtime observation"
+      ],
+      "evidence_limits": {
+        "source": "Original authored static SVG and synthetic inputs only.",
+        "rendered": "Not observed.",
+        "native": "No native runtime or interaction implemented or verified.",
+        "rights": "Original package specimen; no customer/vendor imagery or fonts.",
+        "execution": "No scripts, external assets, engines or imports in SVG.",
+        "adaptation": "Transfer encoding and task reasoning; this is not a product template or fixed option set."
+      }
+    }
+  ]
+}
