@@ -27,6 +27,7 @@ CASES = {
     "workflow": "tests/test_delivery_workflow.py",
     "native-query": "tests/test_native_query_probe.py",
     "native-authoring": "tests/test_native_authoring.py",
+    "native-create": "tests/test_native_create.py",
     "assembly": "tests/test_experience_assembly.py",
     "product-intent": "tests/test_product_intent.py",
     "stage-gates": "tests/test_stage_gates.py",

@@ -192,6 +192,7 @@ Run only the affected original-source cases with the existing interpreter:
 python3 -I -S -B scripts/validate_source.py --case workflow
 python3 -I -S -B scripts/validate_source.py --case native-query
 python3 -I -S -B scripts/validate_source.py --case native-authoring
+python3 -I -S -B scripts/validate_source.py --case native-create
 python3 -I -S -B tests/test_native_input_handoff.py -v
 python3 -I -S -B scripts/validate_source.py --case assembly
 python3 -I -S -B scripts/validate_source.py --case metadata
@@ -205,6 +206,10 @@ not run additional dependency-backed checks without the required exact sign-off.
 The authoring cases cover empty/invalid CLI transport, command inventory, nested
 query envelopes, explicit catalog drift, missing metadata, and existing-App
 HTML-only preparation/readback for supplied organization/user identities. The
+new-App cases check frozen HTML/specification binding, all four reviews, fixed
+new-document routes, locked settings, model/Topic distinction, tamper rejection
+and exact supplied-capture comparisons. They contain no live transport or approval
+provider; creation/publication and native behavior require separate evidence. The
 handoff cases run separately with the existing Node runtime on PATH (the bounded
 Python security lane intentionally strips that host PATH). They use original package sources to check
 qualified numeric strings, grain, refresh/run/subscription semantics, failure
