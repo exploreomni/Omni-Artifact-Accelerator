@@ -22,6 +22,11 @@ class DesignReviewTests(unittest.TestCase):
         self.base = Path(self.temp.name).resolve()
         self.root = self.base / "engagement"
         P.init(self.root, "Synthetic design review", "net-new", "app")
+        # Existing pre-policy candidate: these tests exercise review evidence, not new-product gates.
+        project = P.load_project(self.root)[1]
+        project.update(mode='enhancement')
+        project.pop('stage_gate_policy')
+        P.write_json(self.root / 'project.json', project, replace=True)
         for path, raw in {"deliverables/app.html": b"<h1>Synthetic</h1>",
                           "contracts/resolved.json": b'{"task":"inspect an item"}',
                           "contracts/query.json": b'{"field":"synthetic.revenue"}',

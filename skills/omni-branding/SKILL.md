@@ -5,6 +5,12 @@ description: Establish a reusable brand and theme contract for Omni dashboards a
 
 # Omni branding
 
+For new products, follow the [data-first workflow](../omni-artifact-accelerator/references/data-first-product-workflow.md):
+retain volunteered brand preferences at intake, conduct artifact/brand discovery
+after the A–C analytical narrative, help distinguish the three viable concepts,
+then resolve assets and visual identity for the user's selected option. Existing
+brand authorization and focused corrections do not require repeat interviews.
+
 For selected spatial work, extend the existing brand contract with [procedural material intent](../omni-3d-modeler/references/procedural-craft.md): structural/focal materials, roughness, texture scale, system-font fallback and logo placement. Reuse the approved company website and exact assets. Brand permission does not approve a font loader, remote image decoder or engine. Preserve analytical palette meaning under lighting and retain a clear legend/plain-value route. Do not force branded texture imagery into every scene.
 
 Before runtime or tool use, follow the shared [package-use policy](../omni-artifact-accelerator/references/dependency-policy.md): no unapproved package installation/import or skill activation, and no Blender code or execution. Source review is separate from execution authority.

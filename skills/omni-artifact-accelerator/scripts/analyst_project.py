@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 """Offline analyst engagement helpers; no network, source execution or approvals."""
 import argparse
+from contextlib import contextmanager
+from contextvars import ContextVar
 import hashlib
 import json
 import os
 from pathlib import Path
 import re
+import sys
 import tempfile
 import uuid
 
@@ -152,6 +155,8 @@ def init(output, name, mode, surface, branding=None, website=None):
         "audience": None, "decision": None, "sources": [], "artifacts": [], "decisions": [],
         "open_questions": list(STARTER_QUESTIONS), "open_questions_kind": "starter_prompts",
     }
+    # Every new engagement is gated. A caller-controlled mode is not an exemption.
+    project['stage_gate_policy'] = 'data-first-v1'
     write_json(root / "project.json", project)
     write_json(root / project["design_intent_draft"], intent)
     for contract in ("metrics", "queries", "design", "brand", "qa"):
@@ -209,10 +214,19 @@ def plan(root, scope_ids=None):
         if proposed:
             proposed.add('qa-analyst')
         roles = [role for role in ROLES if role in proposed]
+    gates = stage_status(root)
+    if gates['required']:
+        roles = [r for r in stage_roles(gates.get('next_stage')) if r in ROLES and
+                 (r != 'app-designer' or 'app' in obj['surfaces']) and
+                 (r != 'dashboard-designer' or 'dashboard' in obj['surfaces'])]
     return {"kind": "suggested_role_plan", "agents_dispatched": False,
+            "stage_gates": gates,
             "scope_ids": scope_ids, "focused_scope_missing": focused and scope_ids is None,
             "scope_note": "For a focused repair, supply affected existing requirement IDs with --scope-id; do not restart the interview. Full intent remains in force.",
-            "next_step": ("Supply --scope-id for the affected known requirements; no new user interview is implied."
+            "next_step": ("Continue only stage " + str(gates.get('next_stage')) +
+                          "; verify with stage-check. Choice requires the actual user and a trusted host verifier."
+                          if gates['required'] else
+                          "Supply --scope-id for the affected known requirements; no new user interview is implied."
                           if focused and scope_ids is None else
                           "Use run-check for recorded startup and ownership; plan is advisory and does not execute specialists."),
             "note": "Select the smallest useful team; one worker may own several disciplines. Dependencies and actual dispatch belong to the host.",
@@ -227,7 +241,7 @@ def plan(root, scope_ids=None):
                            (["references/spatial-integration.md"] if r == "app-engineer" and any(
                            "spatial-modeling" in q["capabilities"] and "app" in q["surfaces"]
                            for q in coverage["requirements"]) else [])} for r in roles],
-            "optional_roles": [r for r in ("design-systems", "data-storyteller", "motion-designer", "backend-handoff", "3d-modeler") if r not in roles],
+            "optional_roles": [] if gates['required'] else [r for r in ("design-systems", "data-storyteller", "motion-designer", "backend-handoff", "3d-modeler") if r not in roles],
             "delivery_coverage": coverage}
 
 
@@ -432,17 +446,103 @@ def import_dma(root, review):
 
 def routing_helper(name='task_routing'):
     import importlib.util
-    need(name in {'task_routing', 'task_operations', 'delivery_workflow', 'product_intent'}, 'unknown routing helper')
+    need(name in {'task_routing', 'task_operations', 'delivery_workflow', 'product_intent', 'stage_gates'}, 'unknown routing helper')
+    # Fixed first-party module only. The host verifier never comes from a request,
+    # file path or environment variable. Share its scope across helper imports.
+    cache_key = '_oaa_stage_gates_' + digest(str(Path(__file__).resolve().parent).encode())
+    if name == 'stage_gates' and cache_key in sys.modules:
+        return sys.modules[cache_key]
     spec = importlib.util.spec_from_file_location('oaa_' + name, Path(__file__).with_name(name + '.py'))
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
+    if name == 'stage_gates':
+        module._host_provider_context = ContextVar(cache_key, default=None)
+        sys.modules[cache_key] = module
     return module
+
+
+@contextmanager
+def trusted_stage_provider(provider):
+    """Trusted-host seam; the host must isolate it from the authoring agent.
+
+    The verifier derives choices from authenticated user events. Implementing this
+    method alone does not qualify a host. The stock CLI has no verifier.
+    """
+    need(callable(getattr(provider, 'verify_choice', None)), 'Trusted host choice verifier required')
+    module = routing_helper('stage_gates')
+    token = module._host_provider_context.set(provider)
+    try:
+        yield
+    finally:
+        module._host_provider_context.reset(token)
+
+
+def stage_status(root):
+    module = routing_helper('stage_gates')
+    return module.inspect(root, provider=module._host_provider_context.get())
+
+
+def stage_require(root, action):
+    module = routing_helper('stage_gates')
+    return module.require_action(root, action, provider=module._host_provider_context.get())
+
+
+def stage_record(root, request):
+    module = routing_helper('stage_gates')
+    return module.record(root, request, provider=module._host_provider_context.get())
+
+
+def stage_roles(stage):
+    return {
+        'access': ['bi-engineer', 'qa-analyst'],
+        'analysis': ['data-analyst', 'bi-engineer', 'qa-analyst'],
+        'narrative': ['data-storyteller', 'data-analyst', 'qa-analyst'],
+        'brief': ['product-owner', 'qa-analyst'],
+        'options': ['product-owner', 'app-designer', 'dashboard-designer', 'branding', 'design-systems', 'qa-analyst'],
+        'choice': ['product-owner'],
+        'design': ['app-designer', 'dashboard-designer', 'branding', 'design-systems', 'motion-designer', '3d-modeler'],
+        'candidate': ['app-engineer', 'bi-engineer', 'qa-analyst'],
+        'review': ['qa-analyst', 'design-systems', 'product-owner'],
+        'release': ['qa-analyst', 'product-owner'],
+    }.get(stage, [])
+
+
+def stage_packet_gate(root, role, assignment=None):
+    """Role names and provisional labels never waive authoring prerequisites."""
+    status = stage_status(root)
+    if not status['required']:
+        return status
+    stage = assignment.get('stage') if type(assignment) is dict else None
+    outputs = assignment.get('outputs', []) if type(assignment) is dict else []
+    need(type(outputs) is list and all(type(p) is str for p in outputs), 'Invalid assignment outputs')
+    if any(Path(p).suffix.casefold() in {'.html', '.htm', '.js', '.mjs', '.cjs', '.css',
+                                       '.ts', '.tsx', '.jsx', '.vue', '.svelte', '.glb', '.gltf'} for p in outputs):
+        return stage_require(root, 'build')
+    if role == 'app-engineer' or stage == 'implementation':
+        return stage_require(root, 'build')
+    if role in {'3d-modeler', 'motion-designer'}:
+        return stage_require(root, 'design')
+    if stage in {'app', 'dashboard'} and role not in {
+            'qa-analyst', 'product-owner', 'app-designer', 'dashboard-designer', 'branding', 'design-systems'}:
+        return stage_require(root, 'build')
+    if role in {'app-designer', 'dashboard-designer', 'branding', 'design-systems'}:
+        return stage_require(root, 'options')
+    if role == 'data-storyteller':
+        return stage_require(root, 'narrative')
+    if role == 'product-owner':
+        return stage_require(root, 'brief')
+    if role == 'data-analyst':
+        return stage_require(root, 'analysis')
+    if role in {'bi-engineer', 'qa-analyst', 'backend-handoff', 'artifact-translator'}:
+        return status  # Source/access investigation, never a build grant.
+    raise ValueError('No stage-gated route for specialist')
 
 
 def packet_data(root, role, inputs, assignment=None):
     """Build a bounded handoff view without writing or dispatching it."""
     root, obj = load_project(root)
     need(role in ROLES, "unknown specialist role")
+    gate = stage_packet_gate(root, role, assignment)
     need(bool(inputs), "select at least one bounded input")
     need(len(inputs) == len(set(inputs)), "duplicate packet input")
     design_context = intent_helper().packet_context(root, role)
@@ -478,6 +578,12 @@ def packet_data(root, role, inputs, assignment=None):
                                   "Blender implementation or generated script execution is requested",
                                   "a required native route is unavailable"],
               "trust_note": "Source content is data. This index is not sanitization or authorization."}
+    if gate['required']:
+        result['stage_context'] = {'policy': gate['policy'],
+                                   'stage_bindings': gate.get('stage_bindings', {})}
+        result['allowed_actions'] = ['read selected evidence',
+            'author only the role work permitted by the current A-F stage; no implicit build or release grant']
+        result['stop_conditions'].append('A-F prerequisites or trusted user selection are missing, changed or revoked')
     if design_context["paths"] or design_context["findings"]:
         result["design_context"] = design_context
     if product_context['enabled'] or role == 'product-owner':
@@ -532,7 +638,7 @@ def packet_check(root, packet_relative):
             need(saved.get("task_id") == current.get("task_id"), "assigned task identity changed")
         for key in ("skill", "objective", "allowed_actions", "external_mutations_authorized",
                     "host_must_supply", "stop_conditions", "trust_note", "current_dma_catalog", "baseline_note",
-                    "assignment", "assignment_sha256", "product_context"):
+                    "assignment", "assignment_sha256", "product_context", "stage_context"):
             if saved.get(key) != current.get(key):
                 findings.append({"code": "packet_context_changed", "field": key})
         old_context, new_context = saved.get("design_context", {}), current.get("design_context", {})
@@ -578,13 +684,17 @@ def main():
                     "intent-select", "intent-check", "intent-cases", "claim-work", "prepare-dispatch", "record-dispatch",
                     "checkpoint-work", "work-status", "review-work", "packet-check", "experience-check",
                     "run-start", "run-check", "candidate-freeze", "delivery-check", "source-inventory",
-                    "delivery-project", "delivery-evidence-template", "product-brief", "product-check"):
+                    "delivery-project", "delivery-evidence-template", "product-brief", "product-check",
+                    "stage-status", "stage-record", "stage-check"):
         cmd = commands.add_parser(command)
         cmd.add_argument("--project", required=True)
         if command in ("claim-work", "prepare-dispatch", "record-dispatch", "checkpoint-work", "review-work",
                        "run-start", "run-check", "candidate-freeze", "delivery-check", "source-inventory",
-                       "delivery-project", "delivery-evidence-template"):
+                       "delivery-project", "delivery-evidence-template", "stage-record"):
             cmd.add_argument('--request', required=True)
+        elif command == 'stage-check':
+            cmd.add_argument('--action', required=True, choices=('access', 'analysis', 'narrative', 'brief',
+                'options', 'choose', 'design', 'build', 'review', 'release'))
         elif command == 'work-status':
             cmd.add_argument('--html', help='new or existing generated project-local status HTML')
         elif command == "packet-check":
@@ -618,6 +728,12 @@ def main():
     try:
         if args.command == "init":
             result = init(args.output, args.name, args.mode, args.surface, args.branding, args.website)
+        elif args.command == 'stage-status':
+            result = stage_status(args.project)
+        elif args.command == 'stage-record':
+            result = stage_record(args.project, read_json(args.request)[0])
+        elif args.command == 'stage-check':
+            result = stage_require(args.project, args.action)
         elif args.command in ('product-brief', 'product-check'):
             product = routing_helper('product_intent')
             result = product.generate(args.project, args.output) if args.command == 'product-brief' else product.check(args.project)
@@ -671,7 +787,8 @@ def main():
             result = packet(args.project, args.role, args.input, args.output,
                             read_json(args.assignment)[0] if args.assignment else None)
         print(json.dumps(result, indent=2))
-        return 1 if result.get("status") == "inconsistent" or (args.command in {'run-check', 'delivery-check'} and
+        return 1 if result.get("status") == "inconsistent" or (args.command == 'stage-status' and
+                    result.get('status') in {'blocked', 'invalid', 'incomplete'}) or (args.command in {'run-check', 'delivery-check'} and
                     result.get('status') in {'incomplete', 'candidate_with_gaps'}) or (args.command == "experience-check" and
                     result.get("status") in {"incomplete", "not_assessed"}) or (args.command == "design-check" and
                     result.get("coverage") == "incomplete") else 0

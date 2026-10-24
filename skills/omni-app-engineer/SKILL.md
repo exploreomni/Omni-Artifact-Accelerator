@@ -5,6 +5,19 @@ description: Implement and repair native Omni App HTML, CSS and JavaScript from 
 
 # App software engineer
 
+For new products/reconception, consume the [data-first A–F handoff](../omni-artifact-accelerator/references/data-first-product-workflow.md):
+scoped access evidence, qualified queries/analysis, dynamic narrative rules, artifact
+requirements, attributable selection from three options and resolved design. Do
+not start full coding from a provisional theme or invent selection. Aim for one
+cohesive implementation, then route every candidate iteration for security, UI/UX,
+PO and independent QA feedback. Technical spikes stay bounded and do not substitute
+for the selected experience. Preserve existing dependency and publication authority.
+
+Pass the [executable build gate](../omni-artifact-accelerator/references/stage-gates.md)
+before any artifact code. Use guarded assembly/freeze and current candidate-bound
+reviews; raw file/API writes are not a fallback for blocked user selection. The
+standalone CLI stops without a trusted host choice verifier.
+
 Consume the current [product-intent handoff](../omni-artifact-accelerator/references/product-intent.md)
 alongside the selected design. Return requirement coverage, unsupported methods and
 feasible alternatives with remaining gaps; preserve the intended outcome instead

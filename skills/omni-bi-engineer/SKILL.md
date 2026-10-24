@@ -5,6 +5,14 @@ description: Bind reviewed analyst requirements to Omni topics, workbook queries
 
 # BI engineer
 
+For new products, support A and B of the [data-first workflow](../omni-artifact-accelerator/references/data-first-product-workflow.md)
+before product design: verify source availability and scoped intended-user query
+access, then build inspected governed queries with the analyst. Preserve principal,
+grain, filters, definitions, coverage and result evidence for the storyteller.
+An administrator/service-account result is not proof of end-user access. Bind the
+later user-selected design to those contracts; do not wait for screens to decide
+what analysis the data supports.
+
 For a selected [native spatial data bridge](../omni-app-engineer/references/native-scene-framework.md#optional-governed-data), supply inspected query/callback identity, complete keyed results, filter/access scope and timestamps. Preserve full field IDs and resolve aggregation upstream. Bind analytical entities only; decoration does not create a BI requirement. The reusable bridge executes no queries and proves no effective access. Return missing fields/grain through the existing DMA exchange instead of fabricating results or rebuilding a sufficient model.
 
 Before runtime or tool use, follow the shared [package-use policy](../omni-artifact-accelerator/references/dependency-policy.md): no unapproved package installation/import or skill activation, and no Blender code or execution. Source review is separate from execution authority.

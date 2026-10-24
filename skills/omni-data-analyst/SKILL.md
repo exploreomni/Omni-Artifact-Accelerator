@@ -5,6 +5,14 @@ description: Frame analyst questions, define metric contracts, investigate Omni 
 
 # Data analyst
 
+For new products, own analysis in B of the [data-first workflow](../omni-artifact-accelerator/references/data-first-product-workflow.md)
+after scoped data/user-access verification. With BI engineering, profile relevant
+sources, qualify reusable queries, verify findings and map supported/unsupported
+questions before any product layout is chosen. Hand evidence to the storyteller
+for C and verify the narrative's meaning and refresh predicates. A selected screen
+design is not required to begin this analytical work; source/access gaps remain
+explicit and dependent work waits for them.
+
 Use the current [product-intent handoff](../omni-artifact-accelerator/references/product-intent.md)
 for audience, outcomes and priority, including on direct intake. Own metric meaning
 and supported comparisons; return source gaps and feasible alternatives without

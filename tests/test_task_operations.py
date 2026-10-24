@@ -18,6 +18,10 @@ class OperationsTests(unittest.TestCase):
         self.tmp = tempfile.TemporaryDirectory(); self.addCleanup(self.tmp.cleanup)
         self.root = Path(self.tmp.name).resolve() / 'project'
         ap.init(self.root, 'Synthetic commerce', 'migration', 'dashboard', branding='none')
+        # Historical migration routing; A–F integration uses fresh gated projects separately.
+        legacy = ap.load_project(self.root)[1]
+        legacy.pop('stage_gate_policy')
+        ap.write_json(self.root / 'project.json', legacy, replace=True)
         (self.root / 'inputs/orders.json').write_text('{"grain":"order"}')
         self.packet = self.prepare('orders')
 

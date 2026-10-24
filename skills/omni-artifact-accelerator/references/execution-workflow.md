@@ -2,6 +2,16 @@
 
 Use for substantial new design, redesign and migration. This procedure connects
 the existing project, selected intent, specialist assignments and design review.
+
+For net-new products and explicit product reconception, the
+[data-first A–F workflow](data-first-product-workflow.md) governs execution order.
+Record startup first, then verify source/user access, analyze governed queries and
+complete the reusable narrative before artifact discovery. Present three viable
+options and obtain the user's selection before detailed design/full implementation.
+The [executable stage gates](stage-gates.md) enforce that sequence at supported
+entrypoints and require a trusted host verifier for actual option selection. The
+stock CLI stops at choice. No production host adapter ships; hosts must also guard
+raw authoring routes, and local evidence does not authenticate effective access.
 It adds no universal layout, approval interview or permanent agent team. Focused
 repairs retain their current engagement and inspect only affected obligations.
 
@@ -18,6 +28,8 @@ Use only already authorized tools and original helpers. An inaccessible reposito
 is a startup gap; do not improvise a design-complete claim from engineering snippets.
 If local helper execution is unavailable, retain the same records as attachments
 and label checks `not_run`. Do not install a runtime or connector to close the gap.
+Gated implementation remains blocked until a capable trusted host can execute the
+checks and verify the actual choice; attachments and prose are not a bypass.
 
 For a repository-only blind trial, use only the selected checkout and supplied
 inputs. Do not compare installed copies or read previous apps, outputs or memory.
@@ -89,7 +101,7 @@ Keep design choices in the existing selected intent and resolved design. Its sha
     "engineering": {"role":"app-engineer","worker":"lead","mode":"inline","rationale":"Implements the selected native contract"},
     "verification": {"role":"qa-analyst","worker":"reviewer","mode":"delegated","rationale":"Independent review of original request and output"},
     "design_systems": {"role":"design-systems","worker":"","mode":"not_required","rationale":"Existing reviewed controls are unchanged"},
-    "storytelling": {"role":"data-storyteller","worker":"","mode":"not_required","rationale":"No interpretive narrative is in scope"}
+    "storytelling": {"role":"data-storyteller","worker":"analyst","mode":"inline","rationale":"Creates the traceable, refresh-safe narrative after query analysis and before artifact design"}
   },
   "request_review": {
     "reviewer":"reviewer",
@@ -209,11 +221,13 @@ callbacks are different evidence. Reuse governed definitions; send actual missin
 semantics through the existing DMA handoff, not an unnecessary warehouse rebuild.
 
 The [first-delivery workflow](first-delivery.md) and [experience brief](../../omni-design-systems/references/experience-brief.md)
-own design decisions. Select a direct direction or compare where useful; preserve
+own design decisions. New products require stage E's three options and user choice;
+direct selection is reserved for focused work or an already selected product. Preserve
 brand authorization, first/return use, dominant evidence, control states, responsive
 width **and height**, and useful detail/return. Review the complete first journey,
 then every consequential destination. No fixed KPI count, tabs, animation, imagery,
-3D or number of concepts is required. More prose cannot replace actual critique.
+3D is required. New products require exactly three options; their content is not
+a fixed template. More prose cannot replace actual critique.
 
 Make the first journey representative of the ambition, not just a thin technical
 path. Preserve defining brand/interaction qualities and useful evidence. When a
@@ -221,13 +235,16 @@ method is unsupported, record its preserved outcome, feasible alternative and
 remaining gap; do not let feasibility silently redefine the requested experience.
 
 The original assembler automatically stores exact first HTML bytes and each changed
-assembly under `evidence/assembled-history/` before review. For custom assembly and
-complete delivery context, run `candidate-freeze` immediately after first assembly,
-before fixes, then again for the delivered revision:
+assembly under `evidence/assembled-history/` before review. Gated assembler builds
+also freeze the candidate automatically; use their returned `candidate` path.
+For hand-authored candidates, run `candidate-freeze` immediately after the first
+candidate, before fixes, then again for each reviewed revision. All four reviews
+must be recorded before the next build/freeze:
 
 ```json
 {
   "id":"initial",
+  "builders":["actual-engineer-id"],
   "artifacts":["deliverables/app.html"],
   "context":["evidence/run-first-run.json","contracts/execution.json",
     "evidence/original-request-review.md","contracts/queries.json","contracts/runtime.json"]

@@ -15,6 +15,16 @@ Follow the shared [dependency and execution boundaries](../omni-artifact-acceler
 This role grants no package activation, runtime, publication or external-write
 authority. Keep customer notes and engagement artifacts outside the package.
 
+For new products, use the [data-first workflow](../omni-artifact-accelerator/references/data-first-product-workflow.md).
+Before artifact discovery, require the A–C handoff: scoped data/user-access evidence,
+qualified analysis and the reusable narrative. Intake may recover volunteered
+preferences and clarify source/decision scope; do not start a design questionnaire
+before that handoff. At D, interview using supported insights and questions. At E,
+coordinate exactly three distinct viable options, recommend with reasons and wait
+for the user's selection before detailed design/full coding. Preserve attributable
+selection in current intent; do not let an agent's working proposal substitute for
+it. Review product fit against each candidate iteration in F.
+
 ## Recover before interviewing
 
 Read the original request, current selected [design intent](../omni-artifact-accelerator/references/design-intent.md),

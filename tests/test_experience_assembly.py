@@ -17,7 +17,16 @@ SPEC.loader.exec_module(A)
 class ExperienceAssemblyTests(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
-        self.root = Path(self.tmp.name).resolve()
+        self.root = Path(self.tmp.name).resolve() / 'engagement'
+        spec = importlib.util.spec_from_file_location('assembly_project_fixture', SCRIPT.parents[2] /
+            'omni-artifact-accelerator/scripts/analyst_project.py')
+        P = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(P)
+        P.init(self.root, 'Existing composition repair', 'enhancement', 'app', 'none')
+        # Historical composition fixture. New engagements are exercised in gate integration tests.
+        project = P.load_project(self.root)[1]
+        project.pop('stage_gate_policy')
+        P.write_json(self.root / 'project.json', project, replace=True)
         self.spec = {"schema_version": 1,
                      "template": self.file("view.html", "<main>{{OAA:DATA}}</main>{{OAA:CORE}}{{OAA:VIEW}}"),
                      "slots": [self.slot("DATA", "json", "rows.json", '{"name":"Original synthetic collection","value":0}'),
@@ -72,14 +81,14 @@ class ExperienceAssemblyTests(unittest.TestCase):
     def test_dependency_order_collision_and_placeholders_are_validated(self):
         self.spec["slots"][2]["provides"] = ["Synthetic"]
         with self.assertRaisesRegex(ValueError, "collision"):
-            A.assemble(self.root, self.manifest())
+            A._assemble(self.root, self.manifest())
         del self.spec["slots"][2]["provides"]
         self.spec["template"] = self.file("view.html", "{{OAA:DATA}}{{OAA:VIEW}}{{OAA:CORE}}")
         with self.assertRaisesRegex(ValueError, "script order"):
-            A.assemble(self.root, self.manifest())
+            A._assemble(self.root, self.manifest())
         self.spec["template"] = self.file("view.html", "{{OAA:DATA}}{{OAA:CORE}}{{OAA:VIEW}}{{OAA:MISSING}}")
         with self.assertRaisesRegex(ValueError, "slots differ"):
-            A.assemble(self.root, self.manifest())
+            A._assemble(self.root, self.manifest())
 
     def test_paths_and_symlinks_cannot_escape_selected_project(self):
         for path in ("../outside", "/tmp/outside", "./view.html", "a/../view.html", "C:/outside"):
@@ -88,18 +97,18 @@ class ExperienceAssemblyTests(unittest.TestCase):
         (self.root / "alias.js").symlink_to(self.root / "core.js")
         self.spec["slots"][1]["path"] = "alias.js"
         with self.assertRaisesRegex(ValueError, "symlink"):
-            A.assemble(self.root, self.manifest())
+            A._assemble(self.root, self.manifest())
 
     def test_json_embedding_cannot_close_script_and_code_is_not_executed(self):
         self.spec["slots"][0] = self.slot("DATA", "json", "rows.json", json.dumps({"label": "</script><script>bad()</script>"}))
-        html, _ = A.assemble(self.root, self.manifest())
+        html, _ = A._assemble(self.root, self.manifest())
         self.assertIn("\\u003c/script>", html)
         self.assertNotIn("<script>bad()", html)
         self.spec["slots"][1] = self.slot("CORE", "script", "core.js", "throw new Error('must never execute during assembly');")
         A.build(self.root, self.manifest(), "inert")
         self.spec["slots"][1] = self.slot("CORE", "script", "core.js", 'const text = "</script>";')
         with self.assertRaisesRegex(ValueError, "tokenizer"):
-            A.assemble(self.root, self.manifest())
+            A._assemble(self.root, self.manifest())
 
     def test_budgets_and_duplicate_json_keys_fail_before_output(self):
         self.spec["max_output_bytes"] = 1
@@ -108,7 +117,7 @@ class ExperienceAssemblyTests(unittest.TestCase):
         self.assertFalse((self.root / "too-large").exists())
         (self.root / "bad.json").write_text('{"schema_version":1,"schema_version":2}')
         with self.assertRaisesRegex(ValueError, "duplicate JSON"):
-            A.assemble(self.root, "bad.json")
+            A._assemble(self.root, "bad.json")
 
     def test_cli_builds_new_local_artifact_only(self):
         result = subprocess.run([sys.executable, '-I', '-S', '-B', str(SCRIPT), "--project", str(self.root),

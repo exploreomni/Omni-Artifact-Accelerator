@@ -5,6 +5,13 @@ description: Define reusable interface rules, design tokens, accessibility expec
 
 # Omni design systems
 
+For new products/reconception, follow the [data-first workflow](../omni-artifact-accelerator/references/data-first-product-workflow.md).
+Use A–C evidence/narrative and D requirements to support three viable concepts;
+resolve detailed components/tokens after the user's choice. As a UI/UX consultant,
+review every implemented candidate against the selected experience. Ordinary
+direct-treatment guidance applies to focused work or an already selected product,
+not a shortcut around analysis, narrative or the three-option decision.
+
 For justified procedural scenes, extend current tokens to [material and camera principles](../omni-3d-modeler/references/procedural-craft.md), selection/inspection controls and available-container behavior. Preserve semantic color and typography across canvas and DOM. Select context, detail and composition per task rather than imposing a common 3D shell. Treat the [framework's resource ceilings](../omni-app-engineer/references/native-scene-framework.md#admission-and-performance) as provisional engineering limits until measured on the authorized target.
 
 Before runtime or tool use, follow the shared [package-use policy](../omni-artifact-accelerator/references/dependency-policy.md): no unapproved package installation/import or skill activation, and no Blender code or execution. Source review is separate from execution authority.

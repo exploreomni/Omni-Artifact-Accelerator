@@ -13,6 +13,9 @@ sys.path.insert(0, str(ROOT / 'tests'))  # Only this repository's original fixtu
 import test_experience_quality as fixture
 
 W = fixture.D.P.routing_helper('delivery_workflow')
+_gate_spec = importlib.util.spec_from_file_location('workflow_gate_fixture', ROOT / 'tests/stage_gate_fixture.py')
+G = importlib.util.module_from_spec(_gate_spec)
+_gate_spec.loader.exec_module(G)
 
 
 class WorkflowTests(unittest.TestCase):
@@ -21,6 +24,9 @@ class WorkflowTests(unittest.TestCase):
         self.base.setUp()
         self.addCleanup(self.base.doCleanups)
         self.root = self.base.root
+        project = W.P.load_project(self.root)[1]
+        project['stage_gate_policy'] = 'data-first-v1'
+        W.P.write_json(self.root / 'project.json', project, replace=True)
         self.base.base.select()
         self.write('inputs/brief.txt', 'Investigate collection changes; preserve evidence and return context.')
         self.write('evidence/request-review.txt', 'Original request compared independently with investigate requirement.')
@@ -41,6 +47,11 @@ class WorkflowTests(unittest.TestCase):
                 'requirement_ids': ['investigate'], 'evidence_path': 'evidence/request-review.txt'}}
         self.save_execution()
         self.request = {'run': self.run, 'execution': 'contracts/execution.json'}
+        self.gates = G.Lifecycle(self.root, W.P)
+        self.provider_context = W.P.trusted_stage_provider(self.gates.host)
+        self.provider_context.__enter__()
+        self.addCleanup(self.provider_context.__exit__, None, None, None)
+        self.gates.through()
 
     def write(self, path, content):
         (self.root / path).write_text(content if type(content) is str else json.dumps(content))
@@ -49,8 +60,10 @@ class WorkflowTests(unittest.TestCase):
         self.write('contracts/execution.json', self.execution)
 
     def freeze(self, ident='initial'):
-        return W.freeze(self.root, {'id': ident, 'artifacts': ['deliverables/app.html'],
+        result = W.freeze(self.root, {'id': ident, 'builders': ['builder'], 'artifacts': ['deliverables/app.html'],
             'context': [self.run, 'contracts/execution.json', 'evidence/request-review.txt', 'contracts/query.json']})
+        self.gates.reviews()
+        return result
 
     def evidence(self, candidate):
         evidence = {'candidate_sha256': W.P.digest((self.root / candidate).read_bytes()),
@@ -264,6 +277,8 @@ class WorkflowTests(unittest.TestCase):
         original = (self.root / 'deliverables/app.html').read_bytes()
         self.evidence(first['path'])
         self.write('deliverables/app.html', '<main>Revised original experience</main>')
+        self.base.base.select('revised')
+        self.gates.stage('design')
         next_candidate = self.freeze('revised')
         self.assertEqual(next_candidate['first'], first['first'])
         record = json.loads((self.root / first['path']).read_text())
@@ -284,7 +299,7 @@ class WorkflowTests(unittest.TestCase):
 
     def test_unreviewed_artifact_cannot_borrow_selected_design_completion(self):
         self.write('deliverables/unreviewed.html', '<main>Unreviewed</main>')
-        c = W.freeze(self.root, {'id': 'wrong', 'artifacts': ['deliverables/unreviewed.html'],
+        c = W.freeze(self.root, {'id': 'wrong', 'builders': ['builder'], 'artifacts': ['deliverables/unreviewed.html'],
             'context': [self.run, 'contracts/execution.json', 'evidence/request-review.txt']})['path']
         self.evidence(c)
         result = W.assess(self.root, {**self.request, 'candidate': c, 'evidence': 'evidence/delivery.json'})
@@ -297,7 +312,7 @@ class WorkflowTests(unittest.TestCase):
         self.evidence(final)
         result = W.assess(self.root, {**self.request, 'candidate': final, 'evidence': 'evidence/delivery.json'})
         self.assertIn('candidate_history_invalid', result['findings'])
-        with self.assertRaisesRegex(ValueError, 'historical bytes'):
+        with self.assertRaisesRegex(ValueError, 'stage_gate_stale_iteration_evidence'):
             self.freeze('next')
 
     def test_delivery_cli_reports_unrun_lanes_with_failure_exit(self):

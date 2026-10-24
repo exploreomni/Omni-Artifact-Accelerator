@@ -5,6 +5,14 @@ For substantial Omni artifact creation/redesign/migration, enter through
 [execution procedure](skills/omni-artifact-accelerator/references/execution-workflow.md).
 Repository maintenance and focused repairs do not require a new artifact engagement.
 
+For artifact work, obey the [executable A–F gates](skills/omni-artifact-accelerator/references/stage-gates.md).
+Inspect stage status before dispatch; never code a new product before the actual
+user selects one of exactly three options and detailed design is resolved. Use
+guarded assembly/freeze and candidate-bound reviews. A blocked gate is not permission
+to switch to raw shell/file/API authoring, change mode, delete policy or synthesize
+an approval. The stock CLI has no trusted choice verifier and stops at selection.
+The host must qualify its trusted adapter and enforce routes outside package helpers.
+
 Follow the workspace instructions and the [dependency policy](skills/omni-artifact-accelerator/references/dependency-policy.md).
 
 - Never install, import/load, vendor, update or activate a third-party package, library, skill, runtime image or decoder without Austin's explicit sign-off covering that exact action and dependency closure. Prior availability is not approval. This applies to local tools, subagents, CI, MCP and browser/CDN imports.

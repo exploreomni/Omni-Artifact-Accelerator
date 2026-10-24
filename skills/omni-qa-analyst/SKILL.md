@@ -5,6 +5,15 @@ description: Independently verify Omni dashboard and App numbers, migration pari
 
 # QA analyst
 
+For new products, follow the [data-first workflow](../omni-artifact-accelerator/references/data-first-product-workflow.md).
+Check A's source/access evidence against the intended user rather than equating
+administrator success with user access. Retain independent expectations from B/C.
+On every F candidate iteration, provide QA findings alongside separate security,
+UI/UX and PO feedback; a shared reviewer must identify each scope and its evidence.
+Review dynamic claims after filter/refresh/permission changes, and retain absent
+rendered/native evidence as unobserved. Records and hashes do not prove A–F order,
+three-option quality, actual user selection or effective access.
+
 Review against the original request and current [product intent](../omni-artifact-accelerator/references/product-intent.md).
 PO product-fit recommendations, creative critique and correctness are separate results.
 A creative reviewer must differ from the builder and originating designer; one

@@ -20,6 +20,17 @@ The agent can review the orchestrator directly in the checkout. Role planning do
 
 ## New dashboard or App
 
+Follow the [data-first A–F workflow](../skills/omni-artifact-accelerator/references/data-first-product-workflow.md):
+verify data and the user's access, analyze/query, create the reusable narrative,
+conduct artifact discovery, present three viable product options for user selection,
+then resolve design and implement with security/UI/UX/PO/QA feedback each iteration.
+The setup commands create a gated engagement; they do not perform the analysis or
+authenticate access. [Executable gates](../skills/omni-artifact-accelerator/references/stage-gates.md)
+enforce order at package entrypoints. All new modes are gated, including enhancement
+and migration. Existing evidence can be reused when current. The stock CLI stops
+at option selection until a trusted host verifier is integrated; no production
+adapter ships, and local approval files cannot authorize coding.
+
 ### 1. Create a private engagement
 
 Keep the output outside both the repository and skill installation. The parent directory must exist, and the engagement directory must be new:
@@ -35,6 +46,12 @@ python skills/omni-artifact-accelerator/scripts/analyst_project.py plan \
 
 Choose `dashboard`, `app` or `both`. Use `--mode enhancement` for a change to an existing experience. Resume an engagement by reopening it; do not initialize over its existing files. Helpers reject symlink paths, so use canonical paths and keep all relative file references inside the engagement.
 
+After each A–F checkpoint, use `stage-record --project "$OAA_RUN" --request <request.json>`
+and `stage-status --project "$OAA_RUN"`. Before coding, the host must pass
+`stage-check --project "$OAA_RUN" --action build` through its trusted choice verifier.
+See the [record schemas and host contract](../skills/omni-artifact-accelerator/references/stage-gates.md).
+Do not work around a blocked gate by using a raw file writer or another authoring helper.
+
 The initial structure is:
 
 | Location | Purpose |
@@ -49,9 +66,9 @@ The initial structure is:
 
 ### 2. Give the agent a concrete task
 
-Supply what you already know about the audience, decision, selected surface, available Omni model/Topics and completion stage. A short request is enough to start adaptive discovery: the product owner recovers prior answers and asks only material questions, then hands prioritized intent back to the orchestrator. You do not need to specify a layout or coordinate specialist interviews. Unresolved metrics need an owner, not an invented definition.
+Supply what you already know about the audience, decision, requested surface, available Omni model/Topics and completion stage. A short request starts source/access qualification and analysis. After the storyteller creates the reusable narrative, the product owner asks only missing artifact questions and coordinates three distinct product options for your choice. You do not need to specify a layout or coordinate specialist interviews. Unresolved metrics need an owner, not an invented definition.
 
-> Use $omni-artifact-accelerator in this engagement to design a native operations dashboard. Supervisors need to spot late orders, compare teams and inspect exceptions. Reuse our existing Omni Topics. Start with metric definitions, chart and filter specifications, brand choices and an independent QA plan. Keep unknown targets and data freshness explicit. Produce a local reviewable handoff; do not write to the tenant yet.
+> Use $omni-artifact-accelerator to design a native operations dashboard. Supervisors need to spot late orders, compare teams and inspect exceptions. Verify access to our existing Topics, qualify the analysis and create a refresh-safe narrative, then clarify artifact requirements and show me three viable product options. After I choose, resolve the design and prepare a local reviewable handoff. Keep unknown targets and freshness explicit; do not write to the tenant yet.
 
 For an App:
 
@@ -83,16 +100,16 @@ Packets carry current product context. Focused repairs reuse existing decisions 
 need no extra interview. Product fit, independent creative critique and correctness
 are separate reviews; neither these commands nor role planning activates skills.
 
-The analyst defines meaning and independent examples. Designers create the chart/layout or task/state specification. Branding and design systems establish shared visual roles; storytelling and motion participate when useful. BI and App engineers bind the approved requirements to actual available target capabilities.
+Analyst and BI engineering establish meaning, queries and evidence before design. Storytelling is required for the new-product narrative; it feeds the artifact interview and three-option comparison. After user selection, designers, branding and design systems resolve the product, with motion and other specialists for relevant selected behavior. Engineering implements the resolved handoff against available target capabilities.
 
 Use the [Data Experience Design Studio](../skills/omni-design-systems/references/experience-curriculum.md) when developing a substantial design, addressing craft feedback or practicing a new technique. Select the relevant role lessons, write a concrete design thesis and compare suitable visual structures from the pattern atlas. The worked studios demonstrate how to diagnose and revise a generic starting composition; ordinary engagements need only the lessons that improve the actual task.
 
 For a substantial new experience or material redesign:
 
-1. Retain a brief describing the audience/task, website/brand authority, density, reference qualities to borrow/avoid and target constraints.
-2. Record a reasoned direct direction or compare compositions when that resolves material uncertainty. For comparisons, hold the task/content constant and change grouping or interaction, not only palette. Inspect relevant normal/constrained views and retain the chosen direction and tradeoffs; prose alone is not rendered evidence.
+1. Complete A–C access, analysis and reusable narrative, then retain the D artifact brief: audience/task, website/brand authority, experience ambition and target constraints.
+2. For new products/reconception, present exactly three viable, materially different options on the same core narrative/evidence and wait for the user's selection. Change experience structure or interaction, not only palette. Prose alone is not rendered evidence. Focused work or an already selected product reuses the current direction.
 3. Resolve type/spacing roles, native grid or App geometry, chart axes/labels/units, states, keyboard path and exact query dependencies. Check native feasibility before committing to an unsupported interaction.
-4. Implement the candidate, then return actual captures and material deviations to the designer. Correct concrete hierarchy, alignment, typography, chart-finish or interaction-value findings and repeat affected checks.
+4. Implement a cohesive candidate, then obtain security, UI/UX, PO and independent QA feedback on each iteration. Return permitted captures and material deviations to the designer; correct findings and repeat affected checks.
 5. Keep independent numerical, craft, native behavior and human-usability evidence separate. Update the engagement index and artifact/query records; missing testing remains visible.
 
 Use a focused review for a narrow correction. Preserve a faithful migration's source obligations and record adaptations rather than imposing a redesign.
@@ -287,7 +304,7 @@ From the repository checkout, `python scripts/install_skills.py --destination "$
 
 ## Reuse behavior without inheriting a layout
 
-Choose the task, surface and working direction before optional example retrieval. Follow the [principle/choice/pattern distinction](../skills/omni-design-systems/references/experience-brief.md). Record a direct direction or useful comparison in the existing per-surface design-review selection; either still needs appropriate implemented-result evidence. Native dashboards and faithful migrations retain their own scope.
+Use the A–C evidence and D brief before selecting example treatments for a new product; retain the three-option comparison and user's selection in the existing per-surface design-review context. Follow the [principle/choice/pattern distinction](../skills/omni-design-systems/references/experience-brief.md). Direct treatment is appropriate for a focused change or an already selected product. All routes still need appropriate implemented-result evidence; native dashboards and faithful migrations retain their own scope.
 
 For Apps, [behavior controllers](../skills/omni-app-engineer/references/experience-behaviors.md) can supply state and lifecycle while the engagement renderer supplies presentation. The [portable assembly walkthrough](../skills/omni-app-engineer/references/portable-assembly.md) creates a local candidate from explicit source pins without a prescribed shell or native SDK. Keep the manifest and applicable contract files in current-intent dependencies. Use a fresh output directory for each candidate; inspect the resulting journey and bind the actual native inputs separately.
 
@@ -370,6 +387,8 @@ python3 -I -S -B "$OAA_HELPER" delivery-check --project "$OAA_RUN" --request del
 `run-check` takes `run` and `execution` paths. `delivery-check` adds `candidate` and
 `evidence` paths. Paths inside requests are engagement-relative. Exit 0 means
 structural readiness, exit 1 identifies gaps and exit 2 rejects invalid input.
-These are local assessments, not native writes or authorization. Retain the first
-candidate before review, then freeze a separate delivered revision. No rendering
+These are local assessments, not native writes or authorization. Candidate requests
+include actual `builders`. Gated assembler builds already freeze and return their
+candidate; do not duplicate that freeze. Retain the first candidate before review
+and obtain all four consulting dispositions before creating a revision. No rendering
 permission means visual quality remains unobserved even when publication succeeds.

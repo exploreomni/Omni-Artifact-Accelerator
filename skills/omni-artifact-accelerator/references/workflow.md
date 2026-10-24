@@ -2,12 +2,18 @@
 
 The shared [package-use policy](dependency-policy.md) applies to every route and worker. Routing a responsibility grants no package, runtime, installation or publication authority.
 
+Net-new products and explicit product reconception follow the authoritative
+[data-first A–F sequence](data-first-product-workflow.md). Recover existing choices,
+but finish scoped user-access verification, analysis and a reusable narrative
+before artifact discovery. Three distinct viable options and the user's selection
+precede detailed design. General direct-design advice does not bypass this route.
+
 ## Select the route
 
 | Entry | First work | Semantic dependency | End product |
 | --- | --- | --- | --- |
-| Standalone new dashboard | Decision interview, existing topic inventory, metric contract | Reuse verified fields; request only real gaps | Native dashboard specification/candidate and QA |
-| Standalone new app | User tasks, states, decision flow, workbook query contract | Same governed field bindings | Native Omni App design/code candidate and QA |
+| Standalone new dashboard | A–C: verify data/user access, qualify analysis/queries, create reusable narrative; then D–F | Reuse verified fields; request only real gaps | User-selected native dashboard specification/candidate and QA |
+| Standalone new app | A–C: verify data/user access, qualify analysis/queries, create reusable narrative; then D–F | Same governed field bindings | User-selected native Omni App design/code candidate and QA |
 | Migration / lift and shift | Frozen artifact inventory, independent scope denominator, original behavior | DMA handoff or existing Omni bindings | Original-ID crosswalk, facet parity matrix, selected target artifacts |
 | DMA continuation | Check curated semantic review and exact hashes | Reuse definitions without silently changing them | Analyst presentation and behavior work, upstream gap requests |
 | Enhancement | Capture current content, settings, consumers and authorization | Reuse current definitions | Focused change, regression evidence and recovery |
@@ -34,10 +40,11 @@ Apps suit guided tools and bespoke interactions. Dashboards suit monitoring, com
 | Translator / omni-artifact-translator | Source parsing, identity, behavior recovery | source inventory and facet mappings | Equating extraction with parity |
 | Backend handoff / omni-backend-handoff | Frontend/backend request, response and impact reconciliation | pinned request, candidate exchange, consumer impact report | Model approval, production authorization, or backend implementation |
 
-Workers can run concurrently when their inputs are stable. Analyst and brand discovery can overlap; app/dashboard designs share a frozen metric and token contract. BI bindings precede data wiring. Motion consumes named interaction states. QA can define tests early from original sources, then test final outputs independently. Coordinator resolves conflicts with explicit decisions rather than a majority vote.
+Workers can run concurrently when their inputs are stable. On the new-product route, parallel work must preserve A–F dependencies: analyst/BI work follows access evidence, narrative follows analysis, and artifact/brand discovery follows narrative. Supplied preferences can be retained at intake. App/dashboard designs share current metric, narrative and token contracts. BI bindings precede data wiring. Motion consumes named interaction states. QA can define cases early from original sources, then test outputs independently. The coordinator resolves conflicts with explicit decisions rather than a majority vote.
 
-For substantial work, use the [product-owner front door](product-intent.md) before
-federating requirements. It recovers answers, resolves material gaps and returns
+For substantial work, use the [product owner](product-intent.md) to recover answers
+and federate requirements. For new products, the artifact interview follows A–C.
+It resolves material gaps and returns
 intent to the orchestrator; it does not dispatch another team. Brand/metric specialists
 ask only their unresolved questions through shared intake. Focused repairs bypass
 unnecessary discovery. The canonical intent and its checked North Star travel with
@@ -55,7 +62,7 @@ Keep one trace in the design/review records: `user requirement → selected comp
 
 ## Stages and evidence
 
-For a new experience or material redesign, the preferred design loop is **brief → distinct concepts → reasoned selection → prototype the critical task → observe → revise**. Use the [ideation playbook](../../omni-design-systems/references/ideation-playbook.md), the selected designer's pattern library and [usability protocol](../../omni-qa-analyst/references/usability-testing.md). Adapt the effort to the uncertainty; a known layout correction or faithful migration does not require a new concept exercise. Unavailable participants leave an explicit testing gap while authorized work continues.
+For a new product or product reconception, use **A–C evidence/narrative → artifact brief → three distinct viable options → user selection → detailed design → cohesive implementation → security/UI/UX/PO/QA review → revision**. Use the [ideation playbook](../../omni-design-systems/references/ideation-playbook.md), designer's pattern library and [usability protocol](../../omni-qa-analyst/references/usability-testing.md). A known layout correction or faithful migration reuses existing decisions. Unavailable observation leaves an explicit testing gap; it does not supply a missing user selection.
 
 The PO owns product priorities and fit; designers own alternatives, task structure and composition; the analyst owns numerical meaning and independent expectations; QA owns correctness observations and findings. A creative reviewer different from the builder and originating designer critiques the exact candidate. The app/BI engineer reviews feasibility before promising behavior, preserving the requested outcome when proposing a supported alternative. A needed backend field or definition follows the existing DMA handoff; a visual preference does not justify new warehouse work. Link decisions and evidence into existing working contracts and `START_HERE.md` rather than creating a parallel engagement lifecycle.
 
@@ -76,7 +83,7 @@ For every page, visual, control, calculation, drill, link, action, bookmark, inp
 
 ## Design completion
 
-For material new work/redesign, retain a short visual-direction brief and record a reasoned direct choice or comparison. When composition remains materially uncertain, compare visibly different treatments using the same representative data and task; vary grouping/task flow rather than palette alone. Resolve the chosen desktop/narrow design, chart encodings and states before calling the handoff complete. Feasibility review can alter the direction; record why. A working agent choice is not customer acceptance.
+For new products/reconception, retain the three-option comparison and actual user selection from stage E. Use the same core narrative and representative evidence; vary experience structure and task flow rather than palette alone. For focused changes or an already selected product, a reasoned direct treatment is sufficient. Resolve the selected desktop/narrow design, chart encodings and states before calling the handoff complete. If feasibility requires changing the selected product materially, return that decision to the user. A working agent choice is not customer acceptance.
 
 The implemented candidate returns to the designer with actual captures and deviations from the selected composition. The designer records specific hierarchy, type, spacing, alignment, chart-finish, brand and interaction-value findings. Engineering corrects them and provides a new version for retest. QA independently checks expected behavior; neither the implementer's self-review nor passing numerical tests closes this loop.
 

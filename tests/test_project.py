@@ -19,6 +19,10 @@ class ProjectTests(unittest.TestCase):
         self.base = Path(self.temp.name).resolve()
         self.root = self.base / "engagement"
         project.init(self.root, "Synthetic analyst pilot", "migration", "both")
+        # Pre-policy migration compatibility fixture; fresh project gates have separate tests.
+        legacy = project.load_project(self.root)[1]
+        legacy.pop('stage_gate_policy')
+        project.write_json(self.root / 'project.json', legacy, replace=True)
 
     def tearDown(self):
         self.temp.cleanup()
@@ -64,7 +68,9 @@ class ProjectTests(unittest.TestCase):
         self.assertEqual(state["branding"], "requested")
         self.assertTrue(any("logo" in q for q in state["open_questions"]))
         self.assertEqual(state["requirements"][0]["disposition"], "unresolved")
-        packet = project.packet(root, "app-engineer", ["contracts/queries.json"], root / "tasks/app.json")
+        with self.assertRaisesRegex(ValueError, 'stage_gate_predecessor_incomplete:build'):
+            project.packet(root, "app-engineer", ["contracts/queries.json"], root / "tasks/app.json")
+        packet = project.packet(root, "qa-analyst", ["contracts/queries.json"], root / "tasks/access-review.json")
         self.assertTrue({"contracts/design-intent.json", "contracts/design.json", "contracts/brand.json"}
                         <= {p["path"] for p in packet["inputs"]})
         self.assertEqual(packet["design_context"]["requirements"], state["requirements"])

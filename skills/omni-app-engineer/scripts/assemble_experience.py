@@ -3,6 +3,7 @@
 import argparse
 import base64
 import hashlib
+import importlib.util
 import json
 from pathlib import Path, PurePosixPath
 import re
@@ -12,6 +13,24 @@ MAX_TOTAL = 8 * 1024 * 1024
 MAX_OUTPUT = 2 * 1024 * 1024
 NAME = re.compile(r"[A-Z][A-Z0-9_]{0,63}\Z")
 TOKEN = re.compile(r"\{\{OAA:([A-Z][A-Z0-9_]{0,63})\}\}")
+
+
+def project_helper(root):
+    """Require a real engagement; an untracked folder is not a gate bypass.
+
+    Fixed first-party import only. A qualified host supplies choice verification
+    through analyst_project.trusted_stage_provider; stock CLI cannot self-approve.
+    """
+    helper = Path(__file__).resolve().parents[2] / 'omni-artifact-accelerator/scripts/analyst_project.py'
+    spec = importlib.util.spec_from_file_location('assembly_project_gate', helper)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    module.load_project(root)
+    return module
+
+
+def authoring_gate(root):
+    return project_helper(root).stage_require(root, 'build')
 
 
 def need(condition, message):
@@ -60,7 +79,8 @@ def fields(value, required, optional=()):
          value.keys() <= set(required) | set(optional), "unsupported or missing fields")
 
 
-def assemble(root, manifest_path):
+def _assemble(root, manifest_path):
+    authoring_gate(root)
     root = Path(root).resolve(strict=True)
     need(root.is_dir(), "project directory required")
     source = local_path(root, manifest_path)
@@ -156,23 +176,34 @@ def assemble(root, manifest_path):
     return html, receipt
 
 
-def build(root, manifest_path, output):
+def build(root, manifest_path, output, *, builders=None, iteration_id=None):
     root = Path(root).resolve(strict=True)
+    P = project_helper(root)
+    gates = P.stage_require(root, 'build')
+    W = P.routing_helper('delivery_workflow')
+    if gates['required']:
+        need(type(builders) is list and 0 < len(builders) <= 16 and
+             all(type(b) is str and b.strip() and len(b) <= 256 and
+                 all(ord(c) >= 32 and ord(c) != 127 for c in b) for b in builders) and
+             len(set(builders)) == len(builders), 'Candidate builders required')
+        W.identity(iteration_id)
     destination = local_path(root, output)
     need(destination.parent.is_dir() and not destination.exists(), "output must be a new directory under an existing parent")
-    html, receipt = assemble(root, manifest_path)
+    html, receipt = _assemble(root, manifest_path)
     # Keep exact initial bytes before any review edits, including on subsequent builds.
     history = local_path(root, 'evidence/assembled-history')
     history.mkdir(mode=0o700, parents=True, exist_ok=True)
     snapshot = local_path(root, 'evidence/assembled-history/' + receipt['output']['sha256'] + '.html')
-    if snapshot.exists():
+    new_snapshot = not snapshot.exists()
+    if not new_snapshot:
         need(snapshot.is_file() and snapshot.read_bytes() == html.encode('utf-8'), 'retained assembly differs')
     else:
         with snapshot.open('xb') as stream:
             stream.write(html.encode('utf-8'))
         snapshot.chmod(0o600)
     first = local_path(root, 'evidence/assembled-history/first.json')
-    if not first.exists():
+    new_first = not first.exists()
+    if new_first:
         with first.open('x', encoding='utf-8') as stream:
             stream.write(json.dumps({'path': snapshot.relative_to(root).as_posix(),
                                      'sha256': receipt['output']['sha256'], 'assembly': receipt}, indent=2) + '\n')
@@ -195,10 +226,24 @@ def build(root, manifest_path, output):
             with path.open("x", encoding="utf-8") as stream:
                 created.append(path)
                 stream.write(value)
+        if gates['required']:
+            frozen = W.freeze(root, {'id': iteration_id, 'builders': builders,
+                'artifacts': [(destination / 'index.html').relative_to(root).as_posix()],
+                'context': [manifest_path, (destination / 'assembly.json').relative_to(root).as_posix()]})
+            receipt['candidate'] = frozen['path']
     except Exception:
-        for path in created:
-            path.unlink()
-        destination.rmdir()
+        # Once the journal commits, preserve every byte for recovery even if a
+        # pointer write fails. Otherwise this rejected build leaves no artifact.
+        committed = (P.routing_helper('stage_gates').candidate_commit_status(root, iteration_id)
+                     if gates['required'] else False)
+        if committed is False:
+            for path in created:
+                path.unlink()
+            destination.rmdir()
+            if new_first:
+                first.unlink()
+            if new_snapshot:
+                snapshot.unlink()
         raise
     return {"output_directory": str(destination), **receipt}
 
@@ -208,9 +253,12 @@ def main():
     parser.add_argument("--project", type=Path, required=True)
     parser.add_argument("--manifest", required=True, help="Project-relative pinned manifest")
     parser.add_argument("--output", required=True, help="New project-relative directory")
+    parser.add_argument("--builder", action="append", help="Actual builder identity; repeat as needed")
+    parser.add_argument("--iteration-id", help="New candidate identity for this build")
     args = parser.parse_args()
     try:
-        print(json.dumps(build(args.project, args.manifest, args.output), indent=2))
+        print(json.dumps(build(args.project, args.manifest, args.output,
+                               builders=args.builder, iteration_id=args.iteration_id), indent=2))
     except (ValueError, OSError, UnicodeError) as exc:
         print(json.dumps({"error": str(exc)}))
         return 2

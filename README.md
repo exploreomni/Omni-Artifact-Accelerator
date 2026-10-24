@@ -14,6 +14,27 @@ Start with an existing Omni model, bring an exported BI experience, or continue 
 
 This is a skill bundle for an agent host, not a standalone BI service. Skills define roles; the host runs the agent and supplies its tools. The local helpers manage files, evidence and bounded operations—they do not launch a permanent team of agents or connect accounts automatically.
 
+## How a new product is created
+
+The [data-first product workflow](skills/omni-artifact-accelerator/references/data-first-product-workflow.md)
+sets the order, while leaving the product's visual design open:
+
+1. **Verify data and access.** Establish that the requested data exists and the user can access it.
+2. **Analyze.** Profile relevant sources, build governed queries and derive supported insights and questions.
+3. **Create the analytical story.** Link claims to evidence and define how they update or disappear when data, filters or freshness change.
+4. **Discover the artifact requirements.** Use those findings to ask focused product, brand and experience questions.
+5. **Choose among three products.** Review three distinct, feasible options and select one; specialists then resolve its detailed design.
+6. **Build and refine.** Implement a cohesive candidate and obtain security, UI/UX, product-owner and independent QA feedback after every iteration.
+
+Existing selected products and focused fixes reuse prior evidence and decisions.
+Publication follows its own authorization and verification. The [executable stage gates](skills/omni-artifact-accelerator/references/stage-gates.md)
+block missing/stale predecessors in package entrypoints and require host-verified
+selection before coding. **The stock CLI stops at selection: no production host
+choice verifier ships yet.** A local approval file cannot unlock it. Hosts must also
+control direct shell/file/API routes; these helpers are not a sandbox or proof of
+visual quality. Using Omni's CLI/API does not implicitly invoke
+Omni AI/Blobby.
+
 ## Start in your agent host
 
 For **Claude Code**, read [CLAUDE.md](CLAUDE.md); for **Codex**, read [AGENTS.md](AGENTS.md).
@@ -24,10 +45,11 @@ ask the host to retrieve the orchestrator and relevant sibling guidance:
 > Start with its orchestrator and execution entry procedure. Confirm which revision
 > and files you can read, preserve my original request, and assign experience,
 > branding, semantics, implementation and independent review responsibilities.
-> Use the product owner to recover my answers and resolve material product gaps,
-> then hand intent back to the orchestrator. Qualify the native data contract, build
-> and independently critique one representative journey, and report actual evidence
-> separately from unobserved behavior.
+> Follow the data-first A–F workflow: verify my data/access, analyze governed queries
+> and create a reusable narrative before artifact discovery. Present three viable
+> product options and wait for my selection before detailed design and coding.
+> Build cohesively, obtain all four consultant reviews each iteration, and report
+> actual evidence separately from unobserved behavior.
 
 A repository URL alone does not activate skills. Missing repository/tool access is
 a stated limitation, not permission to install anything. See the [execution procedure](skills/omni-artifact-accelerator/references/execution-workflow.md)
@@ -38,25 +60,27 @@ The local `run-start`, `run-check`, `candidate-freeze` and `delivery-check` comm
 preserve source provenance, named responsibilities, first candidate bytes and
 current evidence. These augment existing intent and QA records. They do not run
 specialists, approve a dependency, or turn a published candidate into a polished,
-runtime-verified artifact. A host without local execution follows the same procedure
-and reports helper checks as unrun.
+runtime-verified artifact. A host without gate execution can collect evidence and
+present options, but implementation needs a capable trusted host. An unrun gate is
+not a passing gate.
 
-## Start with product intent
+## Preserve product intent through the workflow
 
-For substantial work, the [product owner](skills/omni-product-owner/SKILL.md) recovers
-existing answers and asks only material questions about audience, outcomes and the
-experience promise. It keeps attributable notes in the private engagement and hands
-prioritized requirements back to the orchestrator, which routes the work. Focused
-repairs reuse current intent without another interview.
+The [product owner](skills/omni-product-owner/SKILL.md) recovers existing answers at
+intake. For new products, artifact questions follow verified access, analysis and
+the reusable narrative. It keeps attributable notes in the private engagement,
+coordinates the three-option decision and hands prioritized requirements back to
+the orchestrator. Focused repairs reuse current intent without another interview.
 
 The readable **North Star** is generated from the existing selected design intent;
 it is not a second authoritative brief. `product-brief` creates its versioned view,
 and `product-check` detects stale or edited projections. See the
 [product-intent guide](skills/omni-artifact-accelerator/references/product-intent.md).
-Product-fit review, independent creative critique and correctness checks remain
-separate. Build an ambitious representative journey before expanding; unsupported
-technology must not silently reduce the intended outcome. No fixed visual template,
-new approval layer, active installation or visual certification is implied.
+Product-fit, independent creative critique, security and correctness reviews remain
+separate. After user selection, build an ambitious representative journey as part
+of the cohesive implementation; unsupported technology must not silently reduce
+the intended outcome. The product choice does not confer installation or
+publication authority, and no fixed visual template or visual certification is implied.
 
 ## Control quality without a fixed template
 
@@ -133,7 +157,7 @@ Use a new output directory; initialization does not overwrite an existing engage
 
 The initial files and role plan are a starting point, not a built dashboard or App. Add `--branding requested --website https://example.com` for a branded engagement, `--branding none` when branding is out of scope, or leave it unknown. The editable design-intent record retains missing required choices; a website alone does not choose a logo. See [saving intent and reviewing named requirements](skills/omni-artifact-accelerator/references/design-intent.md) for current design/brand/asset selection and per-surface completion. Continue with [the step-by-step how-to](docs/HOW_TO.md).
 
-Material new designs include a reasoned direction, comparison where it resolves uncertainty, a resolved design handoff, and designer review of the actual implementation. The optional [design evidence checker](skills/omni-qa-analyst/references/design-evidence.md) tracks which observations still match the current candidate; it does not certify visual quality or customer acceptance.
+New products include the A–C analytical handoff, artifact discovery, three viable options, actual user selection, a resolved design and all four consultant reviews on each implementation iteration. Focused changes reuse existing decisions. The optional [design evidence checker](skills/omni-qa-analyst/references/design-evidence.md) tracks which observations still match the current candidate; it does not enforce A–F, certify visual quality or authenticate customer acceptance.
 
 For an App, describe the intended experience as well as the metrics. For example: “Create an immersive branded entry that leads into a focused product investigation workspace, with persistent scope and a separate comparison view.” The [experience-mode guide](skills/omni-app-designer/references/app-patterns.md#choose-the-experience-mode) helps distinguish this from a direct workspace or a guided data story. If rendering is unavailable, the agent should retain that visual-review gap explicitly.
 

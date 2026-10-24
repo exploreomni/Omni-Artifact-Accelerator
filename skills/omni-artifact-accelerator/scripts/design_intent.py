@@ -403,7 +403,7 @@ def packet_context(root, role):
             P.read_json(P.relative_file(root, project['design_intent_draft']))[0]
             if project.get('design_intent_draft') else {})
         note_paths = set(spec.get('product', {}).get('note_paths', []))
-        explicit = {p for req in spec['requirements']
+        explicit = {p for req in spec.get('requirements', [])
                     for p in req.get('delivery', {}).get('dependency_paths', [])}
         paths = [p for p in paths if p not in note_paths - explicit]
     if relevant and not state['selected']:

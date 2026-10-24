@@ -49,7 +49,7 @@ For example, a justified `usable-space` requirement can keep `{width: 1024, heig
 
 ## Compare the same task
 
-Record a reasoned direct choice when the brief and constraints establish a useful direction, or compare alternatives when a material choice remains. No alternatives ceremony is required. For a comparison, hold audience, business question, data and primary action constant; vary composition, navigation, type/image balance, density or disclosure. Resolve task uncertainty separately from visual uncertainty.
+For new products/reconception, follow stage E of the [data-first workflow](../../omni-artifact-accelerator/references/data-first-product-workflow.md): after A–C and artifact discovery, present exactly three viable product options and obtain the user's selection. Hold the core analytical narrative and truthful evidence constant; vary experience structure, investigation path, focal visualization or interaction. Resolve task uncertainty separately from visual uncertainty. Direct choices remain appropriate for focused work or implementation within an already selected product; they do not bypass the new-product choice.
 
 Record `reference quality → concrete choice → expected benefit → tradeoff → observation needed`. Compare rendered treatments when permitted; prose can establish structural intent but not visual quality. The original [context studio](experience-context-studio.md) demonstrates three different treatments of one task and an annotated failure. Reuse the reasoning, not its layout as a house style.
 

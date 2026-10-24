@@ -408,6 +408,35 @@ class NativeAdapter:
         raw = path.read_bytes()
         return {"path": relative, "sha256": hashlib.sha256(raw).hexdigest(), "bytes": len(raw)}
 
+    def _stage_gate(self, action, content=None, *, expected=None, execution=False):
+        """Bind native authoring to the cooperating project's current iteration.
+
+        The host supplies the trusted choice verifier in process. Neither an
+        authorization label nor a local prepared candidate supplies that authority.
+        Historical pre-policy projects retain their existing authorization path.
+        """
+        try:
+            _, project = WORKFLOW.ap.load_project(self.root)
+            gate = WORKFLOW.ap.stage_require(self.root, action)
+        except (ValueError, OSError, KeyError, TypeError) as exc:
+            raise NativeError("Native authoring stage gate rejected: " + str(exc)) from exc
+        if not gate["required"]:
+            if expected is not None:
+                raise NativeError("Prepared candidate stage policy changed")
+            return None
+        if content is None:
+            return None  # Early gate, before reading candidate inputs or transport.
+        candidate = gate.get("candidate")
+        content_hash = hashlib.sha256(content).hexdigest()
+        if candidate is None or not any(p["sha256"] == content_hash and p["bytes"] == len(content)
+                                        for p in candidate["artifacts"]):
+            raise NativeError("Native content must match a current staged candidate artifact")
+        binding = {"project_id": project["id"], "candidate_sha256": gate["candidate_sha256"],
+                   "iteration_sha256": candidate["event_sha256"], "content_sha256": content_hash}
+        if execution and expected != binding:
+            raise NativeError("Prepared candidate stage binding changed; prepare again")
+        return binding
+
     def _requirements(self, source_files):
         paths = []
         for path in source_files:
@@ -687,12 +716,17 @@ class NativeAdapter:
         return result
 
     def prepare(self, payload_path, source_files, semantic_file, ownership_path, review_ref):
+        self._stage_gate("build")
         if not review_ref or not isinstance(review_ref, str):
             raise NativeError("A review reference is required")
         if not source_files or len(set(source_files)) != len(source_files):
             raise NativeError("Source evidence paths must be nonempty and unique")
         requirements = self._requirements(source_files)
         payload, ownership = self._read(payload_path), self._read(ownership_path)
+        payload_bytes = self._path(payload_path).read_bytes()
+        if encoded(decode(payload_bytes)) != encoded(payload):
+            raise NativeError("Payload changed during preparation")
+        engagement = self._stage_gate("build", payload_bytes)
         pins = {"source_files": [self._pin(p) for p in source_files], "semantic_file": self._pin(semantic_file),
                 "payload_file": self._pin(payload_path), "ownership_file": self._pin(ownership_path)}
         caps, before = self.capabilities(), self.inspect()
@@ -703,11 +737,14 @@ class NativeAdapter:
                      "expected_state": expected_state(before["state"], payload, ownership),
                      "capability_sha256": caps["capability_sha256"], "capabilities": caps,
                      "validation": "prepared_only", "native_verified": False, "business_accepted": False}
+        if engagement is not None:
+            candidate["engagement"] = engagement
         if baseline is not None:
             candidate["standalone_baseline"] = {k: v for k, v in baseline.items() if k != "check"}
             candidate["standalone_baseline_check"] = baseline["check"]
         candidate_hash = digest(candidate)
         candidate["candidate_sha256"] = candidate_hash
+        self._stage_gate("build", payload_bytes, expected=engagement, execution=True)
         self._write(f".omni-native/candidates/{candidate_hash}.json", candidate, exclusive=True)
         return {"candidate_sha256": candidate_hash, "path": f".omni-native/candidates/{candidate_hash}.json",
                 "status": "prepared", "native_verified": False}
@@ -728,6 +765,8 @@ class NativeAdapter:
             for pin in [*pins["source_files"], pins["semantic_file"], pins["payload_file"], pins["ownership_file"]]:
                 if self._pin(pin["path"]) != pin:
                     raise NativeError("Source, semantic, payload, or ownership evidence changed; prepare again")
+            if encoded(self._read(pins["payload_file"]["path"])) != encoded(candidate["payload"]):
+                raise NativeError("Candidate payload differs from its pinned evidence")
             if self._requirements([p["path"] for p in pins["source_files"]]) != candidate["visual_requirements"]:
                 raise NativeError("Visual source route or requirements changed; prepare again")
             baseline = self._baseline_check(pins["semantic_file"]["path"], candidate["visual_requirements"],
@@ -748,10 +787,13 @@ class NativeAdapter:
         return stream
 
     def execute(self, candidate_sha256, authorization_ref):
+        self._stage_gate("release")
         if not isinstance(authorization_ref, str) or not authorization_ref.strip():
             raise NativeError("Explicit authorization for this candidate and target is required")
         with self._lock():
             candidate = self._candidate(candidate_sha256)
+            payload_bytes = self._path(candidate["pins"]["payload_file"]["path"]).read_bytes()
+            self._stage_gate("release", payload_bytes, expected=candidate.get("engagement"), execution=True)
             intent_path = f".omni-native/executions/{candidate_sha256}/intent.json"
             if self._path(intent_path, exists=False).exists():
                 raise NativeError("Candidate already has a write intent; reconcile, never replay")
@@ -768,6 +810,7 @@ class NativeAdapter:
                        "native_verified": False, "business_accepted": False, "published": False}
             if baseline is not None:
                 receipt["standalone_baseline_check"] = baseline["check"]
+            self._stage_gate("release", payload_bytes, expected=candidate.get("engagement"), execution=True)
             self._write(intent_path, receipt, exclusive=True)
             try:
                 response = self._cli(["documents", "v2-patch-draft-by-identifier", self.target.document_id,

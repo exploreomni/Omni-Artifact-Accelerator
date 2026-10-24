@@ -390,7 +390,16 @@ def inspect_run(root, request):
         P.relative_file(root, review['evidence_path'])
     except (ValueError, OSError):
         findings.append('original_request_review_missing')
+    gates = P.stage_status(root)
+    if gates['required']:
+        if responsibilities['storytelling']['mode'] == 'not_required':
+            findings.append('stage_gate_storytelling_required')
+        try:
+            P.stage_require(root, 'build')
+        except ValueError as exc:
+            findings.append(str(exc))
     return {'status': 'incomplete' if findings else 'ready_for_review', 'findings': findings,
+            'stage_gates': gates,
             'coverage': coverage, 'selected_intent': state['selected'], 'responsibilities': responsibilities,
             'product_context': product, 'source_inventory': source_inventory, 'specialists': specialists,
             'claims_authenticated': False, 'agents_dispatched': False, 'publication_authorized': False,
@@ -422,7 +431,15 @@ def history_check(root, project_id, pointer):
 
 def freeze(root, request):
     root, project = P.load_project(root)
-    need(type(request) is dict and set(request) == {'id', 'artifacts', 'context'}, 'invalid candidate request')
+    need(type(request) is dict and {'id', 'artifacts', 'context'} <= set(request)
+         and set(request) <= {'id', 'artifacts', 'context', 'builders'}, 'invalid candidate request')
+    gates = P.stage_require(root, 'build')
+    if gates['required']:
+        builders = request.get('builders')
+        need(type(builders) is list and builders and len(builders) <= 16 and
+             all(type(b) is str and b.strip() and len(b) <= 256 and
+                 all(ord(c) >= 32 and ord(c) != 127 for c in b) for b in builders)
+             and len(set(builders)) == len(builders), 'stage_gate_candidate_builders_required')
     ident = identity(request['id'])
     artifacts = pins(root, request['artifacts'])
     context = pins(root, request['context'])
@@ -432,6 +449,13 @@ def freeze(root, request):
     directory = P.no_links(root / 'evidence' / 'candidate-history')
     directory.mkdir(mode=0o700, exist_ok=True)
     first, head = directory / 'first.json', directory / 'head.json'
+    if gates['required']:
+        need(not any(directory.glob('*/candidate.json')) or (first.is_file() and head.is_file()),
+             'stage_gate_history_reconciliation_required')
+        if gates.get('candidate') is not None and head.is_file():
+            latest = P.read_json(head)[0]
+            expected = 'evidence/candidate-history/' + gates['candidate']['iteration_id'] + '/candidate.json'
+            need(latest.get('path') == expected, 'stage_gate_history_reconciliation_required')
     previous = P.read_json(head)[0] if head.exists() else P.read_json(first)[0] if first.exists() else None
     if previous is not None:
         history_check(root, project['id'], previous)
@@ -453,6 +477,21 @@ def freeze(root, request):
     saved = path / 'candidate.json'
     P.write_json(saved, record)
     pointer = {'path': saved.relative_to(root).as_posix(), 'sha256': P.digest(saved.read_bytes())}
+    if gates['required']:
+        try:
+            P.stage_record(root, {'stage': 'candidate', 'iteration_id': ident,
+                'builders': request['builders'],
+                'artifacts': [saved.relative_to(root).as_posix(), *retained.values()]})
+        except Exception as exc:
+            # A failure after atomic replacement can still mean committed. Choice
+            # provider availability must not determine whether bytes are retained.
+            committed = P.routing_helper('stage_gates').candidate_commit_status(root, ident)
+            if committed is False:
+                for created in [saved, *(root / p for p in retained.values())]:
+                    created.unlink()
+                path.rmdir()
+                raise
+            raise ValueError('stage_gate_candidate_commit_requires_reconciliation; preserved candidate bytes') from exc
     if not first.exists():
         P.write_json(first, pointer)
     P.write_json(head, pointer, replace=head.exists())
@@ -523,7 +562,16 @@ def assess(root, request):
     design = P.design_completion(root)
     if design['status'] != 'recorded_complete':
         findings.append('design_requirement_review_' + design['status'])
+    gates = P.stage_status(root)
+    if gates['required']:
+        try:
+            P.stage_require(root, 'release')
+            recorded_paths = {r['path'] for r in gates['candidate']['artifacts']}
+            need(request['candidate'] in recorded_paths, 'stage_gate_reviewed_candidate_differs')
+        except (ValueError, KeyError, TypeError) as exc:
+            findings.append(str(exc))
     return {'status': 'candidate_with_gaps' if findings else 'ready_for_review', 'findings': findings,
+            'stage_gates': gates,
             'candidate_sha256': candidate_pin, 'lanes': lanes, 'design': design,
             'review_assessments': {'source_critique': lanes['source'], 'requirement_context_design': design['status']},
             'claims_authenticated': False, 'publication_authorized': False,

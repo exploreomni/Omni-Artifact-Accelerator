@@ -36,6 +36,13 @@ The [harness qualification contract](../harness/SECURITY.md) identifies those ou
 
 ## Experience-context checks
 
+The `stage-gates` and `stage-gate-integration` source cases cover A–F ordering,
+exactly three options, host-verifier absence/revocation, stale evidence, role/output
+bypasses, automatic candidate freezing, candidate-bound reviews and interrupted
+commit recovery. Synthetic host providers stay in tests. Passing these cases does
+not qualify a production host, prove that evidence claims are true or constrain
+agents with unrestricted access outside the guarded entrypoints.
+
 For a focused experience-context change, start with `test_design_intent.py`, `test_design_review.py` and `test_project.py` using the same discovery command with `-p <filename>`. They cover selected decisions reaching motion/storytelling handoffs, pending choices, stale visual inputs, legacy projects and the separation of source evidence from native requirement fulfillment. Installer checks are relevant when validating an upgrade. Broaden testing when changed behavior or a failure warrants it; prose-only changes need metadata/link and affected-example checks rather than unrelated migration runs.
 
 The context cases also exercise resume after a new selection, changed registered/unregistered inputs, explicit runtime/alias dependencies, a usable-height capture mismatch, legacy packets without the optional derived index, and the existing path/size boundaries. `packet-check` verifies declared bytes and decisions; it cannot discover arbitrary nested file references or authenticate source evidence. For a native input repair, independently provide the selected callback shape and exercise the assembled candidate; an export-shaped fixture or simulated callback cannot establish native runtime behavior. For presentation aliases, compare exact-key coverage and keyed totals/partitions before and after application, including duplicate display names and a changed/missing identity.

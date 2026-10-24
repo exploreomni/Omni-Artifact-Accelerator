@@ -438,15 +438,18 @@ class AppNativeAdapter(n.NativeAdapter):
         return baseline
 
     def prepare_initial(self, spec_path):
+        self._stage_gate("build")
         spec = self._read(spec_path)
         need(spec.get("schema_version") == 1 and spec.get("kind") == "analyst_native_app_initial_spec" and
              s.cw.text(spec.get("review_ref")), "app.initial_candidate_spec_required")
+        body = initial_body(self._read(spec["body_path"]))
+        engagement = self._stage_gate("build", body["html"].encode("utf-8"))
         caps, before = self.capabilities(), self.inspect_initial()
         need(before["app"] is None, "app.initial_requires_workbook_only_draft")
         baseline = self.initial_baseline(spec["baseline_path"], before)
         need(spec["requirements_path"] == baseline["requirements"]["path"] and
              spec["body_path"] == baseline["body"]["path"], "app.initial_candidate_paths")
-        body = initial_body(self._read(spec["body_path"]))
+        need(body == initial_body(self._read(spec["body_path"])), "app.initial_body_changed")
         candidate = {"contract": CONTRACT, "surface": "app", "operation": "initial_put", "target": asdict(self.target), "created_at": n.now(),
             "spec": self._pin(spec_path), "baseline": self._pin(spec["baseline_path"]),
             "requirements": self._pin(spec["requirements_path"]), "body_file": self._pin(spec["body_path"]),
@@ -454,9 +457,12 @@ class AppNativeAdapter(n.NativeAdapter):
             "semantic_sha256": baseline["semantic_sha256"], "capability_sha256": caps["capability_sha256"],
             "validation": "prepared_only", "native_verified": False, "business_accepted": False,
             "runtime_validation": "reviewed_construction_contract_independent_native_cases_required"}
+        if engagement is not None:
+            candidate["engagement"] = engagement
         digest = n.digest(candidate)
         candidate["candidate_sha256"] = digest
         path = f".omni-app-native/candidates/{digest}.json"
+        self._stage_gate("build", body["html"].encode("utf-8"), expected=engagement, execution=True)
         self._write(path, candidate, exclusive=True)
         return {"status": "prepared", "surface": "app", "operation": "initial_put", "candidate_sha256": digest, "path": path,
                 "native_verified": False}
@@ -532,14 +538,19 @@ class AppNativeAdapter(n.NativeAdapter):
         return baseline
 
     def prepare(self, spec_path):
+        self._stage_gate("build")
         spec = self._read(spec_path)
         need(spec.get("schema_version") == 1 and spec.get("kind") == "analyst_native_app_spec" and
              s.cw.text(spec.get("review_ref")), "app.candidate_spec_required")
+        saved = self.baseline(spec["baseline_path"])
+        patch = self._read(spec["patch_path"])
+        expected = apply_edits(saved["inspection"]["app"]["html"], patch, spec["owned_regions"])
+        engagement = self._stage_gate("build", expected.encode("utf-8"))
         caps, before = self.capabilities(), self.inspect()
         baseline = self.baseline(spec["baseline_path"], before)
         need(baseline["kind"] == BASELINE and spec["requirements_path"] == baseline["requirements"]["path"], "app.requirements_mismatch")
-        patch = self._read(spec["patch_path"])
-        expected = apply_edits(before["app"]["html"], patch, spec["owned_regions"])
+        need(patch == self._read(spec["patch_path"]) and
+             expected == apply_edits(before["app"]["html"], patch, spec["owned_regions"]), "app.candidate_input_changed")
         req = self._requirements([spec["requirements_path"]])
         self._runtime(baseline["runtime"]["path"], req, baseline["bindings"], expected)
         candidate = {"contract": CONTRACT, "surface": "app", "target": asdict(self.target), "created_at": n.now(),
@@ -550,9 +561,12 @@ class AppNativeAdapter(n.NativeAdapter):
             "semantic_sha256": baseline["semantic_sha256"], "capability_sha256": caps["capability_sha256"],
             "validation": "prepared_only", "native_verified": False, "business_accepted": False,
             "runtime_validation": "retained_reviewed_fragments_only"}
+        if engagement is not None:
+            candidate["engagement"] = engagement
         digest = n.digest(candidate)
         candidate["candidate_sha256"] = digest
         path = f".omni-app-native/candidates/{digest}.json"
+        self._stage_gate("build", expected.encode("utf-8"), expected=engagement, execution=True)
         self._write(path, candidate, exclusive=True)
         return {"status": "prepared", "surface": "app", "candidate_sha256": digest, "path": path, "native_verified": False}
 
@@ -612,9 +626,12 @@ class AppNativeAdapter(n.NativeAdapter):
         return self._execute(candidate_sha256, authorization_ref, True)
 
     def _execute(self, candidate_sha256, authorization_ref, initial):
+        self._stage_gate("release")
         need(s.cw.text(authorization_ref), "app.exact_authorization_required")
         with self._lock():
             candidate = self._candidate(candidate_sha256)
+            content = candidate["expected_app"]["html"].encode("utf-8")
+            self._stage_gate("release", content, expected=candidate.get("engagement"), execution=True)
             need((candidate.get("operation") == "initial_put") is initial, "app.separate_initial_authorization_required")
             intent = f".omni-app-native/executions/{candidate_sha256}/intent.json"
             need(not self._path(intent, exists=False).exists(), "app.intent_exists_reconcile_never_replay")
@@ -627,6 +644,7 @@ class AppNativeAdapter(n.NativeAdapter):
                 "semantic_sha256": baseline["semantic_sha256"], "native_verified": False, "business_accepted": False, "published": False}
             if initial:
                 receipt["operation"] = "initial_put"
+            self._stage_gate("release", content, expected=candidate.get("engagement"), execution=True)
             self._write(intent, receipt, exclusive=True)
             try:
                 status, _, raw = self._rest("PUT" if initial else "PATCH", self._app_route(),

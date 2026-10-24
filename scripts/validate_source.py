@@ -29,6 +29,9 @@ CASES = {
     "native-authoring": "tests/test_native_authoring.py",
     "assembly": "tests/test_experience_assembly.py",
     "product-intent": "tests/test_product_intent.py",
+    "stage-gates": "tests/test_stage_gates.py",
+    "stage-gate-integration": "tests/test_stage_gate_integration.py",
+    "native-stage-gates": "tests/test_native_stage_gate.py",
 }
 IGNORED = {".git", ".venv", "venv", "node_modules", "__pycache__", ".pytest_cache", ".ruff_cache"}
 STDLIB_ROOTS = {Path(sysconfig.get_path(name)).resolve() for name in ("stdlib", "platstdlib")}

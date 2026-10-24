@@ -6,10 +6,17 @@ prior answers, interviews only for material gaps, and preserves the audience,
 outcomes, priorities and experience promise. The orchestrator owns dispatch and
 integration. Focused repairs reuse current intent without another interview.
 
+For new products, follow the [data-first A–F workflow](data-first-product-workflow.md).
+Intake can recover known preferences and source/access questions, but the artifact
+interview follows verified data access, analysis and a reusable narrative. The PO
+then coordinates three viable product options and retains the user's actual
+selection before detailed design. This overrides generic permission to choose a
+working design directly; a helper's selected flag is not a user decision.
+
 ## Adaptive front door
 
 Begin with the original request and current decisions, not a blank questionnaire.
-Clarify only what changes the next useful design: audience and outcome, first versus
+At stage D, clarify only what changes the next useful design: audience and outcome, first versus
 repeat use, meaningful depth, brand authority/website/assets, relevant usable space
 and delivery constraints. Reuse explicit no-logo, no-research and supplied-brand
 choices. Specialists route new questions through this shared intake rather than
@@ -145,6 +152,11 @@ that exception does not make the projection current or authorize implementation
 from stale context. Other dependent packets must wait for reconciliation.
 
 ## Handoff and three separate review questions
+
+These three product/design/correctness questions remain distinct. New-product
+iterations also require the separate security perspective specified in
+[stage F](data-first-product-workflow.md#f-implement-cohesively-and-review-every-iteration);
+do not interpret this section as permission to omit it.
 
 The PO returns brief/intent pins, sources and decisions, priority, acceptance intent,
 gaps and proposed specialist slices. The orchestrator creates actual assignments

@@ -8,6 +8,7 @@ operations; retained captures are evidence inputs, not authenticated permissions
 import argparse
 import copy
 import hashlib
+import importlib.util
 import json
 import os
 from pathlib import Path
@@ -209,7 +210,27 @@ def snapshot_check(snapshot, target):
     return route
 
 
-def prepare_app(target, baseline, current, html):
+def project_helper():
+    helper = Path(__file__).resolve().parents[2] / 'omni-artifact-accelerator/scripts/analyst_project.py'
+    spec = importlib.util.spec_from_file_location('native_project_gate', helper)
+    P = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(P)
+    return P
+
+
+def prepare_app(target, baseline, current, html, *, project=None, artifact=None):
+    need(project is not None and type(artifact) is str, 'Engagement and local candidate artifact required')
+    P = project_helper()
+    root, metadata = P.load_project(project)
+    gate = P.stage_require(root, 'build')
+    candidate = P.relative_file(root, artifact)
+    need(candidate.stat().st_size <= MAX_HTML and candidate.read_bytes() == html.encode('utf-8'),
+         'Candidate bytes differ from the selected engagement artifact')
+    html_sha = hashlib.sha256(html.encode()).hexdigest()
+    if gate['required']:
+        need(gate.get('candidate') is not None and
+             any(pin['sha256'] == html_sha for pin in gate['candidate']['artifacts']),
+             'Freeze and review this exact candidate before native preparation')
     route = snapshot_check(baseline, target)
     snapshot_check(current, target)
     need(digest(baseline) == digest(current), 'Target drift: reconcile before preparing a write')
@@ -218,6 +239,9 @@ def prepare_app(target, baseline, current, html):
     return {'kind': 'native_app_enhancement_request', 'schema_version': 1,
             'target': target, 'baseline_sha256': digest(baseline),
             'html_sha256': hashlib.sha256(html.encode()).hexdigest(),
+            'engagement': {'project_id': metadata['id'], 'artifact': artifact,
+                           'stage_bindings': gate.get('stage_bindings', {}),
+                           'candidate_sha256': gate.get('candidate_sha256')},
             'request': {'method': 'PUT', 'path': route, 'body': {'html': html}},
             'publication_authorized': False, 'settings_changes': False, 'query_changes': False,
             'note': 'Prepared request only; trusted host must verify existing human authorization and '
@@ -260,6 +284,7 @@ def main():
     parser.add_argument('operation', choices=['cli-json', 'route-check', 'query-body', 'plan-check', 'app-prepare', 'app-verify'])
     parser.add_argument('--input', required=True, help='Response file or JSON request describing local input paths')
     parser.add_argument('--output', required=True, help='New private output file; never overwrite')
+    parser.add_argument('--project', help='Required engagement root for app-prepare')
     parser.add_argument('--shape', choices=['object', 'list'], default='object')
     args = parser.parse_args()
     output = Path(args.output).absolute()
@@ -282,9 +307,13 @@ def main():
         elif args.operation == 'plan-check':
             result = plan_check(record)
         elif args.operation == 'app-prepare':
-            raw = read_bytes(local(record['html']), MAX_HTML)
+            need(args.project is not None, 'Engagement required for App preparation')
+            P = project_helper()
+            root, _ = P.load_project(args.project)
+            raw = read_bytes(P.relative_file(root, record['html']), MAX_HTML)
             result = prepare_app(record['target'], read(local(record['baseline'])),
-                                 read(local(record['current'])), raw.decode('utf-8'))
+                                 read(local(record['current'])), raw.decode('utf-8'),
+                                 project=args.project, artifact=record['html'])
         else:
             result = verify_app(read(local(record['prepared'])), read(local(record['baseline'])), read(local(record['after'])))
     data = encoded(result) + b'\n'

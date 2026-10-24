@@ -10,6 +10,9 @@ _s = importlib.util.spec_from_file_location('product_tests', ROOT / 'skills/omni
 N = importlib.util.module_from_spec(_s)
 _s.loader.exec_module(N)
 P = N.P
+_gate_spec = importlib.util.spec_from_file_location('product_gate_fixture', ROOT / 'tests/stage_gate_fixture.py')
+G = importlib.util.module_from_spec(_gate_spec)
+_gate_spec.loader.exec_module(G)
 
 
 class ProductIntentTests(unittest.TestCase):
@@ -26,6 +29,8 @@ class ProductIntentTests(unittest.TestCase):
                                 'note_paths': ['inputs/notes-v1.json']}
         self.spec['requirements'] = [self.requirement('promise', 'user_statement', 'user'),
                                      self.requirement('journey', 'recommendation', 'proposal')]
+        self.gates = G.Lifecycle(self.root, P)
+        self.gates.through('brief')
 
     def write(self, path, value):
         (self.root / path).write_text(json.dumps(value) if not isinstance(value, str) else value)
@@ -75,7 +80,7 @@ class ProductIntentTests(unittest.TestCase):
 
     def test_missing_projection_allows_po_reconciliation_but_blocks_dependent_handoff(self):
         self.select()
-        with self.assertRaisesRegex(ValueError, 'product_context_not_current'):
+        with self.assertRaisesRegex(ValueError, 'stage_gate_predecessor_incomplete:build'):
             P.packet(self.root, 'app-engineer', ['inputs/notes-v1.json'], None)
         po = P.packet(self.root, 'product-owner', ['inputs/notes-v1.json'], None)
         self.assertEqual(po['product_context']['status'], 'inconsistent')
@@ -163,6 +168,7 @@ class ProductIntentTests(unittest.TestCase):
         # An actual legacy project stays usable without a mandatory new interview/gate.
         legacy = Path(self.folder.name).resolve() / 'legacy'
         P.init(legacy, 'Existing project', 'enhancement', 'app', 'none')
+        G.pre_policy_project(legacy, P)
         project = P.load_project(legacy)[1]
         project['open_questions'].append('Who owns the separately authorized release?')
         P.write_json(legacy / 'project.json', project, replace=True)
@@ -172,9 +178,12 @@ class ProductIntentTests(unittest.TestCase):
         self.assertNotIn('product_context', P.packet(legacy, 'app-engineer', ['contracts/metrics.json'], None))
 
     def test_dashboard_migration_retains_surface_and_focused_repair_scope(self):
-        project = P.load_project(self.root)[1]
-        project.update(mode='migration', surfaces=['dashboard'])
-        P.write_json(self.root / 'project.json', project, replace=True)
+        # A genuine existing migration, not relabeling a gated new-product project.
+        notes = (self.root / 'inputs/notes-v1.json').read_text()
+        self.root = Path(self.folder.name).resolve() / 'migration'
+        P.init(self.root, 'Existing dashboard repair', 'migration', 'dashboard', 'none')
+        G.pre_policy_project(self.root, P)
+        self.write('inputs/notes-v1.json', notes)
         self.spec['surfaces'] = ['dashboard']
         self.spec['selections'][0]['surface'] = 'dashboard'
         self.spec['product'].update(scope='focused_repair', discovery='focused_repair')

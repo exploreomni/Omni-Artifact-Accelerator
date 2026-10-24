@@ -29,6 +29,29 @@ def fixture():
 
 
 class Authoring(unittest.TestCase):
+    def setUp(self):
+        self.folder = tempfile.TemporaryDirectory()
+        self.addCleanup(self.folder.cleanup)
+        self.root = Path(self.folder.name).resolve() / 'legacy'
+        helper = PATH.parents[2] / 'omni-artifact-accelerator/scripts/analyst_project.py'
+        spec = importlib.util.spec_from_file_location('native_legacy_project', helper)
+        P = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(P)
+        P.init(self.root, 'Existing pre-policy App repair', 'enhancement', 'app', 'none')
+        legacy = P.load_project(self.root)[1]
+        legacy.pop('stage_gate_policy')
+        P.write_json(self.root / 'project.json', legacy, replace=True)
+        (self.root / 'deliverables/app.html').write_text('<html>after</html>')
+
+    def prepare(self, target, before, current):
+        return a.prepare_app(target, before, current, '<html>after</html>',
+                             project=self.root, artifact='deliverables/app.html')
+
+    def test_preparation_requires_engagement_and_candidate(self):
+        target, before = fixture()
+        with self.assertRaisesRegex(ValueError, 'Engagement'):
+            a.prepare_app(target, before, before, '<html>after</html>')
+
     def test_cli_response_empty_wrong_shape_and_duplicates(self):
         for raw in (b'', b' ', b'{}', b'{"error":1,"error":2}', b'{"x":NaN}', b'{"x":1e999}', b'[]'):
             with self.subTest(raw=raw), self.assertRaises(ValueError):
@@ -80,7 +103,7 @@ class Authoring(unittest.TestCase):
             target, before = fixture()
             target['key_scope'] = scope
             before['identity']['keyScope'] = scope
-            plan = a.prepare_app(target, before, copy.deepcopy(before), '<html>after</html>')
+            plan = self.prepare(target, before, copy.deepcopy(before))
             self.assertEqual(plan['request']['body'], {'html': '<html>after</html>'})
             self.assertFalse(plan['publication_authorized'])
             after = copy.deepcopy(before)
@@ -94,7 +117,7 @@ class Authoring(unittest.TestCase):
             current = copy.deepcopy(before)
             current[section][key] = value
             with self.subTest(section=section, key=key), self.assertRaises(ValueError):
-                a.prepare_app(target, before, current, '<html>after</html>')
+                self.prepare(target, before, current)
         for origin in ('http://example.omniapp.co', 'https://user:secret@example.omniapp.co',
                        'https://example.omniapp.co/api', 'https://example.omniapp.co?x=1'):
             with self.subTest(origin=origin), self.assertRaises(ValueError):
@@ -102,7 +125,7 @@ class Authoring(unittest.TestCase):
 
     def test_readback_preserves_queries_settings_and_detects_tampering(self):
         target, before = fixture()
-        plan = a.prepare_app(target, before, copy.deepcopy(before), '<html>after</html>')
+        plan = self.prepare(target, before, copy.deepcopy(before))
         after = copy.deepcopy(before)
         after['app']['html'] = '<html>after</html>'
         after['app']['settings']['allowDownloads'] = True

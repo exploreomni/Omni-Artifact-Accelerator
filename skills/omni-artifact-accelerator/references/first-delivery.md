@@ -1,6 +1,6 @@
 # First-delivery workflow
 
-Use for a substantial new App or dashboard, or a material redesign. Reuse the selected brief and existing answers; a focused edit needs only affected checks, and a faithful migration retains its source behavior. The target is one customer brief followed by internal design, implementation, critique and repair. It is not a promise of one-generation quality.
+Use for a substantial new App or dashboard, or a material redesign. New products follow the [data-first A–F workflow](data-first-product-workflow.md), including three viable concepts and the user's selection before detailed design. Reuse existing answers; a focused edit needs only affected checks, and a faithful migration retains source behavior. The target is a coherent first implementation from an informed, selected design followed by internal critique and repair. It is not a promise of one-generation quality or permission to omit the concept decision.
 
 ## Recover, resolve, qualify
 
@@ -12,10 +12,10 @@ their current context; routine design choices need no additional user approval.
 
 1. Identify the actual source mode with the [execution entry procedure](execution-workflow.md). For installed-skill work, use the read-only installer comparison described in the [how-to](../../../docs/HOW_TO.md#installation-and-updates). For an explicitly repository-only trial, record the working-tree manifest and do not consult installed copies, prior outputs or memory. For a connected repository link, establish what files were actually read; a URL is not activation. Source/install parity does not prove the host reloaded a cached skill.
 2. Read current intent, original request, source/query scope and tooling restrictions. Reuse the company website, approved asset sources, audience and experience decisions. Batch only material missing questions; do not repeatedly ask about authorized logo sourcing or require the user to choose routine CSS.
-3. Translate reference qualities into concrete choices: focal point, hierarchy, imagery role, density, primary action, useful depth, interaction and first/repeat use. Compare the same task through alternative treatments when useful. In design-review selections, record `exploration: {mode: "direct"|"compare", rationale: "..."}` per surface; a direct choice needs no manufactured alternative and still needs actual candidate critique. An agent can recommend a direction; record that recommendation as a proposal rather than inventing user approval.
-4. Map the [analytical questions and evidence](../../omni-data-analyst/references/analytical-coverage.md). Before final destination scope, inventory usable sources beyond the first query: questions, populations/eras, grain, available and selected depth, unsupported/deferred possibilities and rationale. Use the [source inventory](execution-workflow.md#qualify-and-build-one-journey) to preserve the experience ambition and record why scope expands or remains bounded. Qualify the selected native callback and high-risk asset/media/live-refresh paths before the design depends on them. Follow [native capability checks](../../omni-app-engineer/references/native-capability-checks.md); unavailable observation remains explicit.
+3. For new products, complete A–C before product design: verify data/user access, inventory source depth, qualify governed queries and analyst findings, then create the reusable, refresh-safe narrative. Use the [analytical coverage map](../../omni-data-analyst/references/analytical-coverage.md) and [source inventory](execution-workflow.md#qualify-and-build-one-journey); preserve unsupported/deferred questions. Qualify critical native query capabilities and retain unobserved runtime evidence honestly.
+4. Conduct artifact discovery using that handoff, then present exactly three viable, meaningfully different concepts and obtain the user's selection. Resolve focal point, hierarchy, imagery, density, navigation, interaction and first/repeat use for that option. Record comparative exploration and the decision reference; a recommendation is not a selection. Focused work and already selected products can retain direct exploration. Qualify selected high-risk media/spatial/refresh paths before implementation depends on them; follow [native capability checks](../../omni-app-engineer/references/native-capability-checks.md).
 5. Declare the selected destinations and applicable contexts/lanes before generating review cases. Keep a full inventory even for a focused edit. Choose only combinations needed to assess the actual task; missing applicability remains a gap.
-6. Assemble one ambitious representative task slice, carrying the defining experience qualities as well as relevant default/empty/error states and constrained-layout behavior. If the task includes detail and return, exercise that path; a static dashboard needs no invented App journey. A reduced technical demo cannot qualify omitted experience requirements. Review and repair the slice before expanding other destinations.
+6. Implement from the resolved handoff, using an ambitious representative integration slice where useful, then complete the selected experience. Carry defining qualities as well as default/empty/error and constrained-layout behavior. A reduced technical demo cannot qualify omitted requirements. Obtain security, UI/UX, product-owner and independent QA feedback on every candidate iteration, repair findings and reassess the revised candidate.
 
 An immersive opening, photos, extra destinations and 3D are conditional design choices. Every added region must help the selected task. Richness comes from useful evidence and interaction, not a prescribed number of panels.
 
@@ -154,11 +154,13 @@ Generate the required observation set from the current design and intent before 
 
 Return the exact candidate, original brief, selected direction and generated obligations to the designer and an independent verifier. Reuse [experience critique](../../omni-design-systems/references/experience-review.md) and [design evidence](../../omni-qa-analyst/references/design-evidence.md). Inspect all consequential destinations and a complete task slice, including detail/return only when selected.
 
-Keep three questions distinct: the PO recommends whether the product promise is
-preserved; a creative reviewer different from the builder and originating designer
-critiques its realization; QA verifies correctness. One suitable independent worker
-may perform both review disciplines with separate findings. No result grants
-runtime/publication authority or substitutes for unobserved customer acceptance.
+For new products, retain all four consultant perspectives on every candidate
+iteration: security reviews the selected trust/data/resource boundaries; the PO
+checks product fit; UI/UX critiques the selected experience; independent QA verifies
+correctness. The creative reviewer differs from the builder and originating
+designer. One suitable independent worker may cover multiple review scopes with
+separate findings. No result grants runtime/publication authority or substitutes
+for unobserved customer acceptance.
 
 For final bookkeeping, use the [delivery evidence template](execution-workflow.md#assess-delivery-without-upgrading-claims)
 on the frozen exact candidate. Source critique and requirement-by-context rendered

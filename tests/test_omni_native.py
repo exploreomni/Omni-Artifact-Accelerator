@@ -112,6 +112,10 @@ class NativeTests(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name).resolve() / "engagement"
         native.WORKFLOW.ap.init(self.root, "Native adapter fixture", "migration", "dashboard")
+        # Historical adapter compatibility; fresh-project gate coverage is separate.
+        project = native.WORKFLOW.ap.load_project(self.root)[1]
+        project.pop('stage_gate_policy')
+        native.WORKFLOW.ap.write_json(self.root / 'project.json', project, replace=True)
         self.env = patch.dict(os.environ, {"OAA_TEST_TOKEN": "test-placeholder-only"})
         self.env.start()
         self.addCleanup(self.env.stop)

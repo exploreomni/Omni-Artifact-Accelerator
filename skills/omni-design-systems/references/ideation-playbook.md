@@ -1,12 +1,12 @@
 # From need to a testable concept
 
-Use for a new app/dashboard concept or a meaningful change to how people work. These are package recommendations, not mandatory vendor process gates. Reuse discovery, decisions, brand answers, and authorizations already available. Scale the exercise to the uncertainty; continue authorized local sketches and prototypes without inventing another approval step.
+Use for a new app/dashboard concept or a meaningful change to how people work. For net-new products or product reconception, the package's [data-first workflow](../../omni-artifact-accelerator/references/data-first-product-workflow.md) requires A–C evidence/narrative, artifact discovery, exactly three viable product options and the user's selection before detailed design. These are package workflow requirements, not vendor process rules. Reuse decisions and authorization for focused work or a continuation of an already selected product.
 
 ## Choose the amount of discovery
 
 | Assignment | Useful next artifact |
 | --- | --- |
-| New concept or substantial workflow redesign | Brief, important assumptions and a reasoned direct prototype choice, or comparative treatments when they resolve a material uncertainty |
+| New product or explicit product reconception | A–C analytical handoff, artifact brief, three materially different viable options, then actual user selection and resolved design |
 | Focused enhancement | The affected task, the uncertain choice, and a comparison only if alternatives would change the decision |
 | Faithful migration | Source behavior and unknowns, plus target adaptation where necessary; do not manufacture a redesign exercise or retire source functionality |
 | Specified design or small wording/style fix | Make the scoped change and perform relevant checks; reopen discovery only for a consequential conflict |
@@ -43,25 +43,25 @@ Prioritize assumptions with both serious consequences and weak evidence. A seman
 
 If the uncertainty is frontend treatment, hold audience, question, data and key action constant while changing composition, navigation, type/image balance or disclosure. Comparing different business tasks can settle product scope, but cannot by itself resolve the original visual question. Use the [same-task context studio](experience-context-studio.md) to practice this distinction.
 
-Choose direct or comparative exploration with a brief rationale. A direct choice still needs rendered review of the selected candidate when permitted. When uncertainty warrants comparison, vary information grouping, composition or interaction rather than merely colors, using only enough alternatives to resolve that uncertainty. State required features, source constraints and excluded behavior; preserve rejected choices briefly. There is no fixed concept count or novelty score.
+For new products/reconception, develop exactly three viable concepts with comparable quality and the same core analytical narrative. Vary experience structure, investigation path, focal visualization or interaction rather than merely colors. Present concrete comparable concepts, recommend with reasons and wait for the user's selection. Do not impose the same three archetypes across engagements. For focused work or an already selected product, direct exploration remains appropriate; retain the existing decision and affected scope. Neither route has a universal novelty score or fixed UI template.
 
 Render the selected treatment, and any alternatives being compared, using representative data/context and relevant constrained layouts. Use [visual craft](visual-craft.md) to resolve the screen; preserve render references and distinguish prototype, native and human observations. The optional [design evidence record](../../omni-qa-analyst/references/design-evidence.md#specification) records the direct/compare choice. Prose and structure checks cannot establish typography, proportion, density or polish.
 
 Use a comparison card: `concept → task path → advantages → tradeoffs → unsupported assumptions → prototype decision and rationale`. Assess the relevant criteria: task clarity, faithful coverage, inspection effort, accessibility, target feasibility, and maintainability. Selection for a local prototype is a working decision, not business acceptance or publication permission.
 
-Make a reasoned working selection when the brief supports it; do not turn every internal alternative into a customer question. Before expanding a substantial App, follow the [first complete journey](experience-brief.md#build-the-first-complete-journey-early) through the actual assembled candidate. This tests how the entry, working view and detail connect; an attractive opening alone leaves the rest of the experience unresolved. Under no-rendering constraints, source/interaction rehearsal can expose structural faults while visual judgment remains unobserved.
+For new products, retain the actual user selection; an agent recommendation cannot replace it. After selection, resolve detailed design and follow the [first complete journey](experience-brief.md#build-the-first-complete-journey-early) through the assembled candidate. An attractive opening alone leaves the rest unresolved. Routine choices within an already selected product need no new concept vote. Under no-rendering constraints, source/interaction rehearsal can expose structural faults while visual judgment remains unobserved.
 
 ### Synthetic worked example: inventory investigation
 
-**Illustrative net-new request:** a warehouse analyst needs to inspect low-stock exceptions and understand the evidence before using an existing purchasing process. Target: native Omni App, read-only. No interviews or runtime checks have occurred. The definition of “available units” is pending analyst review; fixture values are synthetic.
+**Synthetic stage-E teaching example, not a live engagement:** assume A–C have established scoped access, available-unit definitions, verified inventory comparisons and a refresh-safe narrative, and D identified the warehouse analyst's investigation task. Target: a read-only native Omni App. These assumed teaching inputs are not evidence of actual access, queries, interviews or runtime qualification. A real engagement must obtain its own evidence first.
 
 | Concept | Task path and tradeoff | Decision |
 | --- | --- | --- |
-| A. Exception list with item detail | Scan comparable items, select one, inspect supporting values. Preserves the surrounding list at wide sizes; density needs testing. | Choose for a provisional interaction prototype because the stated task centers on comparing exceptions. |
-| B. Guided item lookup | Enter an item, then inspect its evidence. Direct when the item is known; poor fit for discovering unknown exceptions. | Retain as an alternative if discovery shows that analysts usually start with an item ID. |
-| C. Overview followed by investigation | Start with aggregates, then navigate to exceptions. Useful for monitoring; adds a step and depends on unsettled KPI definitions. | Defer the summary claims; do not invent a headline metric to complete the design. |
+| A. Exception comparison with item dossiers | Compare inventory exceptions, inspect evidence alongside the list and return with context. Optimizes cross-item decisions; narrow layouts need staged detail. | Proposed; explain the tradeoff and request user selection. |
+| B. Guided evidence investigation | Start from a supported question, follow scoped comparisons to affected items and inspect exact records. Optimizes explanation; repeated use needs a direct route. | Proposed; uses the same inventory claims through a different investigation path. |
+| C. Inventory relationship explorer | Navigate supported location/category relationships, compare contributions and open item evidence. Optimizes relationship discovery; needs a readable table alternative. | Proposed; include only relationships qualified in A–C. |
 
-**Annotation:** this selection follows the illustrative task, not user-test evidence. Assumption A1 is that comparing several items matters more than finding one known item. A small task test can challenge A1. Assumption A2 is the meaning of available units; route that to the model/metric owner. Neither a successful prototype nor a preferred layout resolves A2. No concept adds purchasing/writeback.
+**Annotation:** no option is selected. Recommend based on the actual audience and narrative, then wait for the user's choice. Changed or unresolved metric definitions reopen B/C. None of these teaching concepts adds purchasing/writeback, and their three structures are not a prescribed set for other products.
 
 ## Match fidelity to the question
 
@@ -72,7 +72,7 @@ Make a reasoned working selection when the brief supports it; do not turn every 
 | Density, typography, long labels | Rendered representative screen at agreed sizes | End-to-end usability from a screenshot |
 | Data bridge, permissions, or performance | Bounded implementation investigation owned by engineering/QA in the verified target | Production readiness from a local fixture |
 
-For example A, prototype list selection, narrow-screen return, and a filter change that removes the selected item. Use synthetic short/long labels and empty/partial results. There is no need to build a complete application to learn whether this flow is understandable. Ask independent QA to use [the usability-testing guide](../../omni-qa-analyst/references/usability-testing.md); record observed findings separately from proposed changes. Without participants, deliver the test plan and mark usability not tested.
+If the user selects example A, prototype list selection, narrow-screen return, and a filter change that removes the selected item. Use labeled synthetic short/long labels and empty/partial results for bounded rehearsal. Ask independent QA to use [the usability-testing guide](../../omni-qa-analyst/references/usability-testing.md); record observations separately from proposals. Without participants, mark usability not tested. A prototype is not the complete selected product.
 
 ## Source basis and applicability
 
