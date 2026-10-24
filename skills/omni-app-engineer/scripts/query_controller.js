@@ -104,6 +104,103 @@
     function dispose() { if (!disposed) { invalidate(); disposed=true; phase="disposed"; } }
     return Object.freeze({run, change, reset, retry, restore, cancel, snapshot, dispose});
   }
-  if (typeof module !== "undefined" && module.exports) module.exports={createQueryController};
-  else scope.OAAQueryController=Object.freeze({createQueryController});
+  // Provider-neutral delivery boundary. decode owns the inspected vendor envelope;
+  // this adapter never guesses an SDK method, status, scalar type or request ID.
+  function createQueryDelivery({run, subscribe, decode, columns, grain, limit,
+      onState, correlation, evidenceRef, runSettlement}) {
+    const C = typeof module !== "undefined" && module.exports ? require("./experience_components.js") : scope.OAAExperience;
+    const need = (ok, message) => { if (!ok) throw new Error(message); };
+    need(C && [run, subscribe, decode, onState].every(fn => typeof fn === "function") &&
+      Number.isSafeInteger(limit) && limit > 0 && limit <= 100000 &&
+      Array.isArray(grain) && grain.length > 0 &&
+      runSettlement === "after_terminal_delivery" &&
+      ["provider_correlated", "serialized_unqualified"].includes(correlation) &&
+      typeof evidenceRef === "string" && evidenceRef.trim(), "invalid delivery handoff");
+    const fields = structuredClone(columns), identity = structuredClone(grain);
+    C.mapRows([], fields, limit, {grain: identity});
+    let active = null, disposed = false, usable = true;
+    let state = {phase:"idle", rows:[], completeness:"unknown", busy:false, usable, correlation, evidenceRef, runSettlement};
+    const snapshot = () => structuredClone(state);
+    const emit = patch => { state = {...state, ...patch}; onState(snapshot()); };
+    const clear = (phase, reason = null) => emit({phase, rows:[], completeness:"unknown", reason});
+    function release(ticket) {
+      if (ticket.unsubscribe) {
+        const fn = ticket.unsubscribe; ticket.unsubscribe = null;
+        const result = fn();
+        if (result && typeof result.then === "function") {
+          Promise.resolve(result).catch(() => {});
+          throw new Error("synchronous subscription cleanup required");
+        }
+      }
+    }
+    function consume(ticket, raw) {
+      if (disposed || active !== ticket || ticket.invalidated || raw === undefined) return;
+      try {
+        const value = decode(raw); // Explicit normalized statuses, not vendor strings.
+        need(value && ["loading", "complete", "error", "restricted", "stale"].includes(value.phase), "invalid decoded status");
+        if (value.phase === "loading") return;
+        if (value.phase !== "complete") { ticket.invalidated = true; clear(value.phase, "source_state"); return; }
+        need(Array.isArray(value.columns) && value.columns.every(key => typeof key === "string") &&
+          new Set(value.columns).size === value.columns.length && fields.every(c => value.columns.includes(c.key)), "missing or duplicate result columns");
+        need(value.truncated === false && Array.isArray(value.rows) && value.rows.length < limit &&
+          ["complete", "partial", "unknown"].includes(value.completeness), "unqualified result extent");
+        const rows = C.mapRows(value.rows, fields, limit, {grain: identity});
+        const terminal = JSON.stringify({rows, completeness:value.completeness});
+        if (ticket.terminal === terminal) return; // Listener/run-return duplication.
+        need(ticket.terminal === null, "conflicting terminal results");
+        ticket.terminal = terminal;
+        emit({phase:value.completeness === "complete" ? (rows.length ? "ready" : "empty") : "partial",
+          rows, completeness:value.completeness, reason:null});
+      } catch (_) { ticket.invalidated = true; clear("error", "input_contract_mismatch"); }
+    }
+    async function refresh() {
+      need(!disposed, "delivery disposed");
+      if (!usable) return {started:false, reason:"subscription_unusable"};
+      if (active) return {started:false, reason:"busy"};
+      const ticket = {terminal:null, invalidated:false, unsubscribe:null, subscribed:false};
+      active = ticket; emit({phase:"loading", rows:[], completeness:"unknown", busy:true, reason:null});
+      if (disposed) { active = null; return {started:false, reason:"disposed"}; }
+      try {
+        ticket.unsubscribe = subscribe(raw => consume(ticket, raw));
+        need(typeof ticket.unsubscribe === "function", "qualified subscription cleanup required");
+        ticket.subscribed = true;
+        if (disposed) return {started:false, reason:"disposed"};
+        // Keep busy until the actual run settles, even if a subscription completes
+        // first or invalidate clears the UI. A local token is not native correlation.
+        const returned = await run();
+        consume(ticket, returned);
+        if (!disposed && !ticket.invalidated && ticket.terminal === null) clear("error", "missing_terminal_result");
+      } catch (_) {
+        if (!ticket.subscribed) usable = false; // Registration may have partly succeeded.
+        if (!disposed && !ticket.invalidated) clear("error", "run_or_subscription_failed");
+      }
+      finally {
+        try { release(ticket); }
+        catch (_) {
+          usable = false; ticket.invalidated = true;
+          if (!disposed) clear("error", "subscription_cleanup_failed");
+        }
+        active = null; if (!disposed) emit({busy:false, usable});
+      }
+      return {started:true};
+    }
+    function invalidate(phase = "stale") {
+      need(!disposed && ["stale", "restricted", "error"].includes(phase), "invalid delivery invalidation");
+      if (active) active.invalidated = true;
+      clear(phase, "invalidated"); // Does not pretend to cancel the pending native run.
+    }
+    function dispose() {
+      if (disposed) return;
+      disposed = true;
+      state = {...state, phase:"disposed", rows:[], completeness:"unknown", busy:false, usable:false};
+      if (active) {
+        active.invalidated = true;
+        try { release(active); } catch (_) { state.reason = "subscription_cleanup_failed"; }
+      }
+    }
+    return Object.freeze({refresh, invalidate, snapshot, dispose});
+  }
+  const api = Object.freeze({createQueryController, createQueryDelivery});
+  if (typeof module !== "undefined" && module.exports) module.exports=api;
+  else scope.OAAQueryController=api;
 })(globalThis);

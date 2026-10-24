@@ -123,6 +123,20 @@ Product fit, creative craft and correctness remain separate findings. A suitable
 independent worker can cover both review disciplines. Legacy seven-role records
 remain supported; focused repairs need no extra interview or review ceremony.
 
+Optional specialist ownership belongs in a sibling `specialists` object, not an
+invented core responsibility. For example, a selected spatial task may use:
+
+```json
+{"specialists":{"geometry":{"role":"3d-modeler","worker":"actual-worker",
+  "mode":"delegated","rationale":"Authors the selected original geometry proposal",
+  "requirement_ids":["inspect-object"]}}}
+```
+
+Use an existing package role, actual worker, `inline`/`delegated`/`not_required`
+mode, rationale and existing requirement IDs. Active slots require that role's
+guidance in the run's actual-read inventory. These slots do not replace the core
+experience/engineering/verification owners, prove dispatch or require 3D.
+
 The reviewer compares the original request against every material requirement,
 including deferred/omitted work and the full question→population→grain→denominator
 mapping. Preserve evidence and explain any gap. All recorded requirement IDs must
@@ -135,6 +149,58 @@ review presence, enabled product context and existing `experience-check` coverag
 exit 2 means invalid input. Independent provisional work remains possible.
 
 ## Qualify and build one journey
+
+**Inventory usable source capabilities before final destination selection.** Begin
+with the requested questions and experience promise, then inspect the relevant
+available sources beyond the first saved query. Do not equate one existing query
+with the intended product scope. Record populations/eras, grains, supported depth,
+missingness and constraints; distinguish observed source evidence from an inference.
+Preserve useful task depth and explain expansions or exclusions before freezing the
+destination scope. An inventory is bounded evidence, not proof that every source
+has been discovered.
+
+`source-inventory --project "$OAA_RUN" --request inventory.json` accepts this shape:
+
+```json
+{
+  "id":"qualification-v1",
+  "inputs":["evidence/source-profile.json"],
+  "scope_rationale":"Compare periods and inspect observations; unavailable forecasts remain a gap.",
+  "capabilities":[{
+    "id":"collection-demand", "requirement_ids":["investigate"],
+    "question":"Which collection changed and which observations explain it?",
+    "source_refs":["evidence/source-profile.json#collections"],
+    "population":"Supplied observations for the recorded periods", "grain":"Collection and period",
+    "available_depth":["period comparison","exact observations"],
+    "selected_depth":["period comparison","exact observations"], "disposition":"selected",
+    "rationale":"Comparison and exact evidence serve the original decision.",
+    "remaining_gap":"Native completeness has not been observed."
+  }]
+}
+```
+
+All commands here use `python3 -I -S -B "$OAA_HELPER"`. Capability dispositions
+are `selected`, `unsupported` or `deferred`. Selected depth must be a nonempty
+subset of available depth; other dispositions have empty selected depth and retain
+their reason/gap. Unsupported evidence may name an inspected contract or failed
+qualification rather than nonexistent results. Keep actual customer data outside
+the package. Store a minimal source profile; no credentials or unrelated data.
+
+The command writes a new `evidence/source-capabilities-<id>.json`, pinning its
+inputs and the intent current at capture. Reference that path as
+`product.source_inventory_path` in the next canonical intent selection. This
+documents the sequence without certifying when a person actually made decisions.
+The intent pins the inventory; checks also recheck its source inputs. Changed or
+invalid evidence cannot claim readiness. Unsupported/deferred capabilities linked
+to active requirements remain gaps unless an optional `alternative_id` names a
+selected capability covering those same requirement IDs. Use that link when the
+selected alternative preserves the outcome: keep the unavailable method and its
+remaining difference visible, without turning a rejected implementation option
+into an approval wait. The link declares a scope choice, not user acceptance or
+proof of equivalent quality; unresolved outcome gaps must remain separate rows.
+Legacy records and small focused repairs do
+not require a new inventory; retained inventory still must be current. An existing
+inventory cannot silently disappear from later intent versions.
 
 Use the [native data-input procedure](../../omni-app-engineer/references/native-data-input.md)
 before making the full design depend on a query. Keep connection/database/catalog,
@@ -190,6 +256,13 @@ JSON hash) and `lanes`. Account for `source`, `synthetic`, `numerical`, `native`
 }
 ```
 
+Avoid retyping the lane boilerplate. `delivery-evidence-template` takes
+`{"candidate":"evidence/candidate-history/final/candidate.json","output":"evidence/delivery-v1.json"}`
+as its request. It checks the current selection and retained candidate bytes and
+writes a new evidence file with every lane `not_run`. Replace only observations
+actually obtained, supplying their method, observer, bindings and limitations.
+The generated file is a recording aid, never a pass receipt.
+
 Statuses: `reported_pass`, `failed`, `not_run`, `not_applicable`. A reported pass
 requires an actual observer, a nonempty map of engagement evidence paths to their
 SHA-256 hashes, and the lane-specific method:
@@ -227,6 +300,15 @@ existing design requirement coverage. Exit 1 reports `candidate_with_gaps`; exit
 is only `ready_for_review`, never verified completion or permission. Changes reopen
 affected evidence. Scope a review honestly rather than declaring unrelated screens
 passed. Missing actual rendering stays missing under CLI-only execution.
+
+`review_assessments.source_critique` and `review_assessments.requirement_context_design`
+are separate. A real independent source critique can be recorded as a source-lane
+pass while formal requirement-by-context design coverage remains `not_assessed`.
+Do not manufacture rendered cases to make the latter green. The existing
+`intent-cases`/design-review flow derives applicable destination/context/lane
+obligations from selected intent; actual observations close only the lanes they
+establish. Link the source findings and corrections, retain unobserved contexts,
+and deliver the candid gaps when publication is separately authorized.
 
 The helper neither invokes a provider nor wraps arbitrary native writes. A host may
 use its exit status in a separately qualified managed delivery route; it cannot

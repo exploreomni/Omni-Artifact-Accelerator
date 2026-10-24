@@ -19,7 +19,8 @@ def validate(spec, need, relative, roles):
     if 'product' not in spec:
         need(not any('product' in r for r in spec['requirements']), 'product_context_required')
         return
-    need(type(product) is dict and set(product) == {'schema_version', 'scope', 'discovery', 'note_paths'},
+    need(type(product) is dict and {'schema_version', 'scope', 'discovery', 'note_paths'} <= set(product)
+         and set(product) <= {'schema_version', 'scope', 'discovery', 'note_paths', 'source_inventory_path'},
          'product_fields_invalid')
     need(type(product['schema_version']) is int and product['schema_version'] == 1, 'product_version_invalid')
     need(product['scope'] in SCOPES and product['discovery'] in
@@ -30,6 +31,9 @@ def validate(spec, need, relative, roles):
     for path in notes:
         relative(path)
         need(path.startswith(('inputs/', 'evidence/')), 'product_notes_private_engagement_path_required')
+    if 'source_inventory_path' in product:
+        path = relative(product['source_inventory_path'])
+        need(path.startswith('evidence/'), 'source_inventory_evidence_path_required')
     for req in spec['requirements']:
         item = req.get('product')
         # Existing technical/brand requirements may remain unannotated and visible.
@@ -79,6 +83,9 @@ def render(project, state, generated_at):
             'Scope: ' + product['scope'] + ' | Discovery: ' + product['discovery'], '',
             '## Evidence notes', '']
     rows.extend('- ' + clean(path) for path in product['note_paths'])
+    if product.get('source_inventory_path'):
+        rows.extend(['', 'Source capability inventory: ' + clean(product['source_inventory_path']),
+                     'Inventory dispositions describe usable depth and gaps; they do not approve scope or prove source completeness.'])
     rows.extend(['', '## Requirements, experience promise and success criteria', ''])
     for req in spec['requirements']:
         item = req.get('product', {})
@@ -137,12 +144,15 @@ def check(root):
               'authority': 'projection_of_selected_intent_only', 'claims_authenticated': False,
               'dispatch_authorized': False, 'business_acceptance': 'not_assessed'}
     try:
-        P.need(state['status'] != 'inconsistent', 'current_intent_inconsistent')
         if not state['selected']:
+            P.need(state['status'] != 'inconsistent', 'current_intent_inconsistent')
             return result
+        # Validate the selected record before deciding opt-in. Stale design inputs
+        # in a genuine legacy engagement must not gate unrelated semantic work.
         spec = P.intent_helper().load_selected(root)['spec']
         if 'product' not in spec:
             return result
+        P.need(state['status'] != 'inconsistent', 'current_intent_inconsistent')
         result.update(enabled=True, scope=spec['product']['scope'], discovery=spec['product']['discovery'], requirements=spec['requirements'])
         receipt = project.get('product_brief')
         P.need(type(receipt) is dict and set(receipt) == {'schema_version', 'kind', 'source_intent', 'generated_at', 'brief'},
@@ -159,6 +169,9 @@ def check(root):
         P.need(P.intent_helper().pin(root, brief['path']) == brief, 'product_projection_bytes_changed')
         raw = P.relative_file(root, brief['path']).read_bytes()
         P.need(raw == render((root, project), state, timestamp), 'product_projection_differs_from_intent')
+        if spec['product'].get('source_inventory_path'):
+            inventory = P.routing_helper('delivery_workflow').inventory_check(root, state)
+            P.need(inventory['status'] == 'consistent', 'source_inventory_not_current: ' + '; '.join(inventory['findings']))
         result.update(status='consistent', brief=brief,
                       paths=[brief['path'], *spec['product']['note_paths']])
     except (ValueError, OSError, KeyError, TypeError) as exc:

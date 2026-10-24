@@ -13,7 +13,7 @@ their current context; routine design choices need no additional user approval.
 1. Identify the actual source mode with the [execution entry procedure](execution-workflow.md). For installed-skill work, use the read-only installer comparison described in the [how-to](../../../docs/HOW_TO.md#installation-and-updates). For an explicitly repository-only trial, record the working-tree manifest and do not consult installed copies, prior outputs or memory. For a connected repository link, establish what files were actually read; a URL is not activation. Source/install parity does not prove the host reloaded a cached skill.
 2. Read current intent, original request, source/query scope and tooling restrictions. Reuse the company website, approved asset sources, audience and experience decisions. Batch only material missing questions; do not repeatedly ask about authorized logo sourcing or require the user to choose routine CSS.
 3. Translate reference qualities into concrete choices: focal point, hierarchy, imagery role, density, primary action, useful depth, interaction and first/repeat use. Compare the same task through alternative treatments when useful. In design-review selections, record `exploration: {mode: "direct"|"compare", rationale: "..."}` per surface; a direct choice needs no manufactured alternative and still needs actual candidate critique. An agent can recommend a direction; record that recommendation as a proposal rather than inventing user approval.
-4. Map the [analytical questions and evidence](../../omni-data-analyst/references/analytical-coverage.md). Qualify the selected native callback and high-risk asset/media/live-refresh paths before the design depends on them. Follow [native capability checks](../../omni-app-engineer/references/native-capability-checks.md); unavailable observation remains explicit.
+4. Map the [analytical questions and evidence](../../omni-data-analyst/references/analytical-coverage.md). Before final destination scope, inventory usable sources beyond the first query: questions, populations/eras, grain, available and selected depth, unsupported/deferred possibilities and rationale. Use the [source inventory](execution-workflow.md#qualify-and-build-one-journey) to preserve the experience ambition and record why scope expands or remains bounded. Qualify the selected native callback and high-risk asset/media/live-refresh paths before the design depends on them. Follow [native capability checks](../../omni-app-engineer/references/native-capability-checks.md); unavailable observation remains explicit.
 5. Declare the selected destinations and applicable contexts/lanes before generating review cases. Keep a full inventory even for a focused edit. Choose only combinations needed to assess the actual task; missing applicability remains a gap.
 6. Assemble one ambitious representative task slice, carrying the defining experience qualities as well as relevant default/empty/error states and constrained-layout behavior. If the task includes detail and return, exercise that path; a static dashboard needs no invented App journey. A reduced technical demo cannot qualify omitted experience requirements. Review and repair the slice before expanding other destinations.
 
@@ -44,7 +44,7 @@ The existing intent specification accepts optional requirements[].delivery. Use 
 | destinations | Stable IDs in each affected surface's selected resolved design. One screen is valid. |
 | journeys | Optional stable IDs in each affected surface's selected design, for actual state transitions or paths the requirement needs. No journey is needed for a static task. |
 | dependency_paths | Explicit canonical engagement-relative files needed to implement/review this requirement. Automatically pinned with the selected intent and included in relevant packets. |
-| capabilities | Applicable tags: insight, custom-visualization, motion, external-media, live-content, data-binding, brand-assets. |
+| capabilities | Applicable tags: insight, custom-visualization, spatial-modeling, motion, external-media, live-content, data-binding, brand-assets. |
 
 Example fragment inside an existing requirement, using original synthetic context:
 
@@ -63,7 +63,40 @@ Example fragment inside an existing requirement, using original synthetic contex
 
 Keep required/optional, origin, disposition, value, decision_ref and contexts in the existing requirement. This annotation does not replace them or grant authority. Selected intent freezes explicit dependency bytes; revise and reselect after a material input changes. Arbitrary descriptive links nested in value remain uncrawled. Keep packets within their existing 256 KiB bounds; do not silently drop large dependencies.
 
+Use `delivery-project` to avoid rebuilding a second requirement list. It copies the
+current selected specification into a **new, unselected proposal**, retains all
+requirements and dispositions, and carries existing delivery annotations. It can
+derive `source_ref` from the exact decision reference and destination/journey IDs
+from explicit context applicability. It does not guess aliases from free prose,
+turn suggested roles into owners, infer runtime dependencies or treat acceptance
+goals as implemented behavior. Supply only the remaining explicit annotations:
+
+```json
+{
+  "output":"contracts/intent-with-delivery-v2.json",
+  "annotations":{
+    "investigate":{"owner":"app-designer","behavior_from_value":true}
+  }
+}
+```
+
+Run `python3 -I -S -B "$OAA_HELPER" delivery-project --project "$OAA_RUN" --request projection.json`.
+`behavior_from_value: true` explicitly copies a textual requirement value; use it
+only when that value already states the observable behavior. Otherwise supply an
+explicit `behavior` string. All ordinary delivery fields can be supplied per
+existing requirement ID. Missing owners, behavior or applicability stay missing
+and appear in the returned coverage report. The helper returns field provenance,
+source intent and proposal hash; it does not select, dispatch, approve or rewrite
+the readable North Star. Reconcile against current intent, select a new version
+with the existing `intent-select`, then regenerate the North Star. Regenerate a
+proposal if its source selection changes.
+
 In each selected design JSON, use a destinations list with stable id and meaningful purpose, primary_action, evidence, drill, return and responsive fields. Values can be strings or structured objects/lists. A purposeful absence can be explicit, for example “No drill: this monitoring task is complete in the current view.” Record richer state, imagery, camera, motion and focus decisions in that same resolved design, not a parallel specification.
+
+Author those keys once in the canonical selected design. Descriptive alternatives
+such as `analytical_depth` are useful additional detail but are not automatically
+equivalent to an evidence/drill/return contract. Reconcile the selected design
+directly rather than maintaining another manually synchronized resolved copy.
 
 ~~~json
 {
@@ -109,6 +142,10 @@ For selected reusable App interactions, engineering can load [behavior controlle
 
 Role suggestions are responsibilities, not a mandate to spawn one worker per role. For substantial Apps, a lead/integrator, an experience owner and independent verification are often sufficient. Add a bounded data or visualization worker when complexity or independence warrants it. Preserve the host's configured model and effort.
 
+The execution record supports optional `specialists` with existing role names,
+actual workers and requirement IDs; use that slot for conditional modeling or
+motion work without inventing a new mandatory core responsibility.
+
 For actual parallel work use [scoped assignments](task-routing.md). Include current input bindings, exact owned output files, dependency readiness, public methods/events, style/state ownership, acceptance conditions and cleanup. Map assignment scope_ids to applicable requirement IDs. Reserve and record actual dispatch separately. Integrate the first working slice early; a packet is not evidence that a worker ran.
 
 ## Review the assembled experience
@@ -122,6 +159,12 @@ preserved; a creative reviewer different from the builder and originating design
 critiques its realization; QA verifies correctness. One suitable independent worker
 may perform both review disciplines with separate findings. No result grants
 runtime/publication authority or substitutes for unobserved customer acceptance.
+
+For final bookkeeping, use the [delivery evidence template](execution-workflow.md#assess-delivery-without-upgrading-claims)
+on the frozen exact candidate. Source critique and requirement-by-context rendered
+assessment remain separate results. A source review can resolve concrete code
+findings while the formal design record stays `not_assessed`; retain that accurate
+result rather than presenting source inspection as observation of a screen.
 
 Give each material request a disposition: implemented and observed in a named evidence lane, implemented but unobserved, blocked with a useful fallback, deferred, or explicitly omitted. A working external link does not fulfill inline playback. An agenda does not fulfill a month calendar. A decorative perspective does not establish camera interaction or measured height.
 

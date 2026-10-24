@@ -107,7 +107,7 @@ Independence, authenticity, original-request completeness and equivalent snapsho
 
 ## Isolated source-binding fallback
 
-A read-only SQL result can contain rows while the native adapter has no usable semantic field metadata. Saving the same raw SQL may not fix that. First inspect the effective model, existing fields and actual result metadata; reuse a valid existing model route when it matches the requested source.
+A read-only SQL result can contain rows while the native adapter has no usable semantic field metadata. Saving the same raw SQL may not fix that. First inspect the effective model, existing fields and actual result metadata; reuse a valid existing model route when it matches the requested source. Explicit source text is insufficient: semantic planning can resolve a similarly named object in another catalog. Compare generated SQL and effective connection/workbook bindings with the requested physical source. The [bounded authoring preflight](authoring-preflight.md) catches explicit catalog/schema drift, empty metadata and empty row objects without executing SQL; its lexical screen cannot resolve view expansion or unqualified/dynamic dependencies.
 
 If the requested database is accessible but absent from the existing catalog/model inventory, report the smallest isolated proposal: exact new document/workbook model, one query-view, explicit fully qualified source and required dimensions, affected named query, verification and rollback. Resolve the model-write scope before writing. Do not change shared connection catalog settings, permissions, warehouse tables or existing shared views to repair an App. A query-view is a possible documented route, not an automatic entitlement or universal fix.
 

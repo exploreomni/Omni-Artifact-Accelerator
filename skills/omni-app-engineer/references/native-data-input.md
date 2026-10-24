@@ -12,11 +12,13 @@ The BI engineer and App engineer should retain this compact information in the e
 | --- | --- |
 | Query identity | Current document/draft, effective query model/Topic, query key/tab name, exact fields, filters, sorts, limits and revision/hash. Bind by inspected identity, not a guessed title. |
 | Envelope | Actual result location, status/error shape, subscription/run/reset behavior and available request/state correlation. Mark each supported behavior as documented, observed, or unresolved. Do not invent status strings. |
-| Columns | Exact transport key → semantic field → application key, value type, precision/units, nullability and identity role. Distinguish raw from formatted values. |
+| Columns | Exact **selected query field** → transport key → application key, scalar representation, precision/units and nullability. Metadata can include filter-only fields; do not require those as result columns. Distinguish raw from formatted values. |
+| Grain | Nonempty unique single/composite key, its identity types and safe-integer/string handling. Reject missing or duplicate grain before aggregation. Row position is not identity. |
 | Dates | Date-only versus timestamp, serialization and timezone rules. Preserve calendar dates; do not use locale guessing or assume every timestamp is a date-only field. |
 | Completeness | Pagination/caps, totals rows, missing columns, empty results, filtering and freshness. A terminal success status alone does not prove full population coverage. |
 | Failure/recovery | Unknown/invalid shape, partial, denied, failed, stale and refreshing behavior for the affected UI, including which earlier results must be cleared or labeled stale. |
 | Provenance | Evidence path/hash, method, query/state scope and candidate version. Say whether rows came from the native callback, query/export tooling, or a constructed simulation. |
+| Source era and subset | Each query's period/season/version and population; allowed cross-query joins/comparisons; curated selection rule and participant/coordinate coverage for observed recordings. Never merge eras or claim full participation from a bounded sample. |
 
 Link retained runtime qualification artifacts through the existing runtime `evidence_paths`; register/pin actual dependencies through the existing project/native workflow. A path written inside prose or arbitrary nested JSON is not automatically pinned. Keep protected data scoped and private; never retain tokens. If native observation is unavailable, keep that gap explicit while continuing a labeled local candidate.
 
@@ -36,7 +38,90 @@ For example, these **original synthetic records** illustrate two different trans
 
 An adapter for the qualified runtime row must not accept the export row merely because the values look familiar. A unit value of `0` remains zero; `null` remains unknown under the metric contract. A deliberately re-keyed export fixture is useful contract-shaped simulation, never a recorded native payload.
 
-For a small reusable implementation, [experience utilities](native-capability-checks.md#optional-reusable-utilities) provide exact-key/type projection and generation-aware resource state. They do not parse provider envelopes, discover field names, establish completeness, correlate an unqualified callback, or coerce precise decimal/date values. The qualified boundary must supply those decisions; preserve the immutable runtime fragments below.
+For a small reusable implementation, [experience utilities](native-capability-checks.md#optional-reusable-utilities) provide exact-key/type projection, optional qualified numeric-string normalization, composite-grain checks and generation-aware resource state. They do not discover field names, establish completeness, correlate an unqualified callback, or preserve arbitrary decimal precision. The qualified boundary must supply those decisions; preserve the immutable runtime fragments below.
+
+### Executable handoff without a provider SDK
+
+Reuse `experience_components.js` and `query_controller.js`; do not create another
+application framework. `OAAQueryController.createQueryDelivery` consumes the
+following bounded handoff. Retain its source/evidence with the existing query and
+runtime records. This is an OAA interface, **not a vendor callback schema**:
+
+```js
+const delivery = OAAQueryController.createQueryDelivery({
+  columns: [
+    {key:"source.device_key", as:"device_id", type:"string", nullable:false},
+    {key:"source.period", as:"period", type:"string", nullable:false},
+    {key:"source.value", as:"value", type:"number", nullable:true,
+     numericStrings:"decimal"} // Include only if this alternative was qualified.
+  ],
+  grain:["device_id", "period"], limit:1000,
+  evidenceRef:"evidence/inspected-runtime.json",
+  correlation:"serialized_unqualified",
+  runSettlement:"after_terminal_delivery",
+  run:runInspectedQuery,
+  subscribe:subscribeInspectedQuery, // Returns a qualified synchronous cleanup.
+  decode:decodeInspectedEnvelope,
+  onState:renderDataState
+});
+```
+
+`decode` maps only the inspected envelope into `{phase:"loading"}` or an explicit
+`error`, `restricted` or `stale` phase, or `{phase:"complete", columns:[exactKeys],
+rows:[rawRows], truncated:false, completeness:"complete"|"partial"|"unknown"}`.
+It must not guess aliases/statuses, turn missing truncation evidence into `false`,
+or equate terminal success with completeness. Query results at the saved limit or
+declared truncated are rejected. `columns` contains only selected-field mappings;
+every mapped field must appear in result metadata and every row. Extra metadata
+is not automatically a required result field. Keep date/precision conversion in
+its separately qualified adapter.
+
+`mapRows(rows, columns, maxRows, {grain})` defaults to primitive types only.
+Opt-in `numericStrings:"decimal"` accepts finite strict decimal/exponent strings
+for `number`, with no whitespace, blanks, booleans, currency or locale separators.
+For `integer`, only signed digit strings are accepted and the result must be a
+safe integer; fractional/exponent identity strings are rejected to avoid rounding
+an identity into another value. Nonzero strings that underflow to zero are
+rejected; ordinary binary Number rounding still applies. Already numeric inputs
+cannot recover precision lost upstream. Exact-decimal money/IDs outside that range
+need an explicit string/precision policy, not this Number conversion. NULL stays NULL
+only where nullable; a blank export value does not establish a native NULL rule.
+
+`refresh()` subscribes, runs once, consumes both subscription results and the
+awaited run-return fallback, then cleans up. Identical terminal payloads are
+deduplicated; contradictory terminal results fail closed. The busy state remains
+until the actual run settles, including after a failed or invalidated result.
+An overlapping call returns `{started:false,reason:"busy"}` rather than starting
+another request. `invalidate("stale"|"restricted"|"error")` clears affected rows
+without pretending to cancel the native query. `dispose()` clears rows, releases
+the subscription and ignores late delivery; bind it to the actual view/page
+lifecycle. Also clear affected selected identifiers in the selection owner.
+Independent query panels can use separate instances; combined claims require all
+their qualified dependencies. This adapter does not provide a cross-query join.
+
+This route requires `runSettlement:"after_terminal_delivery"`: the inspected
+`run` promise must settle after terminal subscription delivery or supply the
+terminal result itself. A provider that acknowledges a run before later callbacks
+does **not** satisfy this contract. Qualify a separate bounded completion bridge
+for that provider; never relabel an acknowledgment as completion. An absent
+terminal result at settlement becomes an error and a later callback is ignored.
+The provider must also qualify synchronous subscription release. Failed
+registration, cleanup failure or asynchronous cleanup marks the instance
+`usable:false` and blocks later refresh; recover the underlying subscription
+before constructing a replacement. Do not invent a no-op
+cleanup for an unqualified subscription. A promise-only bridge can retain the
+existing `createQueryController` route instead.
+
+`correlation` is either `provider_correlated` (requires actual provider evidence)
+or `serialized_unqualified`. Serialization and closed local callbacks do **not**
+identify a delayed broadcast delivered to a newly registered listener. Retain
+that native qualification gap; never turn the adapter's local ticket or a copied
+evidence path into provider correlation or production acceptance.
+
+Run `python3 -I -S -B -m unittest discover -s tests -p test_native_input_handoff.py -v`
+for focused original-source checks of this handoff and related continuity. Those
+checks use synthetic inputs, controlled promises and abstract focus targets;
+they contain no browser, DOM emulation, native SDK or vendor execution.
 
 Preserve the chosen result population. Only combine query results whose required state/freshness/completeness conditions agree; one missing required query must not produce a misleading combined KPI. Independent panels may remain usable when their contracts permit it. If the bridge cannot correlate refresh/filter generations, document and constrain overlapping work rather than inventing a request ID. Clear or visibly mark stale results according to the chosen state contract; late results must not overwrite a newer applied state.
 

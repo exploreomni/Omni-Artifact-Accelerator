@@ -577,11 +577,13 @@ def main():
     for command in ("plan", "verify", "import-dma", "register", "packet", "packet-bindings", "design-freeze", "design-check", "design-pin",
                     "intent-select", "intent-check", "intent-cases", "claim-work", "prepare-dispatch", "record-dispatch",
                     "checkpoint-work", "work-status", "review-work", "packet-check", "experience-check",
-                    "run-start", "run-check", "candidate-freeze", "delivery-check", "product-brief", "product-check"):
+                    "run-start", "run-check", "candidate-freeze", "delivery-check", "source-inventory",
+                    "delivery-project", "delivery-evidence-template", "product-brief", "product-check"):
         cmd = commands.add_parser(command)
         cmd.add_argument("--project", required=True)
         if command in ("claim-work", "prepare-dispatch", "record-dispatch", "checkpoint-work", "review-work",
-                       "run-start", "run-check", "candidate-freeze", "delivery-check"):
+                       "run-start", "run-check", "candidate-freeze", "delivery-check", "source-inventory",
+                       "delivery-project", "delivery-evidence-template"):
             cmd.add_argument('--request', required=True)
         elif command == 'work-status':
             cmd.add_argument('--html', help='new or existing generated project-local status HTML')
@@ -619,11 +621,14 @@ def main():
         elif args.command in ('product-brief', 'product-check'):
             product = routing_helper('product_intent')
             result = product.generate(args.project, args.output) if args.command == 'product-brief' else product.check(args.project)
-        elif args.command in ('run-start', 'run-check', 'candidate-freeze', 'delivery-check'):
+        elif args.command in ('run-start', 'run-check', 'candidate-freeze', 'delivery-check', 'source-inventory',
+                              'delivery-project', 'delivery-evidence-template'):
             workflow = routing_helper('delivery_workflow')
             request, _ = read_json(args.request)
             function = {'run-start': workflow.start, 'run-check': workflow.inspect_run,
-                        'candidate-freeze': workflow.freeze, 'delivery-check': workflow.assess}[args.command]
+                        'candidate-freeze': workflow.freeze, 'delivery-check': workflow.assess,
+                        'source-inventory': workflow.inventory, 'delivery-project': workflow.project_delivery,
+                        'delivery-evidence-template': workflow.evidence_template}[args.command]
             result = function(args.project, request)
         elif args.command in ('claim-work', 'prepare-dispatch', 'record-dispatch', 'checkpoint-work', 'review-work', 'work-status'):
             operations = routing_helper('task_operations')

@@ -3,6 +3,7 @@
 Records describe supplied evidence; hashes establish bytes, not truth or authority.
 Uses the existing project, intent and review contracts. No network or dependencies.
 """
+import copy
 import importlib.util
 from pathlib import Path
 import re
@@ -44,6 +45,170 @@ def pins(root, paths):
 def current(root, bindings):
     need(type(bindings) is dict and bool(bindings), 'nonempty file bindings required')
     return pins(root, list(bindings)) == bindings
+
+
+def capability_rows(value, requirement_ids, input_paths):
+    """Task-oriented source evidence; no domain template or automatic scope decision."""
+    need(type(value) is list and bool(value) and len(value) <= 128, 'source capabilities required')
+    seen = set()
+    for row in value:
+        required = {'id', 'requirement_ids', 'question', 'source_refs', 'population', 'grain',
+                    'available_depth', 'selected_depth', 'disposition', 'rationale', 'remaining_gap'}
+        need(type(row) is dict and required <= set(row) and set(row) <= required | {'alternative_id'},
+             'invalid source capability fields')
+        ident = identity(row['id'])
+        need(ident not in seen, 'duplicate source capability')
+        seen.add(ident)
+        for key in ('question', 'population', 'grain', 'rationale', 'remaining_gap'):
+            text(row[key])
+        for key in ('requirement_ids', 'source_refs', 'available_depth', 'selected_depth'):
+            values = row[key]
+            need(type(values) is list and len(values) <= 128 and all(type(v) is str for v in values)
+                 and len(set(values)) == len(values), 'invalid source capability list')
+            for item in values:
+                text(item)
+        need(bool(row['requirement_ids']) and set(row['requirement_ids']) <= requirement_ids,
+             'source capability requirement unknown')
+        need(bool(row['source_refs']) and all(v.split('#', 1)[0] in input_paths for v in row['source_refs']),
+             'source capability references must name pinned inputs')
+        need(row['disposition'] in {'selected', 'unsupported', 'deferred'}, 'invalid source capability disposition')
+        need(set(row['selected_depth']) <= set(row['available_depth']), 'selected depth absent from available depth')
+        need(bool(row['selected_depth']) == (row['disposition'] == 'selected'), 'selected depth requires selected disposition')
+    by_id = {r['id']: r for r in value}
+    for row in value:
+        if 'alternative_id' in row:
+            alternative = by_id.get(identity(row['alternative_id']))
+            need(row['disposition'] != 'selected' and alternative is not None
+                 and alternative['disposition'] == 'selected'
+                 and set(row['requirement_ids']) <= set(alternative['requirement_ids']),
+                 'alternative must be a selected capability covering the same requirements')
+
+
+def inventory(root, request):
+    """Retain qualification before the next destination selection, without selecting it."""
+    root, project = P.load_project(root)
+    need(type(request) is dict and set(request) == {'id', 'inputs', 'capabilities', 'scope_rationale'},
+         'invalid source inventory request')
+    ident = identity(request['id'])
+    text(request['scope_rationale'])
+    state = P.intent_helper().check(root)
+    need(state['status'] != 'inconsistent', 'current intent required before inventory')
+    bindings = pins(root, request['inputs'])
+    capability_rows(request['capabilities'], {r['id'] for r in state['requirements']}, set(bindings))
+    path = 'evidence/source-capabilities-' + ident + '.json'
+    need(not (root / path).exists(), 'source inventory ID already recorded; use a new ID')
+    record = {'schema_version': 1, 'kind': 'analyst_source_capabilities', 'project_id': project['id'],
+              'intent_at_capture': state['selected'], 'input_pins': bindings,
+              'capabilities': request['capabilities'], 'scope_rationale': request['scope_rationale'],
+              'claims_authenticated': False}
+    P.write_json(root / path, record)
+    return {'status': 'recorded', 'path': path, 'sha256': P.digest((root / path).read_bytes()),
+            'next': 'Reference this evidence in product.source_inventory_path before selecting the revised destination scope.',
+            'scope_selected': False, 'publication_authorized': False}
+
+
+def inventory_check(root, state):
+    root, project = P.load_project(root)
+    result = {'status': 'not_assessed', 'findings': [], 'path': None, 'capabilities': [],
+              'claims_authenticated': False, 'scope_approved': False}
+    if not state['selected']:
+        return result
+    try:
+        need(state['status'] != 'inconsistent', 'source inventory selected context inconsistent')
+        spec = P.intent_helper().read_record(root, state['selected'])['spec']
+        path = spec.get('product', {}).get('source_inventory_path')
+        if not path:
+            return result
+        result['path'] = path
+        record, _ = P.read_json(P.relative_file(root, path))
+        need(type(record) is dict and set(record) == {'schema_version', 'kind', 'project_id', 'intent_at_capture',
+             'input_pins', 'capabilities', 'scope_rationale', 'claims_authenticated'}, 'invalid source inventory record')
+        need(type(record['schema_version']) is int and record['schema_version'] == 1 and
+             record['kind'] == 'analyst_source_capabilities' and record['project_id'] == project['id'],
+             'wrong source inventory project/version')
+        need(record['claims_authenticated'] is False, 'source inventory cannot authenticate claims')
+        text(record['scope_rationale'])
+        prior = record['intent_at_capture']
+        if prior is not None:
+            need(prior != state['selected'], 'source inventory must precede destination selection')
+            need(prior in project.get('design_intent_history', []), 'source inventory capture intent not in history')
+            P.intent_helper().read_record(root, prior)
+        need(current(root, record['input_pins']), 'source inventory inputs changed')
+        capability_rows(record['capabilities'], {r['id'] for r in state['requirements']}, set(record['input_pins']))
+        result.update(status='consistent', capabilities=record['capabilities'])
+    except (ValueError, OSError, KeyError, TypeError, AttributeError) as exc:
+        result['status'] = 'inconsistent'
+        result['findings'].append(str(exc))
+    return result
+
+
+def project_delivery(root, request):
+    """Generate an unselected intent proposal, copying explicit facts only."""
+    root, project = P.load_project(root)
+    need(type(request) is dict and set(request) == {'output', 'annotations'}, 'invalid delivery projection request')
+    state = P.intent_helper().check(root)
+    need(state['selected'] and state['status'] == 'consistent', 'current selected intent required')
+    spec = copy.deepcopy(P.intent_helper().read_record(root, state['selected'])['spec'])
+    need(inventory_check(root, state)['status'] != 'inconsistent', 'source inventory must be reconciled before projection')
+    annotations = request['annotations']
+    need(type(annotations) is dict and set(annotations) <= {r['id'] for r in spec['requirements']},
+         'delivery annotation requirement unknown')
+    provenance = {}
+    for req in spec['requirements']:
+        delivery = req.setdefault('delivery', {})
+        supplied = copy.deepcopy(annotations.get(req['id'], {}))
+        need(type(supplied) is dict, 'delivery annotation object required')
+        take_value = supplied.pop('behavior_from_value', False)
+        need(type(take_value) is bool, 'behavior_from_value must be boolean')
+        need(not take_value or 'behavior' not in supplied, 'choose explicit behavior or value copy')
+        if take_value:
+            text(req.get('value'))
+            supplied['behavior'] = req['value']
+        sources = {'existing': sorted(delivery), 'explicit_annotations': sorted(supplied), 'derived': []}
+        if take_value:
+            sources['derived'].append('behavior from value by explicit request')
+        if not delivery.get('source_ref') and req.get('decision_ref'):
+            delivery['source_ref'] = req['decision_ref']
+            sources['derived'].append('source_ref from decision_ref')
+        for key, kind in (('destinations', 'destination'), ('journeys', 'journey')):
+            if key not in delivery:
+                delivery[key] = sorted({a['id'] for c in req.get('contexts', []) for a in c.get('applicability', [])
+                                        if a['kind'] == kind})
+                sources['derived'].append(key + ' from explicit context applicability')
+        delivery.update(supplied)
+        provenance[req['id']] = sources
+    P.intent_helper().validate(spec, project)
+    output = P.intent_helper().relative(request['output'])
+    need(output.startswith('contracts/') and output.endswith('.json'), 'new contracts JSON output required')
+    P.write_json(root / output, spec)
+    projected = dict(state, requirements=spec['requirements'], selections=spec['selections'])
+    return {'status': 'proposal', 'source_intent': state['selected'], 'path': output,
+            'sha256': P.digest((root / output).read_bytes()), 'provenance': provenance,
+            'coverage': P.experience_helper().inspect(root, projected, P),
+            'selection_required': True, 'publication_authorized': False,
+            'note': 'Reconcile this proposal against current intent before selecting a new version. Owners and behavior are never inferred from suggested roles or prose.'}
+
+
+def evidence_template(root, request):
+    """Generate honest unobserved defaults for exact candidate recording."""
+    root, project = P.load_project(root)
+    need(type(request) is dict and set(request) == {'candidate', 'output'}, 'invalid evidence template request')
+    candidate, raw = P.read_json(P.relative_file(root, request['candidate']))
+    need(candidate.get('kind') == 'analyst_candidate' and candidate.get('project_id') == project['id'], 'wrong candidate/project')
+    state = P.intent_helper().check(root)
+    need(state['status'] == 'consistent' and candidate['selected_intent'] == state['selected'],
+         'current candidate selection required')
+    history_check(root, project['id'], {'path': request['candidate'], 'sha256': P.digest(raw)})
+    need(current(root, candidate['artifacts']) and current(root, candidate['context']), 'candidate changed before evidence template')
+    output = P.intent_helper().relative(request['output'])
+    need(output.startswith('evidence/') and output.endswith('.json'), 'new evidence JSON output required')
+    evidence = {'candidate_sha256': P.digest(raw), 'lanes': {name: {'status': 'not_run', 'method': '',
+        'observer': '', 'bindings': {}, 'reason': 'No observation recorded; supply actual method, observer and evidence.'}
+        for name in sorted(LANES)}}
+    P.write_json(root / output, evidence)
+    return {'status': 'template', 'path': output, 'candidate_sha256': P.digest(raw),
+            'design_requirement_review': P.design_completion(root), 'publication_authorized': False,
+            'note': 'Source critique may be recorded in source. Requirement-by-context rendered review remains separate and is not populated from that critique.'}
 
 
 def source_root():
@@ -137,7 +302,8 @@ def inspect_run(root, request):
     run, _ = P.read_json(P.relative_file(root, request['run']))
     execution, _ = P.read_json(P.relative_file(root, request['execution']))
     need(run.get('kind') == 'analyst_execution_start' and run.get('project_id') == project['id'], 'wrong run/project')
-    need(type(execution) is dict and set(execution) == {'responsibilities', 'request_review'}, 'invalid execution contract')
+    need(type(execution) is dict and {'responsibilities', 'request_review'} <= set(execution)
+         and set(execution) <= {'responsibilities', 'request_review', 'specialists'}, 'invalid execution contract')
     findings = []
     need(P.digest(P.relative_file(root, run['brief_retained']).read_bytes()) == run['brief_pins'][run['brief']],
          'retained original request changed')
@@ -163,12 +329,40 @@ def inspect_run(root, request):
     if responsibilities['verification']['worker'] == responsibilities['engineering']['worker']:
         findings.append('independent_verification_not_assigned')
     state = P.intent_helper().check(root)
+    specialists = execution.get('specialists', {})
+    need(type(specialists) is dict and len(specialists) <= 32, 'invalid optional specialists')
+    for ident, value in specialists.items():
+        identity(ident)
+        need(type(value) is dict and set(value) == {'role', 'worker', 'mode', 'rationale', 'requirement_ids'},
+             'invalid specialist assignment')
+        need(value['role'] in P.ROLES and value['mode'] in {'inline', 'delegated', 'not_required'},
+             'unknown specialist role or mode')
+        text(value['rationale'])
+        ids = value['requirement_ids']
+        need(type(ids) is list and ids and all(type(v) is str for v in ids) and len(set(ids)) == len(ids)
+             and set(ids) <= {r['id'] for r in state['requirements']}, 'specialist requirement scope invalid')
+        if value['mode'] != 'not_required':
+            text(value['worker'])
+            prefix = 'skills/' if 'skills/omni-artifact-accelerator/SKILL.md' in run['package_files'] else ''
+            if prefix + 'omni-' + value['role'] + '/SKILL.md' not in run['loaded_guidance_pins']:
+                findings.append('role_guidance_not_recorded:' + value['role'])
     product = P.routing_helper('product_intent').check(root)
+    source_inventory = inventory_check(root, state)
+    if source_inventory['status'] == 'inconsistent':
+        findings.append('source_capability_inventory_not_current')
+    active_ids = {r['id'] for r in state['requirements'] if r['disposition'] not in {'explicitly_omitted', 'deferred'}
+                  and (r['required'] or r['disposition'] == 'selected')}
+    for capability in source_inventory['capabilities']:
+        if (capability['disposition'] != 'selected' and not capability.get('alternative_id')
+                and active_ids.intersection(capability['requirement_ids'])):
+            findings.append('source_capability_' + capability['disposition'] + ':' + capability['id'])
     if product['status'] == 'inconsistent':
         findings.append('product_context_not_current')
     if product['discovery'] == 'material_questions_open':
         findings.append('product_material_questions_open')
     if product['enabled'] and product['scope'] != 'focused_repair':
+        if source_inventory['status'] == 'not_assessed':
+            findings.append('source_capability_inventory_missing')
         for name in PRODUCT_RESPONSIBILITIES - set(responsibilities):
             findings.append('product_responsibility_missing:' + name)
         creative = responsibilities.get('creative_review', {})
@@ -198,7 +392,7 @@ def inspect_run(root, request):
         findings.append('original_request_review_missing')
     return {'status': 'incomplete' if findings else 'ready_for_review', 'findings': findings,
             'coverage': coverage, 'selected_intent': state['selected'], 'responsibilities': responsibilities,
-            'product_context': product,
+            'product_context': product, 'source_inventory': source_inventory, 'specialists': specialists,
             'claims_authenticated': False, 'agents_dispatched': False, 'publication_authorized': False,
             'limitation': 'Declared ownership and supplied review only; does not discover omitted requirements or prove dispatch.'}
 
@@ -331,5 +525,6 @@ def assess(root, request):
         findings.append('design_requirement_review_' + design['status'])
     return {'status': 'candidate_with_gaps' if findings else 'ready_for_review', 'findings': findings,
             'candidate_sha256': candidate_pin, 'lanes': lanes, 'design': design,
+            'review_assessments': {'source_critique': lanes['source'], 'requirement_context_design': design['status']},
             'claims_authenticated': False, 'publication_authorized': False,
             'note': 'Assessment of supplied evidence, not approval, beauty certification, native execution or a universal write gate.'}

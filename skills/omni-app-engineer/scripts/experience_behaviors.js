@@ -27,9 +27,11 @@
       need(Array.isArray(ids) && ids.length <= 10000 && ids.every(id) && new Set(ids).size === ids.length &&
         ["complete","partial","unknown"].includes(completeness) && ["allowed","denied"].includes(access), "invalid result scope");
       need(access !== "denied" || (ids.length === 0 && completeness === "unknown"), "denied scope must not supply identities or completeness");
-      const availability = state.selectedId === null ? "none" : access === "denied" ? "denied" :
+      const availability = access === "denied" ? "denied" : state.selectedId === null ? "none" :
         ids.includes(state.selectedId) ? "available" : completeness === "complete" ? "excluded" : "unknown";
-      state = {...state, ids:[...ids], completeness, access, pending:false, availability};
+      if (access === "denied") origin = null;
+      state = {...state, selectedId:access === "denied" ? null : state.selectedId,
+        ids:[...ids], completeness, access, pending:false, availability};
       ticket = null; emit(); return true;
     }
     function select(entityId, returnToken) {
@@ -39,6 +41,20 @@
       origin = {contextKey:state.contextKey, token:saved};
       state = {...state, selectedId:entityId, availability:"available"}; emit();
     }
+    function order(ids) {
+      live(); need(state.access === "allowed" && Array.isArray(ids) && ids.length === state.ids.length &&
+        new Set(ids).size === ids.length && ids.every(value => state.ids.includes(value)), "order must preserve supplied identity set");
+      state = {...state, ids:[...ids]}; return emit();
+    }
+    function step(delta) {
+      live(); need(delta === -1 || delta === 1, "step must be -1 or 1");
+      if (origin === null || state.availability !== "available") return false;
+      const index = state.ids.indexOf(state.selectedId), next = index + delta;
+      if (index < 0 || next < 0 || next >= state.ids.length) return false;
+      // Traversal follows the same supplied ordering and never captures a detail
+      // page's focus/scroll as a new list origin.
+      state = {...state, selectedId:state.ids[next]}; emit(); return true;
+    }
     function clear() { live(); origin = null; state = {...state, selectedId:null, availability:"none"}; return emit(); }
     function returnToContext() {
       live(); if (origin === null) return false;
@@ -46,7 +62,19 @@
       return restore(copy(origin.token), {originContextKey:origin.contextKey, current:snapshot()});
     }
     function dispose() { disposed = true; ticket = null; origin = null; }
-    return Object.freeze({begin, receive, select, clear, returnToContext, snapshot, dispose});
+    return Object.freeze({begin, receive, select, order, step, clear, returnToContext, snapshot, dispose});
+  }
+
+  function restoreFocus(keys, {resolve, isUsable, focus}) {
+    need(Array.isArray(keys) && keys.length > 0 && keys.length <= 32 &&
+      [resolve, isUsable, focus].every(fn => typeof fn === "function"), "invalid focus restoration contract");
+    for (const key of keys) {
+      if (key === null || key === undefined) continue;
+      need(id(key), "invalid focus key");
+      const target = resolve(key);
+      if (target !== null && target !== undefined && isUsable(target)) { focus(target); return key; }
+    }
+    return null; // Caller must include a usable heading or another explicit fallback.
   }
 
   function createEntityChoices({validate, onChange, maxEntities = 1000}) {
@@ -66,9 +94,12 @@
     return Object.freeze({set, get, forget, dispose});
   }
 
-  function createRecordedPlayback({frames, clock, onFrame, reducedMotion = false}) {
+  function createRecordedPlayback({frames, clock, onFrame, reducedMotion = false, coverage = null}) {
     need(Array.isArray(frames) && frames.length > 0 && frames.length <= 10000 && typeof onFrame === "function" &&
       clock && [clock.now,clock.request,clock.cancel].every(f=>typeof f === "function") && typeof reducedMotion === "boolean", "invalid recording contract");
+    need(coverage === null || (coverage && ["era", "selection", "participants"].every(key => id(coverage[key])) &&
+      coverage.observedOnly === true), "invalid recording coverage");
+    const recordingCoverage = copy(coverage);
     const recording = copy(frames), ids = new Set(), segments = new Set();
     let priorTime = -1, priorSegment = null, totalObservations = 0;
     for(const frame of recording) {
@@ -82,7 +113,8 @@
     }
     let index=0, phase="idle", reduced=reducedMotion, handle=null, generation=0, disposed=false, reason=null;
     const nextSegment = () => index+1 < recording.length && recording[index+1].segment !== recording[index].segment ? index+1 : null;
-    const snapshot = () => copy({index, phase, frame:recording[index], reducedMotion:reduced, nextSegmentIndex:nextSegment(), reason});
+    const snapshot = () => copy({index, phase, frame:recording[index], coverage:recordingCoverage,
+      reducedMotion:reduced, nextSegmentIndex:nextSegment(), reason});
     const emit = () => { onFrame(snapshot()); return snapshot(); };
     const live = () => need(!disposed, "recording disposed");
     function cancel() { generation++; if(handle !== null)clock.cancel(handle);handle=null; }
@@ -176,6 +208,6 @@
     function dispose(){disposed=true;}
     return Object.freeze({setMonth,shift,setTimeZone,replaceEvents,snapshot,dispose});
   }
-  const api=Object.freeze({createSelection,createEntityChoices,createRecordedPlayback,normalizeEvents,createTimeNavigation});
+  const api=Object.freeze({createSelection,restoreFocus,createEntityChoices,createRecordedPlayback,normalizeEvents,createTimeNavigation});
   if(typeof module!=="undefined"&&module.exports)module.exports=api;else scope.OAAExperienceBehaviors=api;
 })(globalThis);

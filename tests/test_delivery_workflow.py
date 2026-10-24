@@ -24,6 +24,7 @@ class WorkflowTests(unittest.TestCase):
         self.base.base.select()
         self.write('inputs/brief.txt', 'Investigate collection changes; preserve evidence and return context.')
         self.write('evidence/request-review.txt', 'Original request compared independently with investigate requirement.')
+        self.write('inputs/source-profile.json', {'population': 'Supplied collection observations', 'synthetic': True})
         self.start_request = {'id': 'trial', 'source_mode': 'repository_only', 'entrypoint': 'explicit local skill',
             'brief': 'inputs/brief.txt', 'host': {'name': 'synthetic host', 'execution_mode': 'inline',
                 'tools': ['local original helpers'], 'constraints': ['no browser or native calls']},
@@ -58,6 +59,140 @@ class WorkflowTests(unittest.TestCase):
         self.write('evidence/delivery.json', evidence)
         return evidence
 
+    def inventory_request(self):
+        return {'id': 'depth', 'inputs': ['inputs/source-profile.json'],
+            'scope_rationale': 'Compare period demand and inspect records before choosing the final destinations.',
+            'capabilities': [{'id': 'demand', 'requirement_ids': ['investigate'],
+                'question': 'Which collection changed, and which observations explain it?',
+                'source_refs': ['inputs/source-profile.json#collection'], 'population': 'Supplied collection observations',
+                'grain': 'Collection and observation period',
+                'available_depth': ['period comparison', 'exact observations'],
+                'selected_depth': ['period comparison', 'exact observations'], 'disposition': 'selected',
+                'rationale': 'Both comparison and inspection serve the original decision.',
+                'remaining_gap': 'Native source completeness has not been observed.'}]}
+
+    def select_inventory(self, path, version='inventoried'):
+        self.base.base.value['product'] = {'schema_version': 1, 'scope': 'material_redesign',
+            'discovery': 'reused_context', 'note_paths': ['inputs/brief.txt'], 'source_inventory_path': path}
+        self.base.base.select(version)
+        W.P.routing_helper('product_intent').generate(self.root, 'deliverables/north-star-' + version + '.md')
+
+    def test_inventory_is_pinned_before_selection_and_stale_inputs_cannot_claim_readiness(self):
+        captured = W.P.intent_helper().check(self.root)['selected']
+        record = W.inventory(self.root, self.inventory_request())
+        self.assertEqual(json.loads((self.root / record['path']).read_text())['intent_at_capture'], captured)
+        self.assertFalse(record['scope_selected'])
+        self.select_inventory(record['path'])
+        result = W.inspect_run(self.root, self.request)
+        self.assertEqual(result['source_inventory']['status'], 'consistent')
+        self.assertNotIn('source_capability_inventory_missing', result['findings'])
+        with self.assertRaises(ValueError):
+            W.inventory(self.root, self.inventory_request())
+        self.write('inputs/source-profile.json', '{"changed":true}')
+        result = W.inspect_run(self.root, self.request)
+        self.assertEqual(result['status'], 'incomplete')
+        self.assertEqual(result['source_inventory']['status'], 'inconsistent')
+        self.assertIn('source_capability_inventory_not_current', result['findings'])
+        self.assertEqual(W.P.routing_helper('product_intent').check(self.root)['status'], 'inconsistent')
+
+    def test_inventory_rejects_unknown_depth_and_preserves_nonselected_dispositions(self):
+        request = self.inventory_request()
+        request['capabilities'][0]['selected_depth'] = ['unavailable live prediction']
+        with self.assertRaisesRegex(ValueError, 'absent from available'):
+            W.inventory(self.root, request)
+        self.assertFalse((self.root / 'evidence/source-capabilities-depth.json').exists())
+        request = self.inventory_request()
+        request['capabilities'][0].update(disposition='unsupported', available_depth=[], selected_depth=[],
+            remaining_gap='The supplied evidence does not support the requested comparison.')
+        record = W.inventory(self.root, request)
+        self.select_inventory(record['path'])
+        result = W.inspect_run(self.root, self.request)
+        self.assertIn('source_capability_unsupported:demand', result['findings'])
+        self.assertFalse(result['source_inventory']['scope_approved'])
+        # Retain a rejected method without making the supported outcome wait for approval.
+        request = self.inventory_request()
+        request['id'] = 'with-alternative'
+        unsupported = copy.deepcopy(request['capabilities'][0])
+        unsupported.update(id='live-comparison', disposition='unsupported', selected_depth=[],
+            alternative_id='demand', remaining_gap='Live delivery is unsupported; the selected observed-period comparison preserves the outcome.')
+        request['capabilities'].append(unsupported)
+        alternative = W.inventory(self.root, request)
+        self.select_inventory(alternative['path'], 'alternative')
+        result = W.inspect_run(self.root, self.request)
+        self.assertNotIn('source_capability_unsupported:live-comparison', result['findings'])
+        self.assertEqual(result['source_inventory']['capabilities'][1]['disposition'], 'unsupported')
+        self.base.base.value['product'].pop('source_inventory_path')
+        with self.assertRaisesRegex(ValueError, 'source_inventory_removed'):
+            self.base.base.select('removed-inventory')
+
+    def test_optional_specialist_has_actual_role_guidance_and_requirement_scope(self):
+        self.execution['specialists'] = {'spatial': {'role': '3d-modeler', 'worker': 'geometry-worker',
+            'mode': 'delegated', 'rationale': 'Bounded original geometry for selected inspection task',
+            'requirement_ids': ['investigate']}}
+        self.save_execution()
+        result = W.inspect_run(self.root, self.request)
+        self.assertIn('role_guidance_not_recorded:3d-modeler', result['findings'])
+        self.start_request['id'] = 'with-specialist'
+        self.start_request['loaded_guidance'].append('skills/omni-3d-modeler/SKILL.md')
+        request = {**self.request, 'run': W.start(self.root, self.start_request)['path']}
+        self.assertEqual(W.inspect_run(self.root, request)['status'], 'ready_for_review')
+        self.execution['specialists']['spatial']['requirement_ids'] = ['invented']
+        self.save_execution()
+        with self.assertRaisesRegex(ValueError, 'scope invalid'):
+            W.inspect_run(self.root, request)
+
+    def test_delivery_projection_copies_explicit_facts_without_selecting_or_inventing(self):
+        req = self.base.base.value['requirements'][0]
+        req.pop('delivery')
+        req['value'] = 'Select a collection, inspect exact observations, and return with the period retained.'
+        req['contexts'][0]['applicability'] = [{'kind': 'destination', 'id': 'investigation',
+                                               'lanes': {'craft': {'status': 'required'}}}]
+        self.base.base.select('unannotated')
+        selected = W.P.intent_helper().check(self.root)['selected']
+        proposal = W.project_delivery(self.root, {'output': 'contracts/proposal.json', 'annotations': {}})
+        value = json.loads((self.root / proposal['path']).read_text())['requirements'][0]['delivery']
+        self.assertNotIn('owner', value)
+        self.assertNotIn('behavior', value)
+        self.assertEqual(value['destinations'], ['investigation'])
+        self.assertEqual(value['source_ref'], req['decision_ref'])
+        self.assertEqual(proposal['coverage']['status'], 'incomplete')
+        self.assertEqual(W.P.intent_helper().check(self.root)['selected'], selected)
+        resolved = W.project_delivery(self.root, {'output': 'contracts/resolved-proposal.json', 'annotations': {
+            'investigate': {'owner': 'app-designer', 'behavior_from_value': True}}})
+        self.assertEqual(resolved['coverage']['status'], 'ready_for_review')
+        self.assertEqual(resolved['status'], 'proposal')
+        self.assertTrue(resolved['selection_required'])
+        self.assertEqual(W.P.intent_helper().check(self.root)['selected'], selected)
+        with self.assertRaises(ValueError):
+            W.project_delivery(self.root, {'output': 'contracts/unsafe-proposal.json', 'annotations': {
+                'investigate': {'dependency_paths': ['../outside']}}})
+        self.assertFalse((self.root / 'contracts/unsafe-proposal.json').exists())
+
+    def test_evidence_template_keeps_source_review_separate_from_formal_design_coverage(self):
+        candidate = self.freeze()['path']
+        self.write('inputs/template-request.json', {'candidate': candidate, 'output': 'evidence/template.json'})
+        command = subprocess.run([sys.executable, '-I', '-S', '-B',
+            str(ROOT / 'skills/omni-artifact-accelerator/scripts/analyst_project.py'),
+            'delivery-evidence-template', '--project', str(self.root), '--request', str(self.root / 'inputs/template-request.json')],
+            capture_output=True, text=True)
+        self.assertEqual(command.returncode, 0, command.stderr)
+        result = json.loads(command.stdout)
+        evidence = json.loads((self.root / result['path']).read_text())
+        self.assertEqual(set(evidence['lanes']), W.LANES)
+        self.assertEqual({r['status'] for r in evidence['lanes'].values()}, {'not_run'})
+        self.assertEqual(result['design_requirement_review']['status'], 'not_assessed')
+        evidence['lanes']['source'] = {'status': 'reported_pass', 'method': 'source_review', 'observer': 'reviewer',
+            'bindings': W.pins(self.root, ['evidence/request-review.txt']), 'reason': 'Bounded original source critique'}
+        self.write('evidence/template.json', evidence)
+        assessment = W.assess(self.root, {**self.request, 'candidate': candidate, 'evidence': 'evidence/template.json'})
+        self.assertEqual(assessment['review_assessments'], {'source_critique': 'reported_pass',
+                                                         'requirement_context_design': 'not_assessed'})
+        self.assertEqual(assessment['status'], 'candidate_with_gaps')
+        self.assertIn('lane_rendered_not_run', assessment['findings'])
+        self.write('deliverables/app.html', 'Changed candidate')
+        with self.assertRaisesRegex(ValueError, 'current candidate selection|candidate changed'):
+            W.evidence_template(self.root, {'candidate': candidate, 'output': 'evidence/stale.json'})
+
     def test_bootstrap_and_ownership_are_distinct_from_dispatch(self):
         r = W.inspect_run(self.root, self.request)
         self.assertEqual(r['status'], 'ready_for_review', r)
@@ -75,6 +210,7 @@ class WorkflowTests(unittest.TestCase):
         self.base.base.select('product')
         W.P.routing_helper('product_intent').generate(self.root, 'deliverables/north-star-product.md')
         findings = W.inspect_run(self.root, self.request)['findings']
+        self.assertIn('source_capability_inventory_missing', findings)
         self.assertIn('product_responsibility_missing:product_intent', findings)
         self.assertIn('product_responsibility_missing:creative_review', findings)
         self.execution['responsibilities'].update({
@@ -98,6 +234,7 @@ class WorkflowTests(unittest.TestCase):
         self.save_execution()
         findings = W.inspect_run(self.root, self.request)['findings']
         self.assertFalse(any(f.startswith('product_responsibility_missing:') for f in findings))
+        self.assertNotIn('source_capability_inventory_missing', findings)
 
     def test_original_request_and_package_drift_cannot_reuse_readiness(self):
         self.write('inputs/brief.txt', 'Additional requirement after intake')

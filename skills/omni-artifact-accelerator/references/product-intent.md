@@ -22,6 +22,15 @@ supported alternative must name what it preserves and what remains missing. Do n
 silently substitute a smaller analytical task for an ambitious experience. CLI-only
 constraints limit observation; they do not lower the requested quality bar.
 
+Before final destination selection, have the analyst and experience owner inventory
+relevant source capabilities against the requested tasks. The first saved query is
+an input, not the scope ceiling. Record usable populations/eras and grain, useful
+comparison/detail depth, selected/unsupported/deferred dispositions, reasons and
+remaining gaps. Preserve a strong first journey without requiring extra screens,
+sports-specific features, media or 3D. Use [source-inventory](execution-workflow.md#qualify-and-build-one-journey)
+to pin this bounded evidence before the revised scope selection. Missing coverage
+remains a question or gap; an inventory does not prove source exhaustiveness.
+
 Keep attributable, minimal notes under the engagement's `inputs/` or `evidence/`,
 outside the repository and skill installation. Retain source references, actual
 decisions and uncertainty; omit unrelated transcripts, personal details and secrets.
@@ -55,6 +64,14 @@ Add this fragment to the existing intent specification, using real private notes
 be a real engagement file under `inputs/` or `evidence/`; these paths are pinned
 with the selected intent. Keep independent work moving when a material question
 blocks only part of the engagement.
+
+The optional `product.source_inventory_path` names the generated private evidence
+file. It is pinned with intent and shown as an evidence reference in the North Star;
+its source inputs are rechecked for freshness without automatically forwarding
+their raw contents. Review the inventory summary before sharing it. New/material
+product `run-check` reports a missing inventory as incomplete. Legacy selection
+and focused repairs stay valid without a new inventory; an existing inventory
+cannot silently disappear, and stale inventory cannot establish current scope.
 
 Annotate material product requirements inside the existing `requirements` list:
 
@@ -116,6 +133,12 @@ and role slices with source references, not blanket access to the private notes.
 Include a note explicitly through `--input` or a declared delivery dependency only
 after reviewing the destination host's disclosure boundary. Review the readable
 projection itself for sensitive information before sharing it.
+
+When intent already contains the decisions, use `delivery-project` to propose the
+delivery annotation projection instead of reauthoring requirements. It preserves
+selected requirements and only copies explicit facts or supplied annotations;
+suggested roles never become assigned owners automatically. Select the reconciled
+proposal through the normal intent workflow and regenerate this projection.
 
 A product-owner packet may proceed to repair an inconsistent projection;
 that exception does not make the projection current or authorize implementation

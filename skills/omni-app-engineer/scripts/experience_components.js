@@ -7,7 +7,7 @@
   const text = value => typeof value === "string" && value.trim().length > 0;
   const clone = value => structuredClone(value);
 
-  function mapRows(rows, columns, maxRows = 10000) {
+  function mapRows(rows, columns, maxRows = 10000, {grain = []} = {}) {
     need(Array.isArray(rows) && Number.isSafeInteger(maxRows) && maxRows > 0 && rows.length <= maxRows,
       "invalid or oversized row set");
     need(Array.isArray(columns) && columns.length > 0, "columns required");
@@ -17,20 +17,43 @@
         !["__proto__", "constructor", "prototype"].includes(column.as) &&
         !keys.has(column.key) && !outputs.has(column.as) &&
         ["string", "number", "integer", "boolean"].includes(column.type) &&
-        typeof column.nullable === "boolean", "invalid column contract");
+        typeof column.nullable === "boolean" &&
+        (column.numericStrings === undefined || (column.numericStrings === "decimal" &&
+          ["number", "integer"].includes(column.type))), "invalid column contract");
       keys.add(column.key); outputs.add(column.as);
     }
+    need(Array.isArray(grain) && new Set(grain).size === grain.length &&
+      grain.every(key => outputs.has(key)), "invalid grain contract");
+    const identities = new Set();
     return rows.map((row, index) => {
       need(row && typeof row === "object" && !Array.isArray(row), `invalid row ${index}`);
       const result = {};
       for (const column of columns) {
         need(Object.hasOwn(row, column.key), `missing input key ${column.key} in row ${index}`);
-        const value = row[column.key];
+        let value = row[column.key];
+        // Only an explicitly qualified scalar alternative is accepted. No blank,
+        // boolean, formatted number, date or arbitrary Number(...) coercion.
+        if (column.numericStrings === "decimal" && typeof value === "string") {
+          const pattern = column.type === "integer" ? /^-?\d+$/ : /^-?\d+(\.\d+)?([eE][+-]?\d+)?$/;
+          if (value.trim() === value && pattern.test(value)) {
+            const parsed = Number(value);
+            need(!(parsed === 0 && /[1-9]/.test(value.split(/[eE]/)[0])),
+              `numeric underflow at ${column.key} in row ${index}`);
+            value = parsed;
+          }
+        }
         const valid = value === null ? column.nullable :
           column.type === "integer" ? Number.isSafeInteger(value) :
           column.type === "number" ? finite(value) : typeof value === column.type;
         need(valid, `invalid ${column.type} at ${column.key} in row ${index}`);
         result[column.as] = value;
+      }
+      if (grain.length) {
+        const parts = grain.map(key => result[key]);
+        need(parts.every(value => text(value) || Number.isSafeInteger(value)), `invalid grain in row ${index}`);
+        const identity = JSON.stringify(parts);
+        need(!identities.has(identity), `duplicate grain in row ${index}`);
+        identities.add(identity);
       }
       return result;
     });

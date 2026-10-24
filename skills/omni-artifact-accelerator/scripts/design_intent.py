@@ -162,6 +162,8 @@ def validate(spec, project):
 def references(spec):
     paths = set()
     paths.update(spec.get('product', {}).get('note_paths', []))
+    if spec.get('product', {}).get('source_inventory_path'):
+        paths.add(spec['product']['source_inventory_path'])
     for selection in spec['selections']:
         paths.update(selection[k] for k in ('design_path', 'brand_path', 'candidate_path') if selection.get(k))
     paths.update(a['local_path'] for a in spec['assets'] if a.get('local_path'))
@@ -207,6 +209,8 @@ def select(root, spec_path, output_relative):
         previous = read_record(root, project['design_intent'])
         need('product' not in previous['spec'] or 'product' in spec,
              'product_context_removed_reconcile_scope_instead')
+        need(not previous['spec'].get('product', {}).get('source_inventory_path') or
+             spec.get('product', {}).get('source_inventory_path'), 'source_inventory_removed_reconcile_instead')
         current = {r['id']: r for r in spec['requirements']}
         for req in previous['spec']['requirements']:
             if req['required']:

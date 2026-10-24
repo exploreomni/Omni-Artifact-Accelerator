@@ -26,12 +26,29 @@ The host owns the result-to-ticket association; this controller cannot manufactu
 | Selected ID is in an allowed result | `available` | Present in the supplied scope. |
 | Omitted from partial/paginated/unknown result | `unknown` | No exclusion or replacement may be inferred. |
 | Omitted from a complete filtered result | `excluded` | Confirmed outside that result; ID is retained for explicit context handling. |
-| Access denied | `denied` | Withhold detail; do not present a filter exclusion or empty-result conclusion. |
+| Access denied | `denied` | Clear selected/origin identities and withhold detail; do not present a filter exclusion or empty-result conclusion. |
 | No selected ID | `none` | No automatic first/peak entity is chosen. |
 
 IDs must be unique nonblank strings of at most 240 characters, with at most 10,000 supplied IDs. Denied results require `ids:[]` and `completeness:"unknown"`; these prevent contradictory identity/coverage declarations, not unauthorized upstream access. Use one controller for one coherent identity namespace. A context key describes current scope, not a new namespace or authorization boundary.
 
-`select(id,returnToken)` requires that ID in the current allowed result and an explicit structured-cloneable token. It saves the origin context and a defensive copy. `returnToContext()` calls the injected restoration callback with the token and `{originContextKey,current}`. Resolve focus/scroll against the **current** layout; if the old element is absent, use an explicitly chosen safe destination. No selector, scroll container, routing strategy or fallback is built into the core. `clear()` explicitly removes selection/origin; `snapshot()` returns copied state; `dispose()` ignores late results and prevents further actions. The controller stores IDs only; the host must withhold restricted/stale detail values separately.
+`select(id,returnToken)` requires that ID in the current allowed result and an explicit structured-cloneable token. It saves the origin context and a defensive copy. `returnToContext()` calls the injected restoration callback with the token and `{originContextKey,current}`. Resolve focus/scroll against the **current** layout; if the old element is absent, use an explicitly chosen safe destination. No selector, scroll container or routing strategy is built into the core. `clear()` explicitly removes selection/origin; denied results do so automatically. `snapshot()` returns copied state; `dispose()` ignores late results and prevents further actions. The controller stores IDs only; the host must withhold restricted/stale detail values separately.
+
+Use the same ordered identity list for the visible index and detail traversal.
+`order(ids)` accepts only a reordering of the current allowed identity set;
+`step(-1|1)` moves through that order without replacing the original return token.
+At a boundary or when the selected identity is not currently available, it returns
+false. Capture origin focus, scroll, page and sort once on the initial drill;
+calling `select` for every next/previous step would incorrectly capture detail
+scroll as the index origin. A new deliberate drill may capture a new origin.
+
+`restoreFocus(keys,{resolve,isUsable,focus})` tries the caller's ordered fallback
+keys and returns the first restored key, or null. Supply actual current-layout
+resolution, a predicate rejecting disabled/hidden/disconnected targets, and the
+native focus operation. Include an explicit focusable heading after the origin
+and any alternate control: the opposite pagination button may also be disabled.
+Use stable control IDs for a rerendering action, preserve selection/caret only for
+the same surviving input, and restore scroll independently of focus. Abstract
+callback tests verify selection logic, not browser focus or accessibility.
 
 When a user can request a known source identity before its result arrives, retain that pending intent in the host before checking readiness. The selection controller's allowed-result rule still applies: a pending request is not evidence that the record is available or accessible. Resolve only the matching identity when its qualified inputs arrive; keep waiting, missing or denied treatment explicit. A later explicit choice supersedes the earlier request, while unrelated input or a first-use default must not replace it. Preserve the request across the selected return path; clear it only under the declared reset/cancellation rule. Keep query-generation correlation at the qualified bridge boundary.
 
@@ -41,7 +58,18 @@ When a user can request a known source identity before its result arrives, retai
 
 ## Recorded observation playback
 
-`createRecordedPlayback({frames,clock,onFrame,reducedMotion=false})` takes:
+Preserve each source's era and selected population. A summary from a later period
+is not the population represented by an older recording. Pass optional
+`coverage:{era,selection,participants,observedOnly:true}` with nonblank strings to
+`createRecordedPlayback`; the controller defensively retains it in each snapshot.
+Render that context beside playback controls. `coverage:null` is explicitly
+unqualified context, not evidence of complete or current coverage. State the
+curated selection rule, measured axes/units, observed participants, omitted roles
+and phases. Do not invent absent participants, height, objects, timestamps or
+trajectories to fill an immersive scene. The controller validates declared shape;
+it cannot establish whether the coverage statement is true.
+
+`createRecordedPlayback({frames,clock,onFrame,reducedMotion=false,coverage=null})` takes:
 
 ```js
 {
@@ -66,6 +94,27 @@ Methods: `play({speed=1})`, `pause()`, `seek(index)`, `setReducedMotion(boolean)
 `series` returns separate observed runs, splitting on segment boundaries **and** missing observations. A renderer must not connect those runs as if continuous or derive an unrecorded trajectory. The other local phases are idle, playing, paused, ended, error and disposed; they are not vendor events. Reduced motion cancels playback immediately; manual seek stays available. A new play/seek/pause or disposal invalidates queued callbacks. The clock must be monotonic. The host owns hidden-page policy, event cleanup and any camera; use the existing projection/camera utility rather than adding unrelated scene assumptions.
 
 For playback in a detail view, hiding that view is a lifecycle transition even when its DOM and controller remain mounted. When controls become unavailable through index mode, a tab or another selected layout, pause playback and retain its frame and camera; returning must not resume automatically. Dispose only when the view is actually retired. If background continuation is intentionally required, resolve its visible controls and status explicitly in the selected design. Rehearse the actual hide/return actions with a controlled clock, rather than checking destination unmount alone.
+
+Retain camera choices using the existing `createEntityChoices`, keyed separately
+for the working view and each inspected entity. Its injected validator owns finite
+values, bounds and supported camera fields. Save before renderer disposal and
+restore before drawing; ordinary query refresh, selection or resize is not a reset.
+Named views/reset controls deliberately replace the saved choice. Do not create
+another camera store, persist values externally by default or encode a universal
+camera/projection into the core. Test save/dispose/restore and explicit reset as
+one interaction, retaining native rendering as a separate observation.
+
+For any numeric geometry, derive one shared signed domain from qualified finite
+values, including zero:
+`minimum=min(0,values)` and `maximum=max(0,values)`. Anchor bars at that zero and
+extend negative values in the opposite direction; absolute magnitude with a minus
+label is not a signed encoding. NULL has no bar. Handle an all-zero domain without
+division by zero and no valid values as unavailable. For a nonempty slice with no
+eligible coordinates, choose a useful non-spatial comparison from qualified
+fields and label the unlocated population; suppress empty camera controls and
+retain exact records. A large decorative field is not evidence. If no alternative
+measure is qualified, show an explicit unavailable state. These are encoding and
+review rules, not a prescribed layout or automatic metric calculation.
 
 ## Time and event navigation
 

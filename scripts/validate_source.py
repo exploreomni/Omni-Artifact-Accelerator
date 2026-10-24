@@ -26,6 +26,7 @@ CASES = {
     "denial": "tests/test_security_denial.py",
     "workflow": "tests/test_delivery_workflow.py",
     "native-query": "tests/test_native_query_probe.py",
+    "native-authoring": "tests/test_native_authoring.py",
     "assembly": "tests/test_experience_assembly.py",
     "product-intent": "tests/test_product_intent.py",
 }

@@ -181,6 +181,8 @@ Run only the affected original-source cases with the existing interpreter:
 ```sh
 python3 -I -S -B scripts/validate_source.py --case workflow
 python3 -I -S -B scripts/validate_source.py --case native-query
+python3 -I -S -B scripts/validate_source.py --case native-authoring
+python3 -I -S -B tests/test_native_input_handoff.py -v
 python3 -I -S -B scripts/validate_source.py --case assembly
 python3 -I -S -B scripts/validate_source.py --case metadata
 ```
@@ -189,6 +191,17 @@ These cover role-stage compatibility, startup/brief drift, responsibility covera
 candidate preservation, stale evidence, native field/population contracts, NULLs,
 caps and independent expectations. None loads a renderer or connects to Omni. Do
 not run additional dependency-backed checks without the required exact sign-off.
+
+The authoring cases cover empty/invalid CLI transport, command inventory, nested
+query envelopes, explicit catalog drift, missing metadata, and existing-App
+HTML-only preparation/readback for supplied organization/user identities. The
+handoff cases run separately with the existing Node runtime on PATH (the bounded
+Python security lane intentionally strips that host PATH). They use original package sources to check
+qualified numeric strings, grain, refresh/run/subscription semantics, failure
+clearing, ordered return, focus fallbacks and per-context choices. These doubles
+do not qualify a native SDK or a rendered interaction. Source-inventory,
+annotation-projection, optional specialist and unobserved-evidence template cases
+remain in the workflow lane; actual creative observations stay separate.
 
 Qualify behavior with two contrasting original briefs and minimal typed inputs,
 then an unseen holdout after concrete findings are repaired. Useful categories are
