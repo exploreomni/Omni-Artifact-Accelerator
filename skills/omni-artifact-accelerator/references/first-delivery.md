@@ -4,14 +4,25 @@ Use for a substantial new App or dashboard, or a material redesign. Reuse the se
 
 ## Recover, resolve, qualify
 
-1. Identify the installed package used by the host. From the source checkout, run the read-only installer comparison described in the [how-to](../../../docs/HOW_TO.md#installation-and-updates). Retain its version and manifest identity with engagement evidence. Source/install parity does not prove the host reloaded a cached skill.
+Use the [product-owner intake and North Star](product-intent.md) for substantial
+product decisions. It reuses prior answers, preserves attributable private notes
+and returns prioritized intent to the orchestrator. The North Star is a checked
+projection of selected intent, not a second authoritative brief. Focused fixes keep
+their current context; routine design choices need no additional user approval.
+
+1. Identify the actual source mode with the [execution entry procedure](execution-workflow.md). For installed-skill work, use the read-only installer comparison described in the [how-to](../../../docs/HOW_TO.md#installation-and-updates). For an explicitly repository-only trial, record the working-tree manifest and do not consult installed copies, prior outputs or memory. For a connected repository link, establish what files were actually read; a URL is not activation. Source/install parity does not prove the host reloaded a cached skill.
 2. Read current intent, original request, source/query scope and tooling restrictions. Reuse the company website, approved asset sources, audience and experience decisions. Batch only material missing questions; do not repeatedly ask about authorized logo sourcing or require the user to choose routine CSS.
 3. Translate reference qualities into concrete choices: focal point, hierarchy, imagery role, density, primary action, useful depth, interaction and first/repeat use. Compare the same task through alternative treatments when useful. In design-review selections, record `exploration: {mode: "direct"|"compare", rationale: "..."}` per surface; a direct choice needs no manufactured alternative and still needs actual candidate critique. An agent can recommend a direction; record that recommendation as a proposal rather than inventing user approval.
 4. Map the [analytical questions and evidence](../../omni-data-analyst/references/analytical-coverage.md). Qualify the selected native callback and high-risk asset/media/live-refresh paths before the design depends on them. Follow [native capability checks](../../omni-app-engineer/references/native-capability-checks.md); unavailable observation remains explicit.
 5. Declare the selected destinations and applicable contexts/lanes before generating review cases. Keep a full inventory even for a focused edit. Choose only combinations needed to assess the actual task; missing applicability remains a gap.
-6. Assemble one complete task slice, with relevant default/empty/error states and constrained-layout behavior. If the task includes detail and return, exercise that path; a static dashboard needs no invented App journey. Review and repair the slice before expanding other destinations.
+6. Assemble one ambitious representative task slice, carrying the defining experience qualities as well as relevant default/empty/error states and constrained-layout behavior. If the task includes detail and return, exercise that path; a static dashboard needs no invented App journey. A reduced technical demo cannot qualify omitted experience requirements. Review and repair the slice before expanding other destinations.
 
 An immersive opening, photos, extra destinations and 3D are conditional design choices. Every added region must help the selected task. Richness comes from useful evidence and interaction, not a prescribed number of panels.
+
+Conditional does not mean disposable after selection. When technology is unavailable,
+retain the original outcome and evaluate supported treatments that preserve its
+ambition. Record the alternative and remaining difference in current intent. A
+no-render restriction limits evidence; it is not a reason to lower the design bar.
 
 For each consequential destination, have the experience owner resolve the [destination specimen and state ownership](../../omni-design-systems/references/experience-brief.md#implement-the-selected-experience) before treating implementation as complete. Critique the main evidence's prominence, useful first state, role-appropriate depth and constrained-space journey separately from numerical correctness. A no-rendering restriction leaves visual quality unobserved, but does not prevent an independent source review from finding a buried scene, missing comparison, generic role fallback or lost exceptional selection. Repair those concrete omissions without inventing a visual pass.
 
@@ -106,6 +117,12 @@ Generate the required observation set from the current design and intent before 
 
 Return the exact candidate, original brief, selected direction and generated obligations to the designer and an independent verifier. Reuse [experience critique](../../omni-design-systems/references/experience-review.md) and [design evidence](../../omni-qa-analyst/references/design-evidence.md). Inspect all consequential destinations and a complete task slice, including detail/return only when selected.
 
+Keep three questions distinct: the PO recommends whether the product promise is
+preserved; a creative reviewer different from the builder and originating designer
+critiques its realization; QA verifies correctness. One suitable independent worker
+may perform both review disciplines with separate findings. No result grants
+runtime/publication authority or substitutes for unobserved customer acceptance.
+
 Give each material request a disposition: implemented and observed in a named evidence lane, implemented but unobserved, blocked with a useful fallback, deferred, or explicitly omitted. A working external link does not fulfill inline playback. An agenda does not fulfill a month calendar. A decorative perspective does not establish camera interaction or measured height.
 
 Tie native/media observations to the candidate, target, relevant settings, date and actual result. Keep separate numerical, local, native, rendered and human evidence. Source-only or simulated review can find defects but cannot establish visual polish. Respect CLI/MCP-only restrictions; do not route around them.
@@ -125,3 +142,10 @@ Retain the initial generated candidate and the internally reviewed first deliver
 For a bounded qualification trial, aim for zero repeated questions, zero customer corrections for already-supplied requirements, and at most one consolidated material clarification batch. These are trial targets, not a service guarantee; never suppress a necessary question to improve a count. Routine spacing, chart finish and implementation choices stay with the specialists.
 
 Use three original contrasting briefs when qualifying a material revision: a branded exploration App, a native operational dashboard, and a constrained migration/investigation. Supply typed data and independently derived expectations; do not supply an expected layout. Run sequentially, retaining one unseen holdout until the package is stable. Discover permitted rendering/native observation before building around it. If unavailable, complete independent engineering/specification work and report qualification as pending. Keep inputs, generated artifacts and run evidence outside the repository. Do not invent a quality score or claim every host was exercised. Package checks and local rehearsals improve confidence; observed native execution and user acceptance remain distinct.
+
+Include a demanding experience brief and a deliberately short ambiguous brief when
+evaluating product-intent transfer. Withhold historical code/layout, not the user's
+actual quality requirements. Check appropriate clarification, reuse of answers,
+North Star freshness, unsupported-method alternatives and independent creative
+findings. An unattended run with no customer correction cannot establish that no
+correction was needed; record feedback as unobserved. See [qualification cases](../../../docs/TESTING.md#product-intent-and-premium-experience-transfer).

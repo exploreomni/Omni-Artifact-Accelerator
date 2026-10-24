@@ -4,6 +4,8 @@ Read this for external assets/media, refreshable content, a new callback boundar
 
 ## One small slice before assembly
 
+For a [native procedural scene](native-scene-framework.md), qualify the exact authorized engine/controls closure and loading route with one original textured shape, one camera view, container resizing and an accessible fallback. Check initialization failure/retry, context loss and cleanup on the actual target before growing scene complexity. API readback is separate from rendering and interaction. If runtime approval or observation is absent, keep those lanes unrun and continue permitted geometry/session/data-contract work.
+
 Use the existing runtime contract's `evidence_paths` and the selected requirement's `delivery.dependency_paths` for the capability evidence file. Preserve target/draft identity, candidate and settings hashes, tool/runtime version, observed time, principal context when relevant, requested behavior, configured settings, actual result, method, evidence reference, remaining limitation and fallback. Record only selected capabilities. These are suggested contents of an evidence artifact, not additional fields in the native adapter's strict schema.
 
 Distinguish `documented`, `configured`, `simulated`, `observed` and `blocked/unobserved` in the record. A URL, HTTP success, stored allowlist, successful iframe load event or matching readback cannot establish effective native behavior. An observation qualifies the exact tested path and state; it is not a global capability promise. Under CLI/source-only constraints, retain the unobserved native lane and continue a useful provisional design. Do not create browser activity to close it.
@@ -34,3 +36,9 @@ Use opaque context keys from the selected query/filter generation, not captions.
 Retain the template/modules, exact built candidate, build command and native launch target separately. Register helper and evidence dependencies so a changed file invalidates the applicable review. Check actual classic-script/module scope and dependency order; `window === globalThis` belongs only to a labeled classic-script rehearsal, not a universal browser emulator. Do not bundle credentials or live fixtures.
 
 On navigation/unmount, invalidate in-flight generations, remove listeners, cancel animation frames/timers and stop media through the qualified mechanism. On hidden pages, apply the selected pause policy; on return, evaluate freshness before reusing results. An engineer's utility check cannot close the experience owner's rendered critique or independent QA's native lane.
+
+## Offline query evidence before the native slice
+
+Use the [native-query qualification helper and capture contract](native-query-qualification.md) to reject wrong source bindings, empty metadata, changed cohorts, invalid types/NULLs, duplicate grain, caps and unreconciled aggregates before a larger App build. The helper reads only bounded local JSON with standard-library code. A passing export or constructed fixture remains source/query evidence; an actual native capture is identified separately and still needs independent provenance review.
+
+When the bridge cannot qualify request/state correlation, keep at most one query sequence in flight and defer new applied query generations until a qualified terminal/reset path. Do not declare timeout recovery or stale-result rejection from a local counter alone. Observe the selected native success/failure/refresh slice when authorized; otherwise retain the native/recovery lane as unrun.

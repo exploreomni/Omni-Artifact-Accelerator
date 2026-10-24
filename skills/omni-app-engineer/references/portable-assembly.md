@@ -1,5 +1,7 @@
 # Assemble selected sources without selecting a layout
 
+The optional [native scene framework](native-scene-framework.md) follows this same source-order and byte-budget discipline. Its original classic-script helpers do not package an engine. Modern engine/addon modules need a separately qualified authorized loading/build route; this assembler is not an ESM bundler. Never use dynamic injection or fetched inline dependency code to bypass the initial native resource profile.
+
 Use [assemble_experience.py](../scripts/assemble_experience.py) when a local App combines separate authored markup, styles, scripts, data/configuration and assets. It assembles bytes; it does not design a screen, execute code, contact a service, supply an Omni SDK or publish anything. Existing native adapters and their credential/query/settings boundaries remain unchanged. Simple files do not need an assembly step, and native dashboards do not use this HTML helper.
 
 Keep the shell and renderer owned by the engagement. Neither the assembler nor the [behavior controllers](experience-behaviors.md) decides navigation, chart type, page count, image roles, fonts or palette. Record those decisions in the selected design and brand contract. Reuse the existing query/runtime/intent records as pinned references rather than defining their semantics again.
@@ -67,3 +69,15 @@ To compose shared behavior, copy only selected helper files into the engagement,
 For a native candidate, replace a synthetic adapter through the [inspected native data contract](native-data-input.md). Keep exact keys, row grain, units, completeness, source time and pending/applied query scope explicit. Never infer a live bridge from the presence of a script slot or an adapter filename. Preserve query definitions and settings through the existing native authoring route.
 
 Check the first assembled journey, current-result generation handling, selection/return, loading/error/partial outcomes and teardown. Source execution under a DOM double can find wiring errors; it does not prove rendering, actual keyboard focus, access, performance or native data delivery. Qualify the actual target when permitted, and retain any unobserved lanes. If a shared behavior needs different code for every layout, revisit the interface before adding more example screens.
+# Preserve candidate history
+
+The original assembler saves exact first HTML bytes and each changed assembly
+under `evidence/assembled-history/` before returning a build. It never overwrites
+the first record. Subsequent edits to a working output do not replace the retained
+bytes; compare hashes before reusing any observation. This is file history, not
+write-proof storage or native verification.
+
+For complete delivery context, also use the orchestrator's
+[candidate-freeze and delivery-check](../../omni-artifact-accelerator/references/execution-workflow.md)
+with the selected query/model/settings/target dependencies. A custom assembly route
+uses candidate-freeze immediately after the first assembled artifact and before QA.

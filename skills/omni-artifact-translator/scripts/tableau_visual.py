@@ -4,11 +4,9 @@ Locators are version-scoped XML identities, never Tableau REST identifiers.
 Capture seals establish integrity, not producer authenticity or applied state.
 """
 import copy
-import csv
 from datetime import datetime
 from decimal import Decimal, InvalidOperation
 import hashlib
-import io
 import importlib.util
 import json
 import os
@@ -410,6 +408,15 @@ def parse_capture(payload, raw, helpers):
     return result
 
 
+def csv_rows(raw, headers, prefix, *, ragged_code="ragged_rows"):
+    """Share the bounded stdlib iterator with the other visual normalizers."""
+    path = Path(__file__).with_name("bounded_csv.py")
+    spec = importlib.util.spec_from_file_location("visual_bounded_csv", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module.rows(raw, headers, prefix, ragged_code=ragged_code)
+
+
 def normalize_results(raw, profile, binding):
     """Explicit CSV derivative. Never guesses locale, headers, nulls or totals.
 
@@ -423,20 +430,18 @@ def normalize_results(raw, profile, binding):
     need(type(binding) is dict and binding.get("attachment_sha256") == sha(raw)
          and all(text(binding.get(k)) for k in ("capture_content_hash", "view_id", "worksheet_id", "state_sha256")),
          "tableau.normalization_binding")
-    try:
-        parsed = list(csv.reader(io.StringIO(raw.decode("utf-8-sig"), newline=""), strict=True))
-    except (UnicodeError, csv.Error):
-        raise ValueError("tableau.invalid_csv") from None
-    need(parsed and len(parsed) <= 100001 and parsed[0] == profile.get("headers"), "tableau.csv_headers_mismatch")
+    headers = profile.get("headers")
+    need(type(headers) is list and bool(headers) and all(type(h) is str for h in headers),
+         "tableau.csv_headers_mismatch")
     columns = profile.get("columns")
-    need(type(columns) is list and len(columns) == len(parsed[0]) and all(type(c) is dict for c in columns)
+    need(type(columns) is list and len(columns) == len(headers) and all(type(c) is dict for c in columns)
          and [c.get("ordinal") for c in columns] == list(range(len(columns)))
          and all(text(c.get("name")) for c in columns)
          and len({c["name"] for c in columns}) == len(columns), "tableau.explicit_ordinal_mapping_required")
-    if len(set(parsed[0])) != len(parsed[0]):
+    if len(set(headers)) != len(headers):
         need(text(profile.get("duplicate_header_resolution_reference")), "tableau.duplicate_headers_unresolved")
     output = []
-    for row in parsed[1:]:
+    for row in csv_rows(raw, headers, "tableau", ragged_code="ragged_csv"):
         need(len(row) == len(columns), "tableau.ragged_csv")
         item = {}
         for col, value in zip(columns, row):
@@ -478,5 +483,5 @@ def normalize_results(raw, profile, binding):
         output.append(item)
     return {"schema_version": 1, "kind": "tableau_normalized_results", "raw_sha256": sha(raw),
             "parser_profile": copy.deepcopy(profile), "binding": copy.deepcopy(binding),
-            "headers": parsed[0], "row_count": len(output), "rows": output,
+            "headers": list(headers), "row_count": len(output), "rows": output,
             "row_order": "preserved", "completeness": "not_established", "native_validation": "not_performed"}

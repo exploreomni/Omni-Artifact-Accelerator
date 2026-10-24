@@ -5,6 +5,16 @@ description: Independently verify Omni dashboard and App numbers, migration pari
 
 # QA analyst
 
+Review against the original request and current [product intent](../omni-artifact-accelerator/references/product-intent.md).
+PO product-fit recommendations, creative critique and correctness are separate results.
+A creative reviewer must differ from the builder and originating designer; one
+qualified independent worker may cover both review disciplines with separate findings.
+Neither projection consistency nor an unobserved customer response establishes acceptance.
+
+For selected native scenes, use [spatial QA](references/spatial-qa.md) and the [framework qualification boundaries](../omni-app-engineer/references/native-scene-framework.md). Freeze original dimensional/data/task expectations and source, scene, engine, query and candidate pins. Check late initialization cleanup, retry, interruption, hide/return, reduced motion, exact identities and stale/error clearing. Record source/local, native readback, rendered interaction, access and participant evidence separately. A fresh-context pilot without observation cannot establish visual polish or zero real-world corrective prompts.
+
+Before runtime or tool use, follow the shared [package-use policy](../omni-artifact-accelerator/references/dependency-policy.md): no unapproved package installation/import or skill activation, and no Blender code or execution. Source review is separate from execution authority.
+
 For navigation, control or responsive-state changes, use [focused control verification](../omni-design-systems/references/control-craft.md#focused-critique-and-verification) within the existing QA record. Freeze independent expectations for affected paths: draft/applied/restored agreement, genuine result correlation, partial/excluded/denied distinctions, explicit-selection precedence, keyboard/focus intent and hidden-region cleanup as applicable. The [focused curriculum lessons](../omni-design-systems/references/experience-curriculum.md#focused-control-practice) support practice; neither their completion nor a local DOM check closes native, rendered, assistive-technology or participant evidence.
 
 Own independent expectations and evidence, not producer self-certification. Derive review obligations from the complete selected destination/journey inventory and explicit context/lane applicability before reading submitted cases. Reconcile every obligation, including missing observations; focused coverage is not whole-experience coverage. Bind corrections to matching obligations and the exact current candidate. Read the [QA matrix](../omni-artifact-accelerator/references/qa-release.md) and [shared contracts](../omni-artifact-accelerator/references/contracts.md). Consume original source artifacts/settings, accepted requirements, frozen expectations and exact candidate pins. Ask for a missing source slice rather than accepting a producer's summary as an oracle.
@@ -50,3 +60,5 @@ For [backend cowork](../omni-backend-handoff/SKILL.md), define independent expec
 For Looker, follow [the run guide](../omni-artifact-accelerator/references/looker-visual-run.md) and retain an independent object listing. Test text/placements and unsupported calculations, not just converted charts. Bind numbers to exact effective query/state; verify App and dashboard candidates separately. Unsupported/deferred work cannot disappear from completion, and a receipt for one surface cannot close the other.
 
 For Hex, apply [the independent experience checks](../omni-app-designer/references/hex-experience-mapping.md#independent-experience-checks): published/draft and applied/pending state, input dependencies, computational outputs, filter exclusions, conditional screens and recovery. Preserve Classic/Generative coverage limits and separate dashboard/App proofs. A control needs behavior cases; a run or screenshot alone cannot establish complete results or a functioning App journey.
+
+For optional 3D work, use [spatial QA](references/spatial-qa.md): independently derive dimensions, transformed landmarks, entity mapping and state expectations. Separate geometry/format checks, actual isolation enforcement, native behavior and rendered craft. Unapproved runtimes and unobserved browser/GPU behavior remain blocked or `not_run`.

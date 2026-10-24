@@ -4,22 +4,19 @@ Start with a business question, a migration source or an existing model. The orc
 
 ## Installation and updates
 
-Follow [the README quick start](../README.md#quick-start) to clone the repository and create a Python 3.12 virtual environment. Commands below run from the repository root with that environment active. The shell examples target macOS/Linux.
+Follow the [source-only quick start](../README.md#quick-start) and [package-use policy](../skills/omni-artifact-accelerator/references/dependency-policy.md). Do not install/import dependencies or activate skills without explicit scoped human sign-off. Existing installations and pinned versions are not automatic approval.
 
-Install all 13 skills together. For Codex, use its skill directory. For another compatible host, choose the directory that host is configured and authorized to read:
+All 15 skills form one portable bundle. Preview an existing directory without writing:
 
 ```sh
 OAA_SKILLS_DIR="$HOME/.codex/skills"
-mkdir -p "$OAA_SKILLS_DIR"
-python scripts/install_skills.py --destination "$OAA_SKILLS_DIR"
-python scripts/install_skills.py --destination "$OAA_SKILLS_DIR" --apply
+python3 -I -S scripts/install_skills.py --destination "$OAA_SKILLS_DIR"
+python3 -I -S scripts/install_skills.py --destination "$OAA_SKILLS_DIR" --verify
 ```
 
-The first command is a preview. Apply leaves identical skills unchanged, installs missing skills and refuses an unrelated or customized existing folder. It does not install Data Model Accelerator or source-platform migrators, configure MCP servers or copy customer evidence.
+The public `--apply` path is disabled pending a qualified host approval gate. Do not use manual copies as a bypass. A reviewed `--upgrade-from` archive can support a read-only comparison; its manifest proves integrity only, not approval or publisher authenticity. Preserve customizations and resolve any conflict before a future authorized activation.
 
-If an update conflicts, retain the existing copy and inspect the differences. The installer's `--upgrade-from` option requires an exact prior package archive with its verified manifest; it is not a general force-overwrite option. If you do not have that archive, use a fresh approved host directory or reconcile the installation manually. Do not edit installed files while an apply is running. Caught replacement failures are rolled back; a process or machine crash is not an atomic bundle transaction.
-
-Refresh the host's skill discovery. In hosts supporting named skills, start with `$omni-artifact-accelerator`; otherwise ask the agent to read `skills/omni-artifact-accelerator/SKILL.md` from the checkout and follow its sibling references. A role plan does not itself spawn workers—the host must support delegation, or the agent performs the roles inline and states that limitation.
+The agent can review the orchestrator directly in the checkout. Role planning does not launch workers or install tools. Once separately authorized activation is implemented and verified, refresh the host's discovery and retain the exact installed-source evidence.
 
 ## New dashboard or App
 
@@ -52,7 +49,7 @@ The initial structure is:
 
 ### 2. Give the agent a concrete task
 
-Supply the audience, decision, selected surface, available Omni model/Topics, known definitions and desired completion stage. Reuse prior answers; unresolved metrics need an owner, not an invented definition.
+Supply what you already know about the audience, decision, selected surface, available Omni model/Topics and completion stage. A short request is enough to start adaptive discovery: the product owner recovers prior answers and asks only material questions, then hands prioritized intent back to the orchestrator. You do not need to specify a layout or coordinate specialist interviews. Unresolved metrics need an owner, not an invented definition.
 
 > Use $omni-artifact-accelerator in this engagement to design a native operations dashboard. Supervisors need to spot late orders, compare teams and inspect exceptions. Reuse our existing Omni Topics. Start with metric definitions, chart and filter specifications, brand choices and an independent QA plan. Keep unknown targets and data freshness explicit. Produce a local reviewable handoff; do not write to the tenant yet.
 
@@ -69,6 +66,22 @@ For a substantial App, carry the intended experience alongside the metrics:
 Use the [shared experience brief](../skills/omni-design-systems/references/experience-brief.md) and [named requirement examples](../skills/omni-artifact-accelerator/references/design-intent.md#experience-requirements) to retain these choices in existing contracts. Reuse supplied answers; ask only about consequential missing choices. A direct workspace without imagery is equally valid when selected. The [context-transfer studio](../skills/omni-design-systems/references/experience-context-studio.md) demonstrates contrasting original treatments of the same task.
 
 ### 3. Design and implement the selected scope
+
+For substantial work, use the [product-intent guide](../skills/omni-artifact-accelerator/references/product-intent.md)
+to add product context to the existing intent specification and select it. Keep
+attributable notes inside the private engagement. Then generate its readable view:
+
+```sh
+python3 -I -S -B "$OAA_HELPER" product-brief --project "$OAA_RUN" \
+  --output deliverables/north-star-v1.md
+python3 -I -S -B "$OAA_HELPER" product-check --project "$OAA_RUN"
+```
+
+Here `OAA_HELPER` is the selected `analyst_project.py`. The North Star is a versioned
+projection, not another authority; edits become proposals for a new selected intent.
+Packets carry current product context. Focused repairs reuse existing decisions and
+need no extra interview. Product fit, independent creative critique and correctness
+are separate reviews; neither these commands nor role planning activates skills.
 
 The analyst defines meaning and independent examples. Designers create the chart/layout or task/state specification. Branding and design systems establish shared visual roles; storytelling and motion participate when useful. BI and App engineers bind the approved requirements to actual available target capabilities.
 
@@ -270,7 +283,7 @@ Build one complete task slice, including detail/return where selected, and quali
 
 Keep the initial candidate, internally revised first delivery and a compact prompting/revision log outside the repository. Distinguish necessary clarification, repeated questions, corrections to supplied requirements and new scope. Internal critique should repair routine design gaps before delivery; it must not fabricate rendering or customer feedback to meet a prompting target.
 
-From the repository checkout, `python scripts/install_skills.py --destination "$OAA_SKILLS_DIR" --verify` compares the active directory to the source package without changing it. Exit 0 means exact package-skill parity; exit 1 reports missing/changed/extra files. Retain the version and source manifest hash with rehearsal evidence, and ensure the host loads those files. Do not overwrite customized skills to force parity; use the existing reviewed-baseline upgrade path.
+From the repository checkout, `python scripts/install_skills.py --destination "$OAA_SKILLS_DIR" --verify` compares the active directory to the source package without changing it. Exit 0 means exact package-skill parity; exit 1 reports missing/changed/extra files. Retain the version and source manifest hash with rehearsal evidence, and ensure the host loads those files. Do not overwrite customized skills to force parity; retain the conflict for a separately authorized upgrade; activation is currently disabled.
 
 ## Reuse behavior without inheriting a layout
 
@@ -289,3 +302,74 @@ The [control studio](../skills/omni-app-engineer/assets/control-studio.html) pro
 For remote search, inspect the actual query/filter route and callback identity before connecting a text field. Declare draft, applied and displayed-result scope, whether restoration runs a query, and reset semantics. A locally filtered partial result is not a complete warehouse search. In a migration, preserve source defaults, field identities and accepted behavior; route genuine model gaps through the existing DMA handoff.
 
 Qualify only the affected task and conditions. CLI-only work can establish source behavior and saved API state, while visual fit, browser focus and actual host execution remain unobserved. Keep pilot evidence and private planning outside the package. Optional reading is linked from the control guide; no course enrollment or completion is needed to use the skills.
+
+## Spatial modeling
+
+Choose `spatial-modeling` in a selected App requirement only when modeling helps the task. The role plan adds the modeler and App designer/engineer; ordinary dashboards and custom charts keep their established routes. Read the [3D curriculum](../skills/omni-design-systems/references/3d-curriculum.md), [model brief](../skills/omni-3d-modeler/references/brief-handoff.md) and [spatial integration contract](../skills/omni-app-engineer/references/spatial-integration.md).
+
+For harness source review, follow [its runbook](../harness/README.md). The compiler and viewer sources are available; processing customer input and promoting assets requires a separately qualified isolated host. A missing runtime yields a brief and blocked request, never a host-execution fallback. Native and visual evidence stay separate from synthetic source checks.
+
+## Native procedural scene workflow
+
+1. **Describe the task and fidelity.** Give the existing orchestrator the audience,
+   inspection/decision, App surface and references. Reuse current brand decisions.
+   State whether dimensions are measured or illustrative. A logo authorization
+   does not authorize a font/engine import.
+2. **Choose the route.** Use a scene-only illustration, governed spatial analysis,
+   or separately isolated asset processing. Stay in 2D when it answers the task
+   more clearly. The native procedural route needs no artificial backend project.
+3. **Prepare bounded original scene data.** The modeler follows
+   [procedural craft](../skills/omni-3d-modeler/references/procedural-craft.md) and
+   the [native contract](../skills/omni-app-engineer/references/native-scene-framework.md).
+   Supply stable part IDs, materials, useful named views and original dimensional
+   expectations. The three included synthetic geometry fixtures illustrate
+   different topologies; they do not prescribe customer layouts.
+4. **Review runtime before loading it.** First-party validators/builders/session
+   code can be checked locally with the existing runtime. The renderer adapter
+   accepts an explicitly supplied engine, but supplies no dependency acquisition
+   or approval. Prepare exact package/closure/action permission and qualify the
+   supported loading route. The current classic assembler and resource policy
+   have not qualified the candidate module engine.
+5. **Compose one useful path.** Bind container sizing, semantic entity/view
+   controls, selection/evidence/return and optional camera motion. Use one session
+   for initialization, cancellation, reduced motion and teardown. Preserve the
+   exact-value/list route if graphics fail. For analysis, use the existing query
+   contract and the optional native scene data bridge; for decoration, omit it.
+6. **Check only what you can observe.** Run the focused source checks below.
+   After runtime and native write authorization, qualify one small original
+   textured shape before complex scenes. Native readback, rendered interaction,
+   access, performance and user acceptance are separate lanes. CLI-only runs do
+   not qualify visual polish. Keep receipts and pilot histories outside the repo.
+
+For developers working on trusted first-party source:
+
+```sh
+env -u NODE_OPTIONS -u NODE_PATH node --test tests/test_native_scene_geometry.js tests/test_native_scene_session.js tests/test_native_scene_integration.js
+python3 -I -S -B scripts/check_package.py
+```
+
+These commands use existing runtimes and standard-library facilities; they do
+not install/load Three.js, contact Omni or render a browser. Installing the skill
+bundle, loading dependencies, publishing an App and pushing the repository each
+retain their existing authorization boundaries.
+# Host startup and delivery assessment
+
+For substantial artifact work, use the [execution procedure](../skills/omni-artifact-accelerator/references/execution-workflow.md)
+before full implementation. It provides exact startup/ownership/candidate/evidence
+request shapes. The helpers below use only original code and the existing Python
+standard library; `$OAA_HELPER` points at the selected `analyst_project.py` and
+`$OAA_RUN` at the existing engagement outside this repository.
+
+```sh
+python3 -I -S -B "$OAA_HELPER" run-start --project "$OAA_RUN" --request startup.json
+python3 -I -S -B "$OAA_HELPER" run-check --project "$OAA_RUN" --request readiness.json
+python3 -I -S -B "$OAA_HELPER" candidate-freeze --project "$OAA_RUN" --request candidate.json
+python3 -I -S -B "$OAA_HELPER" delivery-check --project "$OAA_RUN" --request delivery.json
+```
+
+`run-check` takes `run` and `execution` paths. `delivery-check` adds `candidate` and
+`evidence` paths. Paths inside requests are engagement-relative. Exit 0 means
+structural readiness, exit 1 identifies gaps and exit 2 rejects invalid input.
+These are local assessments, not native writes or authorization. Retain the first
+candidate before review, then freeze a separate delivered revision. No rendering
+permission means visual quality remains unobserved even when publication succeeds.

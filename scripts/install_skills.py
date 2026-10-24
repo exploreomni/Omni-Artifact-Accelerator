@@ -276,6 +276,13 @@ def apply_actions(destination, source, actions, expected, previous):
 
 
 def install(destination, apply=False, source=ROOT, upgrade_from=None):
+    if apply:
+        raise ValueError("activation_blocked: no qualified host approval gate; preview/verify only")
+    return _plan_install(destination, source, upgrade_from)
+
+
+def _plan_install(destination, source=ROOT, upgrade_from=None):
+    """Read-only planning. Repository code cannot authenticate an operator."""
     destination, source = canonical_path(destination), canonical_path(source)
     need(destination.is_dir(), "destination directory must already exist")
     package = package_info(read_regular(source / "package.json"))
@@ -315,9 +322,7 @@ def install(destination, apply=False, source=ROOT, upgrade_from=None):
         if name in active_renames:
             record["from_skill"] = active_renames[name]
         actions.append(record)
-    if apply:
-        apply_actions(destination, source, actions, expected, previous)
-    return {"applied": apply, "destination": str(destination), "skills": actions,
+    return {"applied": False, "destination": str(destination), "skills": actions,
             "baseline": None if baseline is None else {"package": baseline["package"],
                                                         "version": baseline["version"], "sha256": baseline["sha256"],
                                                         "publisher_authenticated": False}}
@@ -352,7 +357,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--destination", required=True)
     mode = parser.add_mutually_exclusive_group()
-    mode.add_argument("--apply", action="store_true")
+    mode.add_argument("--apply", action="store_true", help="Disabled pending a qualified host approval gate")
     mode.add_argument("--verify", action="store_true", help="Read-only exact source/install comparison; exit 1 on drift")
     parser.add_argument("--upgrade-from", type=Path, help="Exact previous bundle ZIP with a verified file manifest")
     args = parser.parse_args()

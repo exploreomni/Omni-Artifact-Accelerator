@@ -1,10 +1,11 @@
 {
   "name": "omni-artifact-accelerator",
-  "version": "0.20.0",
+  "version": "0.21.0",
   "private": true,
   "description": "Portable analyst skill bundle for native Omni Apps and dashboards",
   "skills": [
     "omni-artifact-accelerator",
+    "omni-product-owner",
     "omni-data-analyst",
     "omni-bi-engineer",
     "omni-qa-analyst",
@@ -16,6 +17,7 @@
     "omni-branding",
     "omni-design-systems",
     "omni-artifact-translator",
-    "omni-backend-handoff"
+    "omni-backend-handoff",
+    "omni-3d-modeler"
   ]
 }

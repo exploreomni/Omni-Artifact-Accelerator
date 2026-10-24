@@ -4,6 +4,8 @@ A shared curriculum for creating distinctive, useful Omni dashboards and analyti
 
 The curriculum is an agent operating resource: selected lessons, original exercises, critique and revision. Installing it makes the guidance available; demonstrated competence requires reviewed work. Do not claim that installation retrained a model, trained every worker, or guarantees a polished result.
 
+For a justified model or environment, add the optional [eight-module 3D curriculum](3d-curriculum.md). The modeler studies geometry and delivery; app design/engineering study inspection and lifecycle; analysts study identity/grain; motion studies interruption; branding studies materials; QA studies independent spatial evidence. Every role uses the shared task/fidelity and accessibility lessons as applicable. This adds a specialization, not a universal 3D aesthetic.
+
 ## The standard
 
 Aim for a recognizable point of view, precise analytical communication and satisfying interaction. A convincing experience gives the audience something to understand or do that a generic arrangement of metrics and charts would make harder. Craft can be quiet, expressive, dense or spacious. Choose deliberately.

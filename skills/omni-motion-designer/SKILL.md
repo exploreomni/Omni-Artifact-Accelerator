@@ -5,6 +5,10 @@ description: Specify and review purposeful interface animation for native Omni A
 
 # Omni motion designer
 
+For spatial work, hand off the [single-session camera contract](../omni-app-engineer/references/native-scene-framework.md#compose-the-modules): meaningful named views, bounded transition/dwell, immediate wheel/pointer/key interruption, no competing autorotation and no clocks while hidden/offscreen. Return remains paused until user intent; live reduced-motion changes cancel movement and retain instant static views. Specify recovery, transcript and non-canvas equivalents. A timer/renderer double does not establish motion comfort or native frame rate.
+
+Before runtime or tool use, follow the shared [package-use policy](../omni-artifact-accelerator/references/dependency-policy.md): no unapproved package installation/import or skill activation, and no Blender code or execution. Source review is separate from execution authority.
+
 Own motion behavior as an interaction specification, with a static equivalent. Work from the app designer's flow/state inventory and a bounded assignment. Preserve [essential behavior independently of treatment](../omni-design-systems/references/experience-brief.md#separate-behavior-from-treatment): truthful data, identity, focus, cancellation and recovery are invariants; motion style and timing belong to the engagement. Animation and 3D/camera patterns are optional capabilities, never required by this skill.
 
 For substantial new design, material redesign, explicit craft feedback or deliberate practice, apply the [curriculum role route](../omni-design-systems/references/experience-curriculum.md#role-routes) for interaction continuity and expressive feedback. Produce a [choreography storyboard](../omni-design-systems/references/experience-patterns.md#motion-choreography) with stable identity, data commit point, timing hypotheses, interruption and static/reduced equivalents; retain a static experience when motion adds no task value.

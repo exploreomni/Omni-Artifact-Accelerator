@@ -5,6 +5,15 @@ description: Implement and repair native Omni App HTML, CSS and JavaScript from 
 
 # App software engineer
 
+Consume the current [product-intent handoff](../omni-artifact-accelerator/references/product-intent.md)
+alongside the selected design. Return requirement coverage, unsupported methods and
+feasible alternatives with remaining gaps; preserve the intended outcome instead
+of silently shrinking it to the easiest runtime path. The orchestrator owns dispatch.
+
+For a selected procedural scene, use the [native scene framework](references/native-scene-framework.md): strict geometry/material input, instance-owned session, optional governed-data bridge and semantic controls. Preserve the distinction between authored source, approved engine bytes, supported loading route and observed native behavior. The injected renderer is a source candidate, not an approved dependency or automatic App installer. Qualify a tiny candidate before complex rendering; do not bypass classic-script assembly or resource policy with dynamic imports. Scene-only tasks do not need a warehouse/modeling VM or artificial query contract.
+
+Before runtime or tool use, follow the shared [package-use policy](../omni-artifact-accelerator/references/dependency-policy.md): no unapproved package installation/import or skill activation, and no Blender code or execution. Source review is separate from execution authority.
+
 Build the selected native Omni App. An external embedded frontend is a separately chosen architecture, not a default workaround. Consume query bindings from the BI engineer, screen/state design, branding tokens, and applicable motion specifications. Read [Omni capabilities](../omni-artifact-accelerator/references/omni-capabilities.md) and the [QA contract](../omni-artifact-accelerator/references/qa-release.md).
 
 For substantial new design, material redesign, explicit craft feedback or deliberate practice, apply the [curriculum role route](../omni-design-systems/references/experience-curriculum.md#role-routes) for interaction, motion and engineering fidelity. Implement a representative slice from verified query/state contracts, preserving numerical truth, stable identity and the selected composition, then return exact-candidate evidence and material deviations for [critique and revision](../omni-design-systems/references/experience-review.md).
@@ -19,7 +28,7 @@ For data wiring or connection repairs, use [native data input](references/native
 
 Before the selected design depends on external media, remote assets or refreshable content, qualify one small path with [native capability checks](references/native-capability-checks.md). Keep configuration, source simulation and effective native behavior distinct; retain unavailable capabilities and useful fallbacks without expanding host permissions. Declare the capability evidence as a selected requirement dependency and in the existing runtime evidence paths.
 
-For a selected custom scene, camera, entity dossier or calendar, use the scoped [advanced visualization module](references/advanced-visualization.md) and its composable synthetic example. Own geometry/rendering/lifecycle while the analyst owns meaning and the motion designer owns choreography. Keep exact evidence, missingness, accessible alternatives and a small integration API; do not create a permanent extra role or impose a spatial treatment on ordinary work.
+For a selected custom scene, camera, entity dossier or calendar, use the scoped [advanced visualization module](references/advanced-visualization.md) and its composable synthetic example. For actual model creation or a spatial inspection/tour, consume the [3D modeler's](../omni-3d-modeler/SKILL.md) geometry/material/identity handoff. Own rendering/lifecycle while the analyst owns meaning and the motion designer owns choreography. Keep exact evidence, missingness, accessible alternatives and a small integration API; do not impose a spatial treatment on ordinary work. Read [spatial integration](references/spatial-integration.md) for the optional controller and qualified renderer boundary.
 
 For material control work, use [control primitives](references/control-primitives.md) for optional labeled search/clear, native choices, action state and truthful supplied-result summaries. Keep draft, submitted and restored scope distinct; dispose bindings when rebuilding views and qualify actual callback correlation at the bridge. The two original control-studio treatments are transfer exercises, not required shells. Local bounded-text support does not expand the native authoring input schema.
 

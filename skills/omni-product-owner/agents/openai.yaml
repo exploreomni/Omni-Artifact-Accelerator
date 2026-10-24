@@ -1,0 +1,4 @@
+interface:
+  display_name: "Omni Product Owner"
+  short_description: "Discover and preserve Omni product intent"
+  default_prompt: "Use $omni-product-owner to recover the current brief, resolve material product questions and hand prioritized experience requirements to the orchestrator."

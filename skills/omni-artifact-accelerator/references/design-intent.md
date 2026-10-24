@@ -54,6 +54,15 @@ Declare runtime, callback evidence, aliases and other required files explicitly 
 
 ## Specification contract
 
+For product discovery and intent preservation, optional `product` and
+`requirements[].product` annotations live in this same specification. The
+[Product Owner contract](product-intent.md) defines attribution, priorities,
+private note paths and observable acceptance. Selected intent pins those note
+files. `product-brief` generates a readable North Star with the selected version,
+hash and generation time; `product-check` detects stale selections, changed notes
+and edited projections. Reconcile edits into a new intent version, then regenerate.
+The projection is never a second authority or evidence of user approval.
+
 For substantial experiences, optional `requirements[].delivery` adds observable behavior, responsibility, named destinations and explicit dependency paths. See [first-delivery coverage](first-delivery.md). These declared paths are pinned and carried into packets; arbitrary nested prose links remain uncrawled. Existing records without these annotations remain valid.
 
 Top level: `schema_version: 1`, `kind: analyst_design_intent_spec`, `branding`, `website`, `logo_sourcing`, `surfaces`, `selections`, `assets`, `requirements`.

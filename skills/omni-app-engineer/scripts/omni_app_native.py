@@ -49,10 +49,13 @@ def initial_body(value):
          0 < len(value["html"].encode()) <= MAX_HTML and value["settings"] == LOCKED_SETTINGS and
          all(type(value["settings"][key]) is type(default) for key, default in LOCKED_SETTINGS.items()),
          "app.initial_body_requires_locked_settings")
-    # This is a resource-declaration boundary, not a JavaScript security scanner.
-    need(not re.search(r'(?:src|href)\s*=\s*[\"\']\s*(?:https?:|//)', value["html"], re.I) and
-         not re.search(r'url\(\s*[\"\']?\s*(?:https?:|//)', value["html"], re.I),
-         "app.initial_external_resource_requires_separate_qualification")
+    # Fixed first-party parser; no payload-selected module or third-party parser.
+    # Static declarations only: authored JavaScript/native policy remain separate.
+    path = Path(__file__).with_name("app_resource_policy.py")
+    spec = importlib.util.spec_from_file_location("oaa_app_resource_policy", path)
+    policy = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(policy)
+    policy.check_initial_resources(value["html"])
     return value
 
 

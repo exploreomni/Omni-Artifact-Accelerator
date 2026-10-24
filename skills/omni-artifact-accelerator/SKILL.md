@@ -5,6 +5,8 @@ description: Orchestrate Omni dashboard and native Omni App design, analysis, im
 
 # Omni Artifact Accelerator
 
+Apply the [dependency policy](references/dependency-policy.md) before any package installation, import/load, update or skill activation, including CI, subagents and browser modules. Explicit scoped human sign-off is required; available or previously used packages are not automatically approved. No Blender implementation or generated-script execution is permitted. Continue original source/design work when a runtime gate is unavailable.
+
 Be the analyst's sidekick: turn a business decision into a useful, trustworthy data experience. Own the shared engagement, requirements, task boundaries, reconciliation, and final handoff. Use native Omni dashboards and native Omni Apps as distinct targets; an external embedded application is an explicit additional choice. Do not replace a requested native dashboard with an app or a mockup.
 
 For substantial new design, material redesign, explicit craft feedback or deliberate practice, apply the [curriculum role route](../omni-design-systems/references/experience-curriculum.md#role-routes). Retain the design thesis, task/surface choice and selected alternatives in the existing brief, assign the relevant lessons, and carry the artifact through [critique and revision](../omni-design-systems/references/experience-review.md); this does not require every lesson or an additional team for a focused task.
@@ -17,7 +19,22 @@ For control-level quality feedback or substantial interactive work, route the af
 
 ## Intake and resume
 
-For substantial new Apps or material redesign, apply the [first-delivery workflow](references/first-delivery.md): recover existing answers, trace the brief into observable per-destination requirements, qualify critical runtime paths, assemble one complete journey, and run designer critique plus independent verification before claiming completion. The helper's optional delivery annotations make ownership/dependencies visible; they do not assess beauty or authorize publication. Use internal revision to reduce repeated customer correction, without adding mandatory discovery to a small fix.
+For substantial work, use the [product-owner front door](references/product-intent.md)
+to recover prior answers, resolve only material questions and retain prioritized
+experience intent. The selected design intent stays canonical; the North Star is
+its checked readable projection. Keep notes private and dispatch ownership here.
+Focused repairs reuse current intent without another interview. Assign a creative
+reviewer different from the builder and originating designer; keep PO product fit,
+creative critique and correctness findings separate without adding approval layers.
+
+For a substantial artifact engagement, begin with the [execution entry procedure](references/execution-workflow.md).
+Record the host and actual package source, retain the original request, name responsibility owners,
+and distinguish suggested roles from actual work. Use `run-check` before full implementation and
+`delivery-check` for the final assessment. These local checks assess supplied records; they cannot
+enforce unrelated MCP calls or authorize publication. Direct specialist invocation still carries
+current intent; a focused repair does not require restarting intake.
+
+For substantial new Apps or material redesign, apply the [first-delivery workflow](references/first-delivery.md): recover existing answers, trace the brief into observable per-destination requirements, qualify critical runtime paths, assemble one ambitious representative journey, and run product-fit review, independent creative critique and correctness verification before claiming completion. The slice must carry the experience's defining qualities, not only its easiest technical path. The helper's optional delivery annotations make ownership/dependencies visible; they do not assess beauty or authorize publication. Use internal revision to reduce repeated customer correction, without adding mandatory discovery to a small fix.
 
 Read [workflow](references/workflow.md) for routing and [contracts](references/contracts.md) for shared records. Resolve paths relative to this skill. Reuse answers and prior authorization. Ask short rounds only about missing choices that materially change the work: audience and decision, migration versus new design, selected surfaces, accepted metrics, source scope, branding, devices, and desired completion stage. Read-only inventory and provisional designs can proceed with unknowns labeled. For branded work, resolve the missing company website and an approved logo file/URL or authorization to source the official site's logo in the same small question batch. Reuse existing answers/authorization, or record an explicit no-logo choice. Have [branding](../omni-branding/references/brand-contract.md#logo-decision-and-handoff) retain the selected asset/variant, loading path and placement; a labeled provisional placeholder is not a completed brand identity.
 
@@ -51,6 +68,10 @@ For Hex, follow [the dashboard and App run guide](references/hex-visual-run.md).
 
 ## Assign specialist work
 
+For meaningful object construction, spatial inspection, procedural assemblies or tours, route the selected `spatial-modeling` capability to [3D modeling](../omni-3d-modeler/SKILL.md). Keep ordinary custom charts on their existing route. The modeler authors geometry/material/identity proposals; the App engineer owns the qualified viewer and governed bridge. Neither role may install a modeling tool, execute supplied code, or infer host permission from a scene manifest. The optional isolated harness is obtained separately; missing isolation remains a runtime gap.
+
+Use the [native scene workflow](../omni-app-engineer/references/native-scene-framework.md) to select illustration, spatial analytics or separate asset processing. Only the last route inherently needs the optional compiler; dependency approval still applies to all external engines. Reuse brand/source authorization, define fidelity and task value, then attach scene, renderer, brand, query and candidate pins to existing current intent/runtime dependencies. Do not add a permanent role or another interview. Freeze distinct pilot briefs and prompt categories before generation; source-only rehearsals cannot establish first-prompt visual quality. Keep the first candidate and one bounded internal correction cycle in the engagement, with affected evidence invalidation.
+
 Use [role routing](references/workflow.md#role-routing). Discover the host's real delegation tools, inspect/reuse active workers, and choose the smallest useful team. An ordinary focused task can run inline, disclosed as such. Use independent QA for consequential numerical, access, migration, and release claims. Do not claim that a role plan spawned agents.
 
 For new tracked work, follow [scoped task routing](references/task-routing.md):
@@ -81,6 +102,6 @@ Reuse authorization already given. Before a separately authorized external actio
 
 ## Focused entrypoints
 
-Sibling skills can be invoked directly and share these contracts: `omni-data-analyst`, `omni-bi-engineer`, `omni-qa-analyst`, `omni-app-engineer`, `omni-app-designer`, `omni-dashboard-designer`, `omni-data-storyteller`, `omni-motion-designer`, `omni-branding`, `omni-design-systems`, `omni-artifact-translator`, and `omni-backend-handoff`. Install the complete sibling bundle. They do not require loading this entire orchestrator into every worker.
+Sibling skills can be invoked directly and share these contracts: `omni-product-owner`, `omni-data-analyst`, `omni-bi-engineer`, `omni-qa-analyst`, `omni-app-engineer`, `omni-app-designer`, `omni-dashboard-designer`, `omni-data-storyteller`, `omni-motion-designer`, `omni-branding`, `omni-design-systems`, `omni-artifact-translator`, `omni-backend-handoff`, and `omni-3d-modeler`. Keep the complete sibling bundle together when installation is separately approved. They do not require loading this entire orchestrator into every worker.
 
 For each new frozen design review, derive destination/context/lane and applicable journey obligations from the selected design and intent. Have the experience owner and independent verifier reconcile them before first delivery; a reviewed opening cannot close an unreviewed workspace. Scope focused edits explicitly and preserve historical evidence without treating it as a new whole-experience pass. Use the existing [first-delivery review loop](references/first-delivery.md#review-the-assembled-experience) and [evidence contract](../omni-qa-analyst/references/design-evidence.md), keeping prompting and internal revision history in the engagement.

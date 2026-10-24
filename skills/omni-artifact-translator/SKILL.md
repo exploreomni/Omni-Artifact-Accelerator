@@ -5,6 +5,8 @@ description: Inventory and map existing BI dashboards, reports and data apps for
 
 # Omni Artifact Translator
 
+Before runtime or tool use, follow the shared [package-use policy](../omni-artifact-accelerator/references/dependency-policy.md): no unapproved package installation/import or skill activation, and no Blender code or execution. Source review is separate from execution authority.
+
 Give the orchestrator a traceable analyst inventory and a proposed source-to-target mapping. Preserve what the analyst experiences: page hierarchy, metric meaning, filters, default states, interactions, visual intent, annotations, accessibility, responsive behavior and access boundaries. The data engineering inventory alone does not establish these.
 
 Retain the source reading path and interaction intent in the relevant [experience brief](../omni-design-systems/references/experience-brief.md). Distinguish source evidence, required fidelity and selected redesign choices; a more expressive frontend does not silently waive original behavior or require a new interview for a faithful migration.

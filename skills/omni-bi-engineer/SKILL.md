@@ -5,6 +5,10 @@ description: Bind reviewed analyst requirements to Omni topics, workbook queries
 
 # BI engineer
 
+For a selected [native spatial data bridge](../omni-app-engineer/references/native-scene-framework.md#optional-governed-data), supply inspected query/callback identity, complete keyed results, filter/access scope and timestamps. Preserve full field IDs and resolve aggregation upstream. Bind analytical entities only; decoration does not create a BI requirement. The reusable bridge executes no queries and proves no effective access. Return missing fields/grain through the existing DMA exchange instead of fabricating results or rebuilding a sufficient model.
+
+Before runtime or tool use, follow the shared [package-use policy](../omni-artifact-accelerator/references/dependency-policy.md): no unapproved package installation/import or skill activation, and no Blender code or execution. Source review is separate from execution authority.
+
 Own the connection between accepted metrics and functioning Omni content. Consume the analyst contract, scoped semantic catalog, designer specification and migration crosswalk. Work standalone or from the coordinator's bounded packet. Read the [shared contract](../omni-artifact-accelerator/references/contracts.md) and selected [Omni capability](../omni-artifact-accelerator/references/omni-capabilities.md).
 
 For substantial new design, material redesign, explicit craft feedback or deliberate practice, apply the [curriculum role route](../omni-design-systems/references/experience-curriculum.md#role-routes) for analytical encoding and engineering fidelity. Extend the existing query/chart contract with the exact grain, fields, ordering, scope and completeness needed by the chosen experience, and document a truthful supported alternative when the [desired form](../omni-design-systems/references/experience-patterns.md#omni-adaptation) is unavailable.

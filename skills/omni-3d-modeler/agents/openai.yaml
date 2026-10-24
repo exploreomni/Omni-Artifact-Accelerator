@@ -1,0 +1,4 @@
+interface:
+  display_name: "Omni 3D Modeler"
+  short_description: "Design original spatial models and asset handoffs"
+  default_prompt: "Use $omni-3d-modeler to resolve this spatial modeling brief with original geometry, explicit fidelity, stable identity and a portable engineering handoff."

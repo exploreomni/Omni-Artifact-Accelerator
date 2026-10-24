@@ -4,12 +4,10 @@ The semantic model is optional for enumeration. Original files and unsupported
 properties survive; this reader is not the Power BI renderer or a schema engine.
 """
 import copy
-import csv
 from datetime import datetime
 from decimal import Decimal, InvalidOperation
 import hashlib
 import importlib.util
-import io
 import json
 from pathlib import Path
 import re
@@ -495,12 +493,7 @@ def normalize_results(raw, profile, binding):
              "powerbi.duplicate_headers_unresolved")
     if profile["format"] == "csv":
         need(profile.get("encoding") == "utf-8", "powerbi.csv_encoding_required")
-        try:
-            data = list(csv.reader(io.StringIO(raw.decode("utf-8-sig"), newline=""), strict=True))
-        except (UnicodeError, csv.Error):
-            raise ValueError("powerbi.invalid_csv") from None
-        need(data and data[0] == headers, "powerbi.csv_headers_mismatch")
-        rows = data[1:]
+        rows = common().csv_rows(raw, headers, "powerbi")
     else:
         data = decode(raw)
         # The capture remains JSON bytes. Parse decimal tokens exactly for the
@@ -522,7 +515,7 @@ def normalize_results(raw, profile, binding):
         need(type(data) is list and all(type(r) is dict and set(r) == set(headers) for r in data),
              "powerbi.json_rows_or_columns_required")
         rows = [[r[h] for h in headers] for r in data]
-    need(len(rows) <= 100000, "powerbi.result_row_limit")
+        need(len(rows) <= 100000, "powerbi.result_row_limit")
     output = []
     for row in rows:
         need(len(row) == len(columns), "powerbi.ragged_rows")

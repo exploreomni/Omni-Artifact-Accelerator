@@ -1,0 +1,178 @@
+{
+  "schema_version": 1,
+  "units": "m",
+  "axes": "right-handed-y-up",
+  "materials": [
+    {
+      "id": "shell",
+      "base_color": [
+        0.53,
+        0.62,
+        0.66,
+        1
+      ],
+      "metallic": 0.6,
+      "roughness": 0.55
+    },
+    {
+      "id": "line",
+      "base_color": [
+        0.05,
+        0.31,
+        0.42,
+        1
+      ],
+      "metallic": 0,
+      "roughness": 0.55
+    },
+    {
+      "id": "base",
+      "base_color": [
+        0.21,
+        0.23,
+        0.25,
+        1
+      ],
+      "metallic": 0,
+      "roughness": 0.55
+    }
+  ],
+  "geometries": [
+    {
+      "id": "stand",
+      "type": "box",
+      "size": [
+        4,
+        0.2,
+        3
+      ]
+    },
+    {
+      "id": "vessel",
+      "type": "revolution",
+      "profile": [
+        [
+          0.4,
+          0
+        ],
+        [
+          0.8,
+          0.4
+        ],
+        [
+          0.8,
+          2
+        ],
+        [
+          0.55,
+          2.4
+        ]
+      ],
+      "segments": 20
+    },
+    {
+      "id": "conduit",
+      "type": "tube",
+      "path": [
+        [
+          0,
+          2.4,
+          0
+        ],
+        [
+          0,
+          3.5,
+          0
+        ],
+        [
+          2,
+          3.5,
+          0
+        ],
+        [
+          2,
+          0.3,
+          0
+        ]
+      ],
+      "radius": 0.1,
+      "segments": 12
+    }
+  ],
+  "entities": [
+    {
+      "id": "platform",
+      "label": "Platform",
+      "geometry": "stand",
+      "material": "base"
+    },
+    {
+      "id": "tank",
+      "label": "Tank",
+      "geometry": "vessel",
+      "material": "shell",
+      "transform": {
+        "translation": [
+          0,
+          0.1,
+          0
+        ]
+      },
+      "parent": "platform"
+    },
+    {
+      "id": "transfer-line",
+      "label": "Transfer Line",
+      "geometry": "conduit",
+      "material": "line",
+      "transform": {
+        "translation": [
+          0,
+          0.1,
+          0
+        ]
+      },
+      "parent": "platform"
+    }
+  ],
+  "views": [
+    {
+      "id": "overview",
+      "label": "Overview",
+      "position": [
+        8,
+        6,
+        9
+      ],
+      "target": [
+        0,
+        1,
+        0
+      ],
+      "up": [
+        0,
+        1,
+        0
+      ]
+    },
+    {
+      "id": "front",
+      "label": "Front inspection",
+      "position": [
+        0,
+        2,
+        10
+      ],
+      "target": [
+        0,
+        1,
+        0
+      ],
+      "up": [
+        0,
+        1,
+        0
+      ]
+    }
+  ]
+}

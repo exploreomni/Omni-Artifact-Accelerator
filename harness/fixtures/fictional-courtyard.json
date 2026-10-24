@@ -1,0 +1,192 @@
+{
+  "schema_version": 1,
+  "units": "m",
+  "axes": "right-handed-y-up",
+  "materials": [
+    {
+      "id": "stone",
+      "base_color": [
+        0.62,
+        0.59,
+        0.52,
+        1
+      ],
+      "metallic": 0,
+      "roughness": 0.55
+    },
+    {
+      "id": "roof",
+      "base_color": [
+        0.16,
+        0.32,
+        0.28,
+        1
+      ],
+      "metallic": 0,
+      "roughness": 0.55
+    }
+  ],
+  "geometries": [
+    {
+      "id": "terrace",
+      "type": "extrusion",
+      "outline": [
+        [
+          -4,
+          -3
+        ],
+        [
+          4,
+          -3
+        ],
+        [
+          4,
+          0
+        ],
+        [
+          1,
+          0
+        ],
+        [
+          1,
+          3
+        ],
+        [
+          -4,
+          3
+        ]
+      ],
+      "height": 0.2
+    },
+    {
+      "id": "column",
+      "type": "cylinder",
+      "radius": 0.16,
+      "height": 2.8,
+      "segments": 12
+    },
+    {
+      "id": "canopy",
+      "type": "box",
+      "size": [
+        5,
+        0.15,
+        2
+      ]
+    }
+  ],
+  "entities": [
+    {
+      "id": "ground",
+      "label": "Ground",
+      "geometry": "terrace",
+      "material": "stone"
+    },
+    {
+      "id": "shelter",
+      "label": "Shelter",
+      "geometry": "canopy",
+      "material": "roof",
+      "transform": {
+        "translation": [
+          -1.3,
+          3.1,
+          -1.5
+        ]
+      }
+    }
+  ],
+  "views": [
+    {
+      "id": "overview",
+      "label": "Overview",
+      "position": [
+        8,
+        6,
+        9
+      ],
+      "target": [
+        0,
+        1,
+        0
+      ],
+      "up": [
+        0,
+        1,
+        0
+      ]
+    },
+    {
+      "id": "front",
+      "label": "Front inspection",
+      "position": [
+        0,
+        2,
+        10
+      ],
+      "target": [
+        0,
+        1,
+        0
+      ],
+      "up": [
+        0,
+        1,
+        0
+      ]
+    }
+  ],
+  "instance_sets": [
+    {
+      "geometry": "column",
+      "material": "stone",
+      "parent": "ground",
+      "instances": [
+        {
+          "id": "column-1",
+          "label": "Column 1",
+          "transform": {
+            "translation": [
+              -3.5,
+              1.6,
+              -2.2
+            ]
+          }
+        },
+        {
+          "id": "column-2",
+          "label": "Column 2",
+          "transform": {
+            "translation": [
+              0.8,
+              1.6,
+              -2.2
+            ]
+          }
+        },
+        {
+          "id": "column-3",
+          "label": "Column 3",
+          "transform": {
+            "translation": [
+              -3.5,
+              1.6,
+              -0.8
+            ]
+          }
+        },
+        {
+          "id": "column-4",
+          "label": "Column 4",
+          "transform": {
+            "translation": [
+              0.8,
+              1.6,
+              -0.8
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

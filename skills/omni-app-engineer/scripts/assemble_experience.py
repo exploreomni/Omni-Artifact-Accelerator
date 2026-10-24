@@ -161,6 +161,32 @@ def build(root, manifest_path, output):
     destination = local_path(root, output)
     need(destination.parent.is_dir() and not destination.exists(), "output must be a new directory under an existing parent")
     html, receipt = assemble(root, manifest_path)
+    # Keep exact initial bytes before any review edits, including on subsequent builds.
+    history = local_path(root, 'evidence/assembled-history')
+    history.mkdir(mode=0o700, parents=True, exist_ok=True)
+    snapshot = local_path(root, 'evidence/assembled-history/' + receipt['output']['sha256'] + '.html')
+    if snapshot.exists():
+        need(snapshot.is_file() and snapshot.read_bytes() == html.encode('utf-8'), 'retained assembly differs')
+    else:
+        with snapshot.open('xb') as stream:
+            stream.write(html.encode('utf-8'))
+        snapshot.chmod(0o600)
+    first = local_path(root, 'evidence/assembled-history/first.json')
+    if not first.exists():
+        with first.open('x', encoding='utf-8') as stream:
+            stream.write(json.dumps({'path': snapshot.relative_to(root).as_posix(),
+                                     'sha256': receipt['output']['sha256'], 'assembly': receipt}, indent=2) + '\n')
+        first.chmod(0o600)
+    else:
+        need(first.is_file() and first.stat().st_size <= MAX_FILE, 'first assembly record unavailable')
+        original = decode(first.read_bytes())
+        need(type(original) is dict and type(original.get('sha256')) is str and
+             re.fullmatch(r'[a-f0-9]{64}', original['sha256']), 'invalid first assembly record')
+        retained = local_path(root, original.get('path'))
+        need(retained.is_file() and retained.stat().st_size <= MAX_OUTPUT and
+             hashlib.sha256(retained.read_bytes()).hexdigest() == original['sha256'], 'first assembly bytes changed')
+    receipt['retained_candidate'] = snapshot.relative_to(root).as_posix()
+    receipt['first_candidate_record'] = first.relative_to(root).as_posix()
     destination.mkdir(mode=0o700)
     created = []
     try:

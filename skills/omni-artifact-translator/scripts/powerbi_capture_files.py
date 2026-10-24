@@ -234,15 +234,22 @@ def no_links(path):
 
 def read_file(path, maximum=MAX_FILE):
     path = no_links(path)
-    fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW)
-    with os.fdopen(fd, "rb") as stream:
-        before = os.fstat(stream.fileno())
+    # Nonblocking open lets fstat reject FIFOs before waiting for a writer.
+    fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+    try:
+        before = os.fstat(fd)
         need(
             stat.S_ISREG(before.st_mode) and before.st_size <= maximum,
             "file_size_or_type",
         )
-        raw = stream.read(maximum + 1)
-        after = os.fstat(stream.fileno())
+        stream = os.fdopen(fd, "rb")
+        fd = None  # Ownership transfers only after fdopen succeeds.
+        with stream:
+            raw = stream.read(maximum + 1)
+            after = os.fstat(stream.fileno())
+    finally:
+        if fd is not None:
+            os.close(fd)
     need(
         len(raw) == before.st_size <= maximum
         and before.st_mtime_ns == after.st_mtime_ns,

@@ -55,3 +55,9 @@ After an authorized write, compare exact candidate/readback and unchanged query/
 ## Official-source note
 
 Inspected **2026-10-22**: [Omni Apps](https://docs.omni.co/visualize-present/apps) documents workbook-query-fed Apps, sandboxing and a draft editor with a live preview. [Document CLI commands](https://docs.omni.co/developers/cli/commands/documents) labels App content commands **alpha**, describes draft-scoped writes and distinguishes published reads. These reviewed pages do **not** specify the exact browser callback envelope, row keys, status vocabulary or SDK methods used by a particular starter. Qualify those separately; this guide's synthetic rows and OAA controller are not vendor API documentation. Recheck current tools before execution.
+
+## Executable offline qualification
+
+Before substantial composition or a data-boundary repair, use the [offline native-query probe](native-query-qualification.md) on retained source/query captures and independently pinned population/aggregate evidence. It checks requested versus observed source identity, exact named query and scope, usable field metadata, strict row/NULL types, unique grain and cap/completeness. It cannot authenticate captures, infer the original brief, execute native callbacks or certify rendering. A raw SQL/export success with empty metadata is a qualification gap, not a valid native adapter. Keep modeled fields and the explicit requested database/schema together; never repair this by silently narrowing the cohort or switching source catalogs.
+
+The same guide records bounded in-development payload observations and the smallest isolated workbook query-view proposal path. Requalify current tools before writes; no shared connection or model modification is implied. Unknown request correlation requires serialized refresh/query generations and an explicit terminal/recovery path, not invented callback correlation.

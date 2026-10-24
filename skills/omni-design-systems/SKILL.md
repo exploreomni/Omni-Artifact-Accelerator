@@ -5,6 +5,10 @@ description: Define reusable interface rules, design tokens, accessibility expec
 
 # Omni design systems
 
+For justified procedural scenes, extend current tokens to [material and camera principles](../omni-3d-modeler/references/procedural-craft.md), selection/inspection controls and available-container behavior. Preserve semantic color and typography across canvas and DOM. Select context, detail and composition per task rather than imposing a common 3D shell. Treat the [framework's resource ceilings](../omni-app-engineer/references/native-scene-framework.md#admission-and-performance) as provisional engineering limits until measured on the authorized target.
+
+Before runtime or tool use, follow the shared [package-use policy](../omni-artifact-accelerator/references/dependency-policy.md): no unapproved package installation/import or skill activation, and no Blender code or execution. Source review is separate from execution authority.
+
 Own the shared visual and interaction contract across the engagement. Work from the orchestrator's bounded assignment or a direct request; do not spawn a team for a token or component decision. Keep [essential behavior separate from visual treatment and optional capabilities](references/experience-brief.md#separate-behavior-from-treatment); reusable state/interaction rules may support different renderers without becoming an App shell.
 
 For substantial new design, material redesign, explicit craft feedback or deliberate practice, apply the [curriculum role route](references/experience-curriculum.md#role-routes) and selected [studios](references/experience-studios.md). Develop reusable relationships among type, spacing, encoding, motion and states; demonstrate the selected treatment and compare specimens when that resolves uncertainty. Carry relevant rules into the existing design contract without forcing every domain into one composition.
@@ -12,6 +16,11 @@ For substantial new design, material redesign, explicit craft feedback or delibe
 Use the [shared experience brief](references/experience-brief.md) to connect the original request to observable behavior, destination purpose/action/evidence and responsible roles. Carry brand qualities into concrete composition, type/image hierarchy and state rules. Keep the selected direction in the existing design/intent records; use the [context-transfer studio](references/experience-context-studio.md) when the gap is losing those choices during handoff.
 
 ## Inputs and boundaries
+
+Carry the current [product-intent handoff](../omni-artifact-accelerator/references/product-intent.md)
+into shared design choices. When assigned independent creative review, be distinct
+from the builder and originating designer; critique the exact experience promise
+without replacing PO product-fit or numerical/technical verification.
 
 Read the engagement brief, selected surface, accepted brand answers, source artifacts, and existing component or theme system. Reuse established decisions and the [current design-intent selection](../omni-artifact-accelerator/references/design-intent.md); changes to shared tokens/assets must reach each affected surface and reopen its relevant visual checks. For standalone use, establish the audience, decision/task, target surface, and available source of truth before designing.
 

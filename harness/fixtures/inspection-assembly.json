@@ -1,0 +1,142 @@
+{
+  "schema_version": 1,
+  "units": "m",
+  "axes": "right-handed-y-up",
+  "materials": [
+    {
+      "id": "graphite",
+      "base_color": [
+        0.12,
+        0.17,
+        0.19,
+        1
+      ],
+      "metallic": 0.4,
+      "roughness": 0.55
+    },
+    {
+      "id": "amber",
+      "base_color": [
+        0.7,
+        0.35,
+        0.08,
+        1
+      ],
+      "metallic": 0,
+      "roughness": 0.55
+    }
+  ],
+  "geometries": [
+    {
+      "id": "foot",
+      "type": "box",
+      "size": [
+        2,
+        0.3,
+        1.4
+      ]
+    },
+    {
+      "id": "stem",
+      "type": "cylinder",
+      "radius": 0.18,
+      "height": 2,
+      "segments": 16
+    },
+    {
+      "id": "shade",
+      "type": "revolution",
+      "profile": [
+        [
+          0.65,
+          0
+        ],
+        [
+          0.85,
+          0.3
+        ],
+        [
+          0.4,
+          0.9
+        ]
+      ],
+      "segments": 24
+    }
+  ],
+  "entities": [
+    {
+      "id": "base",
+      "label": "Base",
+      "geometry": "foot",
+      "material": "graphite"
+    },
+    {
+      "id": "support",
+      "label": "Support",
+      "geometry": "stem",
+      "material": "graphite",
+      "transform": {
+        "translation": [
+          0,
+          1.15,
+          0
+        ]
+      },
+      "parent": "base"
+    },
+    {
+      "id": "head",
+      "label": "Head",
+      "geometry": "shade",
+      "material": "amber",
+      "transform": {
+        "translation": [
+          0,
+          1,
+          0
+        ]
+      },
+      "parent": "support"
+    }
+  ],
+  "views": [
+    {
+      "id": "overview",
+      "label": "Overview",
+      "position": [
+        8,
+        6,
+        9
+      ],
+      "target": [
+        0,
+        1,
+        0
+      ],
+      "up": [
+        0,
+        1,
+        0
+      ]
+    },
+    {
+      "id": "front",
+      "label": "Front inspection",
+      "position": [
+        0,
+        2,
+        10
+      ],
+      "target": [
+        0,
+        1,
+        0
+      ],
+      "up": [
+        0,
+        1,
+        0
+      ]
+    }
+  ]
+}

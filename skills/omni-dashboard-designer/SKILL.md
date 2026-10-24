@@ -5,6 +5,8 @@ description: Design or redesign native Omni dashboard layouts, chart specificati
 
 # Omni dashboard designer
 
+Before runtime or tool use, follow the shared [package-use policy](../omni-artifact-accelerator/references/dependency-policy.md): no unapproved package installation/import or skill activation, and no Blender code or execution. Source review is separate from execution authority.
+
 Own native dashboard composition and analytical usability. Support a Data Model Accelerator handoff, a migration inventory, or a standalone dashboard brief without requiring the other modes.
 
 For substantial new design, material redesign, explicit craft feedback or deliberate practice, apply the [curriculum role route](../omni-design-systems/references/experience-curriculum.md#role-routes) for composition, encoding and editorial sequence. Resolve a chart storyboard showing how the reading path, hierarchy, chart anatomy and exact-value access answer the analytical question; compare relevant [pattern alternatives](../omni-design-systems/references/experience-patterns.md) instead of defaulting to a card grid.
@@ -18,6 +20,11 @@ For Tableau migrations, apply [Tableau mapping](references/tableau-mapping.md): 
 For Power BI, apply [Power BI mapping](references/powerbi-mapping.md). Preserve page/visual identity, category/measure roles, visual groups, slicers, bookmarks, drill/tooltip dependencies and custom-visual gaps. Keep a source-faithful composition and an explicit improvement ledger. Verify control behavior separately from the chart's appearance; a query filter alone does not recreate a slicer. Reuse company website and approved brand context.
 
 ## Inputs
+
+Use the current [product-intent handoff](../omni-artifact-accelerator/references/product-intent.md),
+including on direct intake. Reuse answers and route material gaps to the product owner.
+Own the supported dashboard composition and return coverage/alternatives; neither
+product priorities nor App examples prescribe a dashboard template.
 
 Read the audience, decisions, metric definitions, approved topics/fields, filter and security scope, source artifact inventory where present, brand contract, and [Omni capabilities](../omni-artifact-accelerator/references/omni-capabilities.md). Confirm whether the requested output is native dashboard, native App, or an explicitly selected external surface; preserve a native-dashboard constraint. Read the [current design intent](../omni-artifact-accelerator/references/design-intent.md), including required brand choices and selected assets, even on direct invocation. Resolve only missing consequential choices; do not silently omit a logo or reopen unrelated branding for a query/label correction.
 

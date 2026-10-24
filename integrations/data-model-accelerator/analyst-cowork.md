@@ -1,5 +1,15 @@
 # Optional analyst cowork integration
 
+The frontend [Product Owner](../../skills/omni-product-owner/SKILL.md) can recover
+audience, intended outcomes and experience priorities from the existing engagement.
+It returns current intent/North Star pins to the analyst orchestrator. It does not
+replace DMA's semantic authority, alter its version-1 assignment envelope or add a
+backend `product-owner` role. Translate a real model gap through the existing
+backend-handoff contract with independent expectations; keep frontend intent and
+product-fit recommendations on the frontend side of that exchange.
+
+Installation, activation and upstream runtime imports follow the [package-use policy](../../skills/omni-artifact-accelerator/references/dependency-policy.md). Read this reference in the source checkout while public activation is blocked. The installed-path instructions below apply only after a qualified host performs separately authorized installation; they never authorize manual copying or loading a cached dependency.
+
 Use the separately installed Omni Artifact Accelerator when the selected scope includes native Omni dashboards, native Omni Apps, or analyst experience design. DMA owns warehouse and semantic work; the analyst orchestrator owns frontend requirements, query consumers, UX and downstream QA. The companion is optional: preserve `model_only`, `model_semantic` and `full_dashboard` exactly. Semantic completion does not satisfy full dashboard delivery.
 
 For the executable opt-in path, see [DMA frontend continuation](../../skills/omni-backend-handoff/references/dma-continuation.md). The installed `capabilities.json` enables protocol discovery; `continuation.py initiate` validates copied scope and bytes, imports a candidate once and resumes exact retained work. It emits an instruction for the actual host rather than claiming a worker was dispatched. Keep `model_semantic` follow-ups independent unless the user separately changes the saved backend scope.
@@ -68,3 +78,17 @@ This integration provides skill routing and an optional supporting-evidence adap
 Domo/Sigma migrators retain capture, runtime registrations and native write controls. Imported approvals, store receipts and terminal decisions remain upstream claims unless the original authoritative runtime verifies them. Local frontend coverage, native creation/behavior, effective access, business acceptance, operations and publication remain distinct. Do not clear a full-dashboard obligation merely because a candidate receipt is recorded.
 
 For DMA final assembly, retain the OAA package as downstream evidence and register selected inert summary, manifest, crosswalk and QA files in the existing `review.artifacts` inventory with actual hashes, categories, audiences and dependencies. Link them from the maintained DMA design/setup narrative and run the existing finalizer. DMA excludes nested archives, active App HTML/JavaScript/CSS and extra `START_HERE` files: keep App source in the OAA delivery, with an explicit external-dependency guide and version/hash references in DMA. Do not disguise active code as documentation or bypass the finalizer. Missing native/access/business evidence remains pending even when all selected local files are packaged.
+# Execution and role compatibility
+
+OAA's [execution procedure](../../skills/omni-artifact-accelerator/references/execution-workflow.md)
+records frontend startup and responsibility ownership without replacing this
+versioned handoff. App-stage data-storyteller assignments are local frontend work;
+older companion role validators may not accept them. Do not send those assignments
+as warehouse work or silently change a DMA checkout to match. Continue exchanging
+the existing curated semantic requests/responses and verify consumer compatibility.
+
+Native binding gaps do not automatically require a warehouse rebuild. First prove
+the requested database, model inventory, field metadata and query population. If a
+scoped workbook query-view resolves catalog visibility within authorized scope,
+preserve that isolation. Actual missing grain, measures or definitions go to DMA
+with independent expected cases. Do not change the population to satisfy a row cap.

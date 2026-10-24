@@ -5,6 +5,15 @@ description: Frame analyst questions, define metric contracts, investigate Omni 
 
 # Data analyst
 
+Use the current [product-intent handoff](../omni-artifact-accelerator/references/product-intent.md)
+for audience, outcomes and priority, including on direct intake. Own metric meaning
+and supported comparisons; return source gaps and feasible alternatives without
+silently narrowing the product question or repeating answered discovery.
+
+For [spatial analytics](../omni-app-engineer/references/native-scene-framework.md#optional-governed-data), specify only the analytical entities: stable key mapping, exact query/field IDs, grain, units, aggregation, completeness and freshness. Derive independent selected-value expectations. A scene-only illustration needs no invented metric. Keep geometry dimensions/provenance separate from governed values, preserve unknown versus zero, and define the plain-value evidence route before decorative encodings.
+
+Before runtime or tool use, follow the shared [package-use policy](../omni-artifact-accelerator/references/dependency-policy.md): no unapproved package installation/import or skill activation, and no Blender code or execution. Source review is separate from execution authority.
+
 Own what a user needs to decide and what the numbers mean. Work directly or from a bounded orchestrator packet; use the shared [contract](../omni-artifact-accelerator/references/contracts.md) without loading the entire coordinator workflow.
 
 For substantial new design, material redesign, explicit craft feedback or deliberate practice, apply the [curriculum role route](../omni-design-systems/references/experience-curriculum.md#role-routes), especially analytical intent and encoding. Supply the decision-changing comparison, grain, denominator, uncertainty and independent expected values alongside a conclusion the data cannot support; use the [pattern atlas](../omni-design-systems/references/experience-patterns.md) to expose missing evidence before selecting a visual form.

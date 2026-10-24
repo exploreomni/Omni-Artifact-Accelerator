@@ -1,6 +1,8 @@
 """Portable local assignment and review contracts. No dispatch or release authority.
 
-Kept byte-identical in DMA and OAA so either installed skill works independently.
+OAA extends the shared role vocabulary with its optional spatial specialist.
+The common packet shape is unchanged; older DMA role consumers may reject the
+new role, which must stay within the frontend App stage.
 Host receipts are observations, not authenticated execution or a sandbox.
 """
 import copy
@@ -13,17 +15,17 @@ SHA = re.compile(r'[a-f0-9]{64}')
 ALIASES = {'omni_modeler': 'semantic_modeler', 'semantic_architect': 'semantic_modeler',
            'independent_qa': 'independent_reviewer'}
 STAGE_ROLES = {
-    'discovery': {'source_specialist', 'catalogue_specialist', 'artifact-translator', 'data-analyst'},
+    'discovery': {'source_specialist', 'catalogue_specialist', 'artifact-translator', 'data-analyst', 'product-owner'},
     'design': {'warehouse_architect', 'independent_reviewer', 'validation_analyst', 'data-analyst'},
     'implementation': {'analytics_engineer', 'app-engineer', 'bi-engineer'},
     'semantic': {'semantic_modeler', 'bi-engineer'},
     'validation': {'validation_analyst', 'independent_reviewer', 'qa-analyst'},
     'packaging': {'documentation_specialist', 'data-storyteller'},
     'migration_plan': {'migration_project_manager', 'backend-handoff'},
-    'dashboard': {'dashboard-designer', 'bi-engineer', 'data-analyst', 'artifact-translator',
+    'dashboard': {'product-owner', 'dashboard-designer', 'bi-engineer', 'data-analyst', 'artifact-translator',
                   'branding', 'design-systems', 'data-storyteller', 'qa-analyst'},
-    'app': {'app-designer', 'app-engineer', 'bi-engineer', 'motion-designer', 'branding',
-            'design-systems', 'data-analyst', 'qa-analyst'},
+    'app': {'product-owner', 'app-designer', 'app-engineer', '3d-modeler', 'bi-engineer', 'motion-designer', 'branding',
+            'design-systems', 'data-analyst', 'data-storyteller', 'qa-analyst'},
 }
 FIELDS = {'schema_version', 'task_id', 'domain_id', 'stage', 'role', 'scope_ids', 'objective',
           'outputs', 'acceptance', 'input_bindings', 'dependencies', 'unknowns', 'authoring_mode'}

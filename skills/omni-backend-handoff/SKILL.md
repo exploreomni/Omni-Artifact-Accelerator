@@ -5,6 +5,10 @@ description: Coordinate versioned requirements and candidate responses between t
 
 # Frontend and backend cowork
 
+For [spatial analytics](../omni-app-engineer/references/native-scene-framework.md#optional-governed-data), reuse this same versioned exchange for missing entity keys, fields, grain, scope and numerical expectations. Return only the semantic gap; scene-only illustrations need no backend handoff. Keep shape/material/provenance with the modeler and exact approved query/mapping pins with the frontend. A semantic change invalidates affected data/access evidence without silently replacing the selected geometry or brand direction.
+
+Before runtime or tool use, follow the shared [package-use policy](../omni-artifact-accelerator/references/dependency-policy.md): no unapproved package installation/import or skill activation, and no Blender code or execution. Source review is separate from execution authority.
+
 Use either from the analyst orchestrator or from Data Model Accelerator. The analyst owns decisions, experience and consumption; DMA owns warehouse/semantic design and implementation within its stage gates. Keep one owner per file/object, one active semantic baseline per analyst engagement, and one shared decision record. Do not make the user repeat discovery or coordinate workers manually.
 
 For substantial new design, material redesign, explicit craft feedback or deliberate practice, apply the [curriculum role route](../omni-design-systems/references/experience-curriculum.md#role-routes) to the experience's actual data dependencies. Translate a [chosen encoding or interaction](../omni-design-systems/references/experience-patterns.md) into the minimum missing grain, stable identity or measure, with affected consumers and independent expectations in the existing bounded request; leave craft choices with the frontend.

@@ -1,5 +1,7 @@
 # Workflow and ownership
 
+The shared [package-use policy](dependency-policy.md) applies to every route and worker. Routing a responsibility grants no package, runtime, installation or publication authority.
+
 ## Select the route
 
 | Entry | First work | Semantic dependency | End product |
@@ -17,10 +19,12 @@ Apps suit guided tools and bespoke interactions. Dashboards suit monitoring, com
 | Role / skill | Owns | Produces | Must not decide alone |
 | --- | --- | --- | --- |
 | Orchestrator / omni-artifact-accelerator | Scope, decisions, dependency order and final package | project, task packets, integrated review | Business truth, permission grants, publication |
+| Product owner / omni-product-owner | Audience, outcomes, priorities, experience promise and product fit | Private discovery evidence, canonical intent proposals, derived North Star and bounded handoff | Composition, metric truth, independent QA, dispatch or permission grants |
 | Data analyst / omni-data-analyst | Questions, populations, interpretation, expected results | metric contract, analysis, numerical cases | Redefining a governed metric |
 | BI engineer / omni-bi-engineer | Omni query/field bindings, filters, controls, dashboard candidate | query contract, crosswalk, content candidate | Warehouse redesign or access widening |
 | QA analyst / omni-qa-analyst | Independent expected behavior and findings | QA matrix, evidence, regression report | Approving its own implementation |
 | App engineer / omni-app-engineer | Native app code and runtime integration | app code, query binding manifest, runbook | Inventing SDK methods or backend routes |
+| 3D modeler / omni-3d-modeler | Task-justified geometry, units, materials, hierarchy and stable identity | model brief, editable SceneSpec, geometry/asset handoff | Installing/loading runtimes, approving asset promotion, redefining metrics or inventing verified dimensions |
 | App designer / omni-app-designer | Task flow, states, responsive layout | screen and interaction specification | Changing data semantics |
 | Dashboard designer / omni-dashboard-designer | Information hierarchy and supported visual behavior | tile/layout/control specification | Substituting unsupported native behavior |
 | Data storyteller / omni-data-storyteller | Narrative, annotations and uncertainty | evidence-linked story and copy | Causal claims from association |
@@ -31,6 +35,13 @@ Apps suit guided tools and bespoke interactions. Dashboards suit monitoring, com
 | Backend handoff / omni-backend-handoff | Frontend/backend request, response and impact reconciliation | pinned request, candidate exchange, consumer impact report | Model approval, production authorization, or backend implementation |
 
 Workers can run concurrently when their inputs are stable. Analyst and brand discovery can overlap; app/dashboard designs share a frozen metric and token contract. BI bindings precede data wiring. Motion consumes named interaction states. QA can define tests early from original sources, then test final outputs independently. Coordinator resolves conflicts with explicit decisions rather than a majority vote.
+
+For substantial work, use the [product-owner front door](product-intent.md) before
+federating requirements. It recovers answers, resolves material gaps and returns
+intent to the orchestrator; it does not dispatch another team. Brand/metric specialists
+ask only their unresolved questions through shared intake. Focused repairs bypass
+unnecessary discovery. The canonical intent and its checked North Star travel with
+bounded packets; specialists return coverage, conflicts and feasible alternatives.
 
 ## Experience continuity
 
@@ -46,7 +57,7 @@ Keep one trace in the design/review records: `user requirement → selected comp
 
 For a new experience or material redesign, the preferred design loop is **brief → distinct concepts → reasoned selection → prototype the critical task → observe → revise**. Use the [ideation playbook](../../omni-design-systems/references/ideation-playbook.md), the selected designer's pattern library and [usability protocol](../../omni-qa-analyst/references/usability-testing.md). Adapt the effort to the uncertainty; a known layout correction or faithful migration does not require a new concept exercise. Unavailable participants leave an explicit testing gap while authorized work continues.
 
-Designers own alternatives, task structure and composition; the analyst owns numerical meaning and independent expectations; QA owns observations and findings. The app/BI engineer reviews feasibility before promising behavior. A needed backend field or definition follows the existing DMA handoff; a visual preference does not justify new warehouse work. Link decisions and evidence into existing working contracts and `START_HERE.md` rather than creating a parallel engagement lifecycle.
+The PO owns product priorities and fit; designers own alternatives, task structure and composition; the analyst owns numerical meaning and independent expectations; QA owns correctness observations and findings. A creative reviewer different from the builder and originating designer critiques the exact candidate. The app/BI engineer reviews feasibility before promising behavior, preserving the requested outcome when proposing a supported alternative. A needed backend field or definition follows the existing DMA handoff; a visual preference does not justify new warehouse work. Link decisions and evidence into existing working contracts and `START_HERE.md` rather than creating a parallel engagement lifecycle.
 
 - **Discover:** decision, audience, sources, target, unknowns. Inventory can continue without full business acceptance.
 - **Specify:** metrics, data/query contract, branding, screens/tiles, source-to-target facets, acceptance cases. Record review of consequential choices.
@@ -84,3 +95,9 @@ Keep the analyst in control with small choices and a current artifact. Reuse alr
 ## First-delivery integration
 
 For substantial App work, use [requirement coverage and the first-delivery loop](first-delivery.md) before scaling the implementation. `plan` assigns applicable capabilities to existing roles; `experience-check` checks declared requirement/destination coverage, not visual quality. Bring the first assembled journey back to the designer, then review every consequential destination. Retain runtime limitations and unchanged migration/DMA authority.
+
+The first slice must represent the intended ambition, not only a convenient query
+and record drill. Product-fit recommendation, independent creative critique and
+correctness remain separate. Under CLI-only constraints, fix source-observable
+requirement loss while leaving rendered quality unobserved; more structural checks
+cannot close that lane. No fixed layout or extra approval round is required.

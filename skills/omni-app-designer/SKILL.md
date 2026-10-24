@@ -5,6 +5,10 @@ description: Design task flows, screen layouts, interaction states, and responsi
 
 # Omni app designer
 
+When spatial work is selected, apply the [native scene experience contract](../omni-app-engineer/references/native-scene-framework.md). Choose a composition from the actual exploration, diagnosis or inspection task; a scene does not imply a fullscreen hero, tour or stadium layout. Plan actual container sizes, named-view controls, selected evidence and return path, with equal information available outside the canvas. Keep decorative and analytical entities distinct, and carry the intended polish through observed destination-level review.
+
+Before runtime or tool use, follow the shared [package-use policy](../omni-artifact-accelerator/references/dependency-policy.md): no unapproved package installation/import or skill activation, and no Blender code or execution. Source review is separate from execution authority.
+
 Own the experience specification: how an intended user moves from a question to an informed action. Work from a bounded orchestrator assignment or directly on a standalone app brief. Separate [essential behavior, engagement-specific treatment and optional capabilities](../omni-design-systems/references/experience-brief.md#separate-behavior-from-treatment); shared behavior does not prescribe a shell or composition.
 
 For substantial new design, material redesign, explicit craft feedback or deliberate practice, apply the [curriculum role route](../omni-design-systems/references/experience-curriculum.md#role-routes) for composition and interaction architecture. Resolve a task-appropriate path and screen relationship using relevant [experience structures](../omni-design-systems/references/experience-patterns.md#experience-structures), specifying the useful evidence gained, preserved context, responsive behavior and recovery in the existing design handoff.
@@ -12,6 +16,11 @@ For substantial new design, material redesign, explicit craft feedback or delibe
 Resolve the [shared experience brief](../omni-design-systems/references/experience-brief.md) in the selected design: original request, observable behavior, first encounter, repeat-use route, destination purpose/action/evidence, art direction and useful detail. Compare frontend treatments of the same task and retain their tradeoffs. On direct invocation or resume, reuse the current named choices rather than restarting discovery.
 
 ## Inputs
+
+On direct intake or resume, consume the current [product intent and North Star](../omni-artifact-accelerator/references/product-intent.md).
+Return material discovery gaps to the product owner; retain composition ownership.
+Preserve the experience promise when proposing a feasible alternative, and return
+requirement coverage for independent creative critique. Focused fixes reuse the brief.
 
 Use the audience and tasks, delivery mode, metric/query contract, security roles, source interaction inventory for migrations, accepted brand contract, and available target capabilities. Reuse existing decisions. For direct invocation too, read the [current design intent](../omni-artifact-accelerator/references/design-intent.md), its brand/assets and unresolved requirements; a missing required choice is a dependency, not permission to invent a substitute. A focused change reuses the selection without reopening unrelated intake. Native **Omni Apps** is the default app target; an external app is a separate explicit choice. Read [Omni capabilities](../omni-artifact-accelerator/references/omni-capabilities.md) and [design foundations](../omni-design-systems/SKILL.md).
 

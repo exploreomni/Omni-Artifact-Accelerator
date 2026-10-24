@@ -1,6 +1,6 @@
 # Omni Artifact Accelerator
 
-An analyst's sidekick for designing, building and reviewing **native Omni dashboards and native Omni Apps**. The package brings together 13 specialist skills, source migration readers and local workflow helpers so an AI agent can carry a business question through design, implementation and independent QA.
+An analyst's sidekick for designing, building and reviewing **native Omni dashboards and native Omni Apps**. The package brings together 15 specialist skills, source migration readers and local workflow helpers so an AI agent can carry a business question through design, implementation and independent QA.
 
 Start with an existing Omni model, bring an exported BI experience, or continue from the companion [Data Model Accelerator](https://github.com/exploreomni/Data-Model-Accelerator). Use only the specialists the task needs.
 
@@ -14,6 +14,50 @@ Start with an existing Omni model, bring an exported BI experience, or continue 
 
 This is a skill bundle for an agent host, not a standalone BI service. Skills define roles; the host runs the agent and supplies its tools. The local helpers manage files, evidence and bounded operations—they do not launch a permanent team of agents or connect accounts automatically.
 
+## Start in your agent host
+
+For **Claude Code**, read [CLAUDE.md](CLAUDE.md); for **Codex**, read [AGENTS.md](AGENTS.md).
+Both enter the same orchestrator. For **Claude or ChatGPT connected chat**, explicitly
+ask the host to retrieve the orchestrator and relevant sibling guidance:
+
+> Use the Omni Artifact Accelerator from this repository for my requested artifact.
+> Start with its orchestrator and execution entry procedure. Confirm which revision
+> and files you can read, preserve my original request, and assign experience,
+> branding, semantics, implementation and independent review responsibilities.
+> Use the product owner to recover my answers and resolve material product gaps,
+> then hand intent back to the orchestrator. Qualify the native data contract, build
+> and independently critique one representative journey, and report actual evidence
+> separately from unobserved behavior.
+
+A repository URL alone does not activate skills. Missing repository/tool access is
+a stated limitation, not permission to install anything. See the [execution procedure](skills/omni-artifact-accelerator/references/execution-workflow.md)
+for repository-only, installed and connected routes. No host-specific route has
+universal enforcement or implied qualification.
+
+The local `run-start`, `run-check`, `candidate-freeze` and `delivery-check` commands
+preserve source provenance, named responsibilities, first candidate bytes and
+current evidence. These augment existing intent and QA records. They do not run
+specialists, approve a dependency, or turn a published candidate into a polished,
+runtime-verified artifact. A host without local execution follows the same procedure
+and reports helper checks as unrun.
+
+## Start with product intent
+
+For substantial work, the [product owner](skills/omni-product-owner/SKILL.md) recovers
+existing answers and asks only material questions about audience, outcomes and the
+experience promise. It keeps attributable notes in the private engagement and hands
+prioritized requirements back to the orchestrator, which routes the work. Focused
+repairs reuse current intent without another interview.
+
+The readable **North Star** is generated from the existing selected design intent;
+it is not a second authoritative brief. `product-brief` creates its versioned view,
+and `product-check` detects stale or edited projections. See the
+[product-intent guide](skills/omni-artifact-accelerator/references/product-intent.md).
+Product-fit review, independent creative critique and correctness checks remain
+separate. Build an ambitious representative journey before expanding; unsupported
+technology must not silently reduce the intended outcome. No fixed visual template,
+new approval layer, active installation or visual certification is implied.
+
 ## Control quality without a fixed template
 
 The [control-craft guide](skills/omni-design-systems/references/control-craft.md) helps specialists choose buttons, selects, search, navigation and responsive columns by task. Shared behavior and semantic tokens preserve consistency; each engagement retains its own composition and brand treatment.
@@ -25,50 +69,61 @@ The [control-craft guide](skills/omni-design-systems/references/control-craft.md
 
 For example: “Build a branded operations App where I can search supplied records, narrow the scope, inspect evidence and return without losing my selection. Choose controls and layout for that task; preserve partial-data and access boundaries.” The same principles guide native dashboard filter placement and labels through supported settings; custom App CSS is not a dashboard extension.
 
+## Model objects and environments
+
+The [3D specialist](skills/omni-3d-modeler/SKILL.md) and [eight-module curriculum](skills/omni-design-systems/references/3d-curriculum.md) support product inspection, fictional venues, buildings, vehicles and operational systems through task-driven geometry and interaction. They do not impose a stadium, brand, camera tour or page template.
+
+Try: “Design an illustrative equipment inspection App using our governed asset IDs. Compare a useful spatial treatment with a simpler diagram. Preserve exact values, keyboard access and missing-data states. Prepare the model brief and bounded original SceneSpec; do not acquire packages or execute customer assets.”
+
+The separate [modeling harness](harness/README.md) supplies original procedural geometry, strict untextured GLB validation, a dependency-free WebGL viewer and a portable data/state adapter. Three synthetic fixtures demonstrate an assembly, courtyard and material-transfer environment. Geometry source and structural checks are implemented; **host isolation, asset promotion, native integration and rendered visual qualification remain pending**. Execution fails closed until an approved isolated host exists. The harness is not installed with the skills.
+
+That optional off-browser harness is not required for every 3D App. The [execution-route guide](skills/omni-app-engineer/references/spatial-integration.md#select-the-execution-route) also supports original procedural scenes authored in Omni's native App sandbox, with reviewed code and target qualification. Loading external libraries or model assets still follows explicit package approval and resource policy.
+
+The [native procedural scene framework](skills/omni-app-engineer/references/native-scene-framework.md) includes original geometry and texture recipes, camera/session lifecycle, responsive host wiring, plain inspection controls and an optional governed-data bridge. Use it for an environment, product inspection or operational network without prescribing one App template. Decorative scenes need no dummy metrics. The Three.js adapter is **source only**: dependency acquisition/loading and native rendering remain unqualified and require exact approvals. Nothing installs or loads an engine automatically.
+
+Try: “Create an illustrative equipment inspection App using our existing brand and governed asset query. Give geometry stable part IDs, show exact readings outside the canvas, preserve the view on refresh, and make camera movement optional. Use the simplest useful spatial treatment and identify missing dimension or runtime evidence.” Follow the [native scene workflow](docs/HOW_TO.md#native-procedural-scene-workflow); unobserved outcomes remain unrun.
+
 ## Quick start
 
-These commands use a macOS/Linux shell. **Python 3.12 is the recommended, tested runtime.** You also need Git and an agent host that can read skills and local files. Node.js is optional for ordinary Python helper use; controller testing needs Node.js 18 or later. No npm setup is required.
+Use an existing approved Python runtime for source-only work. The package's earlier broad suite used Python 3.12 and Node.js; that history is not approval to install or load a runtime today. **No package installation, import, update or skill activation occurs without your explicit scoped sign-off. No Blender code or execution is permitted.** Read the [package-use policy](skills/omni-artifact-accelerator/references/dependency-policy.md).
 
-### 1. Get the package
+### 1. Review the source
+
+Obtain an authorized checkout, then run the original standard-library package checker:
 
 ```sh
-git clone https://github.com/exploreomni/Omni-Artifact-Accelerator.git
 cd Omni-Artifact-Accelerator
-python3.12 -m venv .venv
-. .venv/bin/activate
-python -m pip install -r requirements.txt
+python3 -I -S scripts/check_package.py
 ```
 
-The dependency file installs the pinned PyYAML version used for YAML source definitions. Keep customer data, tokens and engagement outputs outside this repository.
+`-I -S` prevents user/site package startup in this source-only path. It is not an OS sandbox. The checker does not need PyYAML. `requirements.txt` still records PyYAML 6.0.3 for optional YAML readers; it is neither an installation instruction nor a grandfathered approval. Keep customer data, tokens and outputs outside this repository.
 
-### 2. Install the skills
+For focused security validation, run `python3 -I -S -B scripts/validate_source.py`. It checks the reviewed local boundaries and records failures without installing packages or contacting a tenant. Read [security operations](docs/SECURITY.md) for exact CLI setup, parser limits, approval records and the separately blocked CI/3D activation gates.
 
-For Codex, preview the changes and then apply them:
+### 2. Preview skill installation
+
+For an existing approved host directory:
 
 ```sh
 OAA_SKILLS_DIR="$HOME/.codex/skills"
-mkdir -p "$OAA_SKILLS_DIR"
-python scripts/install_skills.py --destination "$OAA_SKILLS_DIR"
-python scripts/install_skills.py --destination "$OAA_SKILLS_DIR" --apply
+python3 -I -S scripts/install_skills.py --destination "$OAA_SKILLS_DIR"
 ```
 
-For another compatible host, set `OAA_SKILLS_DIR` to its **approved skill directory** and use the same commands. Keep all 13 sibling folders together so their shared references resolve. Copying files alone does not configure a host's tool access or skill discovery.
+Preview and `--verify` are read-only. **`--apply` is disabled** until a qualified host approval gate is supplied. Do not bypass it by copying into an active skills directory. Installation/update approval must cover the exact source and target; an agent-written approval flag is insufficient. All 15 sibling folders belong together once activation is authorized. See [installation and updates](docs/HOW_TO.md#installation-and-updates).
 
-Preview makes no installation changes. Apply installs missing skills, leaves identical copies unchanged and refuses conflicting or customized copies. Review the preview before applying; do not delete customizations to force an update. See [installation and updates](docs/HOW_TO.md#installation-and-updates).
-
-Refresh your host's skill discovery or start a new conversation, then invoke `$omni-artifact-accelerator` in a host that supports that syntax. Otherwise, ask the agent to read [the orchestrator skill](skills/omni-artifact-accelerator/SKILL.md) from this checkout.
+For source review, ask your agent to read [the orchestrator skill](skills/omni-artifact-accelerator/SKILL.md) in this checkout. This does not configure tools, install dependencies or grant native write access.
 
 ### 3. Create a local engagement
 
-From the repository root with the virtual environment active:
+From the repository root using the existing runtime. These local engagement commands use original source and the Python standard library:
 
 ```sh
-python skills/omni-artifact-accelerator/scripts/analyst_project.py --help
+python3 -I -S skills/omni-artifact-accelerator/scripts/analyst_project.py --help
 mkdir -p "$HOME/omni-artifact-runs"
 OAA_RUN="$HOME/omni-artifact-runs/operations-pilot"
-python skills/omni-artifact-accelerator/scripts/analyst_project.py init \
+python3 -I -S skills/omni-artifact-accelerator/scripts/analyst_project.py init \
   --output "$OAA_RUN" --name 'Operations pilot' --mode net-new --surface both
-python skills/omni-artifact-accelerator/scripts/analyst_project.py plan \
+python3 -I -S skills/omni-artifact-accelerator/scripts/analyst_project.py plan \
   --project "$OAA_RUN"
 ```
 
@@ -88,7 +143,7 @@ Give the usable App width **and height** when known, including space occupied by
 
 > Create a polished investigation App from our existing Omni model for regional operations leaders. Use our supplied company website and approved assets. Give returning users a direct path to investigate a change and inspect its evidence. Choose an appropriate visual direction, preserve data scope through navigation, and adapt to phone, laptop and wide screens. Reuse our prior answers; ask one short batch only for material missing context. Build and critique a complete journey before expanding it, then review every working destination. Keep unavailable runtime capabilities explicit. Prepare the candidate in our existing development workflow.
 
-The [first-delivery workflow](skills/omni-artifact-accelerator/references/first-delivery.md) turns that brief into named behavior, owners and dependencies. The agent refines the result internally; a single prompt does not mean a single generation. `experience-check` reports declared coverage and `plan` routes capabilities to existing roles. The App engineer can load an [advanced visualization module](skills/omni-app-engineer/references/advanced-visualization.md) for custom scenes. It is conditional, not a requirement to use 3D or add more agents.
+The [first-delivery workflow](skills/omni-artifact-accelerator/references/first-delivery.md) turns that brief into named behavior, owners and dependencies. The agent refines the result internally; a single prompt does not mean a single generation. `experience-check` reports declared coverage and `plan` routes capabilities to existing roles. The App engineer can load an [advanced visualization module](skills/omni-app-engineer/references/advanced-visualization.md) for custom scenes. Actual object or environment modeling routes to `omni-3d-modeler` through the optional `spatial-modeling` capability. Neither custom visualization nor a premium brief automatically requires 3D.
 
 A new design review checks the selected destinations, applicable contexts and journeys against the full declared scope. A polished opening cannot hide an unreviewed working area. Focused edits report their bounded scope; historical reviews without these bindings remain readable with destination coverage unassessed. The checker tracks evidence coverage, while actual rendered critique establishes visual observations.
 
@@ -98,7 +153,8 @@ Reusable behavior does not impose a visual template. The [interaction controller
 
 > Build a useful analytical experience for our stated audience and task. Choose the composition from our data and brand requirements; reuse interaction mechanics where helpful. Record why the chosen form fits. Compare alternatives only where they resolve uncertainty, and review the actual implementation. An existing example is guidance, not the required layout.
 
-Before evaluating a new package version, verify the installed files:
+For an installed-skill evaluation, verify the installed files. For a repository-only
+blind test, use its working-tree manifest and do not consult installed copies:
 
 ```sh
 python scripts/install_skills.py --destination "$OAA_SKILLS_DIR" --verify
@@ -130,14 +186,16 @@ For migrations, choose the documented source path before exporting or running an
 
 Read [parser coverage](docs/parser-coverage.md) for exact formats and limitations. A supported reader is not a universal chart or formula converter. Missing source objects, custom visualizations, interactions and security dependencies remain visible work.
 
-## The 13 roles
+## The 15 roles
 
 | Skill | Owns |
 | --- | --- |
 | `omni-artifact-accelerator` | Orchestration, shared scope, decisions and integrated handoff |
+| `omni-product-owner` | Adaptive discovery, audience/outcomes, prioritized experience intent and product-fit recommendation |
 | `omni-data-analyst` | Metric meaning, investigation and independent expected results |
 | `omni-bi-engineer` | Governed query bindings, controls and native dashboard construction |
 | `omni-app-engineer` | Native App implementation and runtime behavior |
+| `omni-3d-modeler` | Original geometry, scale, materials, hierarchy and stable spatial identity |
 | `omni-app-designer` | Task flows, screens, interaction states and responsive behavior |
 | `omni-dashboard-designer` | Layout, chart selection, hierarchy and exploration |
 | `omni-qa-analyst` | Independent numerical, interaction, visual, access and performance checks |
@@ -152,7 +210,7 @@ Each specialist can also be invoked directly. Design guidance draws from officia
 
 ## Develop distinctive data experiences
 
-The [Data Experience Design Studio](skills/omni-design-systems/references/experience-curriculum.md) gives all 13 roles a shared curriculum for analytical judgment, art direction, advanced visual encoding, storytelling, dashboard composition, App interactions, motion, branding, implementation and critique. It teaches agents through worked choices and revision instead of prescribing one house layout.
+The [Data Experience Design Studio](skills/omni-design-systems/references/experience-curriculum.md) provides a shared curriculum for analytical judgment, art direction, advanced visual encoding, storytelling, dashboard composition, App interactions, motion, branding, implementation and critique. It teaches agents through worked choices and revision instead of prescribing one house layout.
 
 The installed [experience brief](skills/omni-design-systems/references/experience-brief.md) carries quality expectations into named design choices, first/returning-use journeys and specialist handoffs. Try the [context-transfer studio](skills/omni-design-systems/references/experience-context-studio.md) and its [interactive synthetic specimen](skills/omni-design-systems/assets/experience-context-studio.html) to compare three frontend treatments of the same library investigation. These are original local teaching artifacts, not native Omni content or a required house layout.
 

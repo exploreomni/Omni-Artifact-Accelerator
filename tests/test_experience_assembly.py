@@ -54,6 +54,10 @@ class ExperienceAssemblyTests(unittest.TestCase):
             self.assertNotIn("{{OAA:", html)
             self.assertEqual(hashlib.sha256(html.encode()).hexdigest(), result["output"]["sha256"])
         self.assertNotEqual(first["output"]["sha256"], second["output"]["sha256"])
+        retained = json.loads((self.root / first['first_candidate_record']).read_text())
+        self.assertEqual(retained['sha256'], first['output']['sha256'])
+        (self.root / 'first/index.html').write_text('Changed by subsequent review')
+        self.assertEqual(hashlib.sha256((self.root / retained['path']).read_bytes()).hexdigest(), retained['sha256'])
 
     def test_frozen_inputs_and_existing_output_are_not_overwritten(self):
         manifest = self.manifest()
@@ -107,7 +111,7 @@ class ExperienceAssemblyTests(unittest.TestCase):
             A.assemble(self.root, "bad.json")
 
     def test_cli_builds_new_local_artifact_only(self):
-        result = subprocess.run([sys.executable, str(SCRIPT), "--project", str(self.root),
+        result = subprocess.run([sys.executable, '-I', '-S', '-B', str(SCRIPT), "--project", str(self.root),
                                  "--manifest", self.manifest(), "--output", "cli"], capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stderr)
         report = json.loads(result.stdout)

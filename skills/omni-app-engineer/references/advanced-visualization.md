@@ -1,6 +1,6 @@
 # Advanced visualization, as a bounded engineering assignment
 
-Use when a selected requirement needs custom projection, camera interaction, an entity dossier, a calendar or other behavior beyond ordinary charts. Keep it under the App engineer; a complex component may get a bounded worker, not a new permanent role. Do not add a scene, animation, image or extra destination to faithful migration or simple work without a selected requirement.
+Use when a selected requirement needs custom projection, camera interaction, an entity dossier, a calendar or other behavior beyond ordinary charts. App engineering owns implementation and lifecycle. Actual object/environment geometry, materials and stable spatial identity can use the optional [3D modeler](../../omni-3d-modeler/SKILL.md) and [spatial integration contract](spatial-integration.md). A custom chart alone does not need that role. Do not add a scene, animation, image or extra destination to faithful migration or simple work without a selected requirement.
 
 ## Contract before geometry
 

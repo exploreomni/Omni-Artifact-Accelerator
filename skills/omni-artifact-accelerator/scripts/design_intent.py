@@ -12,7 +12,7 @@ SPEC = 'analyst_design_intent_spec'
 KIND = 'analyst_design_intent'
 BRANDING = {'requested', 'none', 'unknown'}
 VISUAL = {'craft', 'native_behavior', 'responsive', 'accessibility', 'human_usability'}
-ROLES = {'branding', 'design-systems', 'app-designer', 'dashboard-designer', 'app-engineer', 'bi-engineer',
+ROLES = {'product-owner', 'branding', 'design-systems', 'app-designer', 'dashboard-designer', 'app-engineer', 'bi-engineer', '3d-modeler',
          'qa-analyst', 'motion-designer', 'data-storyteller'}
 
 
@@ -152,6 +152,7 @@ def validate(spec, project):
                     for field in ('size', 'accessible_name', 'fallback'):
                         need(text(assets_by_id[asset_id].get(field)), 'logo_asset_' + field + '_required')
     P.experience_helper().validate(spec, need, relative, P.ROLES)
+    P.routing_helper('product_intent').validate(spec, need, relative, P.ROLES)
     if spec['branding'] == 'requested':
         covered = {s for req in requirements if req['category'] == 'logo' and req['required'] for s in req['surfaces']}
         need(covered == set(spec['surfaces']), 'required_logo_surfaces_missing')
@@ -160,6 +161,7 @@ def validate(spec, project):
 
 def references(spec):
     paths = set()
+    paths.update(spec.get('product', {}).get('note_paths', []))
     for selection in spec['selections']:
         paths.update(selection[k] for k in ('design_path', 'brand_path', 'candidate_path') if selection.get(k))
     paths.update(a['local_path'] for a in spec['assets'] if a.get('local_path'))
@@ -200,14 +202,19 @@ def select(root, spec_path, output_relative):
     need(path.is_relative_to(root), 'spec_inside_engagement_required')
     spec, raw = P.read_json(path)
     validate(spec, project)
+    previous = None
     if project.get('design_intent'):
         previous = read_record(root, project['design_intent'])
+        need('product' not in previous['spec'] or 'product' in spec,
+             'product_context_removed_reconcile_scope_instead')
         current = {r['id']: r for r in spec['requirements']}
         for req in previous['spec']['requirements']:
             if req['required']:
                 replacement = current.get(req['id'], {})
                 need(replacement.get('required') is True and set(req['surfaces']) <= set(replacement.get('surfaces', [])),
                      'required_requirement_removed_use_explicit_disposition')
+                need('product' not in req or 'product' in replacement,
+                     'required_product_attribution_removed')
     findings = links(root, spec)
     need(not any(f['code'] == 'design_brand_reference_mismatch' for f in findings), 'design_brand_reference_mismatch')
     relative(output_relative)
@@ -222,6 +229,17 @@ def select(root, spec_path, output_relative):
     selected = pin(root, output_relative)
     project.setdefault('design_intent_history', []).append(selected)
     project['design_intent'] = selected
+    # Retire only known starter prompts. Current intent supplies derived questions;
+    # separately recorded questions survive subsequent selections.
+    questions = project['open_questions']
+    if project.get('open_questions_kind') == 'starter_prompts' or questions == P.STARTER_QUESTIONS:
+        retained = [q for q in questions if q not in P.STARTER_QUESTIONS]
+        project['open_questions'] = list(dict.fromkeys([*choice_report(spec)[0], *retained]))
+        project['open_questions_kind'] = 'current_intent_projection'
+    elif project.get('open_questions_kind') == 'current_intent_projection':
+        prior_questions = choice_report(previous['spec'])[0] if previous else []
+        retained = [q for q in questions if q not in prior_questions]
+        project['open_questions'] = list(dict.fromkeys([*choice_report(spec)[0], *retained]))
     # One atomic index replacement; a crash before this step leaves an unselected recoverable snapshot.
     P.write_json(root / 'project.json', project, replace=True)
     return {'path': str(root / output_relative), 'selection': selected, 'report': check(root)}
@@ -360,7 +378,7 @@ def check(root):
 def packet_context(root, role):
     state = check(root)
     relevant = role in ROLES or any(
-        req.get('delivery', {}).get('owner') == role or any(
+        req.get('delivery', {}).get('owner') == role or role in req.get('product', {}).get('suggested_roles', []) or any(
             role in P.experience_helper().CAPABILITIES.get(tag, ())
             for tag in req.get('delivery', {}).get('capabilities', []))
         for req in state['requirements'] if req['disposition'] not in {'deferred', 'explicitly_omitted'})
@@ -374,6 +392,16 @@ def packet_context(root, role):
                 details.append(finding['code'] + (': ' + str(affected) if affected else ''))
         need(False, 'stale_or_invalid_packet_selection; ' + '; '.join(details[:8]))
     paths = state['paths'] if relevant else []
+    if role != 'product-owner':
+        # Notes remain pinned for freshness, but are not blanket specialist disclosure.
+        root, project = P.load_project(root)
+        spec = load_selected(root)['spec'] if state['selected'] else (
+            P.read_json(P.relative_file(root, project['design_intent_draft']))[0]
+            if project.get('design_intent_draft') else {})
+        note_paths = set(spec.get('product', {}).get('note_paths', []))
+        explicit = {p for req in spec['requirements']
+                    for p in req.get('delivery', {}).get('dependency_paths', [])}
+        paths = [p for p in paths if p not in note_paths - explicit]
     if relevant and not state['selected']:
         root, _ = P.load_project(root)
         for name in ('design', 'brand'):

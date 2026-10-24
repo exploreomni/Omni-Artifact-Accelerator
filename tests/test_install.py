@@ -15,6 +15,23 @@ installer = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(installer)
 
 
+def fixture_install(destination, apply=False, source=installer.ROOT, upgrade_from=None):
+    """Exercise existing copy/rollback mechanics only in temporary test fixtures.
+
+    This is not a production activation route or an approval mechanism.
+    """
+    result = installer.install(destination, source=source, upgrade_from=upgrade_from)
+    if apply:
+        destination, source = Path(destination), Path(source)
+        actions = result["skills"]
+        expected = {row["skill"]: installer.tree(source / "skills" / row["skill"]) for row in actions}
+        names = {row["skill"] for row in actions} | {row["from_skill"] for row in actions if "from_skill" in row}
+        previous = {name: installer.existing_tree(destination / name) for name in names}
+        installer.apply_actions(destination, source, actions, expected, previous)
+        result["applied"] = True
+    return result
+
+
 class InstallTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
@@ -61,7 +78,7 @@ class InstallTests(unittest.TestCase):
         old = self.make_source("old", "0.1.0", {"omni-alpha": "Old alpha", "omni-beta": "Old beta"})
         new = self.make_source("new", "0.2.0", {"omni-alpha": "New alpha", "omni-beta": "New beta", "omni-gamma": "New gamma"})
         baseline = self.archive(old)
-        installer.install(self.destination, apply=True, source=old)
+        fixture_install(self.destination, apply=True, source=old)
         return old, new, baseline
 
     def rename_fixture(self, suffix, version="0.2.0"):
@@ -73,24 +90,30 @@ class InstallTests(unittest.TestCase):
         destination = self.root / ("installed-" + suffix)
         destination.mkdir()
         baseline = self.archive(old, "baseline-" + suffix + ".zip")
-        installer.install(destination, apply=True, source=old)
+        fixture_install(destination, apply=True, source=old)
         return old, new, baseline, destination
+
+    def test_public_activation_is_blocked_before_any_write(self):
+        with self.assertRaisesRegex(ValueError, "activation_blocked"):
+            installer.install(self.destination, apply=True)
+        self.assertEqual(list(self.destination.iterdir()), [])
+        self.assertFalse(installer.install(self.destination)["applied"])
 
     def test_preview_install_and_identical_reinstall(self):
         count = len(json.loads((installer.ROOT / "package.json").read_text())["skills"])
-        preview = installer.install(self.destination)
+        preview = fixture_install(self.destination)
         self.assertEqual(list(self.destination.iterdir()), [])
         self.assertEqual(len(preview["skills"]), count)
-        installed = installer.install(self.destination, apply=True)
+        installed = fixture_install(self.destination, apply=True)
         self.assertTrue(installed["applied"])
-        again = installer.install(self.destination, apply=True)
+        again = fixture_install(self.destination, apply=True)
         self.assertTrue(all(row["action"] == "unchanged" for row in again["skills"]))
         self.assertEqual(len(list(self.destination.iterdir())), count)
 
     def test_verify_detects_missing_changed_and_extra_files_without_writing(self):
         source = self.make_source("verify-source", "0.17.0", {"omni-alpha": "Source skill"})
         self.assertEqual(installer.verify(self.destination, source)["status"], "drift")
-        installer.install(self.destination, apply=True, source=source)
+        fixture_install(self.destination, apply=True, source=source)
         good = installer.verify(self.destination, source)
         self.assertEqual(good["status"], "matching")
         self.assertFalse(good["host_activation_verified"])
@@ -111,7 +134,7 @@ class InstallTests(unittest.TestCase):
         skill.mkdir()
         (skill / "SKILL.md").write_text("Existing unrelated skill")
         with self.assertRaises(ValueError):
-            installer.install(self.destination, apply=True)
+            fixture_install(self.destination, apply=True)
         self.assertEqual([p.name for p in self.destination.iterdir()], ["omni-qa-analyst"])
         self.assertEqual((skill / "SKILL.md").read_text(), "Existing unrelated skill")
 
@@ -119,7 +142,7 @@ class InstallTests(unittest.TestCase):
         link = self.root / "linked"
         link.symlink_to(self.destination, target_is_directory=True)
         with self.assertRaises(ValueError):
-            installer.install(link, apply=True)
+            fixture_install(link, apply=True)
 
     def test_exact_upgrade_preview_apply_and_current_mix(self):
         _, new, baseline = self.upgrade_fixture()
@@ -130,10 +153,10 @@ class InstallTests(unittest.TestCase):
         (self.destination / "omni-beta/SKILL.md").write_text("New beta")
         (self.destination / "omni-beta/references/context.md").write_text("Reference New beta")
         before = installer.tree(self.destination, False)
-        result = installer.install(self.destination, source=new, upgrade_from=baseline)
+        result = fixture_install(self.destination, source=new, upgrade_from=baseline)
         self.assertEqual([r["action"] for r in result["skills"]], ["upgrade", "unchanged", "install"])
         self.assertEqual(installer.tree(self.destination, False), before)
-        installer.install(self.destination, apply=True, source=new, upgrade_from=baseline)
+        fixture_install(self.destination, apply=True, source=new, upgrade_from=baseline)
         for name in json.loads((new / "package.json").read_text())["skills"]:
             self.assertEqual(installer.tree(self.destination / name, False), installer.tree(new / "skills" / name))
         self.assertEqual((unrelated / "custom.txt").read_text(), "Preserve me")
@@ -151,7 +174,7 @@ class InstallTests(unittest.TestCase):
                     (skill / "personal-notes").mkdir()
                 before = installer.tree(self.destination, False)
                 with self.assertRaises(ValueError):
-                    installer.install(self.destination, apply=True, source=new, upgrade_from=baseline)
+                    fixture_install(self.destination, apply=True, source=new, upgrade_from=baseline)
                 self.assertEqual(installer.tree(self.destination, False), before)
                 self.assertFalse((self.destination / "omni-gamma").exists())
 
@@ -164,7 +187,7 @@ class InstallTests(unittest.TestCase):
         malformed.write_bytes(b"not a zip")
         for archive in archives + [malformed]:
             with self.subTest(archive=archive.name), self.assertRaises(ValueError):
-                installer.install(self.destination, apply=True, source=new, upgrade_from=archive)
+                fixture_install(self.destination, apply=True, source=new, upgrade_from=archive)
             self.assertEqual(installer.tree(self.destination, False), before)
 
     def test_archive_paths_duplicates_case_and_symlink_rejected(self):
@@ -180,7 +203,7 @@ class InstallTests(unittest.TestCase):
             with self.subTest(member=str(member)):
                 archive = self.archive(old, str(index) + ".zip", extra=[(member, b"invalid")])
                 with self.assertRaises(ValueError):
-                    installer.install(self.destination, apply=True, source=new, upgrade_from=archive)
+                    fixture_install(self.destination, apply=True, source=new, upgrade_from=archive)
         self.assertFalse((self.root / "escape").exists())
 
     def test_replacement_failure_rolls_back_prior_upgrades_and_new_install(self):
@@ -197,7 +220,7 @@ class InstallTests(unittest.TestCase):
             return real_rename(src, dst)
         with mock.patch.object(installer.os, "rename", side_effect=fail_mid_replacement):
             with self.assertRaises(OSError):
-                installer.install(self.destination, apply=True, source=new, upgrade_from=baseline)
+                fixture_install(self.destination, apply=True, source=new, upgrade_from=baseline)
         self.assertEqual(installer.tree(self.destination, False), before)
         self.assertFalse(any(p.name.startswith('.omni-analyst') for p in self.destination.iterdir()))
 
@@ -212,7 +235,7 @@ class InstallTests(unittest.TestCase):
             return real_rename(src, dst)
         with mock.patch.object(installer.os, "rename", side_effect=fail_install_and_restore):
             with self.assertRaisesRegex(RuntimeError, "backups retained"):
-                installer.install(self.destination, apply=True, source=new, upgrade_from=baseline)
+                fixture_install(self.destination, apply=True, source=new, upgrade_from=baseline)
         recovery = list(self.destination.glob('.omni-analyst-install-*'))
         self.assertEqual(len(recovery), 1)
         self.assertEqual((recovery[0] / "backup/omni-alpha/SKILL.md").read_text(), "Old alpha")
@@ -226,16 +249,16 @@ class InstallTests(unittest.TestCase):
                 unrelated.mkdir()
                 (unrelated / "custom.txt").write_text("Preserve me")
                 before = installer.tree(destination, False)
-                preview = installer.install(destination, source=new, upgrade_from=baseline)
+                preview = fixture_install(destination, source=new, upgrade_from=baseline)
                 self.assertEqual(preview["skills"][0], {"skill": "omni-artifact-accelerator",
                     "action": "rename_upgrade", "from_skill": "omni-analyst-accelerator"})
                 self.assertEqual(installer.tree(destination, False), before)
-                installer.install(destination, apply=True, source=new, upgrade_from=baseline)
+                fixture_install(destination, apply=True, source=new, upgrade_from=baseline)
                 self.assertFalse((destination / "omni-analyst-accelerator").exists())
                 for name in json.loads((new / "package.json").read_text())["skills"]:
                     self.assertEqual(installer.tree(destination / name, False), installer.tree(new / "skills" / name))
                 self.assertEqual((unrelated / "custom.txt").read_text(), "Preserve me")
-                again = installer.install(destination, apply=True, source=new, upgrade_from=baseline)
+                again = fixture_install(destination, apply=True, source=new, upgrade_from=baseline)
                 self.assertTrue(all(row["action"] == "unchanged" for row in again["skills"]))
 
     def test_rename_refuses_customized_unverified_and_conflicting_main(self):
@@ -251,7 +274,7 @@ class InstallTests(unittest.TestCase):
                     installer.shutil.copytree(new / "skills/omni-artifact-accelerator", destination / "omni-artifact-accelerator")
                 before = installer.tree(destination, False)
                 with self.assertRaises(ValueError):
-                    installer.install(destination, apply=True, source=new,
+                    fixture_install(destination, apply=True, source=new,
                                       upgrade_from=None if mode == "no_baseline" else baseline)
                 self.assertEqual(installer.tree(destination, False), before)
 
@@ -265,7 +288,7 @@ class InstallTests(unittest.TestCase):
                 archive = self.archive(old, mode + ".zip")
                 before = installer.tree(destination, False)
                 with self.assertRaisesRegex(ValueError, "package/version mismatch"):
-                    installer.install(destination, apply=True, source=new, upgrade_from=archive)
+                    fixture_install(destination, apply=True, source=new, upgrade_from=archive)
                 self.assertEqual(installer.tree(destination, False), before)
 
     def test_rename_failure_restores_original_name_and_other_skills(self):
@@ -283,7 +306,7 @@ class InstallTests(unittest.TestCase):
                     return real_rename(src, dst)
                 with mock.patch.object(installer.os, "rename", side_effect=fail_replacement):
                     with self.assertRaises(OSError):
-                        installer.install(destination, apply=True, source=new, upgrade_from=baseline)
+                        fixture_install(destination, apply=True, source=new, upgrade_from=baseline)
                 self.assertEqual(installer.tree(destination, False), before)
                 self.assertTrue((destination / "omni-analyst-accelerator").is_dir())
                 self.assertFalse((destination / "omni-artifact-accelerator").exists())

@@ -72,6 +72,10 @@ def _workflow_module():
 
 WORKFLOW = _workflow_module()
 
+_process_spec = importlib.util.spec_from_file_location("oaa_cli_process", Path(__file__).with_name("cli_process.py"))
+CLI_PROCESS = importlib.util.module_from_spec(_process_spec)
+_process_spec.loader.exec_module(CLI_PROCESS)
+
 
 def _standalone_module():
     directory = Path(__file__).resolve().parents[2] / "omni-backend-handoff/scripts"
@@ -371,7 +375,8 @@ class NativeAdapter:
         if not self.root.is_dir():
             raise NativeError("Workspace must be a directory")
         self.target = target
-        self.runner = runner or subprocess.run
+        # Injection is a trusted in-process test/host hook, never artifact data.
+        self.runner = runner
         self.http = http or default_http
         self.store = self.root / ".omni-native"
         if self.store.is_symlink():
@@ -462,19 +467,26 @@ class NativeAdapter:
         return token
 
     def _cli(self, args, body=None, auth=True, text=False):
-        # Source sessions never enter the target CLI child, including help calls.
-        env = {key: value for key, value in os.environ.items() if not key.startswith(("TABLEAU_", "FABRIC_", "POWERBI_", "LOOKER_", "HEX_"))}
-        if auth:
-            env["OMNI_API_TOKEN"] = self._token()
-        argv = ["omni", *args]
-        if auth:
-            argv += ["--base-url", self.target.base_url, "--profile", self.target.profile, "--format", "json"]
-        if body is not None:
-            argv += ["--body", "-"]
         try:
-            result = self.runner(argv, input=encoded(body) if body is not None else None,
-                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False,
-                                 timeout=60, env=env)
+            # Test doubles do not discover or execute a local CLI. Real calls
+            # require host-selected exact bytes, not inherited PATH discovery.
+            argv = (["omni"] if self.runner is not None else CLI_PROCESS.command(os.environ)) + list(args)
+            if auth:
+                argv += ["--base-url", self.target.base_url, "--profile", self.target.profile, "--format", "json"]
+            if body is not None:
+                argv += ["--body", "-"]
+            payload = encoded(body) if body is not None else None
+            if payload is not None and len(payload) > MAX_JSON:
+                raise NativeError("CLI request exceeds bounded size")
+            with tempfile.TemporaryDirectory(prefix="oaa-cli-") as folder:
+                env = CLI_PROCESS.environment(folder, self._token() if auth else None)
+                if self.runner is not None:
+                    result = self.runner(argv, input=payload, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                         shell=False, timeout=60, env=env, cwd=folder)
+                else:
+                    result = CLI_PROCESS.run(argv, input=payload, env=env, cwd=folder, max_stdout=MAX_JSON)
+        except CLI_PROCESS.ProcessError as exc:
+            raise NativeError(str(exc)) from None
         except (OSError, subprocess.TimeoutExpired) as exc:
             raise NativeError("CLI failed or timed out; reconcile any write intent") from exc
         # Never copy stderr: it may contain auth or SQL material supplied by a driver.
@@ -483,7 +495,10 @@ class NativeAdapter:
         raw = result.stdout.encode() if isinstance(result.stdout, str) else result.stdout
         if len(raw) > MAX_JSON:
             raise NativeError("CLI response exceeds bounded size")
-        return raw.decode("utf-8") if text else decode(raw)
+        try:
+            return raw.decode("utf-8") if text else decode(raw)
+        except UnicodeError:
+            raise NativeError("CLI response is not UTF-8") from None
 
     def _rest(self, method, route, body=None, max_bytes=MAX_JSON):
         # route is always produced by this class, never by a payload or response URL.

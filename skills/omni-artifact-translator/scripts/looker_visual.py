@@ -4,10 +4,8 @@ API, DMA canonical, generic adapter and supplied dashboard YAML are distinct
 contracts. Seals establish local integrity, never authenticated source state.
 """
 import copy
-import csv
 from datetime import datetime
 from decimal import Decimal, InvalidOperation
-import io
 import hashlib
 import importlib.util
 import json
@@ -544,12 +542,7 @@ def normalize_results(raw, profile, binding):
              "looker.duplicate_headers_unresolved")
     if profile["format"] == "csv":
         need(profile.get("encoding") == "utf-8", "looker.csv_encoding_required")
-        try:
-            data = list(csv.reader(io.StringIO(raw.decode("utf-8-sig"), newline=""), strict=True))
-        except (UnicodeError, csv.Error):
-            raise ValueError("looker.invalid_csv") from None
-        need(data and data[0] == headers, "looker.csv_headers_mismatch")
-        rows = data[1:]
+        rows = module("tableau_visual").csv_rows(raw, headers, "looker")
     else:
         data = decode(raw)
         # The capture remains JSON bytes. Parse decimal tokens exactly for the
@@ -588,7 +581,7 @@ def normalize_results(raw, profile, binding):
         if mode == "value_object":
             need(all(type(c) is dict and "value" in c for row in rows for c in row), "looker.value_cell_required")
             rows = [[c["value"] for c in row] for row in rows]
-    need(len(rows) <= 100000, "looker.result_row_limit")
+        need(len(rows) <= 100000, "looker.result_row_limit")
     output = []
     for row in rows:
         need(len(row) == len(columns), "looker.ragged_rows")

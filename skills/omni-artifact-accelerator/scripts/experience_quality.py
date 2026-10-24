@@ -3,13 +3,14 @@
 CAPABILITIES = {
     "insight": ("data-analyst", "data-storyteller"),
     "custom-visualization": ("app-designer", "app-engineer"),
+    "spatial-modeling": ("3d-modeler", "app-designer", "app-engineer"),
     "motion": ("app-designer", "motion-designer", "app-engineer"),
     "external-media": ("app-engineer",),
     "live-content": ("bi-engineer", "app-engineer"),
     "data-binding": ("data-analyst", "bi-engineer"),
     "brand-assets": ("branding",),
 }
-APP_ONLY = {"custom-visualization", "motion", "external-media", "live-content"}
+APP_ONLY = {"custom-visualization", "spatial-modeling", "motion", "external-media", "live-content"}
 DESTINATION_FIELDS = ("purpose", "primary_action", "evidence", "drill", "return", "responsive")
 
 

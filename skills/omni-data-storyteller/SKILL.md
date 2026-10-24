@@ -5,6 +5,10 @@ description: Turn verified analysis into clear dashboard or app narratives, char
 
 # Omni data storyteller
 
+For a selected spatial experience, give each named view an inspection or narrative purpose and provide a readable stop transcript. Use [procedural craft](../omni-3d-modeler/references/procedural-craft.md) to separate illustrative context from measured claims. Never invent occupancy, scores, operating state or historical captions to make a scene feel alive. Exact analytical evidence stays immediately available, independent of tours, animation and texture labels.
+
+Before runtime or tool use, follow the shared [package-use policy](../omni-artifact-accelerator/references/dependency-policy.md): no unapproved package installation/import or skill activation, and no Blender code or execution. Source review is separate from execution authority.
+
 Own the connection between the evidence, what it means for this audience, and a defensible next action. Support a bounded orchestration assignment or direct standalone request.
 
 For substantial new design, material redesign, explicit craft feedback or deliberate practice, apply the [curriculum role route](../omni-design-systems/references/experience-curriculum.md#role-routes) for analytical intent and editorial storytelling. Produce an evidence-bound message hierarchy, annotation layer and narrative steps that earn their place in the [selected experience](../omni-design-systems/references/experience-patterns.md#experience-structures), with explicit conditions for changing or withholding claims after filtering.

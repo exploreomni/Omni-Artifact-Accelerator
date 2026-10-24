@@ -7,6 +7,24 @@ validation or external mutations are added.
 
 ## Assignment and execution
 
+For substantial engagements, [record startup and responsibility ownership](execution-workflow.md)
+before full implementation. App-stage insight assignments support data-storyteller;
+this responsibility may share a worker with analysis. A capability suggestion is
+not a dispatch receipt. Keep OAA-only roles on the frontend when a companion DMA
+consumer has not qualified them; retain its existing packet contract.
+
+The [product owner](product-intent.md) proposes bounded specialist slices; the
+orchestrator owns actual assignments and dispatch. The schema-1 envelope is unchanged.
+`product-owner` is valid for frontend discovery, App and dashboard work, not DMA
+backend assignments. When product context is enabled, new packets carry its current
+North Star and `product_context` with relevant priorities/acceptance/alternatives.
+All requirements remain in scope even when absent from the suggested role slice.
+Private notes remain freshness dependencies; only product-owner packets include
+them automatically. Other roles receive source references. Explicit note inputs or
+delivery dependencies require the same host-disclosure review as any private evidence.
+Stale projection blocks dependent packets; the product-owner repair route may
+receive inconsistent context to reconcile it, not to approve or build from it.
+
 1. Inspect/reuse active workers. Keep the configured model and effort and use the
    smallest team, at most two specialists by default. Review disciplines can
    share one independent worker. Capacity limits are not permission to downgrade.
@@ -80,6 +98,13 @@ invalidate earlier reviews; inline/self-review and unknown evidence cannot be
 independent approval. `reviews_complete` is not native validation or authority
 to publish, merge or accept a migration.
 
+For substantial product-enabled work, keep PO product-fit recommendations separate
+from creative and correctness findings. The creative reviewer is a different actual
+worker from both engineering and the originating designer; a suitable independent
+worker may cover creative and QA disciplines separately. Record missing observations
+instead of inventing independence. No new per-specialist approval or user interview
+is implied by these responsibilities.
+
 ## User-visible progress
 
 `work-status --project PROJECT --html TASK_PROGRESS.html` creates an offline
@@ -90,5 +115,10 @@ heartbeat. Native QA and publication remain in their existing evidence lanes.
 The local reservation lock uses POSIX `flock`; qualify a native Windows runner
 separately instead of claiming equivalent coordination there.
 
-`scripts/task_routing.py` must stay byte-identical to DMA's shared contract.
-No third-party runtime dependencies are added by this route.
+The assignment envelope and existing shared roles remain compatible with the
+common DMA contract. This package extends the frontend App role vocabulary with
+`3d-modeler`; its routing file is therefore no longer byte-identical to DMA.
+Keep modeling assignments local to OAA's App stage. Older DMA validators may
+reject that new role; do not send it as a backend assignment or widen DMA rules
+implicitly. Send only actual semantic requirements through the existing backend
+request/response contract. No third-party runtime dependencies are added here.
