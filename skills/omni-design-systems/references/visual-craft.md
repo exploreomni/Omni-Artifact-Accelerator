@@ -28,6 +28,22 @@ Provide enough specificity to remove material aesthetic guesswork:
 
 Use the existing engagement schema. These are minimum evidence concepts, not a second lifecycle or an import format:
 
+For adopted quality policy, use the executable [quality/concept/handoff
+contract](../../omni-artifact-accelerator/references/product-intent.md#quality-bar-in-canonical-requirements).
+The quality index points to existing attributable requirements. Representative
+visuals are pinned with their source/capture evidence kind; all three options
+carry the same active quality and comparison-treatment coverage. Both-surface
+products need a specimen for each surface in each option. A static SVG is source
+evidence, even when its author believes it will render well.
+
+Resolve handoff detail in the existing design's `destinations` and `journeys`.
+`experience_handoff` only binds concept identity and requirement coverage; it does
+not duplicate those records. Resolve each consequential destination's composition,
+type, chart anatomy or justified absence, controls, responsive treatment, state
+ownership and useful detail/return. Resolve imagery/motion only when selected.
+Passing nonempty-field and pin checks is declared completeness, not a judgment of
+the resulting aesthetic or an observed interaction.
+
 ```yaml
 concept: {id: concept-a, surface: app, render_refs: [], context_ref: null}
 selection: {concept_id: concept-a, rationale: null, authority: working_decision}

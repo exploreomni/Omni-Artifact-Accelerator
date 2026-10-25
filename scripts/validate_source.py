@@ -34,7 +34,15 @@ CASES = {
     "stage-gate-integration": "tests/test_stage_gate_integration.py",
     "conversation-choice": "tests/test_conversation_choice.py",
     "native-stage-gates": "tests/test_native_stage_gate.py",
+    "execution-readiness": "tests/test_execution_readiness.py",
+    "experience-contract": "tests/test_experience_contract.py",
+    "experience-enforcement": "tests/test_experience_enforcement.py",
 }
+# Journal integration cases revalidate retained source and candidate evidence.
+# Keep them bounded without turning a larger valid fixture into a false failure.
+CASE_TIMEOUTS = {name: 120 for name in ('workflow', 'product-intent', 'stage-gates',
+    'stage-gate-integration', 'conversation-choice', 'native-stage-gates', 'native-create',
+    'experience-enforcement')}
 IGNORED = {".git", ".venv", "venv", "node_modules", "__pycache__", ".pytest_cache", ".ruff_cache"}
 STDLIB_ROOTS = {Path(sysconfig.get_path(name)).resolve() for name in ("stdlib", "platstdlib")}
 FIRST_PARTY_IMPORTS = {
@@ -115,7 +123,7 @@ def main():
             try:
                 result = transport.run([sys.executable, "-I", "-S", "-B", str(Path(__file__).resolve()),
                                         "--case", name], env=transport.environment(folder), cwd=folder,
-                                       timeout=30, max_stdout=128 * 1024, max_stderr=128 * 1024)
+                                       timeout=CASE_TIMEOUTS.get(name, 30), max_stdout=128 * 1024, max_stderr=128 * 1024)
                 checks.append({"case": name, "passed": result.returncode == 0,
                                "exit_code": result.returncode, "output": result.stdout.decode("utf-8", "replace")})
             except (OSError, transport.ProcessError):

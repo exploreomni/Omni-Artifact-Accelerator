@@ -26,6 +26,7 @@ class DesignReviewTests(unittest.TestCase):
         project = P.load_project(self.root)[1]
         project.update(mode='enhancement')
         project.pop('stage_gate_policy')
+        project.pop('workflow_quality_policy', None)
         P.write_json(self.root / 'project.json', project, replace=True)
         for path, raw in {"deliverables/app.html": b"<h1>Synthetic</h1>",
                           "contracts/resolved.json": b'{"task":"inspect an item"}',

@@ -48,6 +48,12 @@ class NativeCreate(unittest.TestCase):
         evidence = self.gates.evidence('conversation-response', json.dumps(response))
         P.stage_record(self.root, {'stage': 'choice', 'basis': 'conversation_evidence',
             'option_id': 'option-1', 'expected_binding': binding, 'evidence': {'user_response': evidence}})
+        self.html_path, self.spec_path = 'deliverables/app.html', 'contracts/create-spec.json'
+        (self.root / self.html_path).write_text(HTML)
+        draft = P.read_json(self.root / 'contracts/design-intent.json')[0]
+        draft['selections'][0]['candidate_path'] = self.html_path
+        draft['selections'][0]['target'] = {'surface': 'app', 'state': 'local', 'document_id': None, 'draft_id': None}
+        P.write_json(self.root / 'contracts/design-intent.json', draft, replace=True)
         self.gates.stage('design')
         self.spec = {'base_url': 'https://synthetic.invalid', 'slug': 'original-new-app',
             'model_id': 'model-1', 'name': 'Original synthetic App', 'description': 'A synthetic fixture.',
@@ -55,8 +61,6 @@ class NativeCreate(unittest.TestCase):
                 'type': 'query', 'isSql': False,
                 'query': {'fields': ['jobs.id'], 'table': 'jobs', 'limit': 10, 'userEditedSQL': '',
                           'filters': {}, 'sorts': [], 'calculations': [], 'version': 5}}}, 'order': ['1']}}
-        self.html_path, self.spec_path = 'deliverables/app.html', 'contracts/create-spec.json'
-        (self.root / self.html_path).write_text(HTML)
         self.save_spec()
 
     def save_spec(self):
@@ -70,6 +74,48 @@ class NativeCreate(unittest.TestCase):
 
     def prepare(self):
         return a.prepare_create(project=self.root, artifact=self.html_path, spec_artifact=self.spec_path)
+
+    def test_frozen_supporting_spec_is_reviewed_and_cannot_borrow_other_candidate_evidence(self):
+        workflow = P.routing_helper('delivery_workflow')
+        frozen = workflow.freeze(self.root, {'id': 'with-create-spec', 'builders': ['fixture-engineer'],
+            'artifacts': [self.html_path, self.spec_path], 'supporting_artifacts': [self.spec_path],
+            'context': ['contracts/execution.json']})
+        self.gates.reviews()
+        prepared = self.prepare()
+        self.assertFalse(prepared['publication_authorized'])
+        candidate = P.read_json(self.root / frozen['path'])[0]
+        self.assertEqual(candidate['artifact_roles'], {self.html_path: 'primary', self.spec_path: 'supporting'})
+        self.assertEqual(set(candidate['retained']), {self.html_path, self.spec_path})
+        workflow.evidence_template(self.root, {'candidate': frozen['path'], 'output': 'evidence/delivery-fixture.json'})
+        evidence = P.read_json(self.root / 'evidence/delivery-fixture.json')[0]
+        note = self.gates.evidence('supplied-observation', 'Synthetic checker input, not actual publication or source review.')
+        for lane, method in [('source', 'source_review'), ('publication', 'exact_readback')]:
+            evidence['lanes'][lane] = {'status': 'reported_pass', 'method': method, 'observer': 'synthetic-observer',
+                'bindings': workflow.pins(self.root, [note]), 'reason': 'Synthetic report testing checker bindings only.'}
+        P.write_json(self.root / 'evidence/delivery-fixture.json', evidence, replace=True)
+        request = {'run': P.load_project(self.root)[1]['execution_start']['path'],
+            'execution': 'contracts/execution.json', 'candidate': frozen['path'], 'evidence': 'evidence/delivery-fixture.json'}
+        result = workflow.assess(self.root, request)
+        self.assertNotIn('delivery_artifacts_differ_from_selected_candidates', result['findings'])
+        self.assertTrue(result['claims']['published_readback_verified'])
+        self.assertFalse(result['claims']['rendered_verified'])
+        original_hash = evidence['candidate_sha256']
+        evidence['candidate_sha256'] = '0' * 64
+        P.write_json(self.root / 'evidence/delivery-fixture.json', evidence, replace=True)
+        result = workflow.assess(self.root, request)
+        self.assertIn('evidence_candidate_differs', result['findings'])
+        self.assertFalse(result['claims']['source_reviewed'])
+        self.assertFalse(result['claims']['published_readback_verified'])
+        self.assertFalse(result['claims']['preview_structurally_ready'])
+        evidence['candidate_sha256'] = original_hash
+        P.write_json(self.root / 'evidence/delivery-fixture.json', evidence, replace=True)
+        self.spec['name'] = 'Changed unreviewed create specification'
+        self.save_spec()
+        result = workflow.assess(self.root, request)
+        self.assertIn('candidate_artifacts_changed', result['findings'])
+        self.assertFalse(result['claims']['published_readback_verified'])
+        with self.assertRaises(ValueError):
+            self.prepare()
 
     def captures(self, prepared):
         body, origin = prepared['request']['body'], prepared['base_url']
@@ -108,6 +154,9 @@ class NativeCreate(unittest.TestCase):
         self.assertEqual(result['status'], 'exact_create_readback')
         self.assertEqual(result['derived_identifiers']['workbook_model'], 'server-workbook-1')
         self.assertFalse(result['native_verified'])
+        (self.root / 'deliverables/unselected.html').write_text(HTML)
+        with self.assertRaisesRegex(ValueError, 'selected App artifact'):
+            a.prepare_create(project=self.root, artifact='deliverables/unselected.html', spec_artifact=self.spec_path)
 
     def test_missing_reviews_and_unpinned_spec_cannot_prepare(self):
         with self.assertRaises(ValueError):
@@ -137,6 +186,7 @@ class NativeCreate(unittest.TestCase):
     def test_historical_project_exemption_cannot_prepare_new_create(self):
         metadata = P.load_project(self.root)[1]
         metadata.pop('stage_gate_policy')
+        metadata.pop('workflow_quality_policy', None)
         P.write_json(self.root / 'project.json', metadata, replace=True)
         with self.assertRaises(ValueError):
             self.prepare()

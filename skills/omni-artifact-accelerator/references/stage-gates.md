@@ -47,6 +47,66 @@ An option contains `id`, `thesis` and `evidence` (a relative path). The three ID
 normalized theses and evidence hashes must differ. Provide three feasible product
 structures on the same analytical foundation, not three differently named palettes.
 
+## Phase readiness and experience evidence
+
+New projects also carry `workflow_quality_policy: experience-evidence-v1`.
+Record the actual startup before A with `run-start`, an execution contract path,
+the original brief and the guidance actually read. The current checkout is not
+silently represented as verified latest main. See the
+[execution procedure](execution-workflow.md) for source expectations and incremental
+guidance receipts. These records describe evidence; they neither dispatch workers
+nor grant dependency, native or publication authority.
+
+Supported stage records and action guards call the phase readiness helper **before
+work**. This is cumulative phase-scoped readiness, not the full final run check:
+
+| Phase | Required responsibility and guidance increment |
+| --- | --- |
+| A | Current startup, original request and semantics owner. |
+| B–C | Analyst/BI guidance; C also requires storytelling ownership. |
+| D | Product owner, experience and branding ownership; guided discovery. |
+| E | Design systems, independent creative-review and QA ownership; relevant craft curriculum and concept evidence. |
+| F and release preparation | Engineering and original-request coverage, plus current selected handoff and candidate-bound review obligations. |
+
+Selected motion/spatial capabilities add only their applicable specialist scope
+and guidance. Naming a worker or loading a document is not proof that the worker
+ran, that the document was understood, or that the result is good.
+
+The helper generates `workflow_quality_policy` and `workflow_context` in each new
+policy work event. Do not supply these fields. Status compares the current
+phase-relevant startup, ownership and guidance context with the recorded one;
+changed relevant evidence blocks downstream work. Adding later-phase roles or
+guidance does not invalidate A. Package-source changes require a truthful resumed
+startup and reconciliation. Once a journal adopts this policy, removing its marker
+or dropping the generated context from later work events is rejected.
+
+Historical selected products remain readable for focused continuation with
+experience quality `not_assessed`; no startup or visual review is invented for
+them. A historical unselected product must explicitly adopt the current policy
+through `run-start` with `adopt_quality_policy: true` before new D/E work. The old
+journal bytes remain evidence of the prior workflow; adoption is not a rehash or
+retroactive claim that startup preceded it.
+
+## Intentional source upgrades
+
+Ordinary resumes reuse the active startup. After an intentional package-source
+upgrade, record a truthful new startup and use `stage-record` with
+`stage: workflow_requalification`, the exact `expected_tail_sha256`, and
+`previous_start: {path, sha256}` from the immediately preceding startup. The helper
+derives and pins the new contexts; callers cannot supply them. This same-journal
+event preserves the exact existing A–E events, options order and actual choice
+when their evidence, original request, discovery, selected handoff and phase
+owners remain unchanged. Strict choices must still verify through the current
+trusted provider; conversation provenance retains its original assurance.
+
+Changed evidence, choices, owners or missing current guidance require normal
+stage reconciliation. Requalification does not rehash history, reinterpret an
+answer or request a repeated choice for unchanged concepts. It clears the current
+candidate and reviews, preserves their immutable history, and requires a fresh F
+iteration; all prior consultations must already be recorded. It carries no
+rendered, native, human or publication acceptance. Status identifies the exact
+requalified stage hashes and still checks their evidence and current contexts.
+
 ## Visual discovery at D
 
 After A–C, follow the [visual interview](../../omni-product-owner/references/visual-experience-discovery.md).
@@ -71,6 +131,13 @@ when present, otherwise the current draft). The helper records the snapshot and
 all declared product-note dependencies, plus the source inventory when declared.
 Do not supply `discovery_dependencies`; it is generated and rechecked. Preserve
 snapshot and note bytes. A revised answer uses new files and a new D event.
+
+For the experience-evidence policy, D also requires a ready, attributable
+`product.quality_bar` over existing requirements. Its semantic content is checked
+against the current intent alongside visual discovery. Changing quality choices
+reopens D; implementation-only annotations do not manufacture a new interview.
+See the [product contract](product-intent.md) for selected, reused and explicitly
+delegated quality choices. Empty or generic completion flags do not satisfy this.
 
 Status includes `visual_discovery` with its version, families, follow-up state,
 requirement IDs and unresolved findings. D may retain a valid unanswered draft;
@@ -97,6 +164,42 @@ adopted, a historical D event cannot stand in for its current checkpoint. There 
 no production flag to create new legacy D events or waive the interview evidence.
 This does not add a stage, authenticate notes, certify visual quality, or change
 dependency/publication authority.
+
+## Concrete options and selected handoff
+
+For multiple selected surfaces, every selection must point to the same validated
+aggregate handoff. Validating one surface never exempts another selected design.
+
+Under the experience-evidence policy, each option's `evidence` is a structured
+concept manifest validated by the [product contract](product-intent.md). It binds
+an original representative visual artifact, useful labels/state, task structure,
+interaction, responsive intent, current quality/treatment coverage, feasibility,
+asset/dependency limits and the actual observation lane. A static source SVG is a
+permitted design proposal; its source must contain graphical content and text.
+It is not a rendered observation or a working chart runtime. Rendered captures
+retain their supplied observation record without authenticating it.
+
+The three options must have distinct representative artifacts and product
+structures on the same analytical scope. Exactly three text descriptions, three
+renamed palettes or three copies of the same visual do not satisfy the structural
+contract. Hashes and schema checks cannot judge whether the ideas are equally
+compelling; the product owner and creative reviewer still assess that substance.
+All referenced visual files are pinned as generated `experience_dependencies`.
+
+After the actual choice, select a resolved design with its canonical destinations
+and journeys, plus the selected concept/quality handoff. The design event's
+`evidence.design` must be that selected design. The helper verifies the exact
+concept manifest and option ID against the choice, then pins all handoff
+dependencies. Candidate freezing and direct candidate records cannot skip these
+checks. Source-level handoff consistency does not qualify an engine, native
+interaction, accessibility behavior or effective access.
+
+For compatibility, `release_ready` and `status: ready_for_release` continue to mean
+that the recorded workflow reviews are resolved. Read the additive
+`review_assurance` as well: `source_only` identifies source-based dispositions and
+`resolved_scopes_by_basis` exposes the actual lanes. Native/human acceptance and
+external mutation authority remain false; source-only readiness is never a native
+or production acceptance claim.
 
 ## Selection policies
 

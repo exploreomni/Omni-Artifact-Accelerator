@@ -14,6 +14,32 @@ Inspect observable behavior, not component names or element existence. A calenda
 
 Choose a few task-relevant phone, short-laptop or wide contexts by usable width/height and permitted methods. Check a real drill/return journey, not just disconnected screenshots; native behavior requires actual exercise. Under prohibited rendering/native observation, retain independent assembled/source findings and leave the affected visual/native cases unrun. Fix material findings within existing authorization, retest only affected behavior, and name remaining differences in closeout rather than treating publication or matching readback as experience acceptance.
 
+Include the complete custom chrome when selecting those cases. A shared primitive
+pass does not cover an App's independent scope panels or status badges. Check the
+final CSS cascade and actually observe hidden controls/warnings after navigation;
+an author `display` rule can override ordinary `[hidden]` behavior. Reconcile
+completeness warnings with active headlines and evidence, confirm each visible
+control governs the current destination, and exercise representative long identities
+at the selected constrained sizes. Use the [control regression expectations](../../omni-app-engineer/references/control-primitives.md#assembled-control-regressions)
+for concrete cases, not a second review ledger. Screenshots support visible layout;
+keyboard traversal, focus restoration and live scope changes need execution notes.
+
+For net-new products, E's exactly three concrete visual concepts retain the same
+accepted analytical scope and quality ambition. This optional design-review record
+does not relax that stage rule through its historical direct/compare modes. Pin
+the selected concept and its requirement coverage, then critique the implementation
+against it. Original static SVG concept evidence is source-only; an actual rendered
+capture needs retained observation context. File signatures, hashes, labels and
+coverage checks cannot authenticate a capture or judge whether a concept is good.
+
+An authorized native preview may be necessary before target observations are
+possible. Record the actual action and target honestly, including immediate
+publication where that is the selected route. This does not require marking native
+or rendered cases passed in advance. Conversely, successful publication/readback
+does not close them. Final claims must name verified selected scope, current open
+findings and unrun lanes; four resolved source reviews or positive feedback on one
+quality cannot substitute for the remaining evidence.
+
 ## Renderer and transfer review
 
 When assessing a reusable App behavior framework, exercise the same source scope, identities, state transitions and expected outcomes through multiple materially different renderers. Check equivalent selection/filter/error/return behavior and usable exact evidence; inspect each renderer's actual composition, typography, density and constrained layout separately. A shared controller pass does not transfer visual or accessibility results between renderers.

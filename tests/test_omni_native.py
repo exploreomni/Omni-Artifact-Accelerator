@@ -115,6 +115,7 @@ class NativeTests(unittest.TestCase):
         # Historical adapter compatibility; fresh-project gate coverage is separate.
         project = native.WORKFLOW.ap.load_project(self.root)[1]
         project.pop('stage_gate_policy')
+        project.pop('workflow_quality_policy', None)
         native.WORKFLOW.ap.write_json(self.root / 'project.json', project, replace=True)
         self.env = patch.dict(os.environ, {"OAA_TEST_TOKEN": "test-placeholder-only"})
         self.env.start()

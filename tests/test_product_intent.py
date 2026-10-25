@@ -35,8 +35,9 @@ class ProductIntentTests(unittest.TestCase):
         # this test's independent product requirements.
         discovery = json.loads((self.root / 'contracts/design-intent.json').read_text())
         self.spec['product']['visual_experience'] = discovery['product']['visual_experience']
+        self.spec['product']['quality_bar'] = discovery['product']['quality_bar']
         self.spec['product']['note_paths'] += discovery['product']['note_paths']
-        visual_ids = set(N.visual_report(discovery)['requirement_ids'])
+        visual_ids = set(N.visual_report(discovery)['requirement_ids']) | set(discovery['product']['quality_bar']['requirement_ids'])
         self.spec['requirements'] += [r for r in discovery['requirements'] if r['id'] in visual_ids]
 
     def write(self, path, value):
@@ -56,7 +57,9 @@ class ProductIntentTests(unittest.TestCase):
     def select(self, version='one'):
         path = 'contracts/spec-' + version + '.json'
         self.write(path, self.spec)
-        return P.intent_helper().select(self.root, self.root / path, 'contracts/selected-' + version + '.json')
+        result = P.intent_helper().select(self.root, self.root / path, 'contracts/selected-' + version + '.json')
+        G.refresh_request_review(self.root, P)
+        return result
 
     def brief(self, version='one'):
         return N.generate(self.root, 'deliverables/north-star-' + version + '.md')
@@ -94,7 +97,7 @@ class ProductIntentTests(unittest.TestCase):
         self.assertFalse(po['external_mutations_authorized'])
         self.brief()
         packet = P.packet(self.root, 'app-designer', ['inputs/notes-v1.json'], self.root / 'tasks/designer.json')
-        self.assertEqual(len(packet['product_context']['role_slice']), 4)
+        self.assertEqual(len(packet['product_context']['role_slice']), 7)
         self.assertEqual(packet['product_context']['visual_experience']['status'], 'ready')
         self.assertEqual(packet['design_context']['visual_context'], N.visual_context(self.spec))
         self.assertEqual(P.packet_check(self.root, 'tasks/designer.json')['status'], 'consistent')
@@ -208,7 +211,7 @@ class ProductIntentTests(unittest.TestCase):
         self.assertFalse(plan['focused_scope_missing'])
         packet = P.packet(self.root, 'artifact-translator', ['inputs/notes-v1.json'], None)
         self.assertEqual(packet['design_context']['requirements'][0]['surfaces'], ['dashboard'])
-        self.assertEqual(len(packet['product_context']['role_slice']), 4)
+        self.assertEqual(len(packet['product_context']['role_slice']), 7)
 
     def test_adopted_visual_index_cannot_disappear_or_drop_optional_decisions(self):
         self.select(); self.brief()

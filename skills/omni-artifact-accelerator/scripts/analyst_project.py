@@ -158,6 +158,7 @@ def init(output, name, mode, surface, branding=None, website=None, selection_pol
     }
     # Every new engagement is gated. A caller-controlled mode is not an exemption.
     project['stage_gate_policy'] = 'data-first-v1'
+    project['workflow_quality_policy'] = 'experience-evidence-v1'
     write_json(root / "project.json", project)
     write_json(root / project["design_intent_draft"], intent)
     for contract in ("metrics", "queries", "design", "brand", "qa"):
@@ -228,7 +229,16 @@ def plan(root, scope_ids=None):
         roles = [role for role in ROLES if role in proposed]
     gates = stage_status(root)
     if gates['required']:
-        roles = [r for r in stage_roles(gates.get('next_stage')) if r in ROLES and
+        stage = gates.get('next_stage')
+        eligible = set(stage_roles(stage))
+        # Preserve scoped capabilities at their permitted phase; stage advice
+        # must not erase a selected motion, spatial or creative responsibility.
+        if stage in {'options', 'choice', 'design'}:
+            eligible.update({'motion-designer', '3d-modeler'})
+        if stage in {'candidate', 'review', None}:
+            eligible.update(ROLES)
+        roles = [r for r in (roles if focused or scope_ids is not None else
+                 list(dict.fromkeys([*stage_roles(stage), *roles]))) if r in eligible and r in ROLES and
                  (r != 'app-designer' or 'app' in obj['surfaces']) and
                  (r != 'dashboard-designer' or 'dashboard' in obj['surfaces'])]
     return {"kind": "suggested_role_plan", "agents_dispatched": False,
@@ -458,7 +468,7 @@ def import_dma(root, review):
 
 def routing_helper(name='task_routing'):
     import importlib.util
-    need(name in {'task_routing', 'task_operations', 'delivery_workflow', 'product_intent', 'stage_gates'}, 'unknown routing helper')
+    need(name in {'task_routing', 'task_operations', 'delivery_workflow', 'product_intent', 'stage_gates', 'experience_contract'}, 'unknown routing helper')
     # Fixed first-party module only. The host verifier never comes from a request,
     # file path or environment variable. Share its scope across helper imports.
     cache_key = '_oaa_stage_gates_' + digest(str(Path(__file__).resolve().parent).encode())
@@ -533,6 +543,10 @@ def stage_packet_gate(root, role, assignment=None):
     if role == 'app-engineer' or stage == 'implementation':
         return stage_require(root, 'build')
     if role in {'3d-modeler', 'motion-designer'}:
+        # Concept advice and inert visual specimens are not application/model
+        # implementation. Explicit executable/model outputs were gated above.
+        if not outputs or all(Path(p).suffix.casefold() in {'.md', '.txt', '.svg'} for p in outputs):
+            return stage_require(root, 'options')
         return stage_require(root, 'design')
     if stage in {'app', 'dashboard'} and role not in {
             'qa-analyst', 'product-owner', 'app-designer', 'dashboard-designer', 'branding', 'design-systems'}:
@@ -546,6 +560,10 @@ def stage_packet_gate(root, role, assignment=None):
     if role == 'data-analyst':
         return stage_require(root, 'analysis')
     if role in {'bi-engineer', 'qa-analyst', 'backend-handoff', 'artifact-translator'}:
+        # Read-only investigation still uses the actual startup source. It does
+        # not need a finished product or a build grant.
+        action = 'analysis' if stage in {'semantic', 'design'} else 'access'
+        routing_helper('delivery_workflow').require_phase(root, action)
         return status  # Source/access investigation, never a build grant.
     raise ValueError('No stage-gated route for specialist')
 
@@ -697,13 +715,13 @@ def main():
     for command in ("plan", "verify", "import-dma", "register", "packet", "packet-bindings", "design-freeze", "design-check", "design-pin",
                     "intent-select", "intent-check", "intent-cases", "claim-work", "prepare-dispatch", "record-dispatch",
                     "checkpoint-work", "work-status", "review-work", "packet-check", "experience-check",
-                    "run-start", "run-check", "candidate-freeze", "delivery-check", "source-inventory",
+                    "run-start", "run-check", "run-guidance", "source-check", "phase-check", "candidate-freeze", "delivery-check", "source-inventory",
                     "delivery-project", "delivery-evidence-template", "product-brief", "product-check",
                     "stage-status", "stage-record", "stage-check"):
         cmd = commands.add_parser(command)
         cmd.add_argument("--project", required=True)
         if command in ("claim-work", "prepare-dispatch", "record-dispatch", "checkpoint-work", "review-work",
-                       "run-start", "run-check", "candidate-freeze", "delivery-check", "source-inventory",
+                       "run-start", "run-check", "run-guidance", "source-check", "phase-check", "candidate-freeze", "delivery-check", "source-inventory",
                        "delivery-project", "delivery-evidence-template", "stage-record"):
             cmd.add_argument('--request', required=True)
         elif command == 'stage-check':
@@ -751,11 +769,13 @@ def main():
         elif args.command in ('product-brief', 'product-check'):
             product = routing_helper('product_intent')
             result = product.generate(args.project, args.output) if args.command == 'product-brief' else product.check(args.project)
-        elif args.command in ('run-start', 'run-check', 'candidate-freeze', 'delivery-check', 'source-inventory',
+        elif args.command in ('run-start', 'run-check', 'run-guidance', 'source-check', 'phase-check', 'candidate-freeze', 'delivery-check', 'source-inventory',
                               'delivery-project', 'delivery-evidence-template'):
             workflow = routing_helper('delivery_workflow')
             request, _ = read_json(args.request)
             function = {'run-start': workflow.start, 'run-check': workflow.inspect_run,
+                        'run-guidance': workflow.record_guidance, 'source-check': workflow.verify_source,
+                        'phase-check': lambda root, request: workflow.phase_check(root, request['action']),
                         'candidate-freeze': workflow.freeze, 'delivery-check': workflow.assess,
                         'source-inventory': workflow.inventory, 'delivery-project': workflow.project_delivery,
                         'delivery-evidence-template': workflow.evidence_template}[args.command]
@@ -803,7 +823,8 @@ def main():
         print(json.dumps(result, indent=2))
         return 1 if result.get("status") == "inconsistent" or (args.command == 'stage-status' and
                     result.get('status') in {'blocked', 'invalid', 'incomplete'}) or (args.command in {'run-check', 'delivery-check'} and
-                    result.get('status') in {'incomplete', 'candidate_with_gaps'}) or (args.command == "experience-check" and
+                    result.get('status') in {'incomplete', 'candidate_with_gaps'}) or (args.command == 'phase-check' and
+                    result.get('status') == 'blocked') or (args.command == "experience-check" and
                     result.get("status") in {"incomplete", "not_assessed"}) or (args.command == "design-check" and
                     result.get("coverage") == "incomplete") else 0
     except (ValueError, OSError, KeyError, TypeError) as exc:

@@ -22,7 +22,9 @@ preferences and clarify source/decision scope; do not start a design questionnai
 before that handoff. At D, use [visual-experience discovery](references/visual-experience-discovery.md)
 for the tailored family menu and conditional comparison treatment, alongside the
 existing artifact/brand questions. Reuse actual answers; explicit styling delegation
-is scoped and never inferred from silence. At E,
+is scoped and never inferred from silence. Record the attributable quality bar in
+the existing requirement index, including observable destination/journey acceptance;
+see the linked discovery guidance. At E,
 coordinate exactly three distinct viable options, recommend with reasons and wait
 for the user's selection before detailed design/full coding. Preserve attributable
 selection in current intent; do not let an agent's working proposal substitute for

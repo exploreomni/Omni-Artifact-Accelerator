@@ -47,7 +47,7 @@ class WorkflowTests(unittest.TestCase):
                 'requirement_ids': ['investigate'], 'evidence_path': 'evidence/request-review.txt'}}
         self.save_execution()
         self.request = {'run': self.run, 'execution': 'contracts/execution.json'}
-        self.gates = G.Lifecycle(self.root, W.P)
+        self.gates = G.Lifecycle(self.root, W.P, historical=True)
         self.provider_context = W.P.trusted_stage_provider(self.gates.host)
         self.provider_context.__enter__()
         self.addCleanup(self.provider_context.__exit__, None, None, None)

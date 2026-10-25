@@ -42,6 +42,15 @@ Translate each material request into `source wording/decision → observable beh
 
 Use stable destination IDs in the resolved design. The optional existing-intent `requirements[].delivery` and [first-delivery coverage workflow](../../omni-artifact-accelerator/references/first-delivery.md) can retain explicit ownership, behavior and dependency paths. Its checker assesses declared coverage and pins; people still judge whether the behavior satisfies the original request and whether evidence supports completion. Do not duplicate that contract in a new ledger.
 
+For adopted quality policy, index the attributable quality rows through
+`product.quality_bar` in the [canonical product contract](../../omni-artifact-accelerator/references/product-intent.md#quality-bar-in-canonical-requirements).
+Keep observable acceptance in those rows and concrete composition/state choices
+in the existing design destinations and journeys. The selected handoff references
+their IDs and the exact chosen concept; it does not create parallel screen lists.
+At E, retain the same ambition across all three concrete visuals, including every
+required surface. A persona, time-saving preference or unavailable rendering tool
+does not by itself authorize simpler scope.
+
 Unanswered required choices remain open. Optional imagery, a font preference or an agent-proposed transition does not automatically become a required obligation. Single-screen and imagery-free experiences are valid selections. Nothing here creates a hero, animation, image count or universal screen count requirement.
 
 Selected design files are pinned by the existing intent chain. Arbitrary paths written inside `value` are not automatically discovered or pinned: keep decisions inline, or declare relevant design/brand/evidence dependencies through the existing mechanisms. Additional review reports must be explicit packet inputs or review evidence. Never imply that a link alone seals its target.

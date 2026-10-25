@@ -111,7 +111,7 @@ Use the [Data Experience Design Studio](../skills/omni-design-systems/references
 For a substantial new experience or material redesign:
 
 1. Complete A–C access, analysis and reusable narrative, then retain the D artifact brief: audience/task, website/brand authority, experience ambition and target constraints.
-2. For new products/reconception, present exactly three viable, materially different options on the same core narrative/evidence and wait for the user's selection. Change experience structure or interaction, not only palette. Prose alone is not rendered evidence. Focused work or an already selected product reuses the current direction.
+2. For new products/reconception, present exactly three viable, materially different visual concepts on the same analytical scope and accepted quality ambition, then wait for the user's selection. Change experience structure or interaction, not only palette. Each concept retains a representative visual and requirement coverage; three prose pitches are insufficient. Original static SVG specimens are an explicitly unrendered CLI-only route. Focused work or an already selected product reuses the current direction.
 3. Resolve type/spacing roles, native grid or App geometry, chart axes/labels/units, states, keyboard path and exact query dependencies. Check native feasibility before committing to an unsupported interaction.
 4. Implement a cohesive candidate, then obtain security, UI/UX, PO and independent QA feedback on each iteration. Return permitted captures and material deviations to the designer; correct findings and repeat affected checks.
 5. Keep independent numerical, craft, native behavior and human-usability evidence separate. Update the engagement index and artifact/query records; missing testing remains visible.
@@ -287,7 +287,7 @@ Configure only the source request, target documents and exact candidate operatio
 | Skill is not discovered | Check the host's configured skill directory, refresh discovery and confirm all sibling folders were installed. Reading the orchestrator directly is a local fallback. |
 | Installer reports customization | Inspect and preserve the existing folder; use a supported exact-baseline upgrade or a fresh approved directory. |
 | Helper rejects a path or existing output | Use canonical paths without symlinks and a new output filename; keep relative evidence paths inside the engagement. |
-| YAML dependency is unavailable | Activate the prepared environment and install its reviewed requirements; do not install dependencies declared by customer exports. |
+| YAML dependency is unavailable | Retain the runtime gap and prepare the exact dependency/action request for explicit sign-off; use a source-only route where sufficient. Do not install or activate dependencies automatically, including those declared by customer exports. |
 | Comparison is inconclusive | Inspect source state, identity, complete result coverage and persona/data-time evidence. Matching rows alone cannot fill missing provenance. |
 | Native capability or runtime bridge is unavailable | Continue the local specification and provide an explicit operator handoff. Do not invent an API or change the requested surface. |
 | Claude/ChatGPT cannot run the local host | Use a configuration with local process/file support or an explicit operator-assisted transfer. Installing this repository does not create a remote connector. |
@@ -376,18 +376,37 @@ retain their existing authorization boundaries.
 # Host startup and delivery assessment
 
 For substantial artifact work, use the [execution procedure](../skills/omni-artifact-accelerator/references/execution-workflow.md)
-before full implementation. It provides exact startup/ownership/candidate/evidence
-request shapes. The helpers below use only original code and the existing Python
-standard library; `$OAA_HELPER` points at the selected `analyst_project.py` and
+before the first new stage. It provides exact startup/ownership/candidate/evidence
+request shapes and source expectations. New projects use `experience-evidence-v1`;
+older engagements retain their history and may adopt it explicitly on resume.
+Maintenance and focused repairs do not require a new engagement or fresh concept
+selection. The helpers below use original code and the existing Python standard
+library; the optional source check also invokes existing Git for a read-only remote
+reference lookup. `$OAA_HELPER` points at the selected `analyst_project.py` and
 `$OAA_RUN` at the existing engagement outside this repository.
 
 ```sh
 python3 -I -S -B "$OAA_HELPER" run-start --project "$OAA_RUN" --request startup.json
+python3 -I -S -B "$OAA_HELPER" run-guidance --project "$OAA_RUN" --request guidance.json
+python3 -I -S -B "$OAA_HELPER" phase-check --project "$OAA_RUN" --request phase.json
 python3 -I -S -B "$OAA_HELPER" run-check --project "$OAA_RUN" --request readiness.json
 python3 -I -S -B "$OAA_HELPER" candidate-freeze --project "$OAA_RUN" --request candidate.json
 python3 -I -S -B "$OAA_HELPER" delivery-check --project "$OAA_RUN" --request delivery.json
 ```
 
+Run these at their applicable phases, not as one startup batch. `run-start` names
+the execution-contract path and `source_expectation`; record the actual checkout,
+require a pinned clean revision, or verify latest main explicitly. When requested
+and permitted, `source-check --request source-check.json` with `{"id":"entry"}`
+reads configured HTTPS origin/main and writes a receipt. Latest startup requires
+that receipt within ten minutes and the matching clean checkout. It does not fetch,
+install, activate or silently replace an older checkout. The verified pin remains
+stable for the run; it does not track future remote updates automatically.
+
+`run-guidance` takes `id` and `loaded_guidance` paths after actual reads;
+`phase-check` takes an `action`, such as `analysis`, `brief`, `options` or `candidate`.
+It checks only that phase's prerequisites. A declared read is not proof of reading,
+comprehension or agent dispatch. Do not apply full run-check prematurely at A/D.
 `run-check` takes `run` and `execution` paths. `delivery-check` adds `candidate` and
 `evidence` paths. Paths inside requests are engagement-relative. Exit 0 means
 structural readiness, exit 1 identifies gaps and exit 2 rejects invalid input.
@@ -396,3 +415,9 @@ include actual `builders`. Gated assembler builds already freeze and return thei
 candidate; do not duplicate that freeze. Retain the first candidate before review
 and obtain all four consulting dispositions before creating a revision. No rendering
 permission means visual quality remains unobserved even when publication succeeds.
+Keep authorized candidate preview, verified selected scope and published/read-back
+status separate. Preview can enable native observation; it must retain the actual
+write authority and any immediate-publication side effect. Neither a stage-release
+status nor four source consultations erase outstanding delivery findings. See the
+[control cases](../skills/omni-app-engineer/references/control-primitives.md#assembled-control-regressions)
+for custom hidden panels, scope/status agreement and long-label regressions.

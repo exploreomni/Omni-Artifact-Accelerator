@@ -213,6 +213,7 @@ def select(root, spec_path, output_relative):
              spec.get('product', {}).get('source_inventory_path'), 'source_inventory_removed_reconcile_instead')
         P.routing_helper('product_intent').V.validate_transition(
             previous['spec'], spec, lambda ok, message: need(ok, 'visual_experience.' + message))
+        P.routing_helper('product_intent').validate_quality_transition(previous['spec'], spec)
         current = {r['id']: r for r in spec['requirements']}
         for req in previous['spec']['requirements']:
             if req['required']:

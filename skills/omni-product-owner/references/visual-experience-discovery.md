@@ -32,13 +32,13 @@ This menu supplements those decisions.
 If comparisons or trends are requested **or part of the recommended scope**, and
 treatment is unresolved, ask:
 
-> Would you like your bar charts, line charts, and other comparisons to have a futuristic, dimensional appearance? We can explore sculpted columns, dimensional trend lines, layered surfaces, lighting, and interactive camera views. Which direction appeals to you?
+> For bar charts, line charts and other comparisons, would you prefer refined 2D, a futuristic dimensional appearance, interactive 3D, or a recommended mix? Dimensional options can use sculpted columns, layered trends and lighting; interactive 3D adds useful camera and inspection controls. Which fits the experience you want?
 
 | Choice | Meaning |
 | --- | --- |
+| Refined 2D | Deliberate composition, typography, annotation and interaction without spatial depth. |
 | Dimensional styling | Depth, materials and light with a stable analytical view; a 2.5D treatment need not be a navigable scene. |
 | Interactive 3D | Useful inspection views, selection, camera controls and an exact-value alternative; qualify the target/runtime before committing. |
-| Refined 2D | Deliberate composition, typography, annotation and interaction without spatial depth. |
 | Recommend a mix | Explicitly delegate treatment to the designer within the stated task, brand and constraints. |
 
 Recommend by task, not by a package-wide favorite. A clear supplied answer such as
@@ -63,6 +63,29 @@ accept a short free-text list instead. Do not make the user coordinate specialis
 
 ## Carry the decision forward
 
+Before E, recover the experience's distinguishing qualities as well as its visual
+family. If a consequential answer is missing, ask a compact question about what
+the experience should feel and do differently: composition, imagery, depth,
+interaction, motion or spatial inspection; qualities to borrow and avoid; and
+first versus repeat use only when that changes the journey. Do not require an
+answer for every dimension. Keep explicit quality delegation separate from family
+or comparison-treatment delegation. An analyst persona does not imply “simple,”
+and an expressive brief does not mandate imagery, 3D or a library.
+
+Bundle unresolved choices when useful: “Which visual families support your task,
+which comparison treatment appeals to you, and what should make this experience
+feel distinctive? You can delegate any or all three recommendations.” Record the
+actual scope of that reply in each existing index; a single clearly scoped reply
+can supply all three. Do not expand “recommend the charts” into authority to choose
+the quality ambition, install a library, or select the final product option.
+
+Translate the actual answer into observable acceptance attached to existing
+requirements, scoped to the affected destination or journey. Use
+`product.quality_bar` from the linked canonical contract to index those rows.
+Reuse sources rather than asking again, preserve unresolved answers, and keep
+recommendations attributable as proposals. Tooling restrictions change observation
+limits; they do not silently reduce the requested quality.
+
 Use existing requirements and attributable private notes for family membership,
 treatment, priority, constraints, source and acceptance. Separate a user statement,
 reused decision, explicit delegation, agent recommendation and unresolved preference.
@@ -76,6 +99,14 @@ when relevant. Do not turn the four choices above into a fixed concept trio. Wai
 for the actual product selection before detailed design/code. Reopening material
 discovery goes through the existing stage replay rules; never reuse a choice for a
 changed option set or quietly strip a requirement on resume.
+
+Compare concrete representative visuals with realistic labels and a consequential
+state. Each option keeps the same active quality requirements, truthful analytical
+scope and relevant treatment; vary structure and primary interaction. An original
+static SVG/storyboard is useful evidence when rendering is unavailable, but it
+does not establish observed craft. Prose/ASCII alone is insufficient. For products
+with both surfaces, each option covers both. Recommend with reasons and limitations;
+the user's actual product choice remains separate from structural validation.
 
 After selection, hand treatment decisions to the designer using
 [dimensional visualization craft](../../omni-design-systems/references/dimensional-visualization-craft.md).

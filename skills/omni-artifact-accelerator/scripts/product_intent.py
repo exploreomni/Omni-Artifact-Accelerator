@@ -11,8 +11,16 @@ _s.loader.exec_module(P)
 _v = importlib.util.spec_from_file_location('visual_intent', Path(__file__).with_name('visual_experience.py'))
 V = importlib.util.module_from_spec(_v)
 _v.loader.exec_module(V)
+_e = importlib.util.spec_from_file_location('experience_contract', Path(__file__).with_name('experience_contract.py'))
+E = importlib.util.module_from_spec(_e)
+_e.loader.exec_module(E)
 visual_context = V.visual_context
 visual_report = V.visual_report
+quality_context = E.quality_context
+quality_check = E.quality_check
+validate_quality_transition = E.validate_transition
+validate_concept = E.validate_concept
+validate_handoff = E.validate_handoff
 SCOPES = {'new_experience', 'material_redesign', 'migration', 'focused_repair'}
 BASES = {'user_statement': 'user', 'reused_decision': 'reused', 'inference': 'proposal',
          'recommendation': 'proposal', 'unresolved': 'proposal'}
@@ -31,7 +39,7 @@ def validate(spec, need, relative, roles):
         return
     need(type(product) is dict and {'schema_version', 'scope', 'discovery', 'note_paths'} <= set(product)
          and set(product) <= {'schema_version', 'scope', 'discovery', 'note_paths', 'source_inventory_path',
-                             'visual_experience'},
+                             'visual_experience', 'quality_bar'},
          'product_fields_invalid')
     need(type(product['schema_version']) is int and product['schema_version'] == 1, 'product_version_invalid')
     need(product['scope'] in SCOPES and product['discovery'] in
@@ -70,6 +78,7 @@ def validate(spec, need, relative, roles):
                  and all(type(v) is str and 0 < len(v.strip()) <= 8192 for v in alt.values()),
                  'product_alternative_must_preserve_outcome_and_gap')
     V.validate(spec, lambda ok, message: need(ok, 'visual_experience.' + message))
+    E.validate(spec)
 
 
 def clean(value):
@@ -108,6 +117,14 @@ def render(project, state, generated_at):
                      'This records preferences or scoped delegation; it does not select a product concept '
                      'or authorize runtime, access, dependency or publication actions.', ''])
         rows.extend('- Open visual decision: ' + clean(finding) for finding in visual['findings'])
+        rows.append('')
+    quality = quality_check(spec)
+    if quality['status'] != 'not_assessed':
+        rows.extend(['Experience quality decisions: ' + quality['status'],
+                     'Indexed quality requirements: ' + clean(quality['requirement_ids']),
+                     'These sourced decisions set the experience ambition; neither a persona nor a '
+                     'tooling restriction silently lowers it. Declared coverage does not certify craft.', ''])
+        rows.extend('- Open quality decision: ' + clean(finding) for finding in quality['findings'])
         rows.append('')
     for req in spec['requirements']:
         item = req.get('product', {})
@@ -179,6 +196,9 @@ def check(root):
         if visual_context(spec) is not None:
             result['visual_experience'] = visual_report(spec)
             result['visual_context'] = visual_context(spec)
+        if quality_context(spec) is not None:
+            result['quality_bar'] = quality_check(spec)
+            result['quality_context'] = quality_context(spec)
         receipt = project.get('product_brief')
         P.need(type(receipt) is dict and set(receipt) == {'schema_version', 'kind', 'source_intent', 'generated_at', 'brief'},
                'product_projection_missing_or_invalid')

@@ -19,11 +19,32 @@ Each case records id, requirement/asset, source pins, independent expected outco
 
 Local helper verification, native results, access verification, human acceptance and publication are separate lanes. Imported receipts are assertions until independently corroborated. No generated JSON status can authorize a live write.
 
+Check the assembled experience, including custom controls outside shared primitives.
+Exercise hidden-to-visible transitions under the final CSS, scope changes across
+destinations, warning/headline agreement and long labels at relevant small and large
+sizes. A DOM `hidden` property check cannot establish that author styles leave the
+element hidden. See the [bounded control cases](../../omni-app-engineer/references/control-primitives.md#assembled-control-regressions)
+and bind actual rendered results to the exact candidate, viewport and state.
+
 For new or materially redesigned experiences, use the [usability protocol and synthetic comprehension example](../../omni-qa-analyst/references/usability-testing.md). Record the evidence category and exact tested candidate; a local prototype may be task-tested while its native behavior remains unverified. Unavailable participants leave human testing `not_run` and do not prevent authorized provisional work.
 
 Capture design deviations and the designer's disposition, then retest the revised native version. Do not assign a numerical beauty score. Before reporting verified selected scope, identify its required cases and check that none remain failed, blocked or not run. A narrow correction need not reopen unrelated numerical cases, and fidelity-preserving migration must not lose a source requirement in pursuit of a new composition.
 
 For release handoff, provide exact candidate versions and target IDs, selected scope, diff, numerical and visual evidence, unresolved findings, permissions/settings impact, maintainer, refresh/cost assumptions, and recovery to previous content. Reuse existing authorization; request only genuinely missing authorization for the concrete external action. After a permitted mutation, reread actual content and test a bounded critical path. An ambiguous timeout needs reconciliation, not blind retry.
+
+Use the existing delivery assessment to distinguish **prepared local candidate**,
+**authorized candidate preview**, **verified selected scope** and **published/read
+back**. Native preview can be necessary to obtain native observations; do not create
+a circular demand for those observations before a separately authorized preview.
+Some create routes publish immediately, so the actual authorization and description
+must cover that side effect. A preview is not a lower-risk synonym for publication.
+Missing rendering/access/participants remain gaps in the claim, not fabricated
+passes. Preserve CLI-only restrictions without browser/headless workarounds.
+
+Four resolved source consultations establish only their recorded review scope.
+Carry warnings and unresolved findings into closeout, linked to current retests;
+do not call the work clean merely because a stage is release-ready. Positive story
+feedback does not silently accept visual quality, permissions or every destination.
 
 Reconcile the current QA entrypoint as part of that handoff. Preserve the prior QA record, then make `contracts/qa.json` identify the selected candidate path/hash, current scoped review and publication evidence when available. Reopen affected findings until their exact-candidate retest passes. Check agreement with the project's selected artifact/design intent and `START_HERE.md`; updating only the narrative entrypoint leaves standalone QA resumes stale. Retained checks from an earlier candidate stay labeled historical, even when unchanged dependencies make them useful background. Never refresh their hashes or counts to imply execution on the new candidate. This is an agent handoff check, not an automatic capability of the existing helper.
 

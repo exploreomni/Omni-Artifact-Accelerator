@@ -13,7 +13,7 @@ their current context; routine design choices need no additional user approval.
 1. Identify the actual source mode with the [execution entry procedure](execution-workflow.md). For installed-skill work, use the read-only installer comparison described in the [how-to](../../../docs/HOW_TO.md#installation-and-updates). For an explicitly repository-only trial, record the working-tree manifest and do not consult installed copies, prior outputs or memory. For a connected repository link, establish what files were actually read; a URL is not activation. Source/install parity does not prove the host reloaded a cached skill.
 2. Read current intent, original request, source/query scope and tooling restrictions. Reuse the company website, approved asset sources, audience and experience decisions. Batch only material missing questions; do not repeatedly ask about authorized logo sourcing or require the user to choose routine CSS.
 3. For new products, complete A–C before product design: verify data/user access, inventory source depth, qualify governed queries and analyst findings, then create the reusable, refresh-safe narrative. Use the [analytical coverage map](../../omni-data-analyst/references/analytical-coverage.md) and [source inventory](execution-workflow.md#qualify-and-build-one-journey); preserve unsupported/deferred questions. Qualify critical native query capabilities and retain unobserved runtime evidence honestly.
-4. Conduct artifact discovery using that handoff, then present exactly three viable, meaningfully different concepts and obtain the user's selection. Resolve focal point, hierarchy, imagery, density, navigation, interaction and first/repeat use for that option. Record comparative exploration and the decision reference; a recommendation is not a selection. Focused work and already selected products can retain direct exploration. Qualify selected high-risk media/spatial/refresh paths before implementation depends on them; follow [native capability checks](../../omni-app-engineer/references/native-capability-checks.md).
+4. Conduct artifact discovery using that handoff, then present exactly three viable, meaningfully different visual concepts at the same accepted analytical scope and quality ambition. Retain each representative visual and its requirement coverage in the existing concept evidence; prose alone is insufficient. Obtain the actual user's selection, then resolve focal point, hierarchy, imagery, density, navigation, interaction and first/repeat use for that option. Record comparative exploration and the decision reference; a recommendation is not a selection. Focused work and already selected products can retain direct exploration. Qualify selected high-risk media/spatial/refresh paths before implementation depends on them; follow [native capability checks](../../omni-app-engineer/references/native-capability-checks.md).
 5. Declare the selected destinations and applicable contexts/lanes before generating review cases. Keep a full inventory even for a focused edit. Choose only combinations needed to assess the actual task; missing applicability remains a gap.
 6. Implement from the resolved handoff, using an ambitious representative integration slice where useful, then complete the selected experience. Carry defining qualities as well as default/empty/error and constrained-layout behavior. A reduced technical demo cannot qualify omitted requirements. Obtain security, UI/UX, product-owner and independent QA feedback on every candidate iteration, repair findings and reassess the revised candidate.
 
@@ -24,6 +24,16 @@ retain the original outcome and evaluate supported treatments that preserve its
 ambition. Record the alternative and remaining difference in current intent. A
 no-render restriction limits evidence; it is not a reason to lower the design bar.
 
+Keep the quality bar in named canonical requirements and their observable acceptance
+criteria, using actual user answers, reused decisions or explicit delegation. An
+operations audience, frequent use or guided-story structure does not select an
+elementary visual treatment. Reuse prior answers and resolve only material gaps;
+do not require a style vocabulary or an additional interview when the user has
+delegated the choice. At E, original static SVG specimens are an honest CLI-only
+route, while actual captures retain their observation context. Neither source
+geometry nor file-format validation establishes polish. Follow the versioned
+[concept/handoff contract](stage-gates.md) rather than creating another brief.
+
 For each consequential destination, have the experience owner resolve the [destination specimen and state ownership](../../omni-design-systems/references/experience-brief.md#implement-the-selected-experience) before treating implementation as complete. Critique the main evidence's prominence, useful first state, role-appropriate depth and constrained-space journey separately from numerical correctness. A no-rendering restriction leaves visual quality unobserved, but does not prevent an independent source review from finding a buried scene, missing comparison, generic role fallback or lost exceptional selection. Repair those concrete omissions without inventing a visual pass.
 
 ## Component quality within the first journey
@@ -31,6 +41,14 @@ For each consequential destination, have the experience owner resolve the [desti
 When controls are new or materially changed, have design systems resolve the relevant [control families](../../omni-design-systems/references/control-craft.md) before the first slice: task-fit choice, emphasis/anatomy, states, density and responsive rules. Carry the shared definition once in the selected design and reference it from affected destinations. Use [optional control primitives](../../omni-app-engineer/references/control-primitives.md) only when they fit the selected implementation. They do not choose the shell, navigation, palette or query semantics.
 
 Review search → refine → inspect → return only when that task exists. Include reset/recovery and preserved identity, distinguish local filtering of supplied rows from a governed warehouse search, and inspect the input and result state together. Remote free text needs a supported reviewed bridge and bounded domain; a DOM input or local controller does not establish native support. Course references are optional learning aids, not an extra discovery or approval step. A focused correction reuses the existing design and reviews only affected obligations while retaining the full inventory.
+
+Apply control-state checks to the complete assembled App, including custom chrome
+outside optional primitives. A hidden panel must stay hidden despite author CSS;
+the visible scope control must govern the displayed evidence; warnings, headlines
+and completeness labels must agree. Resolve long-label width, wrapping or accessible
+truncation before accepting ranking/chart compositions. The [control regression
+cases](../../omni-app-engineer/references/control-primitives.md#assembled-control-regressions)
+separate useful source checks from actual rendered observations.
 
 ## Declare ownership and observable behavior
 

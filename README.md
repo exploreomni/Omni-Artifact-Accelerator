@@ -23,7 +23,7 @@ sets the order, while leaving the product's visual design open:
 2. **Analyze.** Profile relevant sources, build governed queries and derive supported insights and questions.
 3. **Create the analytical story.** Link claims to evidence and define how they update or disappear when data, filters or freshness change.
 4. **Discover the artifact requirements.** Use those findings for product/brand needs, a tailored visual-experience question and a conditional comparison-style follow-up; reuse answers already supplied.
-5. **Choose among three products.** Review three distinct, feasible options and select one; specialists then resolve its detailed design.
+5. **Choose among three products.** Review three distinct, feasible visual concepts with the same analytical scope and accepted quality ambition, then select one; specialists resolve its detailed design.
 6. **Build and refine.** Implement a cohesive candidate and obtain security, UI/UX, product-owner and independent QA feedback after every iteration.
 
 Existing selected products and focused fixes reuse prior evidence and decisions.
@@ -59,9 +59,14 @@ a stated limitation, not permission to install anything. See the [execution proc
 for repository-only, installed and connected routes. No host-specific route has
 universal enforcement or implied qualification.
 
-The local `run-start`, `run-check`, `candidate-freeze` and `delivery-check` commands
-preserve source provenance, named responsibilities, first candidate bytes and
-current evidence. These augment existing intent and QA records. They do not run
+The local `run-start`, `run-guidance`, `phase-check`, `candidate-freeze` and
+`delivery-check` commands preserve source provenance, stage-appropriate
+responsibilities, first candidate bytes and current evidence. Record startup before
+the first new stage. Choose the actual checkout, a pinned clean revision or verified
+latest main explicitly; `source-check` can read the configured HTTPS origin without
+fetching or activating code. A source mismatch never triggers installation or an
+automatic update. See the [exact entry procedure](skills/omni-artifact-accelerator/references/execution-workflow.md#record-startup-and-ownership).
+These augment existing intent and QA records. They do not run
 specialists, approve a dependency, or turn a published candidate into a polished,
 runtime-verified artifact. A host without gate execution can collect evidence and
 present options; a host with the helpers can continue local implementation using
@@ -103,10 +108,14 @@ For example:
 - “Use refined 2D for the comparisons. Prioritize typography, annotation and quick drill/return.” Depth and camera controls are not required for a premium result.
 
 The agent shows **exactly three distinct feasible products**, each honoring current
-preferences and the same analytical story, then waits for your choice before detailed
+preferences, the same analytical scope and quality ambition, then waits for your choice before detailed
 design and coding. A styling answer does not choose the product, install a renderer
 or authorize a different surface. The selected experience receives the existing four
-candidate reviews.
+candidate reviews. Each concept includes a representative visual and explicit
+quality coverage; three prose pitches do not meet this requirement. Under CLI-only
+constraints, an original static SVG can make a concept concrete while remaining
+unrendered evidence. Human judgment still determines whether the alternatives are
+meaningfully different and well crafted.
 
 [Dimensional craft](skills/omni-design-systems/references/dimensional-visualization-craft.md)
 and [original SVG/JSON specimens](skills/omni-design-systems/assets/dimensional-specimens/specimens.json)

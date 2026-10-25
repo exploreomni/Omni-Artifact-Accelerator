@@ -41,10 +41,15 @@ boolean or self-authored receipt can grant authority or govern unrelated MCP cal
 
 ## Record startup and ownership
 
-Initialize the existing project with `analyst_project.py init`. Preserve the original
+Initialize a new engagement with `analyst_project.py init`, or resume the existing
+one. New projects record `workflow_quality_policy: experience-evidence-v1`; its
+phase checks complement the existing A–F journal rather than creating a second
+workflow. Preserve the original
 request verbatim in `inputs/brief.txt`, redacting credentials before saving. Recover
 existing answers; use one material question batch where feasible. Resolve routine
-design choices internally. Read the relevant skills, then create a startup request:
+design choices internally. Create `contracts/execution.json` with the responsibilities
+known so far. Read the guidance needed for the first phase, then record startup
+**before the first new artifact stage**:
 
 ```json
 {
@@ -58,13 +63,11 @@ design choices internally. Read the relevant skills, then create a startup reque
   },
   "entrypoint": "Explicit repository orchestrator invocation",
   "brief": "inputs/brief.txt",
+  "execution": "contracts/execution.json",
+  "source_expectation": {"kind": "current_checkout"},
   "loaded_guidance": [
     "skills/omni-artifact-accelerator/SKILL.md",
-    "skills/omni-app-designer/SKILL.md",
-    "skills/omni-branding/SKILL.md",
-    "skills/omni-data-analyst/SKILL.md",
-    "skills/omni-app-engineer/SKILL.md",
-    "skills/omni-qa-analyst/SKILL.md"
+    "skills/omni-data-analyst/SKILL.md"
   ]
 }
 ```
@@ -72,7 +75,8 @@ design choices internally. Read the relevant skills, then create a startup reque
 Use `installed` only from the installed helper (guidance paths then omit `skills/`).
 `connected_reference` records a locally available package used from a connected
 host; it does not fetch or prove remote loading. Record only guidance actually read.
-Add relevant design-systems/storyteller guidance when assigned. Host execution modes
+Append relevant guidance as the work reaches each phase; do not predeclare unread
+files to satisfy a check. Host execution modes
 are `inline`, `delegated`, or `instruction_guided`; actual worker invocation still
 uses [scoped task records](task-routing.md).
 
@@ -89,8 +93,56 @@ python3 -I -S -B "$OAA_HELPER" run-start --project "$OAA_RUN" --request startup.
 The immutable `evidence/run-first-run.json` includes source hashes, Git identity
 when available, reported reads, constraints and the original-request hash. Keep
 the selected checkout stable during a trial; changing the package requires a new
-run ID, preserving the prior record. Startup does not compare installed copies in
+run ID, preserving the prior record. The current project points to that startup;
+resumes retain its predecessor and stage-tail reference. A first startup recorded
+after work is labeled late and cannot retrospectively establish timely entry.
+Older engagements may explicitly adopt the quality policy through
+`adopt_quality_policy:true` in a new startup request; retained records keep their
+historical interpretation. Do not rewrite the old journal or restart discovery
+merely to resume a selected product. Startup does not compare installed copies in
 repository mode, run agents, authenticate host claims or confer publication rights.
+
+An ordinary resume reuses the active startup. After an intentional source change,
+record a new startup and use the [same-journal requalification procedure](stage-gates.md)
+to revalidate A–E with current helpers. It can preserve the exact original options
+and actual choice only while their evidence, analytical scope, quality decisions,
+original request and applicable ownership remain unchanged. It does not rewrite
+the user reply or mint another selection. Changed choice inputs reopen the affected
+stages. F reviews and rendered/native/human passes never carry forward merely
+because requalification succeeded.
+
+Select the source expectation that matches the actual request:
+
+| `source_expectation` | Required evidence |
+| --- | --- |
+| `{"kind":"current_checkout"}` | Records the actual working-tree manifest, including local changes. It makes no latest-release claim. |
+| `{"kind":"pinned_revision","revision":"<full revision>"}` | HEAD must equal the requested full revision and the working checkout must be clean. |
+| `{"kind":"latest_main","revision":"<full revision>","verification_path":"evidence/source-check-entry.json"}` | A matching source-check receipt from this project/package, captured within ten minutes before startup, plus the matching clean checkout. |
+
+When a latest-main check is requested and read-only network access is permitted,
+`source-check --request source-check.json` takes `{"id":"entry"}`. It reads
+`refs/heads/main` from the checkout's configured HTTPS `origin` and writes the
+receipt; it does not fetch, reset, install, activate code or contact an Omni tenant.
+An origin URL containing credentials is rejected. Keep the receipt and any private
+repository identity inside the engagement. If verification is unavailable or the
+checkout differs, report that gap and obtain/use the appropriate authorized source;
+do not quietly relabel the current checkout as latest. A valid startup pins the
+verified source for the run; it does not expire every ten minutes or follow later
+remote changes automatically. These are local workflow records, not authenticated
+supply-chain attestations or a security boundary against their author.
+
+After reading more guidance, append a receipt with `run-guidance`:
+
+```json
+{"id":"analysis-reading","loaded_guidance":[
+  "skills/omni-bi-engineer/SKILL.md"
+]}
+```
+
+Receipts pin files from the startup manifest and link to the active run and prior
+receipt. They preserve reported read provenance, not proof of comprehension or
+dispatch. Avoid retaining credentials, unnecessary customer rows or personal data
+in briefs, receipts or review evidence.
 
 Use `contracts/execution.json` only for ownership and original-request review.
 Keep design choices in the existing selected intent and resolved design. Its shape:
@@ -103,7 +155,7 @@ Keep design choices in the existing selected intent and resolved design. Its sha
     "semantics": {"role":"data-analyst","worker":"lead","mode":"inline","rationale":"Owns populations and expected results"},
     "engineering": {"role":"app-engineer","worker":"lead","mode":"inline","rationale":"Implements the selected native contract"},
     "verification": {"role":"qa-analyst","worker":"reviewer","mode":"delegated","rationale":"Independent review of original request and output"},
-    "design_systems": {"role":"design-systems","worker":"","mode":"not_required","rationale":"Existing reviewed controls are unchanged"},
+    "design_systems": {"role":"design-systems","worker":"lead","mode":"inline","rationale":"Defines task-fit composition, type and control rules for this new experience"},
     "storytelling": {"role":"data-storyteller","worker":"analyst","mode":"inline","rationale":"Creates the traceable, refresh-safe narrative after query analysis and before artifact design"}
   },
   "request_review": {
@@ -135,8 +187,11 @@ These are additions inside `responsibilities`, not a replacement execution file.
 Creative review may use `app-designer`, `dashboard-designer` or `design-systems`;
 its actual worker must differ from engineering and the originating experience owner.
 Product fit, creative craft and correctness remain separate findings. A suitable
-independent worker can cover both review disciplines. Legacy seven-role records
-remain supported; focused repairs need no extra interview or review ceremony.
+independent worker can cover both review disciplines. Historical seven-role records
+remain readable. For work under the quality policy, the applicable phase requires
+its named duties; a `not_required` rationale cannot waive them. A focused repair
+retains its original scope and existing applicable evidence rather than forcing a
+new engagement or three new concepts.
 
 Optional specialist ownership belongs in a sibling `specialists` object, not an
 invented core responsibility. For example, a selected spatial task may use:
@@ -158,7 +213,24 @@ mapping. Preserve evidence and explain any gap. All recorded requirement IDs mus
 be accounted for, but matching IDs cannot discover a requirement omitted from both
 records. Never fix a result cap by quietly narrowing the requested population.
 
-Run `run-check` with a request containing `run` and `execution` paths. It checks
+Use `phase-check --request phase.json` with `{"action":"analysis"}` before
+the applicable action. The phase check assesses current startup/source, declared
+responsibilities and guidance, without requiring later design or build records.
+The A–F stage gate remains responsible for predecessor order and actual choice.
+Do not use the full `run-check` as an early A/D gate: it also needs implementation
+readiness and would create a circular requirement.
+
+Responsibilities accumulate with the phase: semantics for access/analysis,
+storytelling for narrative, product intent/experience/brand for discovery,
+design systems/creative review/verification for concepts, and engineering plus
+original-request review for the candidate. Conditional selected capabilities add
+their relevant guidance and scoped specialists. The returned findings identify
+missing reads or owners. This is scope-aware responsibility routing, not a command
+to create another agent or a license to load a renderer. Several duties may share
+one worker when the independent review requirements permit it.
+
+Run `run-check` with a request containing `run` and `execution` paths once its
+implementation-readiness prerequisites exist. It checks
 current package/brief bytes, declared role guidance, ownership, original-request
 review presence, enabled product context and existing `experience-check` coverage. Exit 1 means incomplete;
 exit 2 means invalid input. Independent provisional work remains possible.
@@ -230,7 +302,13 @@ brand authorization, first/return use, dominant evidence, control states, respon
 width **and height**, and useful detail/return. Review the complete first journey,
 then every consequential destination. No fixed KPI count, tabs, animation, imagery,
 3D is required. New products require exactly three options; their content is not
-a fixed template. More prose cannot replace actual critique.
+a fixed template. Each uses the same accepted analytical scope and quality bar,
+with a representative visual and traceable quality coverage in its versioned
+concept manifest. Do not make one option the only complete or ambitious offer.
+Use the [current concept and handoff schema](stage-gates.md), retaining actual
+user selection before detailed implementation. Original static SVG specimens are
+the source-only route; actual PNG/JPEG captures need their observation evidence.
+Neither structural validation nor three prose pitches establish rendered craft.
 
 Make the first journey representative of the ambition, not just a thin technical
 path. Preserve defining brand/interaction qualities and useful evidence. When a
@@ -255,9 +333,26 @@ must be recorded before the next build/freeze:
 ```
 
 List all material query/model/settings/target dependencies explicitly. Selected
-intent files are added automatically. The command creates new, never-overwritten
+intent files and current phase evidence are added automatically for quality-policy
+work. Keep execution ownership, guidance and original-request review current before
+freezing; do not add missing context after review and pretend it was inspected.
+The command creates new, never-overwritten
 candidate records and copies exact artifact bytes. Hash history is tamper-evident
 when checked, not immutable storage or proof that no earlier candidate existed.
+
+For a required companion such as an App create specification, include its path in
+`artifacts` and in the optional `supporting_artifacts` list. Supporting paths must
+be a distinct proper subset of the frozen artifacts; the remaining primary set
+must match the selected surface candidates exactly. A selected App HTML path cannot
+be relabeled supporting to hide it from coverage. Supporting bytes remain fully
+frozen, hash-pinned and covered by the candidate reviews and freshness checks;
+this distinction does not exempt create metadata, queries or settings from review.
+Historical candidates without roles keep their original primary-only interpretation.
+The first assembly may precede selecting its newly produced artifact bytes. It can
+be frozen as a provisional candidate, but it cannot pass delivery coverage or new
+App creation preparation until the actual App artifact is bound into selected
+intent and its current design/candidate reviews are complete. This does not reopen
+the user's product-option choice or permit coding before that choice.
 
 ## Assess delivery without upgrading claims
 
@@ -329,6 +424,25 @@ Do not manufacture rendered cases to make the latter green. The existing
 obligations from selected intent; actual observations close only the lanes they
 establish. Link the source findings and corrections, retain unobserved contexts,
 and deliver the candid gaps when publication is separately authorized.
+
+Use precise delivery language:
+
+- **Local candidate prepared:** exact files and source/synthetic evidence are ready
+  for the stated next step; native and rendered claims remain separate.
+- **Authorized candidate preview:** the actual external action was authorized and
+  its result is retained. A preview can be needed to observe native behavior; some
+  creation routes publish immediately, so disclose that side effect before acting.
+- **Verified selected scope:** only the named, executed current-candidate cases
+  support this claim. Unrun access, responsive or human cases remain explicit gaps.
+- **Published/read back:** the confirmed remote target matches the exact candidate
+  within the documented verification scope. This says nothing by itself about
+  polish, participant understanding or effective access.
+
+Four resolved source consultations do not mean every lane is clean. Reconcile
+carried warnings and unresolved findings against current retests before summarizing
+them; do not hide the delivery assessment behind a stage-release status. Actual
+rendering, host trials and user acceptance remain unrun when permission, tools or
+access are absent. A CLI-only constraint never authorizes a headless workaround.
 
 The helper neither invokes a provider nor wraps arbitrary native writes. A host may
 use its exit status in a separately qualified managed delivery route; it cannot

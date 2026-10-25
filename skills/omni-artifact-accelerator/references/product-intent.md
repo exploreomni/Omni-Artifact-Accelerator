@@ -185,6 +185,115 @@ exactly `unavailable_method`, `preserved_outcome`, `feasible_alternative` and
 its status. A proposal or fallback is not customer acceptance. Escalate material
 outcome/scope changes; ordinary reversible design choices need no extra approval.
 
+## Quality bar in canonical requirements
+
+For newly adopted quality policy, D also records the distinguishing qualities of
+the experience. Recover supplied answers first. Ask only consequential gaps about
+composition, imagery, depth, interaction, motion, spatial treatment, qualities to
+borrow/avoid, or first versus repeat use. These are useful prompts, not mandatory
+features. An analyst persona does not imply a simple interface; an immersive
+request does not imply a particular library, 3D runtime or template.
+
+Add `product.quality_bar` as an index, without copying requirement text:
+
+```json
+{"schema_version":1,"requirement_ids":["focal-composition","useful-inspection"]}
+```
+
+Each indexed row has the existing origin, disposition, source reference, surfaces,
+priority and observable acceptance. Its value is
+`{"quality":"composition","direction":"A focal comparison keeps its hierarchy when evidence opens."}`.
+Other quality names are `typography`, `depth`, `interaction`, `spatial`,
+`reference_qualities`, `use_cadence`, `imagery`, `motion`, and `custom`.
+Custom adds a bounded `custom_label`. Imagery and motion add
+`usage: "included"|"omitted"`, so omission is a recorded choice rather than a guess
+from prose. Their inclusion is never required universally. Reference-quality
+directions explain what to borrow and avoid; a brand name alone is insufficient.
+
+Real user statements and reused decisions can resolve these rows. A recommendation
+remains a proposal. It is ready only with optional
+`delegation_requirement_id` pointing to a separately sourced selected requirement
+whose value is `{"delegation_scope":"experience_quality"}` and whose surfaces
+cover the recommendations. A styling/family delegation does not silently delegate
+the quality bar. Source references must point to declared notes, and a selected
+decision reference must be among its row's sources. These checks validate
+attribution structure, not whether an author faithfully captured a human reply.
+
+Empty or open decisions remain valid drafts with `unresolved` readiness. Each
+product surface needs active quality decisions. Historical absence returns
+`not_assessed`; it is not evidence of failure or permission to bypass newly
+adopted policy. Active recognized quality rows must remain indexed. After adoption,
+removing the index or deleting a prior indexed requirement is invalid; retain an
+explicit user/reused sourced omission when scope genuinely changes.
+
+`quality_context(spec)` uses the same semantic D boundary described above: values,
+scope, provenance, priority and acceptance matter; later delivery ownership,
+assets, suggested roles and context/review scaffolding do not reopen discovery.
+Full selected-intent and candidate freshness still govern the latter. The North
+Star and worker packet carry quality readiness and current indexed decisions.
+
+## Concrete concept evidence and selected handoff
+
+Each new E option names a bounded JSON `analyst_concept_manifest` with
+`schema_version: 1`, `option_id`, `surface`, `analytical_scope`, `structure`,
+`primary_interaction`, `responsive`, `quality_coverage`, `treatment_coverage`,
+`representative`, and `constraints`. Coverage rows contain `requirement_id`,
+`implementation` and `visual_locator`. Every active quality requirement for that
+surface and every selected comparison-treatment requirement must be covered;
+reused or recommended decisions cannot disappear between options.
+
+The representative contains `path`, `evidence_kind`, `state` and a nonempty `labels`
+list. `static_source` accepts an original, bounded SVG with actual graphic elements
+and text labels. It rejects active content and external references; local paint
+servers and embedded PNG/JPEG images are supported. `rendered_capture` accepts
+PNG/JPEG plus a pinned local `observation_path` (`.json` or `.md`). The helper checks
+file structure and dependency bytes, not pixels, evidence authenticity or visual
+quality. A source specimen must never be described as an observed render.
+
+Constraints contain nonempty `feasibility`, `assets`, `dependencies` and
+`observation_limits`. Name actual data/runtime/asset gaps. Labels, comparative
+scope and consequential state must be truthful and representative. A prose-only
+file, ASCII layout or token palette does not establish concept evidence. Passing
+structural checks alone cannot determine whether a specimen is useful or whether
+three ideas are genuinely distinct; the reviewer still makes that judgment.
+
+For an App plus dashboard product, each of the three options can use one
+`analyst_concept_set`: `schema_version`, `kind`, `option_id`, `analytical_scope`,
+`structure`, `primary_interaction`, and `surface_manifests`. The list contains one
+single-surface manifest per required surface, with the same option identity and
+analytical scope and a distinct concrete specimen per surface. Nested sets are
+invalid. The stage layer retains exactly three comparable products and binds the
+user's choice to their exact transitive bytes.
+
+After choice, use the existing selected design's canonical `destinations` and
+`journeys`; do not create a second screen or journey list. Add `experience_handoff`
+with only `schema_version: 1`, `concept_manifest_path`, and `quality_coverage`.
+Handoff coverage rows contain `requirement_id`, `implementation` and
+`destination_ids`; their destinations cover the requirement's actual surfaces.
+
+Each consequential destination retains `id`, `purpose`, `primary_action`,
+`evidence`, `drill`, `return` and `responsive`, and resolves `focal_content`,
+`composition`, `typography`, `chart_anatomy`, `controls`, `state_ownership` and
+`journey_id`. A multi-surface design also identifies each row's `surface`.
+Chart anatomy is `{applicable:true,details:"..."}` or
+`{applicable:false,rationale:"..."}`; charts are not mandatory. Existing additional
+design fields remain available. Canonical journeys have `id`, `destination_ids`,
+`entry`, `action`, `detail`, `return`, `retained_state` and `recovery`.
+
+When selected, imagery resolves `role`, `placement`, `crop`, `alternative_text`,
+`fallback`, and `narrow`; motion resolves `trigger`, `purpose`, `continuity`,
+`interruption`, and `reduced_motion`. A destination without that selected feature
+uses `{applicable:false,rationale:"..."}`. At least one destination per affected
+surface must realize the included feature. Explicit omission cannot coexist with
+its implementation. Nothing requires imagery, motion, a hero or a universal shell.
+
+The helpers return deterministic metadata and transitive `{path,sha256,bytes}`
+dependencies. The stage owner binds the handoff's exact concept manifest to the
+actual choice and checks freshness. This establishes declared design completeness,
+not rendered craft, interaction, native behavior, user acceptance or publication
+authority. Designers resolve real proportions, control behavior and state ownership;
+nonempty field text is not an aesthetic certification.
+
 ## Generate and check the readable projection
 
 After reconciling and selecting a version through the existing intent workflow:

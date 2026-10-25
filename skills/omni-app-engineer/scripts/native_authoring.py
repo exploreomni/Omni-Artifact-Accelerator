@@ -359,6 +359,10 @@ def prepare_create(*, project, artifact, spec_artifact):
     gate = P.stage_require(root, 'release')
     need(gate.get('required') is True and gate.get('release_ready') is True
          and 'app' in metadata['surfaces'], 'New App creation requires current A-F release reviews')
+    selected = P.intent_helper().check(root)
+    app_candidates = {s.get('candidate_path') for s in selected.get('selections', []) if s.get('surface') == 'app'}
+    need(selected.get('status') == 'consistent' and artifact in app_candidates,
+         'New App creation requires the selected App artifact')
     html_raw = read_bytes(P.relative_file(root, artifact), MAX_HTML)
     spec_raw = read_bytes(P.relative_file(root, spec_artifact), MAX_JSON)
     html_sha, spec_sha = (hashlib.sha256(raw).hexdigest() for raw in (html_raw, spec_raw))

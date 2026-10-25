@@ -21,6 +21,7 @@ class OperationsTests(unittest.TestCase):
         # Historical migration routing; A–F integration uses fresh gated projects separately.
         legacy = ap.load_project(self.root)[1]
         legacy.pop('stage_gate_policy')
+        legacy.pop('workflow_quality_policy', None)
         ap.write_json(self.root / 'project.json', legacy, replace=True)
         (self.root / 'inputs/orders.json').write_text('{"grain":"order"}')
         self.packet = self.prepare('orders')

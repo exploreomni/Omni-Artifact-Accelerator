@@ -57,6 +57,7 @@ class StageGateTests(unittest.TestCase):
         for stage, body in self.requests.items():
             body.update(stage=stage, evidence={k: 'evidence/' + k + '.txt' for k in S.EVIDENCE[stage]})
         self.requests['brief'] = G.discovery_request(self.root, P, 'evidence/brief.txt')
+        self.requests['options']['options'] = G.concept_options(self.root, P, ['o0', 'o1', 'o2'])
 
     def write(self, path, value):
         p = self.root / path
@@ -76,6 +77,8 @@ class StageGateTests(unittest.TestCase):
                 receipt = self.host.fixture_user_selection(binding)
                 self.record({'stage': 'choice', 'option_id': 'o1', 'receipt_ref': receipt})
             else:
+                if stage == 'design':
+                    self.prepare_design()
                 self.record(self.requests[stage])
             if stage == end:
                 break
@@ -109,13 +112,19 @@ class StageGateTests(unittest.TestCase):
         return json.loads((self.root / S.JOURNAL).read_text())
 
     def select_actual_intent(self, version):
-        spec = json.loads((self.root / 'contracts/design-intent.json').read_text())
+        if not P.load_project(self.root)[1].get('design_intent'):
+            self.prepare_design()
+        spec = copy.deepcopy(P.intent_helper().load_selected(self.root)['spec'])
         spec['product']['note_paths'] = sorted(set([*spec['product']['note_paths'], 'inputs/notes.json']))
         self.write('inputs/notes.json', {'text': 'Original synthetic request'})
         path = 'contracts/spec-' + version + '.json'
         self.write(path, spec)
         P.intent_helper().select(self.root, self.root / path, 'contracts/selection-' + version + '.json')
         return P.load_project(self.root)[1]['design_intent']
+
+    def prepare_design(self):
+        self.requests['design']['evidence']['design'] = G.selected_handoff(self.root, P,
+            {'id': 'o1', 'evidence': 'evidence/concept-o1.json'})
 
     def test_sequence_requires_all_predecessors_and_never_accepts_future_fields(self):
         self.assertEqual(self.inspect()['next_stage'], 'access')
@@ -178,7 +187,9 @@ class StageGateTests(unittest.TestCase):
     def test_option_revision_invalidates_choice_and_old_receipt(self):
         self.through()
         old = self.inspect()['choice_bindings']['o1']
-        self.write('evidence/option-2.txt', 'Revised third feasible concept')
+        revised = json.loads((self.root / 'evidence/concept-o2.json').read_text())
+        revised['structure'] = 'Revised third feasible coverage structure'
+        self.write('evidence/concept-o2.json', revised)
         self.assertEqual(self.inspect()['next_stage'], 'options')
         self.record(self.requests['options'])
         current = self.inspect()
@@ -315,6 +326,7 @@ class StageGateTests(unittest.TestCase):
         # Deliberately reconstruct a pre-policy legacy fixture. New init calls in
         # every mode retain the policy; production exposes no opt-out operation.
         del project['stage_gate_policy']
+        project.pop('workflow_quality_policy', None)
         self.write('project.json', project)
         self.write('contracts/design-intent.json', P.intent_helper().starter(['app'], 'none'))
         report = S.require_action(self.root, 'build', P=P)
@@ -329,9 +341,8 @@ class StageGateTests(unittest.TestCase):
 
     def test_real_selected_product_pointer_works_and_is_pinned(self):
         self.through()
-        spec = P.intent_helper().starter(['app'], 'none')
-        spec['product'] = {'schema_version': 1, 'scope': 'new_experience', 'discovery': 'sufficient',
-                           'note_paths': ['inputs/notes.json']}
+        spec = copy.deepcopy(P.intent_helper().load_selected(self.root)['spec'])
+        spec['product']['note_paths'].append('inputs/notes.json')
         self.write('inputs/notes.json', {'text': 'Original synthetic request'})
         self.write('contracts/selected-spec.json', spec)
         P.intent_helper().select(self.root, self.root / 'contracts/selected-spec.json', 'contracts/selection.json')
@@ -363,12 +374,15 @@ class StageGateTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.candidate('two')
 
-    def test_standalone_null_design_pin_cannot_ignore_later_selection_or_be_supplied(self):
+    def test_new_policy_rejects_null_design_and_pins_later_selected_handoff(self):
         self.through('choice')
         with self.assertRaises(ValueError):
             self.record(dict(self.requests['design'], selected_intent=None))
+        with self.assertRaisesRegex(ValueError, 'selected_intent_required'):
+            self.record(self.requests['design'])
+        self.prepare_design()
         self.record(self.requests['design'])
-        self.assertIsNone(self.journal()['events'][-1]['payload']['selected_intent'])
+        self.assertIsNotNone(self.journal()['events'][-1]['payload']['selected_intent'])
         self.select_actual_intent('later')
         with self.assertRaises(ValueError):
             S.require_action(self.root, 'build', P=P, provider=self.host)
@@ -377,17 +391,21 @@ class StageGateTests(unittest.TestCase):
 
     def test_selected_design_brand_and_original_spec_dependencies_must_remain_current(self):
         self.through('choice')
+        self.prepare_design()
         spec = P.intent_helper().starter(['app'], 'requested')
-        discovery = json.loads((self.root / 'contracts/design-intent.json').read_text())
+        discovery = copy.deepcopy(P.intent_helper().load_selected(self.root)['spec'])
         spec['product'] = discovery['product']
         spec['requirements'].extend(discovery['requirements'])
         spec['selections'][0].update(design_path='contracts/chosen-design.json',
                                      brand_path='contracts/chosen-brand.json')
-        self.write('contracts/chosen-design.json', {'brand_contract': 'contracts/chosen-brand.json',
-                                                   'task': 'Inspect original garden observations'})
+        chosen = json.loads((self.root / discovery['selections'][0]['design_path']).read_text())
+        chosen['brand_contract'] = 'contracts/chosen-brand.json'
+        self.write('contracts/chosen-design.json', chosen)
         self.write('contracts/chosen-brand.json', {'palette': ['green', 'white']})
         self.write('contracts/selected-spec.json', spec)
         P.intent_helper().select(self.root, self.root / 'contracts/selected-spec.json', 'contracts/selection.json')
+        G.refresh_request_review(self.root, P)
+        self.requests['design']['evidence']['design'] = 'contracts/chosen-design.json'
         selected_bytes = (self.root / 'contracts/selection.json').read_bytes()
         # Unresolved product decisions are distinct from dependency integrity.
         self.assertTrue(P.intent_helper().check(self.root)['open_questions'])

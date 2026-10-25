@@ -36,6 +36,45 @@ Native select/radios are sufficient for this module. A custom combobox is warran
 
 CSS includes visible focus, native radio affordances, reduced-motion removal of its small color transitions and forced-color tokens. These are source affordances, not accessibility acceptance. Observe keyboard, zoom, contrast and focus in the actual selected browser/native candidate when that lane is available.
 
+## Assembled control regressions
+
+The opt-in stylesheet protects hidden elements only inside `.oaa-controls`. Custom
+chapter selectors, badges, scope panels and chart chrome need the same contract in
+their own application scope. Author rules such as `.scope { display:flex }` or
+`.badge { display:inline-block }` can override the browser's ordinary `[hidden]`
+styling even when JavaScript correctly sets `element.hidden = true`. Inspect the
+final cascade, not only DOM state. For ordinary application-owned hidden elements,
+an explicit scoped rule can preserve that contract:
+
+```css
+/* Use the actual application root; this is not a prescribed shell. */
+.app-root [hidden]:not([hidden="until-found"]) { display: none !important; }
+```
+
+Use this only for elements whose visibility is owned by the App. `hidden="until-found"`
+has different browser behavior and needs its own deliberate design. Do not hide
+content merely to simulate access control. When retiring a focused panel, move
+focus to the selected destination or its return control through the reviewed
+interaction contract; CSS alone cannot provide meaningful focus recovery.
+
+Choose a few consequential cases from the actual task and keep them in the existing
+candidate-bound QA records:
+
+| Case | Expected behavior and evidence |
+| --- | --- |
+| Custom scope and warning panels | Exercise visible → hidden → visible in the assembled App. Final computed display and actual layout agree with state; hidden controls are absent from keyboard traversal. A minimal DOM fixture proves the requested state only. |
+| Destination-specific scope | A ride/detail selector, review-park selector or other domain control appears only where relevant. Its selected/applied scope matches the displayed headline, chart, evidence and return state. Do not expose unrelated controls on every chapter. |
+| Complete, partial, failed and stale results | A complete result cannot simultaneously show a false cap/withheld warning. If the selected claim requires complete evidence, withhold it when incomplete; if a qualified partial claim is intentionally supported, label its exact population consistently. Retain genuine warnings, clear obsolete ones, and never relabel a capped population as complete. |
+| Long identities and values | Use representative long labels, punctuation and large/signed values. Give flex/grid children a shrinkable width (`min-width:0` where needed); wrap intentionally or constrain a block with overflow/ellipsis. Inline text alone does not establish an ellipsis. Preserve full identity through accessible detail or another deliberate path; a hover-only title is insufficient on touch. |
+| Constrained layout and return | At selected phone/short-laptop widths and heights, labels remain legible, controls do not collide with chart marks, and useful evidence remains reachable. Exercise selection, drill, return and focus with the actual rendered candidate. |
+
+These are meaningful regression expectations, not a required layout or universal
+case matrix. Source/CSS inspection and synthetic state tests catch specific defects;
+they cannot close computed-layout, keyboard, screen-reader or visual-craft claims.
+When rendering or native observation is unavailable or prohibited, retain those
+cases as `not_run` and name the gap. Do not install a renderer or use a headless
+workaround without the corresponding authorization.
+
 ## Query fields and result evidence
 
 The existing [query controller](../scripts/query_controller.js) remains an **OAA abstraction**, not an Omni SDK. Its original enum/number contracts and `run`, `change`, `reset` methods remain supported. Legacy `onState` event shapes are preserved; opt into `includeInputState:true` for richer state, or call `snapshot()` yourself.

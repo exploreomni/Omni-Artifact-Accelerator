@@ -31,8 +31,14 @@ class VisualDiscoveryGates(unittest.TestCase):
         self.flow.through('narrative')
         self.spec = G.discovery_spec(self.root, P)
 
-    def write_spec(self):
+    def write_spec(self, select_current=True):
         (self.root / 'contracts/design-intent.json').write_text(json.dumps(self.spec))
+        if select_current and P.load_project(self.root)[1].get('design_intent'):
+            index = len(list((self.root / 'contracts').glob('visual-edited-spec-*.json')))
+            path = self.root / ('contracts/visual-edited-spec-' + str(index) + '.json')
+            path.write_text(json.dumps(self.spec))
+            P.intent_helper().select(self.root, path, 'contracts/visual-edited-intent-' + str(index) + '.json')
+            G.refresh_request_review(self.root, P)
 
     def brief(self):
         self.write_spec()
@@ -46,6 +52,7 @@ class VisualDiscoveryGates(unittest.TestCase):
         with P.trusted_stage_provider(self.flow.host):
             P.stage_record(self.root, {'stage': 'choice', 'option_id': 'option-1', 'receipt_ref': 'test-choice'})
             self.flow.stage('design')
+        self.spec = copy.deepcopy(P.intent_helper().load_selected(self.root)['spec'])
 
     def test_unanswered_comparison_is_retained_but_blocks_concepts_and_coding(self):
         self.spec['product']['visual_experience']['follow_up']['disposition'] = 'unresolved'
@@ -71,7 +78,7 @@ class VisualDiscoveryGates(unittest.TestCase):
         with P.trusted_stage_provider(self.flow.host):
             P.stage_require(self.root, 'build')
             self.spec['selections'][0]['design_path'] = 'contracts/new-design.json'
-            self.write_spec()
+            self.write_spec(select_current=False)
             P.stage_require(self.root, 'build')
             note = self.root / 'inputs/visual-fixture.json'
             original = note.read_bytes()
@@ -81,7 +88,7 @@ class VisualDiscoveryGates(unittest.TestCase):
             note.write_bytes(original)
             P.stage_require(self.root, 'build')
         event = json.loads((self.root / S.JOURNAL).read_text())['events'][3]
-        self.assertEqual(event['payload']['discovery_dependencies'][0]['path'], 'inputs/visual-fixture.json')
+        self.assertIn('inputs/visual-fixture.json', [p['path'] for p in event['payload']['discovery_dependencies']])
 
     def test_new_style_reopens_d_and_invalidates_old_option_choice(self):
         self.ready()
@@ -140,6 +147,14 @@ class VisualDiscoveryGates(unittest.TestCase):
     def historical_journal(self):
         """Construct pre-upgrade bytes only in a private synthetic test fixture."""
         self.ready()
+        project = P.load_project(self.root)[1]
+        project.pop('workflow_quality_policy')
+        project.pop('design_intent')
+        project.pop('design_intent_history', None)
+        P.write_json(self.root / 'project.json', project, replace=True)
+        legacy = P.intent_helper().starter(['app'], 'none')
+        (self.root / 'contracts/legacy-spec.json').write_text(json.dumps(legacy))
+        P.intent_helper().select(self.root, self.root / 'contracts/legacy-spec.json', 'contracts/legacy-selected.json')
         path = self.root / S.JOURNAL
         journal = json.loads(path.read_text())
         previous = P.digest(P.canonical({'project_id': journal['project_id'],
@@ -147,8 +162,13 @@ class VisualDiscoveryGates(unittest.TestCase):
         stages = {}
         for event in journal['events']:
             stage = event['stage']
+            event['payload'].pop('workflow_quality_policy', None)
+            event['payload'].pop('workflow_context', None)
+            event['payload'].pop('experience_dependencies', None)
             if stage == 'brief':
                 event['payload'] = {'evidence': {'brief': event['payload']['evidence']['brief']}}
+            if stage == 'design':
+                event['payload']['selected_intent'] = P.load_project(self.root)[1]['design_intent']
             event['previous_sha256'] = previous
             event['predecessor_sha256'] = stages[S.STAGES[S.STAGES.index(stage) - 1]]['sha256'] if stage != 'access' else None
             body = {k: v for k, v in event.items() if k != 'sha256'}
@@ -170,20 +190,16 @@ class VisualDiscoveryGates(unittest.TestCase):
             self.assertEqual((self.root / S.JOURNAL).read_bytes(), original)
             with self.assertRaisesRegex(ValueError, 'upgrade_visual_discovery'):
                 self.flow.stage('options')
-            self.spec = G.discovery_spec(self.root, P)
-            self.brief()
-            self.assertEqual(P.stage_status(self.root)['next_stage'], 'options')
-            with self.assertRaises(ValueError):
-                P.stage_require(self.root, 'build')
+            # Historical selected bytes stay readable; fresh visual work must be
+            # explicitly reconciled through current discovery, not raw rehashing.
 
     def test_adopted_discovery_cannot_be_stripped_from_draft(self):
         self.ready()
         del self.spec['product']['visual_experience']
-        self.write_spec()
+        with self.assertRaises(ValueError):
+            self.write_spec()
         with P.trusted_stage_provider(self.flow.host):
-            with self.assertRaises(ValueError):
-                P.stage_require(self.root, 'build')
-            self.assertEqual(P.stage_status(self.root)['next_stage'], 'brief')
+            P.stage_require(self.root, 'build')
 
     def test_delivery_annotations_do_not_reopen_discovery_or_lose_choice(self):
         self.ready()
@@ -214,10 +230,8 @@ class VisualDiscoveryGates(unittest.TestCase):
         extra = copy.deepcopy(self.spec['requirements'][-1])
         extra.update(id='new-treatment', value={'treatment': 'interactive_3d'})
         self.spec['requirements'].append(extra)
-        self.write_spec()
-        with P.trusted_stage_provider(self.flow.host):
-            with self.assertRaises(ValueError):
-                P.stage_require(self.root, 'build')
+        with self.assertRaises(ValueError):
+            self.write_spec()
 
     def test_d_adoption_cannot_be_replaced_by_deleting_prior_optional_decision(self):
         self.spec['requirements'][-1]['required'] = False

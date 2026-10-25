@@ -22,6 +22,7 @@ class ProjectTests(unittest.TestCase):
         # Pre-policy migration compatibility fixture; fresh project gates have separate tests.
         legacy = project.load_project(self.root)[1]
         legacy.pop('stage_gate_policy')
+        legacy.pop('workflow_quality_policy', None)
         project.write_json(self.root / 'project.json', legacy, replace=True)
 
     def tearDown(self):
@@ -68,8 +69,14 @@ class ProjectTests(unittest.TestCase):
         self.assertEqual(state["branding"], "requested")
         self.assertTrue(any("logo" in q for q in state["open_questions"]))
         self.assertEqual(state["requirements"][0]["disposition"], "unresolved")
-        with self.assertRaisesRegex(ValueError, 'stage_gate_predecessor_incomplete:build'):
+        with self.assertRaisesRegex(ValueError, 'workflow_startup_missing'):
             project.packet(root, "app-engineer", ["contracts/queries.json"], root / "tasks/app.json")
+        with self.assertRaisesRegex(ValueError, 'workflow_startup_missing'):
+            project.packet(root, "qa-analyst", ["contracts/queries.json"], None)
+        fixture_spec = importlib.util.spec_from_file_location('project_gate_fixture', Path(__file__).with_name('stage_gate_fixture.py'))
+        fixture = importlib.util.module_from_spec(fixture_spec)
+        fixture_spec.loader.exec_module(fixture)
+        fixture.bootstrap(root, project)
         packet = project.packet(root, "qa-analyst", ["contracts/queries.json"], root / "tasks/access-review.json")
         self.assertTrue({"contracts/design-intent.json", "contracts/design.json", "contracts/brand.json"}
                         <= {p["path"] for p in packet["inputs"]})

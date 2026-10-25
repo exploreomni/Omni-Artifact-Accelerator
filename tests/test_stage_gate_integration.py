@@ -50,7 +50,7 @@ class GateIntegration(unittest.TestCase):
             root = Path(self.folder.name).resolve() / mode
             P.init(root, 'Fresh ' + mode, mode, 'app', 'none')
             self.assertTrue(P.stage_status(root)['required'])
-            with self.assertRaisesRegex(ValueError, 'predecessor_incomplete'):
+            with self.assertRaisesRegex(ValueError, 'workflow_startup_missing'):
                 A.build(root, 'missing.json', 'build', builders=['engineer'], iteration_id='one')
             self.assertFalse((root / 'build').exists())
         with self.assertRaises((ValueError, OSError)):

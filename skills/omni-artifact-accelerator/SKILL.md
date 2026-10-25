@@ -19,8 +19,11 @@ every iteration**. This ordering supersedes generic direct-design shortcuts belo
 Retain supplied preferences early, but do not begin product design before A–C.
 At D, route the tailored experience-family menu and conditional comparison styling
 question through [visual discovery](../omni-product-owner/references/visual-experience-discovery.md).
-Carry current answers/delegation into all three E concepts and their representative
-visuals; a treatment preference never substitutes for the actual product choice.
+Carry current answers/delegation and the accepted quality bar into all three E
+concepts and their representative visuals. Keep analytical scope and ambition
+comparable; prose pitches alone are insufficient. A treatment preference never
+substitutes for the actual product choice. Static source specimens stay explicitly
+unrendered; no library, 3D treatment or fixed concept trio is required.
 
 Enforce the [executable stage gates](references/stage-gates.md) at dispatch,
 authoring and review. Inspect current status; use only the current permitted action.
@@ -53,11 +56,29 @@ reviewer different from the builder and originating designer; keep PO product fi
 creative critique and correctness findings separate without adding approval layers.
 
 For a substantial artifact engagement, begin with the [execution entry procedure](references/execution-workflow.md).
-Record the host and actual package source, retain the original request, name responsibility owners,
-and distinguish suggested roles from actual work. Use `run-check` before full implementation and
-`delivery-check` for the final assessment. These local checks assess supplied records; they cannot
+Before the first new stage, record the host, actual package source, source expectation
+and execution path with `run-start`; retain the original request and name actual
+responsibility owners. A requested latest revision needs a matching clean checkout
+and bounded `source-check` receipt, not an existing directory or an automatic
+fetch/install. Append only actual reported reads with `run-guidance`. Use
+`phase-check` for stage-appropriate readiness, the full `run-check` when its build
+prerequisites exist, and `delivery-check` for the final assessment. These local
+checks assess supplied records; they cannot
 enforce unrelated MCP calls or authorize publication. Direct specialist invocation still carries
 current intent; a focused repair does not require restarting intake.
+
+New engagements use `experience-evidence-v1`; preserve historical records and make
+adoption explicit when resuming older work. Duties accumulate with the applicable
+phase and selected capabilities. Design-system work includes task-fit composition,
+typography and controls, not only changing a shared component library. A named role
+or guidance receipt is not proof of dispatch, reading or design quality.
+
+Keep local preparation, authorized candidate preview, verified selected scope and
+publication distinct. Preview can be needed to obtain native evidence; never require
+invented native observations to permit it. Conversely, four resolved source reviews
+or a successful publication/readback cannot imply that rendered, access or human
+cases passed. Summarize current gaps and carried findings from the existing delivery
+assessment, preserving the user's exact external-write and dependency authority.
 
 For substantial new Apps or material redesign, apply the [first-delivery workflow](references/first-delivery.md): recover existing answers, trace the brief into observable per-destination requirements, qualify critical runtime paths, assemble one ambitious representative journey, and run product-fit review, independent creative critique and correctness verification before claiming completion. The slice must carry the experience's defining qualities, not only its easiest technical path. The helper's optional delivery annotations make ownership/dependencies visible; they do not assess beauty or authorize publication. Use internal revision to reduce repeated customer correction, without adding mandatory discovery to a small fix.
 

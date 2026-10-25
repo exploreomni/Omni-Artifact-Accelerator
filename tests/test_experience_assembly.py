@@ -26,6 +26,7 @@ class ExperienceAssemblyTests(unittest.TestCase):
         # Historical composition fixture. New engagements are exercised in gate integration tests.
         project = P.load_project(self.root)[1]
         project.pop('stage_gate_policy')
+        project.pop('workflow_quality_policy', None)
         P.write_json(self.root / 'project.json', project, replace=True)
         self.spec = {"schema_version": 1,
                      "template": self.file("view.html", "<main>{{OAA:DATA}}</main>{{OAA:CORE}}{{OAA:VIEW}}"),

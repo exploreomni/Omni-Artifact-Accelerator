@@ -8,6 +8,8 @@ import importlib.util
 from pathlib import Path
 import re
 import subprocess
+from datetime import datetime, timezone
+from urllib.parse import urlsplit
 
 _spec = importlib.util.spec_from_file_location('delivery_project', Path(__file__).with_name('analyst_project.py'))
 P = importlib.util.module_from_spec(_spec)
@@ -25,6 +27,8 @@ ROLE_OWNERS = {'experience': {'app-designer', 'dashboard-designer'}, 'brand': {'
                'creative_review': {'app-designer', 'dashboard-designer', 'design-systems'}}
 LANES = {'source', 'synthetic', 'numerical', 'native', 'rendered', 'access', 'publication', 'human'}
 IGNORED = {'.git', '.venv', 'venv', 'node_modules', '__pycache__', '.pytest_cache', '.ruff_cache'}
+QUALITY_POLICY = 'experience-evidence-v1'
+PHASES = ('access', 'analysis', 'narrative', 'brief', 'options', 'choice', 'design', 'candidate', 'review', 'release')
 
 
 def text(value):
@@ -243,10 +247,97 @@ def source_manifest(root):
     return result
 
 
+def git_identity(package):
+    result = {'head': None, 'status': None}
+    for key, args in (('head', ['rev-parse', 'HEAD']), ('status', ['status', '--porcelain'])):
+        try:
+            r = subprocess.run(['git', '-c', 'core.fsmonitor=false', '-C', str(package), *args],
+                               capture_output=True, text=True, timeout=10)
+            if r.returncode == 0:
+                result[key] = r.stdout.strip()
+        except (OSError, subprocess.TimeoutExpired):
+            pass
+    return result
+
+
+def verify_source(root, request):
+    """Explicit read-only remote check; never fetch, install, reset or activate."""
+    root, project = P.load_project(root)
+    need(type(request) is dict and set(request) == {'id'}, 'source-check requires only id')
+    path = 'evidence/source-check-' + identity(request['id']) + '.json'
+    need(not (root / path).exists(), 'source check ID already exists')
+    package = source_root()
+    base = ['git', '-c', 'core.fsmonitor=false', '-c', 'protocol.file.allow=never',
+            '-c', 'protocol.ext.allow=never', '-c', 'http.followRedirects=false', '-C', str(package)]
+    try:
+        remote = subprocess.run([*base, 'remote', 'get-url', 'origin'], capture_output=True,
+                                text=True, timeout=10)
+        need(remote.returncode == 0, 'configured origin unavailable')
+        url = remote.stdout.strip()
+        parsed = urlsplit(url)
+        need(parsed.scheme == 'https' and parsed.hostname and not parsed.username and not parsed.password
+             and not parsed.query and not parsed.fragment, 'source check needs an HTTPS origin without credentials')
+        result = subprocess.run([*base, 'ls-remote', '--exit-code', 'origin', 'refs/heads/main'],
+                                capture_output=True, text=True, timeout=20)
+        lines = result.stdout.strip().splitlines()
+        need(result.returncode == 0 and len(lines) == 1, 'remote main could not be verified')
+        parts = lines[0].split()
+        need(len(parts) == 2 and parts[1] == 'refs/heads/main' and
+             re.fullmatch(r'[0-9a-f]{40}|[0-9a-f]{64}', parts[0]), 'invalid remote revision response')
+    except (OSError, subprocess.TimeoutExpired):
+        raise ValueError('remote main could not be verified; current checkout remains unchanged') from None
+    record = {'schema_version': 1, 'kind': 'analyst_source_check', 'project_id': project['id'],
+              'package_root': str(package), 'remote': url, 'ref': 'refs/heads/main', 'revision': parts[0],
+              'checked_at': datetime.now(timezone.utc).isoformat(), 'git': git_identity(package),
+              'claims_authenticated': False, 'source_changed': False}
+    P.write_json(root / path, record)
+    return {'status': 'recorded', 'path': path, 'revision': parts[0],
+            'checkout_matches': record['git']['head'] == parts[0] and record['git']['status'] == '',
+            'source_changed': False, 'claims_authenticated': False}
+
+
+def source_expectation(root, request, git, package):
+    expectation = request.get('source_expectation', {'kind': 'current_checkout'})
+    need(type(expectation) is dict and expectation.get('kind') in
+         {'current_checkout', 'pinned_revision', 'latest_main'}, 'invalid source expectation')
+    kind = expectation['kind']
+    expected = {'kind'} if kind == 'current_checkout' else {'kind', 'revision'}
+    if kind == 'latest_main':
+        expected.add('verification_path')
+    need(set(expectation) == expected, 'source expectation fields differ')
+    bindings = {}
+    if kind != 'current_checkout':
+        revision = expectation['revision']
+        need(type(revision) is str and re.fullmatch(r'[0-9a-f]{40}|[0-9a-f]{64}', revision), 'exact revision required')
+        need(git['head'] == revision and git['status'] == '', 'requested source revision does not match clean working checkout')
+    if kind == 'latest_main':
+        path = expectation['verification_path']
+        receipt, _ = P.read_json(P.relative_file(root, path))
+        need(receipt.get('kind') == 'analyst_source_check' and receipt.get('project_id') == P.load_project(root)[1]['id']
+             and receipt.get('revision') == revision and receipt.get('package_root') == str(package)
+             and receipt.get('ref') == 'refs/heads/main', 'source verification does not match run')
+        try:
+            age = (datetime.now(timezone.utc) - datetime.fromisoformat(receipt['checked_at'])).total_seconds()
+        except (ValueError, TypeError, KeyError):
+            raise ValueError('source verification time invalid') from None
+        need(0 <= age <= 600, 'latest-main check must be refreshed within ten minutes before startup')
+        bindings = pins(root, [path])
+    return expectation, bindings
+
+
 def start(root, request):
     root, project = P.load_project(root)
-    need(type(request) is dict and set(request) == {'id', 'source_mode', 'host', 'entrypoint', 'brief', 'loaded_guidance'},
+    required = {'id', 'source_mode', 'host', 'entrypoint', 'brief', 'loaded_guidance'}
+    need(type(request) is dict and required <= set(request) and
+         set(request) <= required | {'execution', 'source_expectation', 'adopt_quality_policy'},
          'invalid run-start fields')
+    if 'adopt_quality_policy' in request:
+        need(request['adopt_quality_policy'] is True, 'explicit quality policy adoption required')
+        need('workflow_quality_policy' not in project, 'quality policy adoption applies only to historical engagements')
+    quality = project.get('workflow_quality_policy') == QUALITY_POLICY or request.get('adopt_quality_policy') is True
+    if quality:
+        need('execution' in request, 'quality startup requires an execution contract path')
+        P.read_json(P.relative_file(root, request['execution']))
     ident = identity(request['id'])
     path = 'evidence/run-' + ident + '.json'
     need(not (root / path).exists(), 'run ID already recorded; use a new ID')
@@ -272,15 +363,25 @@ def start(root, request):
         need(prefix == 'skills/', 'repository-only execution requires a source checkout')
     if request['source_mode'] == 'installed':
         need(prefix == '', 'installed mode must use the installed helper')
-    git = {'head': None, 'status': None}
-    if prefix:
-        for key, args in (('head', ['rev-parse', 'HEAD']), ('status', ['status', '--porcelain'])):
-            try:
-                r = subprocess.run(['git', '-c', 'core.fsmonitor=false', '-C', str(package), *args], capture_output=True, text=True, timeout=10)
-                if r.returncode == 0:
-                    git[key] = r.stdout.strip()
-            except (OSError, subprocess.TimeoutExpired):
-                pass
+    git = git_identity(package) if prefix else {'head': None, 'status': None}
+    expectation, source_pins = source_expectation(root, request, git, package)
+    events = P.read_json(root / 'stage-gates.json')[0]['events'] if (root / 'stage-gates.json').exists() else []
+    work_events = [e for e in events if e.get('stage') != 'selection_policy']
+    previous = project.get('execution_start')
+    if previous:
+        # Check the retained chain without comparing old package bytes to the new
+        # checkout: a legitimate upgrade is allowed, laundering late startup is not.
+        visited, pointer = set(), previous
+        while pointer is not None:
+            need(type(pointer) is dict and set(pointer) == {'path', 'sha256'} and
+                 pointer['path'] not in visited and len(visited) < 64, 'invalid prior startup chain')
+            prior, prior_raw = P.read_json(P.relative_file(root, pointer['path']))
+            need(P.digest(prior_raw) == pointer['sha256'] and prior.get('project_id') == project['id'] and
+                 prior.get('kind') == 'analyst_execution_start', 'prior startup changed')
+            need(prior.get('startup_timing') in {'before_access', 'resumed'}, 'late startup cannot be converted to a resume')
+            visited.add(pointer['path'])
+            pointer = prior.get('previous_start')
+    timing = ('before_access' if not work_events else 'resumed' if previous or request.get('adopt_quality_policy') else 'late')
     brief_pins = pins(root, [request['brief']])
     brief_raw = P.relative_file(root, request['brief']).read_bytes()
     need(P.digest(brief_raw) == brief_pins[request['brief']], 'brief changed during capture')
@@ -289,10 +390,271 @@ def start(root, request):
     record = {'schema_version': 1, 'kind': 'analyst_execution_start', 'project_id': project['id'],
               **request, 'package_root': str(package), 'package_files': manifest, 'git': git,
               'loaded_guidance_pins': {p: manifest[p] for p in loaded}, 'brief_pins': brief_pins, 'brief_retained': retained,
+              'source_expectation': expectation, 'source_verification_pins': source_pins,
+              'execution_path': request.get('execution'), 'startup_timing': timing,
+              'stage_tail_at_start': events[-1]['sha256'] if events else None,
+              'previous_start': previous,
               'claims_authenticated': False, 'agents_dispatched': False,
               'host_qualification': 'unobserved', 'publication_authorized': False}
     P.write_json(root / path, record)
+    if quality:
+        project['workflow_quality_policy'] = QUALITY_POLICY
+        project['execution_start'] = {'path': path, 'sha256': P.digest((root / path).read_bytes())}
+        project['execution_guidance'] = []
+        P.write_json(root / 'project.json', project, replace=True)
     return {'status': 'recorded', 'path': path, 'agents_dispatched': False, 'claims_authenticated': False}
+
+
+def active_run(root, project):
+    pointer = project.get('execution_start')
+    need(type(pointer) is dict and set(pointer) == {'path', 'sha256'}, 'workflow_startup_missing')
+    run, raw = P.read_json(P.relative_file(root, pointer['path']))
+    need(P.digest(raw) == pointer['sha256'] and run.get('project_id') == project['id']
+         and run.get('kind') == 'analyst_execution_start', 'workflow_startup_changed')
+    need(run.get('startup_timing') != 'late', 'workflow_startup_recorded_late')
+    need(str(source_root()) == run['package_root'] and source_manifest(source_root()) == run['package_files'],
+         'package_changed_since_start')
+    need(current(root, run['brief_pins']) and P.digest(P.relative_file(root, run['brief_retained']).read_bytes()) ==
+         run['brief_pins'][run['brief']], 'original_request_changed')
+    if run.get('source_verification_pins'):
+        need(current(root, run['source_verification_pins']), 'source_verification_changed')
+    return run, pointer
+
+
+def guidance_state(root, project, run, pointer):
+    loaded = dict(run['loaded_guidance_pins'])
+    paths = [pointer['path']]
+    previous = pointer
+    chain = project.get('execution_guidance', [])
+    need(type(chain) is list and len(chain) <= 64, 'invalid guidance chain')
+    for receipt in chain:
+        need(type(receipt) is dict and set(receipt) == {'path', 'sha256'}, 'invalid guidance pointer')
+        value, raw = P.read_json(P.relative_file(root, receipt['path']))
+        need(P.digest(raw) == receipt['sha256'] and value.get('kind') == 'analyst_guidance_read'
+             and value.get('run') == pointer and value.get('previous') == previous,
+             'guidance receipt changed or reordered')
+        additions = value.get('loaded_guidance_pins')
+        need(type(additions) is dict and additions and all(run['package_files'].get(p) == h for p, h in additions.items()),
+             'guidance source differs')
+        loaded.update(additions)
+        paths.append(receipt['path'])
+        previous = receipt
+    return loaded, paths
+
+
+def record_guidance(root, request):
+    """Append reported reads; neither file hashes nor this record prove comprehension."""
+    root, project = P.load_project(root)
+    need(type(request) is dict and set(request) == {'id', 'loaded_guidance'}, 'invalid run-guidance request')
+    run, pointer = active_run(root, project)
+    guidance_state(root, project, run, pointer)
+    items = request['loaded_guidance']
+    need(type(items) is list and items and len(items) == len(set(items)) and
+         all(type(p) is str and p in run['package_files'] for p in items), 'guidance must name actual package files read')
+    path = 'evidence/guidance-' + identity(request['id']) + '.json'
+    chain = project.get('execution_guidance', [])
+    P.write_json(root / path, {'schema_version': 1, 'kind': 'analyst_guidance_read', 'run': pointer,
+        'previous': chain[-1] if chain else pointer,
+        'loaded_guidance_pins': {p: run['package_files'][p] for p in items}, 'claims_authenticated': False})
+    project['execution_guidance'] = [*chain, {'path': path, 'sha256': P.digest((root / path).read_bytes())}]
+    P.write_json(root / 'project.json', project, replace=True)
+    return {'status': 'recorded', 'path': path, 'claims_authenticated': False}
+
+
+def phase_snapshot(root):
+    """One read snapshot for a single journal inspection, never a persisted cache.
+
+    Mutation entrypoints still call require_phase afresh. Callers must not retain
+    this value between inspections or use it to authorize a later write.
+    """
+    root, project = P.load_project(root)
+    run, pointer = active_run(root, project)
+    loaded, paths = guidance_state(root, project, run, pointer)
+    execution, _ = P.read_json(P.relative_file(root, run.get('execution_path')))
+    return {'root': root, 'run': run, 'pointer': pointer, 'loaded': loaded, 'paths': paths,
+            'execution': execution, 'state': P.intent_helper().check(root)}
+
+
+def phase_check(root, action, _snapshot=None):
+    """Phase-local structural check; deliberately never calls stage-status/run-check."""
+    root, project = P.load_project(root)
+    action = {'choose': 'choice', 'build': 'candidate'}.get(action, action)
+    need(action in {*PHASES, 'selection_policy'}, 'unknown execution phase')
+    result = {'status': 'not_assessed', 'findings': [], 'context': {}, 'paths': [],
+              'claims_authenticated': False, 'publication_authorized': False}
+    if project.get('workflow_quality_policy') != QUALITY_POLICY or action == 'selection_policy':
+        return result
+    findings = result['findings']
+    try:
+        snapshot = phase_snapshot(root) if _snapshot is None else _snapshot
+        need(snapshot['root'] == root, 'phase_snapshot_project_differs')
+        run, pointer = snapshot['run'], snapshot['pointer']
+        loaded, paths = snapshot['loaded'], list(snapshot['paths'])
+        execution_path = run.get('execution_path')
+        execution = snapshot['execution']
+        need(type(execution) is dict and 'responsibilities' in execution and
+             set(execution) <= {'responsibilities', 'request_review', 'specialists'}, 'invalid execution contract')
+        owners = execution['responsibilities']
+        need(type(owners) is dict and set(owners) <= RESPONSIBILITIES | PRODUCT_RESPONSIBILITIES,
+             'invalid responsibility inventory')
+        phase = PHASES.index(action)
+        required = {'semantics'}
+        if phase >= PHASES.index('narrative'):
+            required.add('storytelling')
+        if phase >= PHASES.index('brief'):
+            required.update({'product_intent', 'experience', 'brand'})
+        if phase >= PHASES.index('options'):
+            required.update({'design_systems', 'creative_review', 'verification'})
+        if phase >= PHASES.index('candidate'):
+            required.add('engineering')
+        used = {}
+        prefix = 'skills/' if 'skills/omni-artifact-accelerator/SKILL.md' in run['package_files'] else ''
+        guidance = {prefix + 'omni-artifact-accelerator/SKILL.md'}
+        for name in sorted(required):
+            value = owners.get(name)
+            if value is None:
+                findings.append('responsibility_missing:' + name)
+                continue
+            need(type(value) is dict and set(value) == {'role', 'worker', 'mode', 'rationale'}
+                 and value['role'] in ROLE_OWNERS[name] and
+                 value['mode'] in {'inline', 'delegated', 'not_required'}, 'invalid responsibility:' + name)
+            text(value['rationale'])
+            if value['mode'] == 'not_required':
+                findings.append('required_responsibility_omitted:' + name)
+            else:
+                text(value['worker'])
+            used[name] = value
+            guidance.add(prefix + 'omni-' + value['role'] + '/SKILL.md')
+        if phase >= PHASES.index('analysis'):
+            guidance.update(prefix + 'omni-' + r + '/SKILL.md' for r in ('data-analyst', 'bi-engineer'))
+        if phase >= PHASES.index('brief'):
+            guidance.add(prefix + 'omni-product-owner/references/visual-experience-discovery.md')
+        if phase >= PHASES.index('options'):
+            guidance.update(prefix + 'omni-design-systems/references/' + p + '.md'
+                            for p in ('experience-brief', 'visual-craft', 'experience-curriculum', 'ideation-playbook'))
+            guidance.add(prefix + 'omni-design-systems/SKILL.md')
+            creative = owners.get('creative_review', {}).get('worker')
+            if creative and creative in {owners.get('experience', {}).get('worker'), owners.get('engineering', {}).get('worker')}:
+                findings.append('independent_creative_review_not_assigned')
+        if phase >= PHASES.index('candidate'):
+            if owners.get('verification', {}).get('worker') == owners.get('engineering', {}).get('worker'):
+                findings.append('independent_verification_not_assigned')
+        # Read draft/selected requirements without stage-status recursion. A later
+        # specialization cannot be erased by the generic stage role projection.
+        state = snapshot['state']
+        if phase >= PHASES.index('brief') and state.get('status') == 'inconsistent':
+            findings.append('selected_intent_inconsistent')
+        active = [r for r in state.get('requirements', []) if r.get('disposition') not in {'deferred', 'explicitly_omitted'}]
+        capabilities = set(c for r in active for c in r.get('delivery', {}).get('capabilities', []))
+        specialist_records = {}
+        if phase >= PHASES.index('options'):
+            conditional = {'motion': 'motion-designer', 'spatial-modeling': '3d-modeler'}
+            specialists = execution.get('specialists', {})
+            need(type(specialists) is dict, 'invalid specialist inventory')
+            for capability, role in conditional.items():
+                ids = {r['id'] for r in active if capability in r.get('delivery', {}).get('capabilities', [])}
+                # Canonical discovery choices already carry an obligation; a
+                # missing later delivery annotation must not erase it.
+                for row in active:
+                    value = row.get('value')
+                    if type(value) is dict and (
+                        capability == 'motion' and value.get('quality') == 'motion' and value.get('usage') == 'included'
+                        or capability == 'spatial-modeling' and value.get('treatment') == 'interactive_3d'
+                    ):
+                        ids.add(row['id'])
+                if not ids:
+                    continue
+                matches = {k: v for k, v in specialists.items() if type(v) is dict and v.get('role') == role
+                           and v.get('mode') in {'inline', 'delegated'}}
+                covered = set()
+                for key, value in matches.items():
+                    need(set(value) == {'role', 'worker', 'mode', 'rationale', 'requirement_ids'}, 'invalid specialist assignment')
+                    text(value['worker']); text(value['rationale'])
+                    need(type(value['requirement_ids']) is list and all(type(v) is str for v in value['requirement_ids']),
+                         'invalid specialist requirement IDs')
+                    covered.update(value['requirement_ids'])
+                    specialist_records[key] = value
+                if not ids <= covered:
+                    findings.append('specialist_scope_missing:' + role)
+                guidance.add(prefix + 'omni-' + role + '/SKILL.md')
+            if 'custom-visualization' in capabilities:
+                guidance.add(prefix + 'omni-app-engineer/references/advanced-visualization.md')
+        for name in sorted(guidance - loaded.keys()):
+            findings.append('guidance_not_recorded:' + name)
+        context = {'run': pointer, 'package_sha256': P.digest(P.canonical(run['package_files'])),
+                   'responsibilities': used, 'specialists': specialist_records,
+                   'guidance': {p: loaded[p] for p in sorted(guidance & loaded.keys())}}
+        paths.extend([execution_path, run['brief_retained'], *run['brief_pins'], *run.get('source_verification_pins', {})])
+        if phase >= PHASES.index('candidate'):
+            review = execution.get('request_review')
+            need(type(review) is dict and set(review) == {'reviewer', 'brief_sha256', 'requirement_ids', 'evidence_path'},
+                 'original_request_review_missing')
+            need(type(review['requirement_ids']) is list and len(review['requirement_ids']) == len(set(review['requirement_ids'])),
+                 'invalid original request review scope')
+            if set(review['requirement_ids']) != {r['id'] for r in state.get('requirements', [])}:
+                findings.append('original_request_review_scope_differs')
+            if review['reviewer'] != owners.get('verification', {}).get('worker'):
+                findings.append('original_request_review_not_independent')
+            if review['brief_sha256'] != run['brief_pins'][run['brief']]:
+                findings.append('original_request_review_stale')
+            context['request_review'] = dict(review, evidence_sha256=pins(root, [review['evidence_path']])[review['evidence_path']])
+            paths.append(review['evidence_path'])
+        result.update(context=context, paths=sorted(set(paths)))
+    except (ValueError, OSError, KeyError, TypeError) as exc:
+        findings.append(str(exc))
+    result['status'] = 'blocked' if findings else 'ready'
+    return result
+
+
+def require_phase(root, action):
+    result = phase_check(root, action)
+    need(result['status'] != 'blocked', 'execution_phase_blocked:' + ';'.join(result['findings']))
+    return result
+
+
+def requalify_context(root, previous_context, action):
+    """Re-derive an A–E context after an explicit startup; never carry F passes.
+
+    The journal owns evidence, choice and ordering validation. This helper only
+    checks the immutable startup lineage and unchanged phase responsibilities.
+    """
+    need(action in PHASES[:PHASES.index('candidate')], 'requalification_applies_only_to_A_E')
+    root, project = P.load_project(root)
+    check = require_phase(root, action)
+    need(check['status'] == 'ready', 'requalification_requires_quality_policy')
+    now = check['context']
+    need(type(previous_context) is dict and set(previous_context) == set(now), 'requalification_context_fields_differ')
+    old_pointer = previous_context.get('run')
+    need(old_pointer != now['run'], 'requalification_requires_new_startup')
+    run, pointer = active_run(root, project)
+    brief_pins = run['brief_pins']
+    visited, found = set(), None
+    while pointer is not None:
+        need(type(pointer) is dict and set(pointer) == {'path', 'sha256'} and
+             pointer['path'] not in visited and len(visited) < 64, 'invalid_requalification_startup_chain')
+        record, raw = P.read_json(P.relative_file(root, pointer['path']))
+        need(P.digest(raw) == pointer['sha256'] and record.get('kind') == 'analyst_execution_start' and
+             record.get('project_id') == project['id'] and record.get('startup_timing') in {'before_access', 'resumed'},
+             'requalification_startup_changed')
+        need(record['brief_pins'] == brief_pins and
+             P.digest(P.relative_file(root, record['brief_retained']).read_bytes()) == brief_pins[record['brief']],
+             'requalification_original_request_changed')
+        visited.add(pointer['path'])
+        if pointer == old_pointer:
+            found = record
+            break
+        pointer = record.get('previous_start')
+    need(found is not None, 'requalification_prior_startup_not_in_chain')
+    need(previous_context['package_sha256'] == P.digest(P.canonical(found['package_files'])),
+         'requalification_prior_package_differs')
+    old_guidance = previous_context['guidance']
+    need(type(old_guidance) is dict and all(found['package_files'].get(p) == h for p, h in old_guidance.items()),
+         'requalification_prior_guidance_differs')
+    # Required guidance may change with the package. Owners and selected
+    # specialist scope must not silently change while preserving old choices.
+    for name in set(now) - {'run', 'package_sha256', 'guidance'}:
+        need(now[name] == previous_context[name], 'requalification_' + name + '_changed')
+    return now
 
 
 def inspect_run(root, request):
@@ -305,6 +667,17 @@ def inspect_run(root, request):
     need(type(execution) is dict and {'responsibilities', 'request_review'} <= set(execution)
          and set(execution) <= {'responsibilities', 'request_review', 'specialists'}, 'invalid execution contract')
     findings = []
+    loaded_guidance = run['loaded_guidance_pins']
+    if project.get('workflow_quality_policy') == QUALITY_POLICY:
+        phase = phase_check(root, 'candidate')
+        findings.extend(phase['findings'])
+        if project.get('execution_start', {}).get('path') != request['run'] or run.get('execution_path') != request['execution']:
+            findings.append('assessment_startup_differs')
+        else:
+            try:
+                loaded_guidance, _ = guidance_state(root, project, run, project['execution_start'])
+            except (ValueError, OSError, KeyError, TypeError) as exc:
+                findings.append(str(exc))
     need(P.digest(P.relative_file(root, run['brief_retained']).read_bytes()) == run['brief_pins'][run['brief']],
          'retained original request changed')
     if not current(root, run['brief_pins']):
@@ -324,7 +697,7 @@ def inspect_run(root, request):
         else:
             text(value['worker'])
             prefix = 'skills/' if 'skills/omni-artifact-accelerator/SKILL.md' in run['package_files'] else ''
-            if prefix + 'omni-' + value['role'] + '/SKILL.md' not in run['loaded_guidance_pins']:
+            if prefix + 'omni-' + value['role'] + '/SKILL.md' not in loaded_guidance:
                 findings.append('role_guidance_not_recorded:' + value['role'])
     if responsibilities['verification']['worker'] == responsibilities['engineering']['worker']:
         findings.append('independent_verification_not_assigned')
@@ -344,7 +717,7 @@ def inspect_run(root, request):
         if value['mode'] != 'not_required':
             text(value['worker'])
             prefix = 'skills/' if 'skills/omni-artifact-accelerator/SKILL.md' in run['package_files'] else ''
-            if prefix + 'omni-' + value['role'] + '/SKILL.md' not in run['loaded_guidance_pins']:
+            if prefix + 'omni-' + value['role'] + '/SKILL.md' not in loaded_guidance:
                 findings.append('role_guidance_not_recorded:' + value['role'])
     product = P.routing_helper('product_intent').check(root)
     source_inventory = inventory_check(root, state)
@@ -432,7 +805,7 @@ def history_check(root, project_id, pointer):
 def freeze(root, request):
     root, project = P.load_project(root)
     need(type(request) is dict and {'id', 'artifacts', 'context'} <= set(request)
-         and set(request) <= {'id', 'artifacts', 'context', 'builders'}, 'invalid candidate request')
+         and set(request) <= {'id', 'artifacts', 'context', 'builders', 'supporting_artifacts'}, 'invalid candidate request')
     gates = P.stage_require(root, 'build')
     if gates['required']:
         builders = request.get('builders')
@@ -442,8 +815,22 @@ def freeze(root, request):
              and len(set(builders)) == len(builders), 'stage_gate_candidate_builders_required')
     ident = identity(request['id'])
     artifacts = pins(root, request['artifacts'])
-    context = pins(root, request['context'])
+    readiness = require_phase(root, 'candidate')
+    context = pins(root, sorted(set([*request['context'], *readiness['paths']])))
     state = P.intent_helper().check(root)
+    supporting = request.get('supporting_artifacts', [])
+    need(type(supporting) is list and all(type(p) is str for p in supporting) and
+         len(supporting) == len(set(supporting)) and set(supporting) < set(artifacts),
+         'supporting_artifacts_must_be_a_distinct_proper_subset')
+    selected_paths = {s['candidate_path'] for s in state['selections'] if s.get('candidate_path')}
+    need(not selected_paths.intersection(supporting), 'selected_candidate_cannot_be_supporting_artifact')
+    artifact_roles = {p: 'supporting' if p in supporting else 'primary' for p in artifacts}
+    if project.get('workflow_quality_policy') == QUALITY_POLICY and selected_paths:
+        need(set(artifacts) - set(supporting) == selected_paths,
+             'candidate_primary_artifacts_must_match_selected_surfaces')
+    # The first assembly can precede binding its actual bytes into selected
+    # intent. It stays a provisional candidate: assess rejects missing selected
+    # artifact coverage and native create independently requires that binding.
     if state['selected']:
         context.update(pins(root, state['paths']))
     directory = P.no_links(root / 'evidence' / 'candidate-history')
@@ -472,8 +859,11 @@ def freeze(root, request):
         P.private_write(copy, raw)
         retained[name] = copy.relative_to(root).as_posix()
     record = {'schema_version': 1, 'kind': 'analyst_candidate', 'project_id': project['id'], 'id': ident,
-              'artifacts': artifacts, 'context': context, 'retained': retained, 'selected_intent': state['selected'],
+              'artifacts': artifacts, 'artifact_roles': artifact_roles,
+              'context': context, 'retained': retained, 'selected_intent': state['selected'],
               'previous': previous}
+    if readiness['status'] == 'ready':
+        record['workflow_context'] = readiness['context']
     saved = path / 'candidate.json'
     P.write_json(saved, record)
     pointer = {'path': saved.relative_to(root).as_posix(), 'sha256': P.digest(saved.read_bytes())}
@@ -509,7 +899,16 @@ def assess(root, request):
     candidate_pin = P.digest(raw)
     state = P.intent_helper().check(root)
     selected_artifacts = {s['candidate_path'] for s in state['selections'] if s.get('candidate_path')}
-    if not selected_artifacts or set(candidate['artifacts']) != selected_artifacts:
+    roles = candidate.get('artifact_roles')
+    if roles is None:  # Historical candidates used the exact primary set only.
+        primary = set(candidate['artifacts'])
+    elif (type(roles) is dict and set(roles) == set(candidate['artifacts']) and
+          all(role in {'primary', 'supporting'} for role in roles.values())):
+        primary = {p for p, role in roles.items() if role == 'primary'}
+    else:
+        primary = set()
+        findings.append('candidate_artifact_roles_invalid')
+    if not selected_artifacts or primary != selected_artifacts:
         findings.append('delivery_artifacts_differ_from_selected_candidates')
     try:
         history_check(root, project['id'], {'path': request['candidate'], 'sha256': candidate_pin})
@@ -570,9 +969,36 @@ def assess(root, request):
             need(request['candidate'] in recorded_paths, 'stage_gate_reviewed_candidate_differs')
         except (ValueError, KeyError, TypeError) as exc:
             findings.append(str(exc))
+    claims = assessment_claims(findings, result['findings'], lanes, design, gates)
     return {'status': 'candidate_with_gaps' if findings else 'ready_for_review', 'findings': findings,
             'stage_gates': gates,
             'candidate_sha256': candidate_pin, 'lanes': lanes, 'design': design,
             'review_assessments': {'source_critique': lanes['source'], 'requirement_context_design': design['status']},
+            'claims': claims,
             'claims_authenticated': False, 'publication_authorized': False,
             'note': 'Assessment of supplied evidence, not approval, beauty certification, native execution or a universal write gate.'}
+
+
+def assessment_claims(findings, structural_findings, lanes, design, gates):
+    """Describe only recorded lanes. Publication/readback never upgrades quality."""
+    pending = sorted(set(findings))
+    identity_findings = [f for f in pending if f.startswith(('candidate_', 'evidence_candidate_',
+        'delivery_artifacts_', 'stage_gate_reviewed_candidate_', 'stale_candidate_', 'assessment_startup_'))]
+    current_candidate = not identity_findings
+    source_reviewed = current_candidate and lanes.get('source') == 'reported_pass'
+    rendered = current_candidate and lanes.get('rendered') == 'reported_pass' and design.get('status') == 'recorded_complete'
+    native = current_candidate and lanes.get('native') == 'reported_pass'
+    published = current_candidate and lanes.get('publication') == 'reported_pass'
+    accepted = current_candidate and lanes.get('human') == 'reported_pass'
+    return {'source_reviewed': source_reviewed, 'rendered_verified': rendered,
+            'native_verified': native, 'effective_access_verified': current_candidate and lanes.get('access') == 'reported_pass',
+            'published_readback_verified': published, 'user_acceptance_recorded': accepted,
+            'preview_structurally_ready': current_candidate and not structural_findings and bool(gates.get('release_ready')),
+            'current_candidate_evidence_bound': current_candidate,
+            'delivery_evidence_complete': not pending, 'remaining_findings': pending,
+            'summary': ('Delivery evidence recorded; human judgment remains explicit.' if not pending else
+                        'Published candidate with unresolved evidence.' if published else
+                        'Source-reviewed candidate with unresolved evidence.' if source_reviewed else
+                        'Candidate with unresolved evidence.'),
+            'publication_authorized': False, 'beauty_certified': False,
+            'limitation': 'Supplied observations are not independently authenticated. Preview readiness is not permission to publish.'}
