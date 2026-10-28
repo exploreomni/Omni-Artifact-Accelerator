@@ -31,6 +31,15 @@ CASES = {
     "assembly": "tests/test_experience_assembly.py",
     "product-intent": "tests/test_product_intent.py",
     "data-refresh": "tests/test_data_refresh_gates.py",
+    "periscope-bridge": "tests/test_periscope_visual_bridge.py",
+    "periscope-capture": "tests/test_periscope_capture.py",
+    "periscope-projection": "tests/test_periscope_capture_projection.py",
+    "periscope-integration": "tests/test_periscope_integration.py",
+    "periscope-host": "tests/test_periscope_host.py",
+    "metabase-capture": "tests/test_metabase_capture.py",
+    "metabase-projection": "tests/test_metabase_visual.py",
+    "metabase-integration": "tests/test_metabase_integration.py",
+    "metabase-host": "tests/test_metabase_host.py",
     "stage-gates": "tests/test_stage_gates.py",
     "stage-gate-integration": "tests/test_stage_gate_integration.py",
     "conversation-choice": "tests/test_conversation_choice.py",
@@ -43,7 +52,7 @@ CASES = {
 # Keep them bounded without turning a larger valid fixture into a false failure.
 CASE_TIMEOUTS = {name: 120 for name in ('workflow', 'product-intent', 'stage-gates',
     'stage-gate-integration', 'conversation-choice', 'native-stage-gates', 'native-create',
-    'experience-enforcement', 'data-refresh')}
+    'experience-enforcement', 'data-refresh', 'periscope-integration', 'metabase-integration')}
 IGNORED = {".git", ".venv", "venv", "node_modules", "__pycache__", ".pytest_cache", ".ruff_cache"}
 STDLIB_ROOTS = {Path(sysconfig.get_path(name)).resolve() for name in ("stdlib", "platstdlib")}
 FIRST_PARTY_IMPORTS = {

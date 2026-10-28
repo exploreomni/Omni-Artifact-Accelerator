@@ -392,6 +392,21 @@ def translate(raw, source_format, producer_revision=None):
     payload = decode(raw)
     if source_format == "looker-api":
         result = parse_looker(payload, raw)
+    elif source_format in ("metabase-api", "metabase-capture"):
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("analyst_metabase_visual", Path(__file__).with_name("metabase_visual.py"))
+        bridge = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(bridge)
+        helpers = {"base": base, "add_asset": add_asset, "gap": gap, "facet": facet}
+        result = (bridge.parse_capture if source_format == "metabase-capture" else bridge.parse_snapshot)(payload, raw, helpers)
+    elif source_format in ("periscope-adapter", "periscope-capture"):
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("analyst_periscope_visual", Path(__file__).with_name("periscope_visual.py"))
+        bridge = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(bridge)
+        helpers = {"base": base, "add_asset": add_asset, "gap": gap, "facet": facet}
+        result = (bridge.parse_capture(payload, raw, helpers) if source_format == "periscope-capture" else
+                  bridge.parse_adapter(payload, raw, helpers, producer_revision))
     elif source_format in ("looker-capture", "looker-canonical", "looker-adapter"):
         bridge = looker_module()
         helpers = {"base": base, "add_asset": add_asset, "gap": gap, "facet": facet, "parse_looker": parse_looker}
@@ -512,7 +527,7 @@ def write_new(path, value):
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("input", type=Path)
-    parser.add_argument("--format", required=True, choices=("looker-api", "looker-capture", "looker-canonical", "looker-adapter", "hex-capture", "hex-adapter", "normalized-inventory", "dma-inventory", "domo-agent", "sigma-agent", "tableau-capture", "powerbi-capture", "powerbi-adapter"))
+    parser.add_argument("--format", required=True, choices=("looker-api", "looker-capture", "looker-canonical", "looker-adapter", "hex-capture", "hex-adapter", "normalized-inventory", "dma-inventory", "domo-agent", "sigma-agent", "tableau-capture", "powerbi-capture", "powerbi-adapter", "periscope-adapter", "periscope-capture", "metabase-api", "metabase-capture"))
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--producer-revision")
     args = parser.parse_args(argv)

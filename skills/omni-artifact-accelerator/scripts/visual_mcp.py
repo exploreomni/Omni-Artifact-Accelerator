@@ -15,7 +15,15 @@ import re
 import subprocess
 import sys
 
-import visual_workflow as workflow
+try:
+    import visual_workflow as workflow
+except ModuleNotFoundError as error:
+    if error.name != "visual_workflow":
+        raise
+    _workflow_spec = importlib.util.spec_from_file_location("visual_workflow", Path(__file__).with_name("visual_workflow.py"))
+    workflow = importlib.util.module_from_spec(_workflow_spec)
+    sys.modules[_workflow_spec.name] = workflow
+    _workflow_spec.loader.exec_module(workflow)
 
 MAX_MESSAGE = 512 * 1024
 PROTOCOL = "2025-11-25"
@@ -37,6 +45,30 @@ def tool(name, description, properties, required=None, read=False, external=Fals
 
 
 LOCAL_TOOLS = [
+    tool("metabase_import_local", "Retain a scoped Metabase snapshot and original response evidence; no tenant calls or query execution.",
+         {"request": STRING, "source_root": STRING, "directory": STRING}),
+    tool("metabase_import_evidence", "Retain supplied Metabase visual/result bytes with identity and observed state; no URL fetching.",
+         {"source": STRING, "spec": STRING, "source_root": STRING}),
+    tool("metabase_translate", "Project a typed supplied Metabase API snapshot; preserve unsupported query and placement obligations.",
+         {"source": STRING, "output": STRING}),
+    tool("metabase_import_capture", "Verify Metabase original and attachment bytes before projecting migration requirements.",
+         {"source": STRING, "output": STRING}),
+    tool("metabase_check_capture", "Verify retained Metabase capture integrity; no native, access or business acceptance claim.",
+         {"source": STRING}, read=True),
+    tool("metabase_normalize_results", "Normalize supplied Metabase CSV/JSON with explicit columns and a capture binding; no query execution.",
+         {"source": STRING, "profile": STRING, "binding": STRING, "output": STRING}),
+    tool("periscope_import_local", "Retain a supplied CDT adapter report, original files and independent inventory; no source code execution or tenant call.",
+         {"request": STRING, "source_root": STRING, "directory": STRING}),
+    tool("periscope_import_evidence", "Retain supplied CDT render/result bytes and separately observed state; never fetch source URLs.",
+         {"source": STRING, "spec": STRING, "source_root": STRING}),
+    tool("periscope_translate", "Translate the pinned DMA Periscope adapter contract; supplied-file coverage is not visual completeness.",
+         {"source": STRING, "producer_revision": STRING, "output": STRING}),
+    tool("periscope_import_capture", "Verify CDT source, inventory, crosswalk and attachment bytes before projecting migration obligations.",
+         {"source": STRING, "output": STRING}),
+    tool("periscope_check_capture", "Verify retained CDT capture bytes and scope; no live, visual, or business acceptance claim.",
+         {"source": STRING}, read=True),
+    tool("periscope_normalize_results", "Normalize supplied CDT CSV bytes using an explicit column profile and capture binding; no source query execution.",
+         {"source": STRING, "profile": STRING, "binding": STRING, "output": STRING}),
     tool("hex_import_local", "Retain supplied Hex YAML exports and dependency files; no notebook execution or tenant call.",
          {"request": STRING, "source_root": STRING, "directory": STRING}),
     tool("hex_import_evidence", "Retain transferred Hex image/result bytes and explicitly observed state without fetching response URLs.",
@@ -504,11 +536,178 @@ class LookerBatch(CaptureBatch):
         return LookerCommand(project, executable, request, directory, runner, self.token_env, self.allow_query)
 
 
+def periscope_host_module(name):
+    folder = Path(__file__).resolve().parents[2] / "omni-artifact-translator/scripts"
+    workflow.need(name in ("periscope_capture", "periscope_visual", "translate_artifact"), "host.source_module_rejected")
+    spec = importlib.util.spec_from_file_location("host_" + name, folder / (name + ".py"))
+    loaded = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(loaded)
+    return loaded
+
+
+def metabase_host_module(name):
+    folder = Path(__file__).resolve().parents[2] / "omni-artifact-translator/scripts"
+    workflow.need(name in ("metabase_capture", "metabase_visual", "translate_artifact"), "host.source_module_rejected")
+    spec = importlib.util.spec_from_file_location("host_" + name, folder / (name + ".py"))
+    loaded = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(loaded)
+    return loaded
+
+
+class MetabaseCommand:
+    """Startup-selected tenant, objects and query bodies; never a generic proxy."""
+    def __init__(self, project, request, directory, *, token_env="METABASE_API_KEY", allow_query=False, transport=None):
+        self.root, _ = workflow.ap.load_project(project)
+        self.request = workflow.pin(self.root, request)
+        self.directory = local_directory(self.root, directory)
+        workflow.need(type(token_env) is str and re.fullmatch(r"METABASE_[A-Z0-9_]+", token_env), "host.source_token_env")
+        self.token_env, self.allow_query, self.transport = token_env, allow_query, transport
+        folder = Path(__file__).resolve().parents[2] / "omni-artifact-translator/scripts"
+        self.runtime = {}
+        for filename in ("metabase_capture.py", "powerbi_capture_files.py", "bounded_csv.py"):
+            path = workflow.ap.no_links(folder / filename)
+            workflow.need(path.is_file(), "host.source_runtime_missing")
+            self.runtime[path] = workflow.ap.digest(path.read_bytes())
+        self.module = metabase_host_module("metabase_capture")
+        self.config = self.module.validate_request(workflow.load(self.root, request))
+        workflow.need(not self.config["queries"] or allow_query, "host.metabase_query_grant_required")
+        self.request_hash = self.module.sha(self.config)
+        origin = self.config['source_origin']
+        self.read_urls = {origin + '/api/dashboard/' + str(self.config['dashboard_id'])}
+        self.read_urls.update(origin + '/api/card/' + str(i) for i in self.config['card_ids'])
+        self.read_urls.update(origin + '/api/' + r['kind'] + '/' + str(r['id']) for r in self.config['metadata'])
+        self.query_requests = {(origin + '/api/card/' + str(q['card_id']) + '/query', self.module.sha(q['body']))
+                               for q in self.config['queries']}
+
+    def check_scope(self):
+        workflow.check_pin(self.root, self.request)
+        for path, pin in self.runtime.items():
+            workflow.ap.no_links(path)
+            workflow.need(workflow.ap.digest(path.read_bytes()) == pin, "host.source_runtime_changed")
+
+    def authorize(self, operation, fingerprint):
+        self.check_scope()
+        workflow.need(type(fingerprint) is dict and set(fingerprint) == {'request_sha256', 'method', 'url', 'body_sha256'}
+                      and fingerprint['request_sha256'] == self.request_hash, "host.metabase_scope_changed")
+        if operation == 'read':
+            workflow.need(fingerprint['method'] == 'GET' and fingerprint['body_sha256'] is None
+                          and fingerprint['url'] in self.read_urls, "host.metabase_read_scope")
+        elif operation == 'query':
+            workflow.need(self.allow_query and fingerprint['method'] == 'POST' and
+                          (fingerprint['url'], fingerprint['body_sha256']) in self.query_requests,
+                          "host.metabase_query_scope")
+        else:
+            raise ValueError('host.metabase_operation_rejected')
+        token = os.environ.get(self.token_env, '')
+        workflow.need(0 < len(token) <= 4096 and not any(ord(c) < 32 for c in token), "host.source_credential_unavailable")
+        return token
+
+    def capture(self, resume):
+        self.check_scope()
+        value = self.module.capture(self.config, self.directory, authority=self.authorize,
+                                    transport=self.transport, resume=resume)
+        saved = Path(value['output'])
+        workflow.need(saved.is_absolute() and saved.is_relative_to(self.directory), 'host.capture_output_escaped')
+        return {'status': value['status'], 'evidence': workflow.pin(self.root, str(saved.relative_to(self.root))),
+                'native_validation': 'not_run'}
+
+
+class PeriscopeCommand:
+    """Fixed startup-selected CDT scope; tool arguments never grant network authority.
+
+    This is a local cooperating-host boundary, not isolation against an operator
+    who can replace the host, its environment, or its Python interpreter.
+    """
+    def __init__(self, project, request, directory, *, token_env="PERISCOPE_API_KEY", allow_render=False, transport=None):
+        from hashlib import sha256
+        self.root, _ = workflow.ap.load_project(project)
+        self.request = workflow.pin(self.root, request)
+        self.directory = local_directory(self.root, directory)
+        workflow.need(type(token_env) is str and re.fullmatch(r"PERISCOPE_[A-Z0-9_]+", token_env), "host.source_token_env")
+        self.token_env, self.allow_render, self.transport = token_env, allow_render, transport
+        folder = Path(__file__).resolve().parents[2] / "omni-artifact-translator/scripts"
+        # Pin the shipped reader and its first-party helper closure before load.
+        self.runtime = {}
+        for filename in ("periscope_capture.py", "periscope_visual.py", "powerbi_capture_files.py",
+                         "powerbi_visual.py", "tableau_visual.py", "bounded_csv.py", "tableau_capture_files.py"):
+            p = workflow.ap.no_links(folder / filename)
+            workflow.need(p.is_file(), "host.source_runtime_missing")
+            self.runtime[p] = sha256(p.read_bytes()).hexdigest()
+        self.module = periscope_host_module("periscope_capture")
+        self.config = self.module.validate_request(workflow.load(self.root, request), require_service=True)
+        workflow.need(not self.config["render"] or allow_render, "host.periscope_render_grant_required")
+        snapshot, _ = self.module.load_latest(self.directory, self.config)
+        self.source_fingerprint = snapshot["source"]["definition_fingerprint"]
+        self.request_hash = self.module.sha(self.config)
+        self.render_body_hash = None
+        if self.config["render"]:
+            numeric = next(r["numeric_id"] for r in snapshot["source"]["crosswalk"]["rows"]
+                           if r["key"] == self.config["dashboard_key"])
+            body = {"dashboard_id": numeric, "filters": self.config["state"]["filters"]}
+            for key in ("aggregation", "daterange"):
+                if self.config["state"][key] is not None:
+                    body[key] = self.config["state"][key]
+            if self.config["render"]["dashboard_ts"] is not None:
+                body["dashboard_ts"] = self.config["render"]["dashboard_ts"]
+            self.render_body_hash = self.module.sha({"data": body})
+
+    def check_scope(self):
+        from hashlib import sha256
+        workflow.check_pin(self.root, self.request)
+        for path, digest in self.runtime.items():
+            workflow.need(not path.is_symlink() and sha256(path.read_bytes()).hexdigest() == digest,
+                          "host.source_runtime_changed")
+
+    def authorize(self, operation, fingerprint):
+        from urllib.parse import parse_qs, urlsplit
+        self.check_scope()
+        workflow.need(type(fingerprint) is dict and set(fingerprint) == {"request_sha256", "method", "url", "body_sha256"}
+                      and fingerprint["request_sha256"] == self.request_hash, "host.periscope_scope_changed")
+        url = fingerprint["url"]
+        workflow.need(type(url) is str and not any(c in url for c in ("\r", "\n", "\\")), "host.periscope_url_scope")
+        if operation == "inventory":
+            p = urlsplit(url)
+            query = parse_qs(p.query, keep_blank_values=True, strict_parsing=True) if p.query else {}
+            workflow.need(self.config["list_dashboards"] and fingerprint["method"] == "GET"
+                          and fingerprint["body_sha256"] is None and p.scheme == "https"
+                          and p.netloc == "app.periscopedata.com" and p.path == "/api/v1/dashboards"
+                          and not p.fragment and set(query) <= {"next_page_start"}
+                          and all(len(v) == 1 and 0 < len(v[0]) <= 1000 for v in query.values()),
+                          "host.periscope_inventory_scope")
+        elif operation == "render":
+            workflow.need(self.allow_render and self.render_body_hash is not None and fingerprint["method"] == "POST"
+                          and url == "https://api.periscopedata.com/api/v1/screenshot_requests"
+                          and fingerprint["body_sha256"] == self.render_body_hash, "host.periscope_render_scope")
+        elif operation == "download":
+            workflow.need(self.allow_render and self.render_body_hash is not None and fingerprint["method"] == "GET"
+                          and fingerprint["body_sha256"] is None, "host.periscope_download_scope")
+            self.module.render_url(url, self.config)
+            return True
+        else:
+            raise ValueError("host.periscope_operation_rejected")
+        token = os.environ.get(self.token_env, "")
+        workflow.need(0 < len(token) <= 4096 and not any(c in token for c in "\r\n:"), "host.source_credential_unavailable")
+        return token
+
+    def capture(self, resume):
+        self.check_scope()
+        workflow.need(resume is True, "host.periscope_import_before_capture")
+        snapshot, _ = self.module.load_latest(self.directory, self.config)
+        workflow.need(snapshot["source"]["definition_fingerprint"] == self.source_fingerprint,
+                      "host.periscope_source_changed")
+        value = self.module.capture(self.config, self.directory, authority=self.authorize,
+                                    transport=self.transport, resume=True)
+        saved = Path(value["output"])
+        workflow.need(saved.is_absolute() and saved.is_relative_to(self.directory), "host.capture_output_escaped")
+        return {"status": value["status"], "evidence": workflow.pin(self.root, str(saved.relative_to(self.root))),
+                "native_validation": "not_run"}
+
+
 class Bridge:
     def __init__(self, project, native=None, allowed_candidate=None, authorization_reference=None, sigma=None, tableau=None,
                  export_candidate=None, export_request=None, export_state=None, export_authorization_reference=None, powerbi=None,
                  looker=None, app=None, allowed_app_candidate=None, app_authorization_reference=None, hex_source=None,
-                 allowed_app_initial_candidate=None, app_initial_authorization_reference=None):
+                 allowed_app_initial_candidate=None, app_initial_authorization_reference=None, periscope=None, metabase=None):
         self.root, _ = workflow.ap.load_project(project)
         self.native = native
         self.allowed_candidate = allowed_candidate
@@ -518,6 +717,8 @@ class Bridge:
         self.powerbi = powerbi
         self.looker = looker
         self.hex_source = hex_source
+        self.periscope = periscope
+        self.metabase = metabase
         self.allowed_app_initial_candidate = allowed_app_initial_candidate
         self.app_initial_authorization_reference = app_initial_authorization_reference
         workflow.need(not allowed_app_initial_candidate or (app and app_initial_authorization_reference),
@@ -572,6 +773,12 @@ class Bridge:
         if self.hex_source is not None:
             values.append(tool("hex_capture", "Capture only the startup-selected Hex definitions and existing-run chart images; never execute source code.",
                                {"resume": {"type": "boolean"}}, external=True))
+        if self.metabase is not None:
+            values.append(tool("metabase_capture", "Capture only startup-selected Metabase definitions and explicitly allowed saved-question results; no arbitrary SQL or target writes.",
+                               {"resume": {"type": "boolean"}}, external=True))
+        if self.periscope is not None:
+            values.append(tool("periscope_capture", "Resume the startup-selected CDT scope; separately granted rendering may refresh older source results. No source code or target execution.",
+                               {"resume": {"type": "boolean"}}, external=True))
         if self.native is not None:
             values += [t for t in NATIVE_TOOLS if t["name"] != "native_execute" or self.allowed_candidate]
         if self.export_candidate:
@@ -605,6 +812,66 @@ class Bridge:
         definition = next((t for t in self.definitions() if t["name"] == name), None)
         workflow.need(definition is not None, "host.unknown_or_disabled_tool")
         validate_args(definition, args)
+        if name == "metabase_capture":
+            return self.metabase.capture(args["resume"])
+        if name.startswith("metabase_"):
+            capture = metabase_host_module("metabase_capture")
+            visual = metabase_host_module("metabase_visual")
+            if name in ("metabase_import_local", "metabase_import_evidence"):
+                source_root = local_directory(self.root, args["source_root"])
+                if name == "metabase_import_local":
+                    value = capture.import_local(workflow.load(self.root, args["request"]), source_root,
+                        local_directory(self.root, args["directory"]), allow_source_read=True)
+                else:
+                    value = capture.import_evidence(workflow.ap.relative_file(self.root, args["source"]),
+                        workflow.load(self.root, args["spec"]), source_root)
+                saved = Path(value["output"])
+                workflow.need(saved.is_absolute() and saved.is_relative_to(self.root), "host.capture_output_escaped")
+                return {"status": value["status"], "evidence": workflow.pin(self.root, str(saved.relative_to(self.root))),
+                        "native_validation": "not_run"}
+            source = workflow.ap.relative_file(self.root, args["source"])
+            if name == "metabase_normalize_results":
+                raw = capture.F.read_file(source, capture.F.MAX_FILE)
+                return workflow.output(self.root, args["output"], visual.normalize_results(raw,
+                    workflow.load(self.root, args["profile"]), workflow.load(self.root, args["binding"])))
+            value, raw = workflow.ap.read_json(source)
+            if name != "metabase_translate":
+                visual.verify_capture_files(value, source.parent)
+                if name == "metabase_check_capture":
+                    return {"status": "consistent", "capture": workflow.pin(self.root, args["source"]), "native_validation": "not_run"}
+            selected_format = "metabase-api" if name == "metabase_translate" else "metabase-capture"
+            return workflow.output(self.root, args["output"], metabase_host_module("translate_artifact").translate(
+                raw, selected_format))
+        if name == "periscope_capture":
+            return self.periscope.capture(args["resume"])
+        if name.startswith("periscope_"):
+            capture = periscope_host_module("periscope_capture")
+            visual = periscope_host_module("periscope_visual")
+            if name in ("periscope_import_local", "periscope_import_evidence"):
+                source_root = local_directory(self.root, args["source_root"])
+                if name == "periscope_import_local":
+                    value = capture.import_local(workflow.load(self.root, args["request"]), source_root,
+                        local_directory(self.root, args["directory"]), allow_source_read=True)
+                else:
+                    value = capture.import_evidence(workflow.ap.relative_file(self.root, args["source"]),
+                        workflow.load(self.root, args["spec"]), source_root)
+                saved = Path(value["output"])
+                workflow.need(saved.is_absolute() and saved.is_relative_to(self.root), "host.capture_output_escaped")
+                return {"status": value["status"], "evidence": workflow.pin(self.root, str(saved.relative_to(self.root))),
+                        "native_validation": "not_run"}
+            source = workflow.ap.relative_file(self.root, args["source"])
+            if name == "periscope_normalize_results":
+                raw = capture.F.read_file(source, capture.F.MAX_FILE)
+                return workflow.output(self.root, args["output"], visual.normalize_results(raw,
+                    workflow.load(self.root, args["profile"]), workflow.load(self.root, args["binding"])))
+            value, raw = workflow.ap.read_json(source)
+            if name != "periscope_translate":
+                visual.verify_capture_files(value, source.parent)
+                if name == "periscope_check_capture":
+                    return {"status": "consistent", "capture": workflow.pin(self.root, args["source"]), "native_validation": "not_run"}
+            selected_format = "periscope-adapter" if name == "periscope_translate" else "periscope-capture"
+            return workflow.output(self.root, args["output"], periscope_host_module("translate_artifact").translate(
+                raw, selected_format, args.get("producer_revision")))
         if name == "hex_capture":
             return self.hex_source.capture(args["resume"])
         if name in ("hex_import_local", "hex_import_evidence", "hex_import_capture", "hex_check_capture", "hex_translate"):
@@ -948,6 +1215,16 @@ def main(argv=None):
     parser.add_argument("--hex-directory", help="Private capture directory relative to the engagement")
     parser.add_argument("--hex-token-env", default="HEX_ACCESS_TOKEN")
     parser.add_argument("--enable-hex-capture", action="store_true")
+    parser.add_argument("--metabase-request", help="Exact Metabase capture request relative to engagement")
+    parser.add_argument("--metabase-directory", help="Private Metabase capture directory")
+    parser.add_argument("--metabase-token-env", default="METABASE_API_KEY")
+    parser.add_argument("--enable-metabase-capture", action="store_true")
+    parser.add_argument("--enable-metabase-query", action="store_true", help="Separately authorize only the reviewed saved-question requests")
+    parser.add_argument("--periscope-request", help="Pinned CDT request relative to the engagement")
+    parser.add_argument("--periscope-directory", help="Already imported private CDT capture directory")
+    parser.add_argument("--periscope-token-env", default="PERISCOPE_API_KEY")
+    parser.add_argument("--enable-periscope-capture", action="store_true")
+    parser.add_argument("--enable-periscope-render", action="store_true", help="Separately allow the exact render request, including its source refresh intent")
     parser.add_argument("--allow-app-initial-candidate", help="Exact initial App candidate hash; separate from edit authority")
     parser.add_argument("--app-initial-authorization-reference")
     args = parser.parse_args(argv)
@@ -1024,12 +1301,28 @@ def main(argv=None):
                   "host.source_startup_authority_required")
     if all(configured_hex) and args.enable_hex_capture:
         hex_source = HexCommand(args.project, *configured_hex, token_env=args.hex_token_env)
+    metabase = None
+    configured_metabase = (args.metabase_request, args.metabase_directory)
+    workflow.need(not args.enable_metabase_query or args.enable_metabase_capture, "host.metabase_query_grant_required")
+    workflow.need(not (any(configured_metabase) or args.enable_metabase_capture)
+                  or (all(configured_metabase) and args.enable_metabase_capture), "host.source_startup_authority_required")
+    if args.enable_metabase_capture:
+        metabase = MetabaseCommand(args.project, *configured_metabase,
+            token_env=args.metabase_token_env, allow_query=args.enable_metabase_query)
+    periscope = None
+    configured_periscope = (args.periscope_request, args.periscope_directory)
+    workflow.need(not args.enable_periscope_render or args.enable_periscope_capture, "host.periscope_render_grant_required")
+    workflow.need(not (any(configured_periscope) or args.enable_periscope_capture)
+                  or (all(configured_periscope) and args.enable_periscope_capture), "host.source_startup_authority_required")
+    if args.enable_periscope_capture:
+        periscope = PeriscopeCommand(args.project, *configured_periscope,
+            token_env=args.periscope_token_env, allow_render=args.enable_periscope_render)
     bridge = Bridge(args.project, native, args.allow_candidate, args.authorization_reference, sigma, tableau,
                     args.allow_export_candidate, args.native_export_request, args.native_export_state,
                     args.export_authorization_reference, powerbi=powerbi, looker=looker, app=app,
                     allowed_app_candidate=args.allow_app_candidate, app_authorization_reference=args.app_authorization_reference,
                     hex_source=hex_source, allowed_app_initial_candidate=args.allow_app_initial_candidate,
-                    app_initial_authorization_reference=args.app_initial_authorization_reference)
+                    app_initial_authorization_reference=args.app_initial_authorization_reference, periscope=periscope, metabase=metabase)
     serve(bridge, sys.stdin.buffer, sys.stdout)
 
 

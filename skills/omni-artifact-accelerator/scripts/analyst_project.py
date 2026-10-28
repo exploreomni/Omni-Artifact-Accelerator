@@ -18,6 +18,8 @@ STARTER_QUESTIONS = ["Who uses this and what decision or task must it support?",
                      "Which metrics and source behaviors are accepted or unresolved?",
                      "What branding, device, access and completion scope is required?"]
 ROLES = {
+    "metabase-migrator": "Interpret scoped Metabase evidence, preserve query and placement behavior, coordinate migration obligations",
+    "periscope-migrator": "Interpret verified Periscope/CDT evidence, preserve source behavior and coordinate migration obligations",
     "product-owner": "Recover user intent, interview only material gaps, and return a versioned product North Star",
     "3d-modeler": "Author bounded original spatial geometry, materials, hierarchy and stable entity mappings",
     "data-analyst": "Define decision, metrics and independent expected examples",
@@ -197,8 +199,60 @@ def init(output, name, mode, surface, branding=None, website=None, selection_pol
             "selection_policy": selection_policy}
 
 
+def periscope_scope(root, obj):
+    """Route only from pinned typed evidence, never a product-name substring."""
+    for record in obj['sources']:
+        if not record.get('path', '').endswith('.json'):
+            continue
+        value, raw = read_json(relative_file(root, record['path']))
+        need(digest(raw) == record.get('sha256'), 'registered source changed; review before routing')
+        if type(value) is not dict:
+            continue
+        workflow = None
+        if value.get('kind') == 'source_adapter_result' and value.get('source') == 'periscope':
+            workflow = routing_helper('visual_workflow')
+            bridge = workflow.periscope_module()
+            bridge.validate(value, bridge.DMA_REVISION)
+        elif value.get('schema_version') == 'periscope-visual-capture.v1':
+            workflow = routing_helper('visual_workflow')
+            workflow.periscope_module().verify_capture_files(value, relative_file(root, record['path']).parent)
+        elif value.get('kind') == 'omni_analyst_source_inventory' and value.get('source', {}).get('platform') == 'periscope':
+            matches = [r for r in obj['sources'] if r.get('sha256') == value['source'].get('input_sha256')]
+            need(bool(matches), 'Periscope routing requires the registered original source')
+            workflow = routing_helper('visual_workflow')
+            workflow.source_inventory(root, matches[0]['path'], record['path'])
+        if workflow is not None:
+            return True
+    return False
+
+
+def metabase_scope(root, obj):
+    """Only pinned, typed Metabase evidence selects the source specialist."""
+    for record in obj['sources']:
+        if not record.get('path', '').endswith('.json'):
+            continue
+        value, raw = read_json(relative_file(root, record['path']))
+        need(digest(raw) == record.get('sha256'), 'registered source changed; review before routing')
+        if type(value) is not dict:
+            continue
+        kind = value.get('schema_version')
+        if kind in ('metabase-api-snapshot.v1', 'metabase-visual-capture.v1'):
+            workflow = routing_helper('visual_workflow')
+            if kind == 'metabase-api-snapshot.v1':
+                workflow.metabase_module().validate_snapshot(value)
+            else:
+                workflow.metabase_module().verify_capture_files(value, relative_file(root, record['path']).parent)
+            return True
+        if value.get('kind') == 'omni_analyst_source_inventory' and value.get('source', {}).get('platform') == 'metabase':
+            matches = [r for r in obj['sources'] if r.get('sha256') == value['source'].get('input_sha256')]
+            need(bool(matches), 'Metabase routing requires its registered original source')
+            routing_helper('visual_workflow').source_inventory(root, matches[0]['path'], record['path'])
+            return True
+    return False
+
+
 def plan(root, scope_ids=None):
-    _, obj = load_project(root)
+    root, obj = load_project(root)
     product = routing_helper('product_intent').check(root)
     state = intent_helper().check(root)
     if scope_ids is not None:
@@ -208,6 +262,12 @@ def plan(root, scope_ids=None):
     roles = ["product-owner", "data-analyst", "branding", "bi-engineer"]
     if obj["mode"] == "migration":
         roles.insert(0, "artifact-translator")
+    metabase = metabase_scope(root, obj)
+    if metabase:
+        roles.insert(0, 'metabase-migrator')
+    periscope = periscope_scope(root, obj)
+    if periscope:
+        roles.insert(0, 'periscope-migrator')
     if "dashboard" in obj["surfaces"]:
         roles.append("dashboard-designer")
     if "app" in obj["surfaces"]:
@@ -231,6 +291,10 @@ def plan(root, scope_ids=None):
     if gates['required']:
         stage = gates.get('next_stage')
         eligible = set(stage_roles(stage))
+        if periscope and stage in {'access', 'analysis', 'narrative', 'brief', 'options', 'design', 'candidate', 'review'}:
+            eligible.add('periscope-migrator')
+        if metabase and stage in {'access', 'analysis', 'narrative', 'brief', 'options', 'design', 'candidate', 'review'}:
+            eligible.add('metabase-migrator')
         # Preserve scoped capabilities at their permitted phase; stage advice
         # must not erase a selected motion, spatial or creative responsibility.
         if stage in {'options', 'choice', 'design'}:
@@ -468,7 +532,7 @@ def import_dma(root, review):
 
 def routing_helper(name='task_routing'):
     import importlib.util
-    need(name in {'task_routing', 'task_operations', 'delivery_workflow', 'product_intent', 'stage_gates', 'experience_contract'}, 'unknown routing helper')
+    need(name in {'task_routing', 'task_operations', 'delivery_workflow', 'product_intent', 'stage_gates', 'experience_contract', 'visual_workflow'}, 'unknown routing helper')
     # Fixed first-party module only. The host verifier never comes from a request,
     # file path or environment variable. Share its scope across helper imports.
     cache_key = '_oaa_stage_gates_' + digest(str(Path(__file__).resolve().parent).encode())
@@ -531,6 +595,12 @@ def stage_roles(stage):
 
 def stage_packet_gate(root, role, assignment=None):
     """Role names and provisional labels never waive authoring prerequisites."""
+    if role == 'metabase-migrator':
+        root, obj = load_project(root)
+        need(metabase_scope(root, obj), 'Metabase specialist requires pinned source evidence')
+    if role == 'periscope-migrator':
+        root, obj = load_project(root)
+        need(periscope_scope(root, obj), 'Periscope specialist requires pinned CDT source evidence')
     status = stage_status(root)
     if not status['required']:
         return status
@@ -559,7 +629,7 @@ def stage_packet_gate(root, role, assignment=None):
         return stage_require(root, 'brief')
     if role == 'data-analyst':
         return stage_require(root, 'analysis')
-    if role in {'bi-engineer', 'qa-analyst', 'backend-handoff', 'artifact-translator'}:
+    if role in {'bi-engineer', 'qa-analyst', 'backend-handoff', 'artifact-translator', 'periscope-migrator', 'metabase-migrator'}:
         # Read-only investigation still uses the actual startup source. It does
         # not need a finished product or a build grant.
         action = 'analysis' if stage in {'semantic', 'design'} else 'access'

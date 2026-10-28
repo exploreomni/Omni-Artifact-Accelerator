@@ -82,9 +82,43 @@ Accepts `tableau-visual-capture.v1` from the separately authorized source wrappe
 
 The [Tableau source contract](tableau-source-contract.md) defines explicit view/XML reconciliation, independently supplied expected objects, separate worksheet and placement identities, nested/device layouts, controls, parameters, content, actions and unknown-object preservation. Original source payloads and unsupported semantics remain visible. A coherent capture is not proof of effective filter/parameter state, native rendering, permissions or migration parity. The actual DMA reader can supply source-matched semantic evidence; a supplier revision/hash is not producer authentication.
 
+### `metabase-api` and `metabase-capture`
+
+`metabase-api` accepts `metabase-api-snapshot.v1`, not a bare dashboard, arbitrary
+MCP response or generic Domo migration bundle. `metabase-capture` projects the
+separate `metabase-visual-capture.v1` envelope; the capture check, MCP import and
+shared visual workflow separately verify its retained attachment bytes.
+Read the [Metabase source contract](metabase-source-contract.md) for exact shape,
+identity and state requirements and the [run guide](../../omni-artifact-accelerator/references/metabase-visual-run.md)
+for local intake and separately authorized capture.
+
+Preserve dashboard/tab/dashcard/card identities, original definitions, every
+placement, parameter mapping, non-query object and unsupported query clause.
+Simple interpreted clauses do not establish complete MBQL translation or target
+binding. No `metabase-adapter` or DMA Metabase `source_adapter_result` exists in
+this integration; normalized semantic requirements use the existing DMA exchange.
+
+### `periscope-adapter` and `periscope-capture`
+
+Accepts DMA's actual schema-1 `source_adapter_result`, `source: "periscope"`,
+`adapter_version: 1`, with `--producer-revision a88f2a3b4dd0cfa596766f938961f37d673cf9b9`.
+This separate compatibility pin leaves other producer contracts unchanged.
+Original configuration, object/native/occurrence identities, expressions,
+dependency declarations and upstream gaps remain evidence. File coverage is not
+export completeness; `component_sha256` is not a JSON seal or producer authentication.
+
+Read the [Periscope/CDT source contract](periscope-source-contract.md) for intake,
+mapping boundaries and continuation. The adapter format is supplied-JSON intake
+only. The separate `periscope-capture` format retains captured definitions and
+transferred/rendered evidence with attachment checks in the workflow. Neither
+parser executes code/queries or creates native content. The source specialist uses
+the [run guide](../../omni-artifact-accelerator/references/periscope-visual-run.md)
+for separately authorized capture. Sisense Linux/Fusion exports are different
+surfaces and are not accepted by these CDT formats.
+
 ### `normalized-inventory`
 
-Use this supplier-declared format for explicit manual evidence from Domo, Sigma, Metabase, other tools, or reviewed screenshot/live-behavior captures. It is **not a native parser for those products**.
+Use this supplier-declared format for explicit manual evidence from any named source or reviewed screenshot/live-behavior captures that do not match a supported typed reader. It is **not a native parser for those products**; prefer a source-specific format when its actual contract is available.
 
 ```json
 {

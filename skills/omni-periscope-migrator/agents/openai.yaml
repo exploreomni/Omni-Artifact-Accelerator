@@ -1,0 +1,4 @@
+interface:
+  display_name: "Omni Periscope Migrator"
+  short_description: "Guide CDT capture, mapping and migration evidence"
+  default_prompt: "Use $omni-periscope-migrator to migrate the selected CDT dashboards through the existing Omni Artifact Accelerator workflow, preserving source behavior and explicit evidence gaps."

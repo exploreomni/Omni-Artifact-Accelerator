@@ -705,8 +705,8 @@ class NativeAdapter:
             req = WORKFLOW.load(self.root, requirements["file"]["path"])
             inventory = WORKFLOW.load(self.root, req["source_files"][1]["path"])
             platform = inventory.get("source", {}).get("platform")
-            if platform in {"looker", "hex"} or (platform in {"tableau", "powerbi"} and req["route"] == "reuse_existing"):
-                raise NativeError("Tableau/Power BI reuse_existing and Looker/Hex require a typed current existing-Omni baseline")
+            if platform in {"looker", "hex", "periscope", "metabase"} or (platform in {"tableau", "powerbi"} and req["route"] == "reuse_existing"):
+                raise NativeError("Tableau/Power BI reuse_existing and Looker/Hex/Periscope require a typed current existing-Omni baseline")
             return None
         baseline = standalone.load_baseline(self.root, semantic_file, WORKFLOW)
         if (baseline["target"] != asdict(self.target) or baseline["requirements"] != requirements["file"]

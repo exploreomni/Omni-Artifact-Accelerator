@@ -1,6 +1,6 @@
 ---
 name: omni-artifact-accelerator
-description: Orchestrate Omni dashboard and native Omni App design, analysis, implementation, QA, and lift-and-shift migrations; reuse Hex, Looker, Power BI, Tableau, Sigma and Domo evidence and collaborate bidirectionally with Data Model Accelerator or work standalone.
+description: Orchestrate Omni dashboard and native Omni App design, analysis, implementation, QA, and lift-and-shift migrations; reuse Hex, Looker, Power BI, Tableau, Sigma, Domo, Periscope/CDT and Metabase evidence and collaborate bidirectionally with Data Model Accelerator or work standalone.
 ---
 
 # Omni Artifact Accelerator
@@ -9,7 +9,7 @@ Apply the [dependency policy](references/dependency-policy.md) before any packag
 
 Be the analyst's sidekick: turn a business decision into a useful, trustworthy data experience. Own the shared engagement, requirements, task boundaries, reconciliation, and final handoff. Use native Omni dashboards and native Omni Apps as distinct targets; an external embedded application is an explicit additional choice. Do not replace a requested native dashboard with an app or a mockup.
 
-For a net-new product or explicit product reconception, follow the authoritative
+For every new engagement, including migration and enhancement modes, follow the authoritative
 [data-first product workflow](references/data-first-product-workflow.md): **A verify
 data and user access → B analyze and qualify queries → C create a traceable,
 refresh-safe narrative → D interview for the artifact → E present three distinct
@@ -50,9 +50,9 @@ For control-level quality feedback or substantial interactive work, route the af
 
 ## Intake and resume
 
-For new products, the [product owner](references/product-intent.md) recovers prior
+For new engagements, the [product owner](references/product-intent.md) recovers prior
 answers at intake but conducts artifact discovery only after the A–C handoff.
-For other substantial work, reuse current evidence, resolve material questions and retain prioritized
+For resumed substantial work, reuse current evidence, resolve material questions and retain prioritized
 experience intent. The selected design intent stays canonical; the North Star is
 its checked readable projection. Keep notes private and dispatch ownership here.
 Focused repairs reuse current intent without another interview. Assign a creative
@@ -117,6 +117,24 @@ For a full migration, follow [the end-to-end lifecycle](../omni-backend-handoff/
 For Looker, follow [the visual run guide](references/looker-visual-run.md) and [consolidated Omni migration guidance](references/looker-guidance.md). Preserve non-query content, placements and unsupported dependencies independently of semantic parsing. Use explicit DMA producer contracts. Select dashboard, App or both; share metric evidence but keep separate target documents and native QA. The App path edits reviewed sections of an existing native App runtime against current governed queries. It is not a general LookML compiler or a dashboard-to-App conversion command.
 
 For Hex, follow [the dashboard and App run guide](references/hex-visual-run.md). Preserve source origin, workspace, project/version/cell identity, complete layouts and repeated placements, typed inputs, code/dependency obligations and Classic/Generative provenance. Assign each requirement to dashboard, App or both with a recorded decision. Use both typed DMA producer bridges; keep requested state separate from observed results. Initial App construction requires inspected governed workbook queries and a reviewed native bridge, plus its own exact-candidate grant. Source execution stays disabled; native runtime, effective access and acceptance require independent evidence.
+
+For Periscope / Sisense CDT, assign the [source specialist](../omni-periscope-migrator/SKILL.md)
+inside this engagement and follow the [Periscope run guide](references/periscope-visual-run.md).
+Keep CDT distinct from Sisense Linux/Fusion. Preserve the separate DMA producer pin,
+Git/API identity crosswalk, independent widget denominator, source-state evidence
+and explicit gaps. Source capture does not authorize script execution or target
+writes. Reuse the shared translator, DMA cowork, native builders and independent QA;
+the specialist is not another orchestrator. Local workflow support does not prove a
+successful tenant migration.
+
+For Metabase, assign the [source specialist](../omni-metabase-migrator/SKILL.md) in
+this engagement and follow the [Metabase run guide](references/metabase-visual-run.md).
+Preserve tenant/version, dashboard/tab/dashcard/card identities, the independent
+placement denominator, full query definitions, parameter mappings and actual
+capture state. Unsupported clauses cannot disappear into a partial query. Use
+typed snapshots/captures and existing native/DMA contracts; no Metabase DMA parser
+or universal MBQL compiler is supplied. All new engagements retain A–F and actual
+selection before coding. Source capture/query grants do not authorize target writes.
 
 ## Assign specialist work
 

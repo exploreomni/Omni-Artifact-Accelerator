@@ -102,6 +102,46 @@ def current_catalog(root, obj):
     return pin, value
 
 
+def verify_periscope_inventory(root, obj, path, inputs=()):
+    """Reproject CDT originals and check capture attachments on every round trip."""
+    value, _ = ap.read_json(ap.relative_file(root, path))
+    if value.get('source', {}).get('platform') != 'periscope':
+        return None
+    expected = value['source'].get('input_sha256')
+    candidates = list(dict.fromkeys([*inputs, *[r['path'] for r in obj['sources']]]))
+    matches = []
+    for candidate in candidates:
+        if candidate.endswith('.json') and candidate != path:
+            record = file_pin(root, candidate, obj)
+            if record['sha256'] == expected:
+                matches.append(record)
+    ap.need(bool(matches), 'Periscope inventory requires its pinned original source in the engagement')
+    original = matches[0]
+    workflow = ap.routing_helper('visual_workflow')
+    workflow.source_inventory(root, original['path'], path)
+    return original
+
+
+def verify_metabase_inventory(root, obj, path, inputs=()):
+    """Reproject Metabase originals and check capture attachments on every round trip."""
+    value, _ = ap.read_json(ap.relative_file(root, path))
+    if value.get('source', {}).get('platform') != 'metabase':
+        return None
+    expected = value['source'].get('input_sha256')
+    candidates = list(dict.fromkeys([*inputs, *[r['path'] for r in obj['sources']]]))
+    matches = []
+    for candidate in candidates:
+        if candidate.endswith('.json') and candidate != path:
+            record = file_pin(root, candidate, obj)
+            if record['sha256'] == expected:
+                matches.append(record)
+    ap.need(bool(matches), 'Metabase inventory requires its pinned original source in the engagement')
+    original = matches[0]
+    workflow = ap.routing_helper('visual_workflow')
+    workflow.source_inventory(root, original['path'], path)
+    return original
+
+
 def migration_sources(root, obj, spec, inputs):
     """Bind route checks to the selected export evidence, not just an action label."""
     explicit = spec.get("source_inventory_paths")
@@ -139,8 +179,11 @@ def migration_sources(root, obj, spec, inputs):
         # create a model; neither silently switches a known direct/warehouse route.
         ap.need(route is None or spec["route"] in (route, "unselected", "reuse_existing"),
                 "request route conflicts with selected source inventory")
+        original = (verify_periscope_inventory(root, obj, path, inputs) if platform == 'periscope' else
+                    verify_metabase_inventory(root, obj, path, inputs) if platform == 'metabase' else None)
         records.append({**pin, "platform": platform, "route": route,
-                        "route_status": context.get("route_status", "not_supplied")})
+                        "route_status": context.get("route_status", "not_supplied"),
+                        **({'original_source': original} if original else {})})
     return records
 
 
@@ -152,7 +195,8 @@ def create_request(project, spec_path, inputs):
     if spec.get("migration_scope_path"):
         paths.append(spec["migration_scope_path"])
     sources = migration_sources(root, obj, spec, paths)
-    paths = list(dict.fromkeys([*paths, *[row["path"] for row in sources]]))
+    paths = list(dict.fromkeys([*paths, *[row["path"] for row in sources],
+                               *[row['original_source']['path'] for row in sources if row.get('original_source')]]))
     pins = [file_pin(root, path, obj) for path in paths]
     ap.need(sum(p["bytes"] for p in pins) <= ap.PACKET_BYTES, "request inputs exceed 256 KiB; select a narrower reviewed slice")
     baseline, catalog = current_catalog(root, obj)

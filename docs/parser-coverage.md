@@ -1,6 +1,9 @@
 # Analyst migration parser coverage
 
-Evidence reviewed 2026-10-22. **High confidence** in the inspected code and locally exercised fixture scope; no live source tenant, Omni tenant, query replay, native rendering or business acceptance was tested for this package.
+Historical source evidence reviewed 2026-10-22; Periscope/CDT and Metabase interfaces reviewed
+2026-10-28. Compatibility and fixture results describe only their retained scope;
+they do not establish a live source/Omni migration, native rendering, effective
+access or business acceptance. CDT and Metabase real-tenant pilots remain unqualified.
 
 ## Producer compatibility
 
@@ -9,6 +12,7 @@ The following revisions identify the source contracts exercised by the package. 
 | Producer | Compatible revision | Use |
 | --- | --- | --- |
 | Data Model Accelerator | `c513474e87af9c2c31deebd2ae675c8602955203` | Optional source inventory and backend handoff integration. |
+| Data Model Accelerator, Periscope/CDT source report only | `a88f2a3b4dd0cfa596766f938961f37d673cf9b9` | Separate `periscope-adapter` compatibility pin; does not replace other producer pins. |
 | DomoMigrationAgent | `55eba0ca0690fbf14f39eddbc8a04c94a720c155` | Supplied Domo evidence/rebuild/redesign contracts. Source-engine access is separate. |
 | SigmaMigrationAgent | `f4eda45b0f49dc7335496d028665f7339ed82e8f` | Supplied Sigma snapshot/capability contracts. The optional visual-capture extension also needs its maintained command and producer fixtures; the base revision alone does not provide that extension. |
 
@@ -30,7 +34,25 @@ The following revisions identify the source contracts exercised by the package. 
 
 8. **Hex visual capture and generic adapter:** `hex-capture` accepts `hex-visual-capture.v1`, preserving original YAML and supporting files, tab/layout/placement denominators, input/control/content/action/code/generated-file obligations, version and state identities, and immutable supplied/API attachments. `hex-adapter` consumes the actual DMA `source_adapter_result` separately from legacy `hex_source_inventory`. Both producer enrichments retain their original evidence and cannot shrink the visual denominator. Safe YAML requires an approved PyYAML installation.
 
-All parser outputs remain partial evidence. Read the skill's [input/output contract](../skills/omni-artifact-translator/references/inventory-contract.md), [Looker source contract](../skills/omni-artifact-translator/references/looker-source-contract.md), [Power BI source contract](../skills/omni-artifact-translator/references/powerbi-source-contract.md) and [Tableau source contract](../skills/omni-artifact-translator/references/tableau-source-contract.md) for exact shapes and limits. The offline translator has no live acquisition or target write behavior. Hex/Looker/Power BI/Tableau acquisition uses separate source-only wrappers; native candidate construction is separately configured. Parser support alone does not recreate charts, Apps, filters, actions, layouts or security in Omni.
+9. **Periscope / Sisense CDT:** `periscope-adapter` imports the separately pinned
+actual DMA `source_adapter_result`. `periscope-capture` retains an independent
+dashboard/chart/control denominator, explicit Git/API crosswalk, original files,
+requested/observed state and transferred/rendered evidence. Source code stays
+inert; declared hashes and runtime fingerprints are not authentication. The
+[CDT source contract](../skills/omni-artifact-translator/references/periscope-source-contract.md)
+describes bounded capture and comparison inputs; Linux/Fusion is outside its scope.
+
+10. **Metabase:** `metabase-api` accepts the typed `metabase-api-snapshot.v1`;
+`metabase-capture` projects `metabase-visual-capture.v1`; capture/MCP/shared-workflow
+checks separately verify retained bytes.
+Dashboard/tab/dashcard/card identities, repeated placements, controls, content,
+raw query definitions and unknown clauses remain independent obligations. Bounded
+capture and result normalization are separate from source interpretation. The
+[Metabase source contract](../skills/omni-artifact-translator/references/metabase-source-contract.md)
+defines the supported subset; no arbitrary MBQL compiler, YAML serialization
+parser, Domo runtime import or DMA Metabase adapter is supplied.
+
+All parser outputs remain partial evidence. Read the skill's [input/output contract](../skills/omni-artifact-translator/references/inventory-contract.md), [Looker source contract](../skills/omni-artifact-translator/references/looker-source-contract.md), [Power BI source contract](../skills/omni-artifact-translator/references/powerbi-source-contract.md) and [Tableau source contract](../skills/omni-artifact-translator/references/tableau-source-contract.md) for exact shapes and limits. The offline translator has no live acquisition or target write behavior. Hex/Looker/Power BI/Tableau/CDT/Metabase acquisition uses separate bounded source wrappers; native candidate construction is separately configured. Parser support alone does not recreate charts, Apps, filters, actions, layouts or security in Omni.
 
 ## Existing BI capabilities and analyst gaps
 
@@ -42,17 +64,25 @@ All parser outputs remain partial evidence. Read the skill's [input/output contr
 | Hex | SchemaVersion 3 `.hex.yaml` project/component exports; actual DMA `hex_source_inventory` and `source_adapter_result`; OAA `hex-visual-capture.v1`. | Independent cells, seven-or-more tabs, repeated/input/content placements, shared filters, generated files, component and code dependencies; bounded definition/existing-run-image capture and supplied PNG/PDF/MCP/CSV/JSON evidence. | State-bound typed comparison, both DMA bridges, dashboard and initial/existing App paths. No notebook/source execution, automatic query creation, general Python/JS translation or native-runtime claim. Conditional interfaces, incomplete results, unknown sharing/access and generated code remain explicit obligations. |
 | Domo | `DMA/adapters/domo.py`: Platform v1 DataSet detail/list JSON, Product v1 Beast Mode template/search JSON, unversioned Magic ETL clipboard `domo/dataflow-actions` JSON. `Domo/engine/extractors/domo/{manual.py,models.py,dataflow_definition.py,evidence.py}`: typed customer manifest, serialized evidence bundle/envelope and bounded DataFlow graph/SQL analysis. | DMA captures datasets, schema/PDP declarations, expressions and selected ETL actions. Dedicated Domo engine has evidence types for cards, pages, app definitions, layout/interactions/visibility, workflows and policies. DataFlow definitions preserve graph IDs, dataset references, scripts/SQL and unsupported transforms. | New `domo-agent` bridge reads the four emitted contracts above. It does not parse raw live Product API responses, customer ZIP manifests or generic MigrationBundle envelopes. DMA still excludes card definitions/SQL DataFlow envelopes; use the dedicated Domo evidence owner. No automatic behavioral translation or store-backed acceptance. |
 | Sigma | `DMA/adapters/sigma.py`: REST v2 workbook/page/element/column/query/dataset/grant and element-lineage JSON. `Sigma/engine/extractors/sigma/{extractor.py,source_contracts.py,dashboard.py,capability_contracts.py,visual_capture.py}` and `prepush/{build,scope,session}.py`: `sigma-api-v2`, Data Model `/spec`, workbook graph/behavior/routing artifacts, source-bound context and reviewed prepush manifest. | Source/element identities, formulas, scoped model bindings, metric/relationship declarations and workbook pages/elements. Dashboard code explicitly retains unsupported controls/actions/input tables/writeback and unresolved fields. | New `sigma-agent` bridge imports these explicit JSON shapes. It preserves full source even when a pilot excludes charts. Existing API layout/control gaps remain; generated SQL stays supplied evidence. Beta/Deprecated labels in the DMA profile require official refresh before a customer claim. Actual API acquisition markers, verified native aliases, bulk-only placements, capability aggregates and versioned visual-capture envelopes have bounded bridge coverage. A bare tagged snapshot remains unsupported. Envelope attachment bytes/journal chains are not read; source capture completeness is not analyst parity. |
-| Metabase | `Domo/engine/extractors/metabase/dashboard.py` and adjacent extractor/API modules exist. Inspected dashboard reader consumes dashboard/dashcards plus cards with MBQL `dataset_query`, parameters and grid fields. | Dashboard/grid, field and filter candidates when existing unambiguous model references resolve. | Typed manual inventory only here. Native-SQL questions and ad hoc aggregates without explicit backing measures are not silently mapped. No Metabase implementation is claimed from file presence. |
+| Metabase | OAA `metabase-api-snapshot.v1` and `metabase-visual-capture.v1`; inspected Domo `extractors/metabase/` code remains design precedent, not an imported producer. | Dedicated specialist and independent visual inventory preserve tabs, placements, parameters/mappings, content, raw MBQL/SQL, dependencies and unresolved clauses. Capture and result evidence use explicit source/state bindings. | No complete MBQL compilation, automatic semantic model creation, YAML serialization parsing or effective-access equivalence. Native SQL, nested/multistage queries and unsupported expressions remain reviewed obligations. Original-byte verification and local checks do not establish a qualified tenant migration. |
 
 The [Looker Dashboard API](https://docs.cloud.google.com/looker/docs/reference/looker-api/latest/methods/Dashboard/dashboard) was checked live on 2026-10-21 to confirm the direct input contract. The other rows describe inspected local code and its declared limitations; they are not freshly verified vendor support matrices.
 
+Metabase official MCP/API, serialization, export and interaction references were
+reviewed 2026-10-28; see [source competencies](../skills/omni-metabase-migrator/references/source-competencies.md).
+The Domo Metabase source at the listed Domo revision has narrower and sometimes
+lossy mapping: unresolved SQL tiles can disappear, parameter mappings flatten and
+unsupported query clauses can yield partial candidates. Its conformance fixture's
+coverage labels are not adopted as OAA completeness claims. Current DMA source
+registries have no Metabase adapter; use normalized, scoped backend requirements.
+
 ## Other DMA adapters present
 
-The registered sources come from `DMA/adapters/registry.py`; every corresponding file's `CAPABILITY` declaration was inspected. These support upstream evidence or future analyst extensions, not dashboard conversion in this package.
+The registered sources come from `DMA/adapters/registry.py`; every corresponding file's `CAPABILITY` declaration was inspected. These support upstream evidence or future analyst extensions, not automatic dashboard conversion. CDT now has the dedicated OAA projection/capture route above; the remaining rows are not dedicated OAA BI adapters.
 
 | Adapter file under `DMA/adapters/` | Declared supplied formats | Boundary relevant to analysts |
 |---|---|---|
-| `periscope.py` | CDT Git Configuration YAML and SQL/Python/R sidecars, custom modules | CDT Git is not Sisense Fusion JSON. Inherited filters, snippets, encrypted settings and effective security are incomplete. |
+| `periscope.py` | CDT Git Configuration YAML and SQL/Python/R sidecars, custom modules | Reused through the separately pinned OAA bridge. CDT Git is not Sisense Fusion JSON; inherited filters, encrypted settings and effective security still need independent evidence. |
 | `webfocus.py` | UTF-8 `.fex` literal report subset; `.mas` / `.acx` declarations | No Dialogue Manager, includes, remote requests or report execution; unsupported syntax remains gaps. |
 | `bigquery.py` | GoogleSQL, REST v2 Table/Routine JSON, Dataform v1 compilationResults query JSON, SQLX preservation | No SQLX/JavaScript compilation or authenticated physical bindings. |
 | `snowflake.py` | SQL, SQL API v2 ResultSet JSON, CLI JSON/JSON_EXT catalog-row candidates | Result headers are not physical schema; grants/policy attachments and runtime remain unverified. |

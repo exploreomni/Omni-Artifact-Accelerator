@@ -181,6 +181,26 @@ Use the [parser coverage matrix](parser-coverage.md) to select the correct reade
 - [Tableau](../skills/omni-artifact-accelerator/references/tableau-visual-run.md): definition/view reconciliation, worksheet placements, actions and typed result evidence.
 - [Sigma](../skills/omni-artifact-accelerator/references/sigma-visual-run.md): compatible separately obtained migration-engine output, explicit route and selected visual capture.
 - [Domo](../skills/omni-artifact-translator/references/domo-visual-pilot.md): companion migrator evidence, complete Page/Card context and supported visual references.
+- [Periscope / Sisense CDT](../skills/omni-artifact-accelerator/references/periscope-visual-run.md): dedicated source specialist, explicit Git/API identity crosswalk, retained definitions and matched render/result evidence. Source scripts stay inert; Sisense Linux/Fusion tools are outside this route.
+- [Metabase](../skills/omni-artifact-accelerator/references/metabase-visual-run.md): dedicated source specialist, typed dashboard/question snapshots, bounded source capture, per-placement filter mappings and explicit MBQL/SQL gaps. No complete MBQL compiler or DMA Metabase parser is implied.
+
+For example: “Use the Periscope migrator inside this accelerator to inventory the
+selected CDT dashboard and preserve its filters and metric definitions in Omni.
+Reuse our existing Topic if compatible; identify real backend gaps for DMA. Keep
+unsupported behavior and manual evidence explicit, and prepare a reviewed native
+candidate before publication.” Supply the existing scope, files or URLs and
+authorization; do not paste credentials. A real source/target pilot still needs
+independent numerical, visual, interaction and effective-access evidence.
+
+For Metabase: “Use the Metabase specialist inside this accelerator to migrate the
+selected dashboards and questions. Preserve tabs, repeated cards, filters and
+metric definitions; show unsupported behavior before proposing adaptations.
+Reuse compatible Omni Topics and send genuine semantic gaps to DMA. Keep source
+query permission separate from publishing the Omni candidate.” Supply the
+instance/version, selected IDs and available files through approved channels.
+All new migration engagements follow A–F, including three options and the actual
+user choice before coding. Reuse valid answers and record the desired App refresh
+policy when an App is selected; no custom policy is a valid answer.
 
 ### Try the offline reader with a synthetic example
 

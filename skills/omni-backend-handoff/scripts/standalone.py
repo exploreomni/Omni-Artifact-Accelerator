@@ -75,7 +75,9 @@ def control_source_keys(requirements, surface="dashboard"):
         visual = item.get("source_facets", {})
         for key in ("visual", "value", "visual", "visualType"):
             visual = visual.get(key) if isinstance(visual, dict) else None
-        if item["disposition"] == "migrate" and (item["kind"] == "control" or visual == "slicer"):
+        if item["disposition"] == "migrate" and (item["kind"] == "control" or visual == "slicer" or
+                (item.get("source_identity", {}).get("source_platform") in {"periscope", "metabase"} and
+                 item["kind"] in {"filter", "parameter"})):
             result.add(item["asset_key"])
     return result
 
@@ -142,7 +144,7 @@ def validate_control_bindings(root, spec, requirements, workflow):
         cw.strings(control["evidence_paths"], "standalone.control_evidence_required", nonempty=True)
         for path in control["evidence_paths"]:
             workflow.pin(root, path)
-    if inventory.get("source", {}).get("platform") in {"powerbi", "looker", "hex"}:
+    if inventory.get("source", {}).get("platform") in {"powerbi", "looker", "hex", "periscope", "metabase"}:
         ap.need(bound == required, "standalone.retained_source_control_unbound")
     return controls
 
@@ -170,7 +172,7 @@ def validate_spec(root, spec, workflow):
     ap.need(cw.text(spec.get("review_ref")), "standalone.review_required")
     _, requirements = workflow.requirements(root, spec.get("requirements_path"))
     inventory = workflow.load(root, requirements["source_files"][1]["path"])
-    if inventory.get("source", {}).get("platform") in {"looker", "hex"}:
+    if inventory.get("source", {}).get("platform") in {"looker", "hex", "periscope", "metabase"}:
         ap.need(requirements["route"] != "unselected", "standalone.explicit_route_required")
         selected_backend(root, requirements, workflow)
     else:
@@ -459,7 +461,7 @@ def build_return(root, project, scope_relative, spec_path, migration):
     bound_assets = {key for binding in [*baseline["bindings"], *baseline.get("control_bindings", [])]
                     for key in binding["source_asset_keys"]}
     control_bound = {key for binding in baseline.get("control_bindings", []) for key in binding["source_asset_keys"]}
-    if workflow.load(root, inventory["path"]).get("source", {}).get("platform") in {"powerbi", "looker", "hex"} or baseline.get("control_bindings"):
+    if workflow.load(root, inventory["path"]).get("source", {}).get("platform") in {"powerbi", "looker", "hex", "periscope", "metabase"} or baseline.get("control_bindings"):
         gaps += [{"code": "source_control_not_bound", "asset_key": key}
                  for key in sorted(control_source_keys(requirements) - control_bound)]
     gaps += [{"code": "source_query_not_bound", "asset_key": key}

@@ -1,6 +1,6 @@
 # Omni Artifact Accelerator
 
-An analyst's sidekick for designing, building and reviewing **native Omni dashboards and native Omni Apps**. The package brings together 15 specialist skills, source migration readers and local workflow helpers so an AI agent can carry a business question through design, implementation and independent QA.
+An analyst's sidekick for designing, building and reviewing **native Omni dashboards and native Omni Apps**. The package brings together 17 specialist skills, source migration readers and local workflow helpers so an AI agent can carry a business question through design, implementation and independent QA.
 
 Start with an existing Omni model, bring an exported BI experience, or continue from the companion [Data Model Accelerator](https://github.com/exploreomni/Data-Model-Accelerator). Use only the specialists the task needs.
 
@@ -200,7 +200,7 @@ Use a new output directory; initialization does not overwrite an existing engage
 
 The initial files and role plan are a starting point, not a built dashboard or App. Add `--branding requested --website https://example.com` for a branded engagement, `--branding none` when branding is out of scope, or leave it unknown. The editable design-intent record retains missing required choices; a website alone does not choose a logo. See [saving intent and reviewing named requirements](skills/omni-artifact-accelerator/references/design-intent.md) for current design/brand/asset selection and per-surface completion. Continue with [the step-by-step how-to](docs/HOW_TO.md).
 
-New products include the A–C analytical handoff, artifact discovery, three viable options, actual user selection, a resolved design and all four consultant reviews on each implementation iteration. Focused changes reuse existing decisions. The optional [design evidence checker](skills/omni-qa-analyst/references/design-evidence.md) tracks which observations still match the current candidate; it does not enforce A–F, certify visual quality or authenticate customer acceptance.
+All new engagements, including migrations, include the A–C analytical handoff, artifact discovery, three viable options, actual user selection, a resolved design and all four consultant reviews on each implementation iteration. Focused continuation reuses existing valid decisions under its recorded policy. The optional [design evidence checker](skills/omni-qa-analyst/references/design-evidence.md) tracks which observations still match the current candidate; it does not enforce A–F, certify visual quality or authenticate customer acceptance.
 
 For an App, describe the intended experience as well as the metrics. For example: “Create an immersive branded entry that leads into a focused product investigation workspace, with persistent scope and a separate comparison view.” The [experience-mode guide](skills/omni-app-designer/references/app-patterns.md#choose-the-experience-mode) helps distinguish this from a direct workspace or a guided data story. If rendering is unavailable, the agent should retain that visual-review gap explicitly.
 
@@ -251,11 +251,13 @@ For migrations, choose the documented source path before exporting or running an
 | Tableau | Supplied definitions, bounded REST or official-MCP evidence and DMA enrichment | [Tableau workflow](skills/omni-artifact-accelerator/references/tableau-visual-run.md) |
 | Sigma | Outputs from a separately obtained, compatible migration engine and its visual capture | [Sigma workflow](skills/omni-artifact-accelerator/references/sigma-visual-run.md) |
 | Domo | Selected companion-migrator evidence plus original configuration and visual references | [Domo pilot](skills/omni-artifact-translator/references/domo-visual-pilot.md) |
+| Periscope / Sisense CDT | Dedicated source specialist, pinned DMA evidence and bounded capture/result handoff; Linux/Fusion is a separate product | [CDT migration workflow](skills/omni-artifact-accelerator/references/periscope-visual-run.md) |
+| Metabase | Dedicated source specialist, typed API snapshots and bounded capture; preserved dashboard/tab/question identity, controls and query gaps | [Metabase migration workflow](skills/omni-artifact-accelerator/references/metabase-visual-run.md) |
 | Other sources | Explicitly reviewed manual evidence inventory | [Inventory contract](skills/omni-artifact-translator/references/inventory-contract.md#normalized-inventory) |
 
 Read [parser coverage](docs/parser-coverage.md) for exact formats and limitations. A supported reader is not a universal chart or formula converter. Missing source objects, custom visualizations, interactions and security dependencies remain visible work.
 
-## The 15 roles
+## The 17 roles
 
 | Skill | Owns |
 | --- | --- |
@@ -273,6 +275,8 @@ Read [parser coverage](docs/parser-coverage.md) for exact formats and limitation
 | `omni-branding` | Customer identity, approved assets, fonts and theme mappings |
 | `omni-design-systems` | Reusable design rules, tokens and accessibility expectations |
 | `omni-artifact-translator` | Original source inventory, behavior mapping and migration gaps |
+| `omni-periscope-migrator` | CDT source identity, capture/state, custom-logic obligations and coordinated migration evidence |
+| `omni-metabase-migrator` | Metabase source identity, query/placement/control evidence and coordinated migration obligations |
 | `omni-backend-handoff` | Versioned DMA exchanges, current bindings and change-impact review |
 
 Each specialist can also be invoked directly. Design guidance draws from official Apple, Google, Microsoft, Samsung and other primary sources, with platform-specific advice distinguished from package recommendations. See [design foundations](skills/omni-design-systems/references/vendor-guidance.md).

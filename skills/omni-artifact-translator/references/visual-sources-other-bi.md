@@ -1,6 +1,6 @@
-# Visual migration evidence: Tableau, Power BI, Looker, and Hex
+# Visual migration evidence and source coverage
 
-Checked 2026-10-21 (America/Chicago). This is official-source research and a proposed acquisition design, not a tested tenant integration. Product documentation changes: pin the source product/API/tool-contract version when implementing. No customer system was accessed or changed for this review.
+Vendor research below was checked 2026-10-21 (America/Chicago); those product and release statements are historical research, not fresh tenant qualification. Periscope/CDT Git/render and Metabase documentation were rechecked 2026-10-28. Package coverage below reflects the implemented source routes, separately from vendor capabilities. Pin the source product/API/tool-contract version when implementing. No customer system was accessed or changed for this review.
 
 ## Recommended architecture
 
@@ -18,14 +18,14 @@ Recommended minimum capture bundle for each selected dashboard/page/app:
 
 ## Capability matrix
 
-| Source | Official agent entry point | Visual evidence route | Definition route | Acquisition work still proposed |
+| Source | Official agent entry point | Visual evidence route | Definition route | OAA implementation and remaining scope |
 |---|---|---|---|---|
-| Tableau | Official hosted Cloud MCP; self-hosted alternative for Server | MCP `get-view-image`; REST view image/PDF and workbook PDF; embedding export options | Workbook definition plus Metadata API lineage and supplied query/data exports | Version-aware image/filter capture and original-definition acquisition |
-| Power BI | Fabric IQ MCP, generally available and read-only; separate model Authoring MCP | Async REST ExportToFile: PNG/PDF/PPTX | PBIR/PBIP report definitions plus semantic-model definitions; MCP metadata is supplemental | Export job lifecycle, capacity checks, PBIR chart/action coverage expansion |
-| Looker | Looker-managed MCP, Preview; official MCP Toolbox alternative | API render task → poll → PDF/PNG/JPG | Dashboard API elements, queries, filters and layouts; LookML/model/access dependencies | Complete dashboard/dependency acquisition and stateful render capture |
-| Hex | Official MCP, beta; official CLI | MCP chart-cell PNG; published-App PDF through UI | YAML project export, cell contents and sharing metadata | Pin published versus draft state; qualify CLI capture and complete App/configuration coverage |
+| Tableau | Official hosted Cloud MCP; self-hosted alternative for Server | MCP `get-view-image`; REST view image/PDF and workbook PDF; embedding export options | Workbook definition plus Metadata API lineage and supplied query/data exports | Bounded capture wrapper, supplied-capture projection and visual workflow; unsupported behavior and tenant state still need qualification |
+| Power BI | Fabric IQ MCP, generally available and read-only; separate model Authoring MCP | Async REST ExportToFile: PNG/PDF/PPTX | PBIR/PBIP report definitions plus semantic-model definitions; MCP metadata is supplemental | Bounded definition/export capture and PBIR projection; capacity, permissions and unsupported visuals remain explicit obligations |
+| Looker | Looker-managed MCP, Preview; official MCP Toolbox alternative | API render task → poll → PDF/PNG/JPG | Dashboard API elements, queries, filters and layouts; LookML/model/access dependencies | Bounded dashboard/render capture, supplied-source readers and visual workflow; dependency semantics and effective state still need review |
+| Hex | Official MCP, beta; official CLI | MCP chart-cell PNG; published-App PDF through UI | YAML project export, cell contents and sharing metadata | Bounded capture, supplied-source projection and dashboard/App workflow; reactive execution and complete published-state parity are not established |
 
-Detailed sources and restrictions follow; none of these rows means the existing OAA package connects to a tenant.
+Detailed sources and restrictions follow. Capture wrappers require separately configured and authorized source operations; their presence does not establish a connected tenant or successful migration.
 
 ## Tableau
 
@@ -83,31 +83,34 @@ Published Apps support UI PDF snapshots for authenticated users on Team/Enterpri
 
 Recommended Omni review targets: App grid/tab order, reactive execution, Python/R output, input defaults/dependencies, SQL cells, components, cache/run state, writeback and sharing/access. Retain readable analytical compositions where native Omni supports them; classify executable logic and unsupported interaction separately before choosing an App or dashboard.
 
-## Existing package implementation versus proposed work
+## Implemented package routes and boundaries
 
-The implemented [offline inventory contract](inventory-contract.md) accepts supplied evidence; it makes no network calls or native conversion claims:
+The [offline inventory contract](inventory-contract.md) accepts supplied evidence without network calls. Separate capture wrappers serve the documented Tableau, Power BI, Looker, Hex, CDT and Metabase operations; source capture is not performed by the parser. Companion producers provide Domo and Sigma evidence.
 
-| Implemented reader | What it preserves | Explicit boundary |
+| Implemented source route | What it preserves | Explicit boundary |
 |---|---|---|
-| `looker-api` | Supplied Dashboard object, embedded query/Look references, filters/layout components | No authenticated acquisition; merged results/SQL dependencies and completeness unresolved |
-| `dma-inventory`: Tableau | Pinned DMA inventory of workbooks/dashboards/worksheets/parameters, zones/shelves/filter/table-calculation evidence | Source actions/stories, rendering and live permissions still need review |
-| `dma-inventory`: Power BI | Pinned enhanced PBIR inventory of projects/pages/visuals/filters | Inspected extractor profiles `tableEx`; not general chart/PBIX/bookmark/field-parameter support |
-| `dma-inventory`: Hex | Pinned projects/cells, App layout, cell IDs/configuration/chart specifications | No reactive execution, component/input or access verification |
+| Domo and Sigma companion bridges | Typed migrator evidence, producer revision, source IDs, coverage and obligations | Acquisition and producer runtime gates remain with the companion; import is not target acceptance |
+| Tableau: `tableau-capture`; legacy `dma-inventory` | Retained definitions, visual attachments, worksheets/placements and supplied semantic evidence | Capture and attachment checks do not establish action parity or effective access |
+| Power BI: `powerbi-capture`, `powerbi-adapter`; legacy `dma-inventory` | PBIR pages/visuals, captures, state and source-matched semantic evidence | Legacy DMA profile limits remain; no general PBIX conversion or universal visual support |
+| Looker: `looker-api`, `looker-capture`, `looker-canonical`, `looker-adapter` | Dashboard elements, placements, layouts, queries and declared dependencies | Merged-result semantics, model/access behavior and target execution still need independent review |
+| Hex: `hex-capture`, `hex-adapter`; legacy `dma-inventory` | Projects/cells, retained App layouts, configuration, inputs and code obligations | No source-code execution or automatic reactive/App parity |
+| Periscope / Sisense CDT: `periscope-adapter`, `periscope-capture` | Supplied DMA report and distinct captured evidence, original identities/configuration, crosswalk, code/dependencies and gaps | [Source contract](periscope-source-contract.md) preserves incomplete/unknown state; source scripts stay inert and native parity needs independent proof |
+| Metabase: `metabase-api`, `metabase-capture` | Typed snapshots and separate captures, full source definitions, tabs/placements, parameter mappings, raw query and unsupported behavior | [Source contract](metabase-source-contract.md) retains incomplete states; no universal MBQL compiler, serialization parser or DMA Metabase producer |
 | `normalized-inventory` | Supplier-declared manual evidence with visual/query/layout/filter/interaction/security/content facets | Not a native parser; missing facets become gaps, references are not fetched |
 
-**Proposed package work:** official acquisition adapters with read/query/export allowlists; capture manifests and export-job polling; parser/schema expansion from preserved definitions; visual comparison and analyst behavior tests. Keep acquisition separate from DMA's semantic/model parsing and from OAA's immutable evidence projection. An imported source inventory, MCP connection or local candidate is not source/target tenant acceptance. Root orchestration must still retain numerical, native interaction, effective-access and business gates.
+Remaining work is source-specific: qualify the customer's version, authorized operations, retained evidence and unsupported behavior; expand unsupported formats only through reviewed contracts. CDT's [specialist workflow](../../omni-artifact-accelerator/references/periscope-visual-run.md) retains explicit supplied-result/manual gaps; a general authenticated CSV-query API is not established. Keep acquisition separate from DMA's semantic/model parsing and OAA's evidence projection. An imported inventory, MCP connection or local candidate is not source/target tenant acceptance. Retain separate numerical, native interaction, effective-access and business gates.
 
-## Later-wave sources
+## Additional-source coverage
 
-These are bounded discovery notes, not qualified adapters or a complete API survey. No third-party MCP implementation is recommended.
+Vendor entry points below remain bounded research, not a complete API survey. Periscope/CDT and Metabase have dedicated OAA readers in this group; the others use explicit manual evidence until a typed bridge is implemented. No third-party MCP implementation is recommended.
 
-| Source | Official evidence available | Proposed next qualification |
+| Source | Official evidence available | OAA coverage and remaining qualification |
 |---|---|---|
-| Periscope / Sisense for Cloud Data Teams | [Render API](https://dtdocs.sisense.com/article/render-api): `POST https://api.periscopedata.com/api/v1/screenshot_requests`, `HTTP-X-PARTNER-AUTH`, dashboard/filter state → PDF URL. Add-on; 60 requests/minute, 500/day, default 30 widgets; URL lasts three days and may initially contain “Screenshot not ready.” [Git integration](https://dtdocs.sisense.com/article/git-integration) covers dashboard/chart/view/snippet definitions. | Treat Periscope/CDT as the same product lineage where applicable, not duplicate inventory. Read an existing frozen Git snapshot; connecting/syncing a repository is a write-capable setup. Verify customer version, snapshot format and render completeness. Official MCP was not established in this bounded review. |
-| WebFOCUS | Versioned [9.3.3 repository REST documentation](https://docs.tibco.com/pub/wf-wf/9.3.3/doc/html/embedded-bi-user/02REST_WS16.htm) covers report parameters; [output documentation](https://docs.tibco.com/webfocus/8206/doc/html/topic/com.ibi.help.intro/source/Report_output_formats.htm) describes HTML/AHTML/PDF/PPTX/XLSX. | Qualify the exact installed version and FEX/style/procedure/parameter dependencies. Older output docs are not a current-version promise. Official MCP was not established here. |
-| Metabase | [Official MCP](https://www.metabase.com/docs/latest/ai/mcp): `/api/metabase-mcp`, OAuth, user permissions and admin enablement. [Exports](https://www.metabase.com/docs/latest/questions/exporting-results): chart PNG, data CSV/XLSX/JSON, dashboard/current-tab PDF screenshots. [Serialization](https://www.metabase.com/docs/latest/installation-and-operation/serialization) retains content but excludes users/groups/permissions. | Pair content definitions with renders and separately captured access policy; qualify plan/version/tool scopes. Inline MCP charts are not automatically archived visual evidence. |
-| ThoughtSpot | [Spotter MCP](https://developers.thoughtspot.com/docs/mcp-integration) supplies analytics/content discovery with versioned endpoints. Distinct [SpotterCode](https://developers.thoughtspot.com/docs/SpotterCode) offers docs and authenticated API execution. [Embed download controls](https://developers.thoughtspot.com/docs/liveboard-data-downloads) document PDF/data exports. | Pin tool/API version and licensed capability, retain Liveboard/Answer IDs and TML/query dependencies, and independently qualify render API scope. Both agent surfaces may expose writes; restrict migration discovery accordingly. |
-| Qlik | [Official API catalog](https://portal.qlik.dev/apis/) documents REST, Associative Engine JSON-RPC, CLI and tenant-available MCP; [no-code catalog](https://qlik.dev/toolkits/no-code/) points to MCP and Reporting connectors. | Qualify tenant/version tools and export endpoints before implementation. Preserve app/sheet/object definitions, selections, set analysis, alternate states, extensions and Section Access separately from static images. |
+| Periscope / Sisense for Cloud Data Teams | [Git configuration](https://dtdocs.sisense.com/article/git-configuration) preserves definitions and code sidecars; the separate [Render API](https://dtdocs.sisense.com/article/render-api) supplies dashboard PDF evidence. | Dedicated specialist, separate pinned DMA import and bounded evidence workflow. Real tenant operations and effective access still need qualification. Sisense Linux/Fusion is outside this CDT route. |
+| WebFOCUS | Versioned [9.3.3 repository REST documentation](https://docs.tibco.com/pub/wf-wf/9.3.3/doc/html/embedded-bi-user/02REST_WS16.htm) covers report parameters; [output documentation](https://docs.tibco.com/webfocus/8206/doc/html/topic/com.ibi.help.intro/source/Report_output_formats.htm) describes HTML/AHTML/PDF/PPTX/XLSX. | Manual OAA inventory only. DMA has an offline FEX/MAS/ACX reader, but no typed OAA bridge yet. Qualify installed version and procedure/style/parameter dependencies; older output docs are not a current-version promise. |
+| Metabase | [Official MCP](https://www.metabase.com/docs/latest/ai/mcp) and [tool contracts](https://www.metabase.com/docs/latest/ai/mcp-tools) require explicit definition/layout inclusions and result pagination. [Serialization](https://www.metabase.com/docs/latest/installation-and-operation/serialization) is Pro/Enterprise and excludes users/groups/permissions. | Dedicated [specialist workflow](../../omni-artifact-accelerator/references/metabase-visual-run.md), typed snapshot/capture readers and bounded evidence operations. Qualify tenant/client and exact source scope; no automatic MBQL conversion, permission equivalence or DMA Metabase parser. |
+| ThoughtSpot | [Spotter MCP](https://developers.thoughtspot.com/docs/mcp-integration) supplies analytics/content discovery with versioned endpoints. Distinct [SpotterCode](https://developers.thoughtspot.com/docs/SpotterCode) offers docs and authenticated API execution. [Embed download controls](https://developers.thoughtspot.com/docs/liveboard-data-downloads) document PDF/data exports. | Research/manual evidence only; no dedicated OAA reader or capture wrapper. Pin version and licensed capability, retain Liveboard/Answer IDs and TML/query dependencies, and qualify read/export operations separately from writes. |
+| Qlik | [Official API catalog](https://portal.qlik.dev/apis/) documents REST, Associative Engine JSON-RPC, CLI and tenant-available MCP; [no-code catalog](https://qlik.dev/toolkits/no-code/) points to MCP and Reporting connectors. | Research/manual evidence only; no dedicated OAA reader or capture wrapper. Qualify tenant/version/export operations and preserve app/sheet/object definitions, selections, set analysis, alternate states, extensions and Section Access. |
 
 ## Pilot acceptance criteria (recommended)
 

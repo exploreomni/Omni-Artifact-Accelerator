@@ -15,7 +15,16 @@ from pathlib import Path
 import sys
 from urllib.parse import urlsplit
 
-import analyst_project as ap
+try:
+    import analyst_project as ap
+except ModuleNotFoundError as error:
+    if error.name != "analyst_project":
+        raise
+    # Isolated CLI mode excludes the script directory from module discovery.
+    _project_spec = importlib.util.spec_from_file_location("analyst_project", Path(__file__).with_name("analyst_project.py"))
+    ap = importlib.util.module_from_spec(_project_spec)
+    sys.modules[_project_spec.name] = ap
+    _project_spec.loader.exec_module(ap)
 
 KINDS = {"visual", "worksheet", "query", "cell", "placement"}
 LANES = ("numeric", "interaction", "access", "visual", "accessibility", "performance")
@@ -80,6 +89,22 @@ def hex_module():
     return module
 
 
+def periscope_module():
+    path = Path(__file__).resolve().parents[2] / "omni-artifact-translator/scripts/periscope_visual.py"
+    spec = importlib.util.spec_from_file_location("visual_periscope_validation", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def metabase_module():
+    path = Path(__file__).resolve().parents[2] / "omni-artifact-translator/scripts/metabase_visual.py"
+    spec = importlib.util.spec_from_file_location("visual_metabase_validation", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
 def item_surfaces(requirements, item):
     return item.get("target_surfaces", requirements.get("surface", ["dashboard", "app"]))
 
@@ -109,7 +134,11 @@ def source_inventory(root, original, inventory):
                "supplied_looker_canonical_dashboard": "looker-canonical",
                "supplied_looker_source_adapter_result": "looker-adapter",
                "supplied_hex_visual_capture": "hex-capture",
-               "supplied_hex_source_adapter_result": "hex-adapter"}
+               "supplied_hex_source_adapter_result": "hex-adapter",
+               "supplied_periscope_source_adapter_result": "periscope-adapter",
+               "supplied_periscope_visual_capture": "periscope-capture",
+               "supplied_metabase_api_snapshot": "metabase-api",
+               "supplied_metabase_visual_capture": "metabase-capture"}
     source_format = formats.get(data["source"].get("format"))
     need(source_format is not None, "source.unrecognized_projection")
     module_path = Path(__file__).resolve().parents[2] / "omni-artifact-translator/scripts/translate_artifact.py"
@@ -129,6 +158,10 @@ def source_inventory(root, original, inventory):
         looker_module().verify_capture_files(original_value, ap.relative_file(root, original).parent)
     elif source_format == "hex-capture":
         hex_module().verify_capture_files(original_value, ap.relative_file(root, original).parent)
+    elif source_format == "periscope-capture":
+        periscope_module().verify_capture_files(original_value, ap.relative_file(root, original).parent)
+    elif source_format == "metabase-capture":
+        metabase_module().verify_capture_files(original_value, ap.relative_file(root, original).parent)
     need(type(data.get("assets")) is list and bool(data["assets"]), "source.assets_required")
     need(len({a["asset_key"] for a in data["assets"]}) == len(data["assets"]), "source.duplicate_asset")
     return data
@@ -137,6 +170,12 @@ def source_inventory(root, original, inventory):
 def capture_value(root, record):
     path = check_pin(root, record)
     value, raw = ap.read_json(path)
+    if value.get("schema_version") == "metabase-visual-capture.v1":
+        metabase_module().verify_capture_files(value, path.parent)
+        return value
+    if value.get("schema_version") == "periscope-visual-capture.v1":
+        periscope_module().verify_capture_files(value, path.parent)
+        return value
     if value.get("schema_version") == "tableau-visual-capture.v1":
         tableau_module().verify_capture_files(value, path.parent)
         return value
@@ -330,7 +369,7 @@ def cases(asset):
         numeric = asset["source_identity"].get("query_visual") is True
     if asset["source_identity"].get("source_platform") == "looker" and asset["source_identity"].get("expected_kind") in KINDS:
         numeric = True
-    if asset["source_identity"].get("source_platform") == "hex":
+    if asset["source_identity"].get("source_platform") in {"hex", "periscope", "metabase"}:
         numeric = asset["source_identity"].get("query_visual") is True
     if numeric:
         scenarios.extend([("numeric", "default"), ("numeric", "changed_filter"),
@@ -344,6 +383,27 @@ def cases(asset):
     if asset["source_identity"].get("source_platform") == "looker":
         scenarios.extend([("interaction", "filter_listener_exclusions"), ("interaction", "tab_navigation"),
                           ("visual", "content_and_custom_behavior")])
+    if asset["source_identity"].get("source_platform") == "metabase":
+        if asset["kind"] in {"control", "parameter", "placement", "page", "dashboard"}:
+            scenarios.extend([("interaction", "tab_parameter_mapping"), ("interaction", "linked_filters_apply_reset")])
+        if numeric:
+            scenarios.extend([("interaction", "click_destination_and_series"), ("interaction", "export_scope"),
+                              ("interaction", "refresh_and_stale_recovery")])
+        if asset["kind"] == "definition":
+            scenarios = [("interaction", "dependency_disposition"), ("access", "source_security_review")]
+    if asset["source_identity"].get("source_platform") == "periscope":
+        if asset["kind"] in {"control", "filter", "parameter"}:
+            scenarios.extend([("interaction", "effective_defaults_and_inheritance"),
+                              ("interaction", "parent_child_and_query_scope"),
+                              ("interaction", "empty_invalid_reset")])
+        if numeric:
+            scenarios.extend([("interaction", "drill_target_filter_mapping"),
+                              ("interaction", "export_result_scope"),
+                              ("interaction", "refresh_and_stale_recovery"),
+                              ("numeric", "transformed_or_preview_population")])
+        if asset["kind"] in {"definition", "dependency"}:
+            # Source files and code dependencies remain obligations, not tiles.
+            scenarios = [("interaction", "dependency_disposition"), ("access", "source_security_review")]
     if asset["source_identity"].get("source_platform") == "hex":
         kind = asset["kind"]
         if kind == "control":
@@ -460,7 +520,9 @@ def requirements(root, path):
                 capture = capture_value(root, case["source_capture"])
                 expected_provider = {"powerbi": "powerbi-visual-capture.v1", "tableau": "tableau-visual-capture.v1",
                                      "sigma": "sigma-visual-capture.v1", "looker": "looker-visual-capture.v1",
-                                     "hex": "hex-visual-capture.v1"}.get(source["source"].get("platform"))
+                                     "hex": "hex-visual-capture.v1",
+                                     "periscope": "periscope-visual-capture.v1",
+                                     "metabase": "metabase-visual-capture.v1"}.get(source["source"].get("platform"))
                 need(expected_provider is not None and capture["schema_version"] == expected_provider,
                      "requirements.capture_provider_mismatch")
                 if capture["schema_version"] == "tableau-visual-capture.v1":
@@ -469,6 +531,10 @@ def requirements(root, path):
                     powerbi_case_binding(asset, case, capture)
                 elif capture["schema_version"] == "looker-visual-capture.v1":
                     looker_case_binding(asset, case, capture)
+                elif capture["schema_version"] == "metabase-visual-capture.v1":
+                    metabase_module().case_binding(asset, case, capture)
+                elif capture["schema_version"] == "periscope-visual-capture.v1":
+                    periscope_module().case_binding(asset, case, capture)
                 elif capture["schema_version"] == "hex-visual-capture.v1":
                     frozen_identity = source["source"].get("source_identity")
                     if frozen_identity is not None:
@@ -527,6 +593,22 @@ def rows(root, record):
         raw = check_pin(root, record.get("raw_file")).read_bytes()
         rebuilt = hex_module().normalize_results(raw, value.get("parser_profile"), value.get("binding"))
         need(value == rebuilt, "results.hex_normalization_changed")
+        value = value["rows"]
+    elif record.get("format") == "metabase-normalized":
+        value, _ = ap.read_json(file)
+        need(type(value) is dict and value.get("kind") == "metabase_normalized_results",
+             "results.metabase_normalization_required")
+        raw = check_pin(root, record.get("raw_file")).read_bytes()
+        rebuilt = metabase_module().normalize_results(raw, value.get("parser_profile"), value.get("binding"))
+        need(value == rebuilt, "results.metabase_normalization_changed")
+        value = value["rows"]
+    elif record.get("format") == "periscope-normalized":
+        value, _ = ap.read_json(file)
+        need(type(value) is dict and value.get("kind") == "periscope_normalized_results",
+             "results.periscope_normalization_required")
+        raw = check_pin(root, record.get("raw_file")).read_bytes()
+        rebuilt = periscope_module().normalize_results(raw, value.get("parser_profile"), value.get("binding"))
+        need(value == rebuilt, "results.periscope_normalization_changed")
         value = value["rows"]
     else:
         raise ValueError("results.unknown_format")
@@ -776,7 +858,7 @@ def compare(root, spec_path, destination):
         gaps.append("source.hex_frozen_workspace_identity_unknown")
     if source_platform == "hex" and not spec.get("persona_equivalence_reference"):
         gaps.append("source.hex_persona_equivalence_required")
-    if source_platform in ("looker", "hex") and selected_case.get("source_capture") is None:
+    if source_platform in ("looker", "hex", "periscope", "metabase") and selected_case.get("source_capture") is None:
         gaps.append("source." + source_platform + "_case_capture_required")
     if selected_case.get("source_capture") is not None:
         selected_capture = capture_value(root, selected_case["source_capture"])
@@ -796,6 +878,16 @@ def compare(root, spec_path, destination):
     if original.get("schema_version") == "hex-visual-capture.v1":
         selected = next(i for i in req["items"] if any(c["case_id"] == spec["case_id"] for c in i["required_cases"]))
         gaps.extend(hex_comparison_gaps(root, source, target, original, selected, selected_case, spec.get("columns")))
+    if source_platform == "periscope" and original.get("schema_version") == "periscope-visual-capture.v1":
+        selected = next(i for i in req["items"] if any(c["case_id"] == spec["case_id"] for c in i["required_cases"]))
+        normalized = load(root, source["file"]["path"]) if source.get("format") == "periscope-normalized" else None
+        gaps.extend(periscope_module().comparison_gaps(original, selected, selected_case, source, target,
+                                                      normalized=normalized, columns=spec.get("columns")))
+    if source_platform == "metabase" and original.get("schema_version") == "metabase-visual-capture.v1":
+        selected = next(i for i in req["items"] if any(c["case_id"] == spec["case_id"] for c in i["required_cases"]))
+        normalized = load(root, source["file"]["path"]) if source.get("format") == "metabase-normalized" else None
+        gaps.extend(metabase_module().comparison_gaps(original, selected, selected_case, source, target,
+                                                      normalized=normalized, columns=spec.get("columns")))
     if original.get("schema_version") == "sigma-visual-capture.v1":
         capture = original["request"]
         selected = next(i for i in req["items"] if any(c["case_id"] == spec["case_id"] for c in i["required_cases"]))

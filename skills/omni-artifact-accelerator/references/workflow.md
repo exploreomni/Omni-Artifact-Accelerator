@@ -2,11 +2,13 @@
 
 The shared [package-use policy](dependency-policy.md) applies to every route and worker. Routing a responsibility grants no package, runtime, installation or publication authority.
 
-Net-new products and explicit product reconception follow the authoritative
+All new engagements, including migration and enhancement modes, follow the authoritative
 [data-first A–F sequence](data-first-product-workflow.md). Recover existing choices,
 but finish scoped user-access verification, analysis and a reusable narrative
 before artifact discovery. Three distinct viable options and the user's selection
-precede detailed design. General direct-design advice does not bypass this route.
+precede detailed design and coding. Reuse valid evidence and choices in those
+checkpoints; historical engagements retain their recorded policy. General
+direct-design advice does not bypass a current gate.
 
 ## Select the route
 
@@ -38,9 +40,28 @@ Apps suit guided tools and bespoke interactions. Dashboards suit monitoring, com
 | Branding / omni-branding | Brand interview, tokens, fonts, palettes, theme scope | brand contract and mappings | Organization-wide configuration changes |
 | Design systems / omni-design-systems | Reusable frontend patterns and vendor guidance | component/state rules and a11y guidance | Importing native OS rules as web requirements |
 | Translator / omni-artifact-translator | Source parsing, identity, behavior recovery | source inventory and facet mappings | Equating extraction with parity |
+| Periscope migrator / omni-periscope-migrator | CDT product/source qualification, capture/state and source-specific behavior coordination | pinned CDT evidence, identity crosswalk, mapping obligations and handoff | Selecting a different product, executing source code, native writes or independent acceptance |
+| Metabase migrator / omni-metabase-migrator | Metabase source qualification, query/placement/parameter preservation and migration coordination | pinned source scope, captured state, mapping obligations and handoff | Dropping unsupported semantics, source authoring, native writes or independent acceptance |
 | Backend handoff / omni-backend-handoff | Frontend/backend request, response and impact reconciliation | pinned request, candidate exchange, consumer impact report | Model approval, production authorization, or backend implementation |
 
-Workers can run concurrently when their inputs are stable. On the new-product route, parallel work must preserve A–F dependencies: analyst/BI work follows access evidence, narrative follows analysis, and artifact/brand discovery follows narrative. Supplied preferences can be retained at intake. App/dashboard designs share current metric, narrative and token contracts. BI bindings precede data wiring. Motion consumes named interaction states. QA can define cases early from original sources, then test outputs independently. The coordinator resolves conflicts with explicit decisions rather than a majority vote.
+Workers can run concurrently when their inputs are stable. On every new engagement, parallel work must preserve A–F dependencies: analyst/BI work follows access evidence, narrative follows analysis, and artifact/brand discovery follows narrative. Supplied preferences can be retained at intake. App/dashboard designs share current metric, narrative and token contracts. BI bindings precede data wiring. Motion consumes named interaction states. QA can define cases early from original sources, then test outputs independently. The coordinator resolves conflicts with explicit decisions rather than a majority vote.
+
+For CDT migrations, the [Periscope specialist](../../omni-periscope-migrator/SKILL.md)
+owns only the source-specific slice. Recover the existing source run and use shared
+translator, analyst, backend, design/build and QA contracts; do not create a parallel
+lifecycle. Reuse valid accepted design evidence within the applicable checkpoints;
+all new engagements follow A–F, and historical policy/journal records remain in
+force. Source capture authority, user design selection and native publication are
+separate decisions. Read the [run guide](periscope-visual-run.md) for supported routes.
+
+For Metabase, the [source specialist](../../omni-metabase-migrator/SKILL.md) owns the
+bounded source slice within this same lifecycle. Use the [run guide](metabase-visual-run.md)
+and preserve every selected tab/placement/control independently of query conversion.
+All new engagements, including migration mode, follow the current A–F checkpoints:
+three viable options and actual user choice precede coding. Reuse valid historical
+decisions under their recorded policy. The specialist cannot replace design
+selection, source-query authorization, native grants or independent QA. Semantic
+gaps use the existing normalized DMA request route, not a fabricated source adapter.
 
 For substantial work, use the [product owner](product-intent.md) to recover answers
 and federate requirements. For new products, the artifact interview follows A–C.

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Omni Metabase Migrator"
+  short_description: "Guide Metabase capture, behavior and migration evidence"
+  default_prompt: "Use $omni-metabase-migrator to migrate the selected Metabase dashboards through the Omni Artifact Accelerator, preserving complete source evidence, behavior and explicit acceptance gaps."

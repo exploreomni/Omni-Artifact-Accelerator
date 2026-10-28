@@ -47,6 +47,42 @@ For chosen existing-Topic reuse, require exact model/connection/topic/field iden
 
 API model/dataset metadata is not a complete workbook UX. Carry source-bound layout/control supplements and per-object blockers; do not invent absent layout. Preserve `offline_preflight_passed` and `blocked` as upstream local statuses. They do not establish native behavior, effective access, business acceptance, or target-write authority. The originating runtime owns its terminal review. A chat decision, imported JSON, or peer receipt here cannot impersonate that review; use its documented operator workflow when running it.
 
+## Periscope / Sisense CDT
+
+Use the [CDT behavior handoff](../../omni-periscope-migrator/references/behavior-handoff.md)
+with the same ledger and independent cases. Reconcile native Git tokens with
+numeric dashboard/API IDs using retained evidence; neither captions nor generated
+adapter IDs establish that mapping. Compare the independent widget/control listing
+with definitions and rendered output, preserving omitted and non-query content.
+
+Check inherited/local filter scope, parameters, defaults/reset and drill behavior.
+Keep full-result versus displayed-result exports, requested versus observed state,
+cache timing, persona and data watermark explicit. Unresolved identity, population,
+filter or custom-code evidence prevents a numerical parity claim. Python/R, modules
+and serialized assets remain inert. Verify target controls, current baseline and
+separate dashboard/App returns; a file-coverage pass cannot close these cases.
+
+## Metabase
+
+Use the [Metabase behavior handoff](../../omni-metabase-migrator/references/behavior-handoff.md)
+within the same independent ledger. Reconcile the expected dashboard/tab/dashcard
+set against original definitions, including repeated cards, series, content and
+unsupported objects. Card-query success cannot close missing placement coverage.
+
+Check the entire query AST/SQL and per-placement parameter targets, linked-filter
+dependencies, required/default/reset values, click/drill destinations and return
+state. Partial supported clauses do not establish parity for a query with an
+unsupported measure, filter, stage or join. Compare matched source definition,
+observed state, original result bytes, principal, population, pagination, time zone
+and cache evidence. Unknown state or incomplete rows remain inconclusive.
+
+Recheck current native bindings, every applicable control and separate App/dashboard
+receipts. Preserve the actual App refresh choice across design, implementation and
+QA. Serialized content and administrator visibility cannot prove effective viewer
+access. Numerical/source checks do not replace target interaction, rendered design,
+negative access cases or business acceptance. Follow the [source contract](../../omni-artifact-translator/references/metabase-source-contract.md)
+for supported intake rather than assuming every export or MCP tool is qualified.
+
 ## Two-way model cowork
 
 Use [the backend handoff skill](../../omni-backend-handoff/SKILL.md) for a bounded request to DMA or the owning model workflow. Send the analytical decision, exact affected source/query/field IDs and pins, observed behavior, competing interpretations, allowed route/scope, proposed grain/filter/security/freshness requirements, and independent expected cases. Do not send an entire customer workspace or invent owners, definitions, approvals, or target bindings.
