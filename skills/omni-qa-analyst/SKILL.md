@@ -47,6 +47,12 @@ For design work, read the [saved design intent](../omni-artifact-accelerator/ref
 
 Create cases before implementation when possible. Cover correct and denied personas, empty/NULL/sparse data, totals and dimensional slices, filter scope/reset, drill/export behavior, visual states, keyboard/reduced motion and representative volume. In migration, account for every independently scoped asset and behavior; unknown features remain unverified in the denominator.
 
+For query-backed Apps, compare the actual [cache/refresh behavior](../omni-product-owner/references/data-refresh-policy.md)
+with the recorded choice. With no custom policy, verify no unsolicited cache bypass,
+polling or age-based clearing; with an explicit policy, verify its idle/hidden/return,
+manual refresh and failure recovery paths. Keep retrieval time separate from source
+freshness and native cache observations separate from local simulations.
+
 For Domo/Sigma evidence and DMA returns, use [migration behavior and peer handoff coverage](references/migration-behavior.md). Reconcile the per-Page/query/placement/facet denominator, matched comparison contexts, allowed/denied and derived-field-leakage cases, operational consumers, and accepted differences. A broad Page visual test or Topic access test cannot close omitted query-specific cases. Treat upstream Domo store attestations and Sigma local review/preflight as supplied evidence with their original authority limits; this package cannot authenticate or recreate those runtime gates.
 
 For a [connected visual migration](../omni-artifact-accelerator/references/connected-visual-migration.md), compare source and actual native target captures under the same filters, timezone, effective persona, data time and intended viewport. Require native readback plus result/interaction evidence; an image match alone cannot pass numerical or access checks. Report preserved behavior, measured improvements, accepted differences, defects and untested facets separately. A one-Card pilot does not close the remaining Page obligations.

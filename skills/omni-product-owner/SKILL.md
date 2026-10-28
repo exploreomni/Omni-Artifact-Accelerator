@@ -51,6 +51,10 @@ Use the smallest useful batch, with a recommended interpretation when appropriat
 - Required surface, useful depth, expected devices/usable space and completion stage.
 - Source scope, accepted meaning, missing evidence and important constraints.
 - Brand authority, website and logo/asset choice when unresolved and relevant.
+- For a query-backed App, [caching and refresh preferences](references/data-refresh-policy.md):
+  ask whether any custom caching, automatic refresh or expiry is wanted. Keep
+  source freshness, query caching and displayed-result age separate; reuse current
+  choices and record the answer in intent before handing off affected behavior.
 
 These are question domains, not a mandatory questionnaire. Reuse explicit no-logo,
 no-research and supplied-brand decisions to close the corresponding questions.

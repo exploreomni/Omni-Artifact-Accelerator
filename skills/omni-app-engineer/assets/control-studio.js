@@ -17,7 +17,7 @@
   const node=(tag,text)=>{const el=document.createElement(tag);if(text!==undefined)el.textContent=text;return el;};
   const resource=E.createResource({validate:value=>{
     if(!Array.isArray(value)||value.some(r=>!fixtures.some(f=>f.id===r.id)))throw Error("unexpected fixture identity");return value;
-  },onState:()=>{},maxAgeMs:60000});
+  },onState:()=>{},maxAgeMs:null}); // No automatic expiry in this synthetic studio.
   const selection=B.createSelection({onChange:()=>renderDetail(),restore:(token)=>{
     mode="index";setLayout(token.layout);renderResults();const target=$(`${token.layout}-row-${token.id}`)||$(`${token.layout}-results-title`);target.focus();return true;
   }});

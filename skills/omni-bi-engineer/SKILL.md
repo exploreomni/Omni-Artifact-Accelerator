@@ -46,6 +46,12 @@ For connected migrations, follow [native build and export](references/omni-build
 
 For Apps, supply the app engineer with a stable query contract and exact workbook/tab bindings, typed values, completeness, errors and allowed parameter domains. Keep analysis logic governed; the renderer owns display and interaction.
 
+Carry the selected [cache/refresh preference](../omni-product-owner/references/data-refresh-policy.md)
+into that query contract. Qualify available query-cache controls separately from
+source update cadence and client expiry. Inherit existing caching unless a supported
+override was selected; a user-facing App preference grants no shared model/connection
+cache change. Report unsupported TTL requests instead of simulating them with a timer.
+
 Use [native data input](../omni-app-engineer/references/native-data-input.md) for that handoff: record exact semantic IDs and transport keys, envelope/type/completeness evidence and export-versus-callback provenance. A successful formatted query export does not qualify the App's input adapter. Presentation-only [demo aliases](../omni-branding/references/demo-presentation.md) retain original fields and grouping keys; they do not justify query or model changes.
 
 Preserve the designer's selected composition and complete chart specification. Return material implementation adaptations with actual native captures for designer review. Account for each named design requirement with implementation evidence or a concrete gap, including visible identity on the dashboard. Reconcile the new candidate in the current design/brand/asset chain before asking QA to assess it; do not refresh old observations to match new bytes. A newly useful detail view needs a real query and independent analyst/QA expectations, not another rendering of the same row. For net-new tooling and complete presentation replacement, follow [native authoring](../omni-artifact-accelerator/references/native-authoring.md).

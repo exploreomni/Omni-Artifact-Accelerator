@@ -30,6 +30,7 @@ CASES = {
     "native-create": "tests/test_native_create.py",
     "assembly": "tests/test_experience_assembly.py",
     "product-intent": "tests/test_product_intent.py",
+    "data-refresh": "tests/test_data_refresh_gates.py",
     "stage-gates": "tests/test_stage_gates.py",
     "stage-gate-integration": "tests/test_stage_gate_integration.py",
     "conversation-choice": "tests/test_conversation_choice.py",
@@ -42,7 +43,7 @@ CASES = {
 # Keep them bounded without turning a larger valid fixture into a false failure.
 CASE_TIMEOUTS = {name: 120 for name in ('workflow', 'product-intent', 'stage-gates',
     'stage-gate-integration', 'conversation-choice', 'native-stage-gates', 'native-create',
-    'experience-enforcement')}
+    'experience-enforcement', 'data-refresh')}
 IGNORED = {".git", ".venv", "venv", "node_modules", "__pycache__", ".pytest_cache", ".ruff_cache"}
 STDLIB_ROOTS = {Path(sysconfig.get_path(name)).resolve() for name in ("stdlib", "platstdlib")}
 FIRST_PARTY_IMPORTS = {

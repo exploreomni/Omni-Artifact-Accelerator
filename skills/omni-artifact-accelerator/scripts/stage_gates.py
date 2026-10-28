@@ -275,6 +275,9 @@ def _discovery_snapshot(fd, project, payload, P, *, current=True):
     helper = P.routing_helper('product_intent')
     context = helper.visual_context(spec)
     _need(context is not None, 'stage_gate_visual_discovery_required')
+    refresh_required = payload.get('data_refresh_version') == 1
+    if refresh_required:
+        _need(helper.refresh_context(spec) is not None, 'stage_gate_data_refresh_interview_required')
     quality_required = project.get('workflow_quality_policy') == QUALITY_POLICY
     if quality_required:
         _need(helper.quality_check(spec)['status'] == 'ready', 'stage_gate_experience_quality_required')
@@ -295,6 +298,9 @@ def _discovery_snapshot(fd, project, payload, P, *, current=True):
         if quality_required:
             _need(helper.quality_context(live) == helper.quality_context(spec),
                   'stage_gate_experience_quality_changed_reopen_brief')
+        if refresh_required:
+            _need(helper.refresh_context(live) == helper.refresh_context(spec),
+                  'stage_gate_data_refresh_changed_reopen_brief')
     return helper.visual_report(spec), paths
 
 
@@ -324,6 +330,18 @@ def _experience_options(root, fd, project, payload, P):
     _need(len({(normalize(r['structure']), normalize(r['primary_interaction'])) for r in results}) == 3,
           'stage_gate_distinct_product_structures_required')
     return [dependencies[path] for path in sorted(dependencies)]
+
+
+def _refresh_handoff(fd, project, payload, P):
+    """Preserve an adopted refresh decision independently of quality-policy age."""
+    spec = _current_spec(fd, project, P)
+    helper = P.routing_helper('product_intent')
+    if helper.refresh_context(spec) is None:
+        return  # Unadopted historical designs need no new interview.
+    path = payload['evidence']['design']['path']
+    app_designs = {s.get('design_path') for s in spec['selections'] if s['surface'] == 'app'}
+    _need(app_designs == {path}, 'stage_gate_refresh_handoff_must_match_app_design')
+    helper.validate_refresh_handoff(_json(_read(fd, path, P.MAX_BYTES), P), spec)
 
 
 def _experience_handoff(root, fd, project, payload, state, P):
@@ -430,6 +448,10 @@ def _payload_shape(stage, payload, saved=True):
         expected.add('discovery_version')
         if saved:
             expected.add('discovery_dependencies')
+    if saved and 'data_refresh_version' in payload:
+        expected.add('data_refresh_version')
+        _need(discovery and type(payload['data_refresh_version']) is int
+              and payload['data_refresh_version'] == 1, 'stage_gate_invalid_data_refresh_version')
     conversation = stage == 'choice' and payload.get('basis') == 'conversation_evidence'
     if conversation:
         expected = {'basis', 'option_id', 'expected_binding', 'evidence'}
@@ -694,6 +716,8 @@ def _report(root, fd, project, required, state, P, provider):
               'tail_sha256': state['tail'], 'choice_assurance': None, 'choice_authenticated': False,
               'external_mutations_authorized': False, 'limits': list(LIMITS),
               'visual_discovery': {'status': 'not_assessed', 'version': None},
+              'data_refresh': {'status': 'not_assessed', 'version': None},
+              'app_refresh_required': 'app' in project['surfaces'],
               'workflow_quality_policy': project.get('workflow_quality_policy'),
               'historical_selected_continuation': (project.get('workflow_quality_policy') is None and
                                                     project.get('design_intent') is not None),
@@ -749,6 +773,21 @@ def _report(root, fd, project, required, state, P, provider):
                     report['next_stage'] = 'brief'
                     break
                 report['visual_discovery'] = dict(discovery, version=1)
+                helper = P.routing_helper('product_intent')
+                live = _current_spec(fd, project, P)
+                if event['payload'].get('data_refresh_version') == 1:
+                    refresh = helper.refresh_report(live)
+                    report['data_refresh'] = dict(refresh, version=1)
+                    if refresh['status'] not in {'ready', 'not_applicable'}:
+                        report['completed_stages'].append(stage)
+                        report['stage_bindings'][stage] = event['sha256']
+                        report['findings'].append('data_refresh_interview_unresolved')
+                        report['next_stage'] = 'brief'
+                        break
+                elif helper.refresh_context(live) is not None:
+                    report['findings'].append('data_refresh_checkpoint_required')
+                    report['next_stage'] = 'brief'
+                    break
                 if project.get('workflow_quality_policy') == QUALITY_POLICY:
                     report['experience_quality'] = P.routing_helper('product_intent').quality_check(
                         _current_spec(fd, project, P))
@@ -766,6 +805,13 @@ def _report(root, fd, project, required, state, P, provider):
             report['findings'].append('selected_intent_changed')
             report['next_stage'] = stage
             break
+        if stage == 'design':
+            try:
+                _refresh_handoff(fd, project, event['payload'], P)
+            except (ValueError, OSError, KeyError, TypeError) as exc:
+                report['findings'].append(str(exc) if isinstance(exc, ValueError) else 'stage_gate_invalid_refresh_handoff')
+                report['next_stage'] = stage
+                break
         if stage == 'choice':
             if state['selection_policy'] is not None:
                 _conversation_response(fd, event['payload'], P)
@@ -886,6 +932,10 @@ def _require(report, action, provider):
         discovery = report.get('visual_discovery', {})
         _need(discovery.get('version') == 1, 'stage_gate_upgrade_visual_discovery_before_options')
         _need(discovery.get('status') == 'ready', 'stage_gate_visual_discovery_unresolved')
+        if report.get('app_refresh_required'):
+            refresh = report.get('data_refresh', {})
+            _need(refresh.get('version') == 1, 'stage_gate_upgrade_data_refresh_interview_before_options')
+            _need(refresh.get('status') in {'ready', 'not_applicable'}, 'stage_gate_data_refresh_interview_unresolved')
     if stage in {'choice', 'design', 'candidate', 'review', 'release'} and report['selection_policy'] == HOST_SELECTION:
         _need(provider is not None and callable(getattr(provider, 'verify_choice', None)),
               'stage_gate_trusted_provider_required')
@@ -983,6 +1033,8 @@ def record(root, request, *, P=None, provider=None):
             payload = _requalification(root, fd, project, payload, state, P, provider)
         if stage == 'brief':
             _need(payload.get('discovery_version') == 1, 'stage_gate_visual_discovery_required')
+            if 'app' in project['surfaces']:
+                payload['data_refresh_version'] = 1
         if stage == 'selection_policy':
             _need(not state['choice_seen'] and state['last_candidate'] is None,
                   'stage_gate_selection_policy_already_fixed')
@@ -1007,6 +1059,7 @@ def record(root, request, *, P=None, provider=None):
                 old_spec = _json(_read(fd, pin['path'], P.MAX_BYTES), P)
                 new_spec = _json(_read(fd, payload['evidence']['intent']['path'], P.MAX_BYTES), P)
                 P.routing_helper('product_intent').validate_visual_transition(old_spec, new_spec)
+                P.routing_helper('product_intent').validate_refresh_transition(old_spec, new_spec)
                 if project.get('workflow_quality_policy') == QUALITY_POLICY:
                     P.routing_helper('product_intent').validate_quality_transition(old_spec, new_spec)
         if stage == 'options':
@@ -1027,6 +1080,7 @@ def record(root, request, *, P=None, provider=None):
                 _need(payload['subject'] is not None, 'stage_gate_trusted_choice_unverified')
         if stage == 'design':
             payload['selected_intent'] = project.get('design_intent')
+            _refresh_handoff(fd, project, payload, P)
             if project.get('workflow_quality_policy') == QUALITY_POLICY:
                 payload['experience_dependencies'] = _experience_handoff(root, fd, project, payload, state, P)
         if stage == 'candidate':

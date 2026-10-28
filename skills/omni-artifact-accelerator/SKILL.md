@@ -19,6 +19,10 @@ every iteration**. This ordering supersedes generic direct-design shortcuts belo
 Retain supplied preferences early, but do not begin product design before A–C.
 At D, route the tailored experience-family menu and conditional comparison styling
 question through [visual discovery](../omni-product-owner/references/visual-experience-discovery.md).
+For query-backed Apps, also resolve [caching and refresh preferences](../omni-product-owner/references/data-refresh-policy.md)
+at D and carry the decision through design, query bindings and QA. Preserve existing
+Omni caching; automatic refresh, cache bypass and client expiry are opt-in choices,
+not package defaults. Reuse attributable decisions for focused repairs.
 Carry current answers/delegation and the accepted quality bar into all three E
 concepts and their representative visuals. Keep analytical scope and ambition
 comparable; prose pitches alone are insufficient. A treatment preference never

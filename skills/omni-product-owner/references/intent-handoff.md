@@ -39,6 +39,8 @@ The readable North Star summarizes:
   proposals, preferences, deferred work and unresolved decisions.
 - Relevant first/repeat-use, brand, depth, interaction and usable-space expectations.
 - Scope, evidence limitations, constraints and observable product-fit criteria.
+- The selected [App cache/refresh policy](data-refresh-policy.md), including an
+  explicit no-custom-policy choice, optional expiry and return/recovery behavior.
 
 Generate it from the chosen intent record. Identify the canonical path/version,
 SHA-256, actual generation time and provisional/selected state. Any linked supporting

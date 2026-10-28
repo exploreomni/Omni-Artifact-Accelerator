@@ -52,6 +52,41 @@ const count=states.length;r.dispose();r.refreshAge();assert.equal(states.length,
 assert.throws(()=>r.begin('new'),/disposed/);
 """)
 
+    def test_no_expiry_policy_preserves_age_completeness_and_failed_refresh(self):
+        self.run_js("""
+for(const policy of [{},{maxAgeMs:null}]){
+ let now=1000;const states=[];
+ const r=C.createResource({validate:value=>value,onState:s=>states.push(s),now:()=>now,...policy});
+ const old=r.begin('old'),current=r.begin('current');
+ assert.equal(r.accept(old,{data:[99],completeness:'complete',evidenceRef:'obsolete'}),false);
+ r.accept(current,{data:[0],completeness:'complete',evidenceRef:'simulation'});
+ now+=86400000*2;const ready=r.refreshAge();
+ assert.equal(ready.phase,'ready');assert.equal(ready.ageMs,86400000*2);assert.deepEqual(ready.data,[0]);
+ r.accept(r.begin('partial'),{data:[1],completeness:'unknown',evidenceRef:'simulation'});
+ now+=86400000*2;assert.equal(r.refreshAge().phase,'partial');
+ for(const phase of ['error','restricted','blocked']){
+  const token=r.begin('retry');assert.equal(r.snapshot().data,null);
+  r.fail(token,phase,'Unavailable');assert.equal(r.snapshot().phase,phase);assert.equal(r.snapshot().data,null);
+  assert.equal(r.accept(token,{data:[1],completeness:'complete',evidenceRef:'late'}),false);
+ }
+ r.accept(r.begin('clock'),{data:[1],completeness:'complete',evidenceRef:'simulation'});
+ now=NaN;assert.throws(()=>r.snapshot(),/invalid retrieval clock/);
+ const count=states.length;r.dispose();r.refreshAge();assert.equal(states.length,count);
+}
+""")
+
+    def test_invalid_expiry_limits_do_not_silently_disable_policy(self):
+        self.run_js("""
+for(const maxAgeMs of [0,-1,NaN,Infinity,'100',false]){
+ assert.throws(()=>C.createResource({validate:value=>value,onState:()=>{},maxAgeMs}),/invalid resource contract/);
+}
+let now=0;
+const r=C.createResource({validate:value=>value,onState:()=>{},now:()=>now,maxAgeMs:0.5});
+r.accept(r.begin('finite'),{data:[1],completeness:'complete',evidenceRef:'simulation'});
+now=0.5;assert.equal(r.snapshot().phase,'ready');
+now=0.6;assert.equal(r.snapshot().phase,'stale');
+""")
+
     def test_media_load_is_not_readiness_and_cleanup_ignores_late_events(self):
         self.run_js("""
 let stops=0;const states=[];

@@ -168,7 +168,7 @@ const contract = {
   queryId: "exact_saved_query_id",
   keyField: "assets.entity_key",
   grain: "one row per asset in the current filter scope",
-  maxAgeMs: 60000,
+  maxAgeMs: null, // No client age cutoff; use a finite limit only when selected.
   fields: [{id: "telemetry.pressure", type: "number", unit: "kPa",
             aggregation: "latest observation in the selected window"}],
   bindings: [{entityId: "pump_a", dataKey: "asset_a"}]
@@ -183,17 +183,23 @@ identity and incomplete snapshots fail visibly. Missing values remain unknown.
 
 Each reviewed native query generation calls `bridge.begin()`. Resolve its token
 with `{queryId, status, complete, capturedAt, rows}`. Ready data requires a
-complete snapshot and timestamp. Expired ready data becomes stale. Restricted,
+complete snapshot and timestamp. Omitted/null `maxAgeMs` disables time-based expiry;
+an explicitly selected positive safe-integer limit up to 86400000 milliseconds
+makes expired ready data stale. Source-reported stale data remains stale in either
+mode. Restricted,
 error or malformed current results clear previous values. Superseded results
 cannot overwrite newer state. The host must convert real callbacks into this
 contract and invalidate on timeout, unsubscribe, changed access or filter scope;
 there is no hidden query API or automatic access verification.
 
-Snapshot reads and emitted state evaluate freshness against the current clock,
-so old values do not stay labeled ready merely because no new result arrived.
-The host owns a cancellable freshness deadline and calls `checkFreshness()` on
-that deadline and on resume to update visible UI. The bridge owns no background
-timer. Detach that deadline with query subscriptions on unmount. Observer errors
+Snapshot reads and emitted state evaluate age against the current clock. `ready`
+is an accepted snapshot, not a guarantee of current source data. Only when a cutoff
+is selected does the host own a cancellable freshness deadline and call
+`checkFreshness()` on that deadline and on resume to update visible UI. The bridge
+owns no background timer and performs no query. Implement selected recovery through
+the [cache/refresh policy](../../omni-product-owner/references/data-refresh-policy.md);
+an age check alone cannot recover expired data. Detach any deadline with query
+subscriptions on unmount. Observer errors
 are bounded diagnostics and cannot turn a valid result into a query failure.
 
 Refresh does not reset the viewpoint/selection. Feed the selected object's exact

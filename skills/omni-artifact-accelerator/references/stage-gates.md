@@ -25,7 +25,7 @@ credentials, private results and engagement records outside the repository.
 | A | `access` | `data`, `user_access` | `source_scope`, `user_identity` |
 | B | `analysis` | `profile`, `queries`, `insights`, `expectations` | `analyst`, `bi_engineer` |
 | C | `narrative` | `narrative`, `traceability`, `refresh` | `storyteller`, `analyst` |
-| D | `brief` | `brief`, `intent` | `discovery_version: 1`; note dependencies are automatically pinned |
+| D | `brief` | `brief`, `intent` | `discovery_version: 1`; App refresh version/context and note dependencies are generated/pinned |
 | E | `options` | `comparison` | exactly three `options` |
 | E | `choice` | conversation: `user_response`; strict: none | conversation: `basis`, `option_id`, `expected_binding`; strict: `option_id`, `receipt_ref` |
 | E | `design` | `design` | `resolved: true`; current selected intent is automatically bound |
@@ -138,6 +138,24 @@ against the current intent alongside visual discovery. Changing quality choices
 reopens D; implementation-only annotations do not manufacture a new interview.
 See the [product contract](product-intent.md) for selected, reused and explicitly
 delegated quality choices. Empty or generic completion flags do not satisfy this.
+
+For App scope, D also includes the [data-refresh index](product-intent.md#data-refresh-index)
+over the existing required interaction requirement. A–C source cadence and claim
+rules inform the question; D records the actual cache/refresh/optional-expiry answer.
+An explicit `no_custom_policy` answer is resolved, not missing. Unanswered policy
+remains `unresolved`; justified data-free scope is `not_applicable`. New dependent
+options require a resolved policy, and E design binds it through
+`data_refresh_handoff` for F implementation and QA. Reuse an existing answer rather
+than asking again.
+
+New App brief records save `data_refresh_version: 1` and the current policy context
+automatically; callers do not add that flag to the request above. The versioned
+context includes policy meaning and sources, not later delivery annotations.
+Changed policy requires a new D checkpoint and affected design; its adopted index
+cannot be dropped to bypass that reconciliation. Historical selected records remain
+readable as `not_assessed`; new options upgrade the policy contract rather than
+inventing an old interview. These checks neither execute refreshes nor establish
+effective server-cache behavior.
 
 Status includes `visual_discovery` with its version, families, follow-up state,
 requirement IDs and unresolved findings. D may retain a valid unanswered draft;

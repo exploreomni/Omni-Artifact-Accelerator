@@ -60,6 +60,10 @@ Resolve metric definitions and build governed queries; inspect results and verif
 important totals independently. Retain query identities/definitions, source scope,
 filters, period, denominators and observed results in the private engagement.
 
+For query-backed Apps, retain known source-update cadence and available query-cache
+controls as evidence for D; unknowns stay explicit. Do not choose polling, bypass
+or a display-age cutoff while profiling the data.
+
 Identify supported comparison, time, location, entity identity, geometry and movement
 evidence in the existing source inventory/query contracts. Record missing coordinates,
 dimensions or ordered observations explicitly. These are opportunities and limits
@@ -105,6 +109,15 @@ interaction and delivery constraints. Recover existing answers instead of asking
 again. When branding is wanted, obtain the company website and approved logo/asset
 source or reuse existing authorization.
 
+For query-backed Apps, ask the [caching and refresh question](../../omni-product-owner/references/data-refresh-policy.md)
+in the same batch unless a current answer exists. Resolve whether the user wants
+any custom policy at all, then only relevant cache/interval/expiry follow-ups.
+Stage C supplies source-update evidence and business freshness constraints; it
+does not silently choose an App timeout or forced cache bypass. Retain the answer
+as an existing required interaction requirement through E design and F review.
+An actual “no custom policy” answer resolves the question; silence does not.
+Periodic refresh, cache bypass and display expiry are separate choices.
+
 Use [guided visual discovery](../../omni-product-owner/references/visual-experience-discovery.md)
 for the two layers: how people should explore the supported data, then a conditional
 comparison/trend styling question. Reuse attributable answers and explicit delegation;
@@ -130,6 +143,10 @@ three archetypes for every engagement. Current required visual preferences apply
 to every option; when comparisons are in scope, show a representative comparison
 treatment in each. Style choices are not a fixed “2D / dimensional / 3D” trio and
 do not constitute the product selection.
+
+Carry the recorded App cache/refresh decision into every concept. After selection,
+resolve its UI states, refresh controls, hidden/return behavior and recovery in the
+same design and query handoff. A visual concept choice does not reset that policy.
 
 For each option present:
 
@@ -173,6 +190,12 @@ coherent first implementation from the resolved handoff, rather than discovering
 the product while coding. Bounded technical qualification or a representative
 integration slice may reduce risk; neither replaces the selected experience nor
 allows the delivered product to shrink to an elementary demo.
+
+For query-backed Apps, engineering and QA use the same selected refresh-policy
+requirement and query contract. Verify only chosen automatic triggers and expiry,
+plus error/access and scope-change protections. No custom policy adds neither
+polling nor an age cutoff; periodic refresh alone does not imply either bypass or
+expiry. Return material policy changes through the affected D/E records.
 
 For **every candidate iteration**, obtain and consolidate four review perspectives:
 

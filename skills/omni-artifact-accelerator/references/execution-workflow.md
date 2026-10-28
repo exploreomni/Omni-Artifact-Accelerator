@@ -86,6 +86,12 @@ Notes stay in private engagement inputs/evidence. Recover existing answers befor
 interviewing; a focused repair does not restart discovery. Select the canonical
 intent, then use `product-brief` and `product-check` for its readable North Star.
 
+For query-backed Apps, sequence [cache/refresh discovery](../../omni-product-owner/references/data-refresh-policy.md)
+with that intake: A–C supplies source cadence and claim constraints; D captures the
+actual cache, refresh and optional expiry answer; E resolves the chosen behavior;
+F implements and reviews the same requirement. Record an explicit no-custom-policy
+answer rather than inventing a timeout. Reuse current answers for focused repairs.
+
 ```sh
 python3 -I -S -B "$OAA_HELPER" run-start --project "$OAA_RUN" --request startup.json
 ```
@@ -228,6 +234,12 @@ their relevant guidance and scoped specialists. The returned findings identify
 missing reads or owners. This is scope-aware responsibility routing, not a command
 to create another agent or a license to load a renderer. Several duties may share
 one worker when the independent review requirements permit it.
+
+Carry the refresh-policy requirement through the canonical intent/North Star and
+existing worker packets: BI owns qualified cache controls and source-time evidence,
+the designer owns refresh/recovery presentation, engineering owns selected triggers,
+and QA owns policy-specific observations. Do not create a separate policy ledger
+or let an example timer become a specialist's default.
 
 Run `run-check` with a request containing `run` and `execution` paths once its
 implementation-readiness prerequisites exist. It checks

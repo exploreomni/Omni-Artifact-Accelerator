@@ -14,6 +14,13 @@ _v.loader.exec_module(V)
 _e = importlib.util.spec_from_file_location('experience_contract', Path(__file__).with_name('experience_contract.py'))
 E = importlib.util.module_from_spec(_e)
 _e.loader.exec_module(E)
+_r = importlib.util.spec_from_file_location('data_refresh', Path(__file__).with_name('data_refresh.py'))
+R = importlib.util.module_from_spec(_r)
+_r.loader.exec_module(R)
+refresh_context = R.context
+refresh_report = R.report
+validate_refresh_transition = R.validate_transition
+validate_refresh_handoff = R.validate_handoff
 visual_context = V.visual_context
 visual_report = V.visual_report
 quality_context = E.quality_context
@@ -39,7 +46,7 @@ def validate(spec, need, relative, roles):
         return
     need(type(product) is dict and {'schema_version', 'scope', 'discovery', 'note_paths'} <= set(product)
          and set(product) <= {'schema_version', 'scope', 'discovery', 'note_paths', 'source_inventory_path',
-                             'visual_experience', 'quality_bar'},
+                             'visual_experience', 'quality_bar', 'data_refresh'},
          'product_fields_invalid')
     need(type(product['schema_version']) is int and product['schema_version'] == 1, 'product_version_invalid')
     need(product['scope'] in SCOPES and product['discovery'] in
@@ -79,6 +86,7 @@ def validate(spec, need, relative, roles):
                  'product_alternative_must_preserve_outcome_and_gap')
     V.validate(spec, lambda ok, message: need(ok, 'visual_experience.' + message))
     E.validate(spec)
+    R.validate(spec)
 
 
 def clean(value):
@@ -126,6 +134,12 @@ def render(project, state, generated_at):
                      'tooling restriction silently lowers it. Declared coverage does not certify craft.', ''])
         rows.extend('- Open quality decision: ' + clean(finding) for finding in quality['findings'])
         rows.append('')
+    refresh = refresh_report(spec)
+    if refresh['status'] != 'not_assessed':
+        rows.extend(['App cache/refresh decision: ' + refresh['status'],
+                     'Requirement: ' + clean(refresh['requirement_id']),
+                     'Selected policy: ' + clean(refresh['policy']),
+                     'This is recorded intent, not proof of native cache behavior or permission to change shared settings.', ''])
     for req in spec['requirements']:
         item = req.get('product', {})
         rows.extend(['### ' + clean(req['id']) + ': ' + clean(req['purpose']), '',

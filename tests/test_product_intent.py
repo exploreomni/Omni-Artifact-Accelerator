@@ -36,8 +36,10 @@ class ProductIntentTests(unittest.TestCase):
         discovery = json.loads((self.root / 'contracts/design-intent.json').read_text())
         self.spec['product']['visual_experience'] = discovery['product']['visual_experience']
         self.spec['product']['quality_bar'] = discovery['product']['quality_bar']
+        self.spec['product']['data_refresh'] = discovery['product']['data_refresh']
         self.spec['product']['note_paths'] += discovery['product']['note_paths']
         visual_ids = set(N.visual_report(discovery)['requirement_ids']) | set(discovery['product']['quality_bar']['requirement_ids'])
+        visual_ids.add(discovery['product']['data_refresh']['requirement_id'])
         self.spec['requirements'] += [r for r in discovery['requirements'] if r['id'] in visual_ids]
 
     def write(self, path, value):
@@ -97,7 +99,8 @@ class ProductIntentTests(unittest.TestCase):
         self.assertFalse(po['external_mutations_authorized'])
         self.brief()
         packet = P.packet(self.root, 'app-designer', ['inputs/notes-v1.json'], self.root / 'tasks/designer.json')
-        self.assertEqual(len(packet['product_context']['role_slice']), 7)
+        self.assertEqual(len(packet['product_context']['role_slice']), 8)
+        self.assertIn('refresh-fixture-policy', {r['id'] for r in packet['product_context']['role_slice']})
         self.assertEqual(packet['product_context']['visual_experience']['status'], 'ready')
         self.assertEqual(packet['design_context']['visual_context'], N.visual_context(self.spec))
         self.assertEqual(P.packet_check(self.root, 'tasks/designer.json')['status'], 'consistent')
@@ -200,6 +203,9 @@ class ProductIntentTests(unittest.TestCase):
         self.spec['surfaces'] = ['dashboard']
         self.spec['selections'][0]['surface'] = 'dashboard'
         self.spec['product'].update(scope='focused_repair', discovery='focused_repair')
+        # A separate historical dashboard has no adopted App refresh interview.
+        refresh_id = self.spec['product'].pop('data_refresh')['requirement_id']
+        self.spec['requirements'] = [r for r in self.spec['requirements'] if r['id'] != refresh_id]
         for req in self.spec['requirements']:
             req['surfaces'] = ['dashboard']
             req['product']['suggested_roles'] = ['dashboard-designer', 'artifact-translator']

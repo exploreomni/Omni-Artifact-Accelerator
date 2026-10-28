@@ -60,8 +60,9 @@
   }
 
   function createResource({validate, onState, now = Date.now, maxAgeMs}) {
+    const expires = maxAgeMs !== undefined && maxAgeMs !== null;
     need(typeof validate === "function" && typeof onState === "function" &&
-      typeof now === "function" && finite(maxAgeMs) && maxAgeMs > 0, "invalid resource contract");
+      typeof now === "function" && (!expires || (finite(maxAgeMs) && maxAgeMs > 0)), "invalid resource contract");
     let active = null, sequence = 0, disposed = false;
     let state = {phase: "idle", contextKey: null, data: null, completeness: "unknown"};
     const snapshot = () => {
@@ -69,7 +70,8 @@
       if (["ready", "partial"].includes(result.phase)) {
         const instant = now(); need(finite(instant), "invalid retrieval clock");
         result.ageMs = Math.max(0, instant - result.fetchedAt);
-        if (result.ageMs > maxAgeMs) result.phase = "stale";
+        // An omitted/null limit reports age without imposing an expiry policy.
+        if (expires && result.ageMs > maxAgeMs) result.phase = "stale";
       }
       return result;
     };

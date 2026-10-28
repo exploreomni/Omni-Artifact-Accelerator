@@ -107,6 +107,68 @@ fragments. The helper checks the path relationship, not the truth of a citation.
 Acceptance statements and suggested existing roles are nonempty lists. Existing
 technical requirements may remain unannotated; they do not disappear from scope.
 
+## Data-refresh index
+
+For an App, follow the [cache/refresh interview](../../omni-product-owner/references/data-refresh-policy.md)
+after A–C. Source cadence informs D; it does not choose caching, polling or expiry.
+Use this index over the existing required `interaction` requirement:
+
+```json
+{"data_refresh":{"schema_version":1,"requirement_id":"app-data-refresh"}}
+```
+
+This fragment belongs inside `product`. The referenced row has `surfaces: ["app"]`,
+normal product source references to declared notes, observable acceptance, and its
+actual decision reference. Its ID remains stable after adoption. Unanswered/deferred
+rows remain unresolved; a neutral implementation posture is not a user answer.
+
+The requirement's structured `value` uses `kind: "app_data_refresh"` and one mode:
+
+- `no_custom_policy`: only `kind` and `mode`. This actual answer means inherited
+  caching, initial/manual loading and no added polling, return refresh or age cutoff.
+- `not_applicable`: only `kind`, `mode` and a nonempty `rationale` identifying the
+  data-free App scope. Do not use this to skip policy discovery for a query-backed App.
+- `custom`: `kind`, `mode` and exactly the following fields.
+
+| Custom field | Accepted meaning |
+| --- | --- |
+| `query_cache` | `inherit` or `bypass`; a bypass still needs qualified native support. |
+| `refresh_mode` | `manual`, `on_return`, `interval` or `interval_and_return`. |
+| `interval_ms` | Positive safe integer only for an interval trigger; otherwise null. |
+| `return_after_ms` | Positive safe integer only for a return trigger; otherwise null. |
+| `max_age_ms` | Null for no client expiry, otherwise a positive safe integer. Qualify the chosen value against the actual helper/runtime limits. |
+| `hidden_behavior` | `pause` or `continue`; continue requires an interval trigger. |
+| `stale_display` | `timestamp`, `label` or `withhold`. An expiry requires label/withhold; withhold requires expiry. |
+| `recovery` | Nonempty explanation of the selected retry/recovery behavior. |
+
+Periodic refresh does not imply bypass or expiry. The selected policy is not a
+provider payload, a backend TTL setting, or a guarantee of upstream freshness.
+Helper expiry marks retained values stale; the App implements the selected display
+and recovery behavior. Error/access and changed-scope clearing remain required.
+
+User/reused decisions must be attributable. A selected agent recommendation needs
+the optional index field `delegation_requirement_id`, pointing to a separate
+required App interaction row with an actual selected user/reused decision and
+value `{"delegation_scope":"app_data_refresh"}`. Other design delegation does
+not delegate this policy. Attribution checks validate record structure, not the
+authenticity of a human response or permission for native writes.
+
+Readiness is `ready`, `unresolved`, `not_applicable` or historical `not_assessed`.
+New App D checkpoints record the versioned context automatically; new dependent
+concept work needs the resolved contract. Historical selected products stay
+readable without invented decisions. Once adopted, the index and its stable
+requirement cannot silently disappear. Reuse attributable answers when upgrading.
+
+After E selection, the design must include `data_refresh_handoff` with exactly:
+`context` equal to the helper's `data_refresh.context(spec)` projection,
+`implementation` as a nonempty behavior explanation, and `qa_cases` as a nonempty
+list of specific cases. This pins the same interview meaning through F rather
+than asking engineering to infer another policy. The context includes source
+references and decision meaning, excluding delivery ownership and implementation
+contexts. A changed policy reopens affected D/E work; later implementation-only
+annotations do not manufacture a new interview. Full design/candidate freshness
+checks still apply. North Star and worker packets carry policy status and context.
+
 ## Visual experience index
 
 Use the [guided questions](../../omni-product-owner/references/visual-experience-discovery.md)

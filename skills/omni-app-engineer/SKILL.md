@@ -44,6 +44,13 @@ On direct invocation as well as delegated work, consume the [current design-inte
 
 Before wiring data, inspect the current documented/native starter's supported bridge and actual workbook/tab identities. Never invent SDK methods, global data objects, undocumented endpoints or import schemas. When runtime access is unavailable, create a clearly labeled local candidate with an adapter boundary, synthetic fixtures and an explicit native integration gap. Do not present fixture arrays as live analytics.
 
+Consume the selected [App cache/refresh policy](../omni-product-owner/references/data-refresh-policy.md)
+before wiring result lifetime. Keep Omni's existing cache behavior and no client
+expiry/polling unless an attributable choice or verified business rule requires
+otherwise. Do not copy sample age limits or force cache bypass. Age checks do not
+refresh queries; implement and qualify the selected return, retry and stale-display
+behavior without clearing valid values merely because an unselected timer elapsed.
+
 For CLI/API route selection and existing-App enhancements outside the migration adapter, use [authoring preflight](references/authoring-preflight.md): versioned command inventory, nested query envelope, generated physical-source/metadata checks and exact HTML-only preparation/readback. A valid export does not qualify native callbacks; the helper never connects or grants write authority.
 
 For data wiring or connection repairs, use [native data input](references/native-data-input.md): bind exact transport keys/types/envelopes and completeness to the existing query/runtime evidence, distinguish exports from callbacks, and rehearse the assembled candidate at the affected boundary. Keep template, built artifact and native launch target distinct. Preserve the native helper's immutable runtime fragments; a local callback double does not establish native behavior.

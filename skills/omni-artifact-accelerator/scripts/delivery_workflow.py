@@ -542,6 +542,8 @@ def phase_check(root, action, _snapshot=None):
         # Read draft/selected requirements without stage-status recursion. A later
         # specialization cannot be erased by the generic stage role projection.
         state = snapshot['state']
+        if phase >= PHASES.index('brief') and state.get('data_refresh_context') is not None:
+            guidance.add(prefix + 'omni-product-owner/references/data-refresh-policy.md')
         if phase >= PHASES.index('brief') and state.get('status') == 'inconsistent':
             findings.append('selected_intent_inconsistent')
         active = [r for r in state.get('requirements', []) if r.get('disposition') not in {'deferred', 'explicitly_omitted'}]

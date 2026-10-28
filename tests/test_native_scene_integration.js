@@ -4,9 +4,9 @@ for(const name of ["native_scene_contract","native_scene_geometry","native_scene
   require(`../skills/omni-app-engineer/scripts/${name}.js`);
 require("../skills/omni-app-engineer/assets/native-scene-examples.js");
 const E=OAANativeSceneExamples;
-function dataSetup(onState=()=>{},now=()=>Date.parse("2026-10-23T12:00:00Z")){
+function dataSetup(onState=()=>{},now=()=>Date.parse("2026-10-23T12:00:00Z"),freshness={maxAgeMs:60000}){
   const scene=E.network(),selected=[],contract={queryId:"exact_saved_query",keyField:"assets.entity_key",grain:"one row per network node",
-    maxAgeMs:60000,fields:[{id:"telemetry.pressure",type:"number",unit:"kPa",aggregation:"latest observed at selected instant"}],
+    ...freshness,fields:[{id:"telemetry.pressure",type:"number",unit:"kPa",aggregation:"latest observed at selected instant"}],
     bindings:scene.entities.filter(e=>e.role==="analytical").map(e=>({entityId:e.id,dataKey:e.id}))};
   const bridge=OAANativeSceneData.create({scene,contract,renderer:{setSelection:id=>selected.push(id)},onState,now});
   const sample={queryId:contract.queryId,status:"ready",complete:true,capturedAt:"2026-10-23T11:59:50Z",
@@ -48,8 +48,40 @@ test("freshness expires without a new query result and the host can announce it"
   let time=Date.parse("2026-10-23T12:00:00Z");const states=[];
   const {bridge:b,sample}=dataSetup(state=>states.push(state),()=>time);
   b.resolve(b.begin(),sample);assert.equal(b.snapshot().dataStatus,"ready");
-  time+=61000;assert.equal(b.snapshot().dataStatus,"stale");b.checkFreshness();assert.equal(states.at(-1).dataStatus,"stale");
+  time+=50000;assert.equal(b.snapshot().dataStatus,"ready");
+  time+=1;assert.equal(b.snapshot().dataStatus,"stale");b.checkFreshness();assert.equal(states.at(-1).dataStatus,"stale");
   assert.equal(b.snapshot().values.consumer["telemetry.pressure"],20);
+});
+test("absent or null expiry accepts historical snapshots without weakening data protections",()=>{
+  for(const freshness of [{},{maxAgeMs:null}]){
+    let time=Date.parse("2026-10-23T12:00:00Z");const states=[];
+    const {bridge:b,sample}=dataSetup(state=>states.push(state),()=>time,freshness);
+    sample.capturedAt="2026-10-20T12:00:00Z";
+    b.select("consumer");const old=b.begin(),current=b.begin();
+    assert.deepEqual(b.resolve(old,{bad:true}),{ignored:true});b.resolve(current,sample);
+    time+=86400000*2;assert.equal(b.checkFreshness().dataStatus,"ready");
+    assert.equal(states.at(-1).dataStatus,"ready");assert.equal(b.snapshot().selection,"consumer");
+    assert.equal(b.snapshot().values.supply["telemetry.pressure"],0);
+    assert.equal(b.snapshot().values.junction_a["telemetry.pressure"],null);
+    for(const patch of [{complete:false},{queryId:"other"},{capturedAt:"invalid"},
+      {capturedAt:new Date(time+6000).toISOString()}]){
+      assert.throws(()=>b.resolve(b.begin(),{...sample,...patch}));
+      assert.equal(b.snapshot().dataStatus,"error");assert.deepEqual(b.snapshot().values,{});
+    }
+    b.resolve(b.begin(),{...sample,status:"stale"});assert.equal(b.snapshot().dataStatus,"stale");
+    for(const status of ["error","restricted"]){
+      b.resolve(b.begin(),sample);b.resolve(b.begin(),{...sample,status,rows:[]});
+      assert.equal(b.snapshot().dataStatus,status);assert.deepEqual(b.snapshot().values,{});
+    }
+    b.resolve(b.begin(),sample);time=NaN;assert.equal(b.snapshot().dataStatus,"stale");
+    const count=states.length;b.dispose();b.checkFreshness();assert.equal(states.length,count+1);
+    assert.throws(()=>b.begin());
+  }
+});
+test("invalid explicit expiry limits are rejected rather than treated as no policy",()=>{
+  for(const maxAgeMs of [0,-1,NaN,Infinity,"60000",false,0.5,86400001]){
+    assert.throws(()=>dataSetup(undefined,undefined,{maxAgeMs}),/invalid freshness limit/);
+  }
 });
 
 function target(){const events=new Map();return {events,addEventListener(n,f){if(!events.has(n))events.set(n,new Set());events.get(n).add(f);},removeEventListener(n,f){events.get(n)?.delete(f);},emit(n,event={}){for(const f of [...(events.get(n)||[])])f(event);}};}

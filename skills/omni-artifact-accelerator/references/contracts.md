@@ -34,6 +34,12 @@ A metric item should include `id`, business question, definition/authority statu
 
 A query item links that metric to exact model ID/revision, topic, field IDs, workbook/tab IDs when real, selected filters/defaults, grouping, sort, limit, result column names/types/units, allowed parameter domain, cache/freshness, pagination/completeness and error/empty/loading behavior. Carry hashes of definition and source snapshots. Labels do not substitute for stable IDs. An app renderer consumes this contract; it does not silently recalculate governed business definitions.
 
+For Apps, link cache/freshness to the existing selected [refresh-policy requirement](../../omni-product-owner/references/data-refresh-policy.md).
+Retain query-cache inheritance/override, refresh triggers, optional intervals/expiry,
+hidden/return behavior, source versus retrieval time and recovery separately. No
+custom policy keeps existing Omni caching and adds no automatic expiry or polling;
+it does not imply that a snapshot is current or authorize a shared cache change.
+
 ## Design and brand contracts
 
 The [saved design intent](design-intent.md) retains consequential required/optional decisions and one current per-surface selection. `project.design_intent_draft` links the editable starter; `intent-select` creates an immutable record at `project.design_intent` and retains history. A selected design JSON declares `brand_contract` equal to its selected brand path. Missing choices remain visible, changed declared bytes are stale, and an authorized omission remains an explicit decision. Older contracts stay readable with unassessed intent coverage until selected. This record adds consistency and named-review coverage, not native acceptance or permission.

@@ -94,7 +94,7 @@ class VisualDiscoveryGates(unittest.TestCase):
         self.ready()
         with P.trusted_stage_provider(self.flow.host):
             old = P.stage_status(self.root)['choice_bindings']['option-1']
-            self.spec['requirements'][-1]['value'] = {'treatment': 'interactive_3d'}
+            self.spec['requirements'][-1]['value'] = {'treatment': 'dimensional_styling'}
             self.write_spec()
             report = P.stage_status(self.root)
             self.assertEqual(report['next_stage'], 'brief')

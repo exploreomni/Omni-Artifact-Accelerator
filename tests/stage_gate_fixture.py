@@ -27,6 +27,7 @@ def bootstrap(root, P):
     loaded = ['skills/omni-artifact-accelerator/SKILL.md']
     loaded += ['skills/omni-' + role + '/SKILL.md' for role in P.ROLES]
     loaded += ['skills/omni-product-owner/references/visual-experience-discovery.md']
+    loaded += ['skills/omni-product-owner/references/data-refresh-policy.md']
     loaded += ['skills/omni-design-systems/references/' + name + '.md' for name in
                ('experience-brief', 'visual-craft', 'experience-curriculum', 'ideation-playbook')]
     request = {'id': 'synthetic-fixture',
@@ -86,13 +87,35 @@ def quality_spec(spec, root):
     return spec
 
 
+def refresh_spec(spec, root):
+    """Fictional interview answer for isolated gate tests, never user evidence."""
+    if 'app' not in spec['surfaces'] or spec['product'].get('data_refresh'):
+        return spec
+    note = 'inputs/refresh-fixture.json'
+    (root / note).write_text(json.dumps({'fixture_only': True,
+        'response': 'Keep the existing query cache with manual refresh and no automatic expiry.'}))
+    spec['product']['note_paths'] = sorted(set([*spec['product']['note_paths'], note]))
+    ident = 'refresh-fixture-policy'
+    req = {'id': ident, 'category': 'interaction', 'purpose': 'Synthetic App cache and refresh decision',
+        'surfaces': ['app'], 'required': True, 'origin': 'user', 'disposition': 'selected',
+        'value': {'kind': 'app_data_refresh', 'mode': 'no_custom_policy'},
+        'asset_ids': [], 'decision_ref': note,
+        'contexts': [{'id': 'idle-return', 'appearance': 'light', 'state': 'ready'}],
+        'product': {'priority': 'must', 'basis': 'user_statement', 'source_refs': [note],
+            'acceptance': ['No unsolicited expiry, polling or cache bypass.'],
+            'suggested_roles': ['product-owner', 'app-designer', 'app-engineer', 'bi-engineer', 'qa-analyst']}}
+    spec['requirements'][-1:-1] = [req]
+    spec['product']['data_refresh'] = {'schema_version': 1, 'requirement_id': ident}
+    return spec
+
+
 def discovery_spec(root, P):
     """Original synthetic user replies; never a runtime interview shortcut."""
     project = P.load_project(root)[1]
     draft = root / project['design_intent_draft']
     spec = json.loads(draft.read_text())
     if spec.get('product', {}).get('visual_experience'):
-        spec = quality_spec(spec, root)
+        spec = refresh_spec(quality_spec(spec, root), root)
         draft.write_text(json.dumps(spec))
         bootstrap(root, P)
         refresh_request_review(root, P)
@@ -116,7 +139,7 @@ def discovery_spec(root, P):
     product['visual_experience'] = {'schema_version': 1,
         'family_requirement_ids': ['visual-fixture-family'],
         'follow_up': {'disposition': 'answered', 'requirement_ids': ['visual-fixture-treatment']}}
-    spec = quality_spec(spec, root)
+    spec = refresh_spec(quality_spec(spec, root), root)
     draft.write_text(json.dumps(spec))
     bootstrap(root, P)
     refresh_request_review(root, P)
@@ -212,6 +235,11 @@ def selected_handoff(root, P, option, version=None):
         'concept_manifest_path': option['evidence'] if isinstance(option['evidence'], str) else option['evidence']['path'],
         'quality_coverage': [{'requirement_id': i, 'implementation': 'Carry the original direction into main',
                              'destination_ids': ['main']} for i in spec['product']['quality_bar']['requirement_ids']]}}
+    refresh = P.routing_helper('product_intent').refresh_context(spec)
+    if refresh is not None:
+        design['data_refresh_handoff'] = {'context': refresh,
+            'implementation': 'Use the exact recorded policy in the synthetic bridge; retain same-scope selection.',
+            'qa_cases': ['Check selected cache and trigger behavior, idle/return and error/access recovery.']}
     if len(spec['surfaces']) > 1:
         design['destinations'], design['journeys'] = [], []
         for surface in spec['surfaces']:

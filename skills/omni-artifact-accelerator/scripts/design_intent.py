@@ -214,6 +214,7 @@ def select(root, spec_path, output_relative):
         P.routing_helper('product_intent').V.validate_transition(
             previous['spec'], spec, lambda ok, message: need(ok, 'visual_experience.' + message))
         P.routing_helper('product_intent').validate_quality_transition(previous['spec'], spec)
+        P.routing_helper('product_intent').validate_refresh_transition(previous['spec'], spec)
         current = {r['id']: r for r in spec['requirements']}
         for req in previous['spec']['requirements']:
             if req['required']:
@@ -302,6 +303,10 @@ def choice_report(spec):
             findings.append({'code': 'remote_asset_bytes_unverified', 'asset_id': asset['id'], 'url': asset['remote_url']})
     visual = P.routing_helper('product_intent').visual_report(spec)
     findings.extend(visual['findings'])
+    refresh = P.routing_helper('product_intent').refresh_report(spec)
+    findings.extend(refresh['findings'])
+    if refresh['status'] == 'unresolved':
+        questions.append('How should this App cache, refresh and age its data, or should it use no custom policy?')
     if any(f['code'].startswith('visual_family_') for f in visual['findings']):
         questions.append('Which visual experiences should be used, or has the user explicitly delegated the family recommendation?')
     if any(f['code'] == 'visual_treatment_follow_up_unresolved' for f in visual['findings']):
@@ -324,6 +329,9 @@ def context_index(project, state):
     if state.get('visual_context') is not None:
         result['visual_context'] = copy.deepcopy(state['visual_context'])
         result['visual_experience'] = copy.deepcopy(state['visual_experience'])
+    if state.get('data_refresh_context') is not None:
+        result['data_refresh_context'] = copy.deepcopy(state['data_refresh_context'])
+        result['data_refresh'] = copy.deepcopy(state['data_refresh'])
     return result
 
 
@@ -381,6 +389,8 @@ def check(root):
         visual = P.routing_helper('product_intent')
         base['visual_experience'] = visual.visual_report(spec)
         base['visual_context'] = visual.visual_context(spec)
+        base['data_refresh'] = visual.refresh_report(spec)
+        base['data_refresh_context'] = visual.refresh_context(spec)
         questions, findings = choice_report(spec)
         base['open_questions'] = questions
         base['findings'].extend(findings)
@@ -436,6 +446,9 @@ def packet_context(root, role):
     if state.get('visual_context') is not None:
         result['visual_context'] = copy.deepcopy(state['visual_context'])
         result['visual_experience'] = copy.deepcopy(state['visual_experience'])
+    if state.get('data_refresh_context') is not None:
+        result['data_refresh_context'] = copy.deepcopy(state['data_refresh_context'])
+        result['data_refresh'] = copy.deepcopy(state['data_refresh'])
     return result
 
 

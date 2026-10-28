@@ -19,7 +19,8 @@
     }
     need(keys(contract, ["queryId","keyField","fields","bindings","grain","maxAgeMs"]), "query contract required");
     need(text(contract.queryId) && text(contract.keyField) && text(contract.grain), "exact query, key and grain required");
-    need(Number.isSafeInteger(contract.maxAgeMs) && contract.maxAgeMs > 0 && contract.maxAgeMs <= 86400000, "bounded freshness required");
+    const expires = contract.maxAgeMs !== undefined && contract.maxAgeMs !== null;
+    need(!expires || (Number.isSafeInteger(contract.maxAgeMs) && contract.maxAgeMs > 0 && contract.maxAgeMs <= 86400000), "invalid freshness limit");
     need(Array.isArray(contract.fields) && contract.fields.length > 0 && contract.fields.length <= 32, "bounded fields required");
     for (const f of contract.fields) {
       need(keys(f, ["id","type","unit","aggregation"]) && metricId(f.id) && f.type === "number" && text(f.unit) && text(f.aggregation), "numeric field contract required");
@@ -35,7 +36,7 @@
       if(status==="ready"){
         let current;try{current=now();}catch(_){current=NaN;}
         const age=current-Date.parse(state.asOf);
-        if(!Number.isFinite(age)||age>c.maxAgeMs||age< -5000)status="stale";
+        if(!Number.isFinite(age)||(expires&&age>c.maxAgeMs)||age< -5000)status="stale";
       }
       return {...state,dataStatus:status,diagnostics:[...diagnostics]};
     };
@@ -67,7 +68,7 @@
           for (const f of fields) { need(Object.hasOwn(row,f), "missing field"); values[f] = row[f]; }
           return {key:row[c.keyField], values:{...values}};
         });
-        const status = snapshot.status === "ready" && current - captured > c.maxAgeMs ? "stale" : snapshot.status;
+        const status = snapshot.status === "ready" && expires && current - captured > c.maxAgeMs ? "stale" : snapshot.status;
         // The existing controller validates identities, duplicates, finite/null values.
         return decorate(control.resolve(token, {status, rows, asOf:stamp}));
       } catch (error) {
@@ -77,7 +78,7 @@
     }
     return Object.freeze({begin:control.begin,resolve,invalidate:control.invalidate,select:id=>decorate(control.select(id)),
       snapshot:()=>decorate(control.snapshot()),
-      // Host owns a cancellable freshness deadline and calls this on resume.
+      // Only an explicit limit expires by age; a host may check it on resume.
       checkFreshness(){const state=control.snapshot();if(!state.disposed)notify(state);return decorate(state);},
       dispose:control.dispose,contract:() => clone(c)});
   }
