@@ -170,3 +170,59 @@ Looker projections now declare `source.projection_version: "1.2.0"`. The existin
 Use `--format hex-capture` for `hex-visual-capture.v1` and `--format hex-adapter --producer-revision c513474e87af9c2c31deebd2ae675c8602955203` for the actual Hex `source_adapter_result`. The legacy `hex_source_inventory` continues to use `dma-inventory` at the same declared revision. These are separate contracts, not renamed equivalents. Read [the Hex source contract](hex-source-contract.md) for exact shapes and byte verification.
 
 Complete original definitions retain tabs, repeated placements, controls, content, shared filters, actions, code/component dependencies and generated files independently of semantic parsing. Unknown generated screens remain obligations; generated source is never executed. The capture preserves selected source origin/workspace/project/version/cell/output and state, plus actual supplied/API attachment bytes. Preview rows, unknown state or incomplete result populations cannot establish numerical parity. Imported identities and compatibility pins remain supplied evidence, not authenticated provenance.
+
+## WebFOCUS evidence
+
+`webfocus-adapter` projects the explicitly qualified DMA `source_adapter_result`;
+`webfocus-capture` projects the OAA visual capture. Read the
+[WebFOCUS source contract](webfocus-source-contract.md) for producer/version pins,
+original-file verification, page occurrence identity, result binding and limits.
+Source procedures and executable style/page code remain inert. An adapter report
+is not a complete visual inventory, and structural translation is not native parity.
+
+## ThoughtSpot evidence
+
+The [ThoughtSpot contract](thoughtspot-source-contract.md) specifies the typed
+JSON snapshot, independent inventory, original pointer mappings, capture and
+state-bound result evidence. Select `thoughtspot-api` or `thoughtspot-capture`
+explicitly; no schema guessing or `thoughtspot-adapter` producer exists. Native
+TML and inventory omissions remain obligations. Separate scoped source acquisition,
+interpretation, target design and independent acceptance.
+
+## Qlik supplied contracts
+
+`qlik-api` and `qlik-capture` preserve typed original Qlik definitions and
+independent visual scope; see the [source contract](qlik-source-contract.md).
+Each original payload and independent inventory requires byte-bound mapping.
+Keep repeated placement identity, master references, private/source omissions,
+expression text, states and unresolved extension behavior. Capture validation
+verifies retained bytes; it does not authenticate the source or qualify a tenant.
+No `qlik-adapter` DMA format is registered.
+
+## MicroStrategy supplied contracts
+
+`microstrategy-api` and `microstrategy-capture` project original definitions and
+independently enumerated scope. See the [source contract](microstrategy-source-contract.md).
+Keep project/object/type/version, prompt keys, attribute forms/elements, metric
+identity, page/visual/placement pointers and shared dependencies. Unknown, denied,
+private and unsupported obligations stay in the denominator. No
+`microstrategy-adapter` DMA format is registered.
+
+## Cognos report snapshots
+
+`--format cognos-report` reads `cognos-report-snapshot.v1` under the
+[Cognos contract](cognos-source-contract.md). The local importer wraps original
+UTF-8 report XML with reviewed identity and independent inventory metadata.
+Reprojection revalidates the exact XML fingerprint. Source expressions, external
+references, unknown XML and behavior remain inert evidence or review obligations.
+No connected acquisition, dashboard-spec schema or result binding is qualified.
+
+## BusinessObjects snapshots and captures
+
+`--format businessobjects-api` reads `businessobjects-api-snapshot.v1`;
+`--format businessobjects-capture` reads `businessobjects-visual-capture.v1`.
+See the [source contract](businessobjects-source-contract.md). Original bytes,
+independent inventory, provider/report identities, element occurrences and
+unresolved dependencies remain pinned. Incomplete exports retain their missing
+obligations. Self-declared REST provenance is not authenticated source evidence;
+result/capture normalization and host authority have separate contracts.

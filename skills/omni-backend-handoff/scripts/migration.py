@@ -42,18 +42,27 @@ def surface_deliveries(root, obj, scope, spec):
     selected = {surface for unit in scope["units"] if unit["disposition"] == "migrate" for surface in unit["surfaces"]}
     supplied = spec.get("surface_deliveries", {})
     ap.need(type(supplied) is dict and set(supplied) <= selected, "surface delivery lies outside selected migration scope")
-    required = bool(supplied) or any(inv["platform"] in ("looker", "hex", "periscope", "metabase") for inv in scope["inventories"])
+    required = bool(supplied) or any(inv["platform"] in ("looker", "hex", "periscope", "metabase", "webfocus", "thoughtspot", "qlik", "microstrategy", "cognos", "businessobjects", "ssrs", "powerbi_paginated", "crystal") for inv in scope["inventories"])
     verified, files, gaps, targets = {}, {}, [], set()
     for surface, delivery in supplied.items():
         ap.need(type(delivery) is dict and set(delivery) == {"candidate_path", "execution_receipt_path", "coverage_path"},
                 "surface delivery needs exact candidate, execution receipt and coverage paths")
         import standalone
-        verifier = standalone._app_module() if surface == "app" else standalone
+        if surface == "report":
+            import importlib.util
+            report_path = Path(__file__).resolve().parents[2] / 'omni-report-builder/scripts/report_native.py'
+            ap.no_links(report_path)
+            module_spec = importlib.util.spec_from_file_location('migration_report_delivery', report_path)
+            verifier = importlib.util.module_from_spec(module_spec)
+            module_spec.loader.exec_module(verifier)
+        else:
+            ap.need(surface in ('app', 'dashboard'), 'unknown delivery surface')
+            verifier = standalone._app_module() if surface == "app" else standalone
         proof = verifier.verify_delivery(root, delivery)
         ap.need(proof.get("surface") == surface, "surface delivery kind mismatch")
         origin = urlsplit(proof["target"]["base_url"])
         target = (origin.scheme.lower(), origin.hostname.lower().rstrip("."), origin.port or 443, proof["target"]["document_id"])
-        ap.need(target not in targets, "dashboard and app deliveries require separate target documents")
+        ap.need(target not in targets, "artifact surfaces require separate target documents")
         targets.add(target)
         requirements, _ = ap.read_json(ap.relative_file(root, proof["requirements"]["path"]))
         units = [unit for unit in scope["units"] if unit["disposition"] == "migrate" and surface in unit["surfaces"]]
@@ -89,6 +98,13 @@ def build_scope(root, obj, spec_path):
         envelope(value, "omni_analyst_source_inventory")
         cw.verify_periscope_inventory(root, obj, path)
         cw.verify_metabase_inventory(root, obj, path)
+        cw.verify_webfocus_inventory(root, obj, path)
+        cw.verify_thoughtspot_inventory(root, obj, path)
+        cw.verify_qlik_inventory(root, obj, path)
+        cw.verify_microstrategy_inventory(root, obj, path)
+        cw.verify_cognos_inventory(root, obj, path)
+        cw.verify_businessobjects_inventory(root, obj, path)
+        cw.verify_report_source_inventory(root, obj, path)
         rows = value.get("assets")
         ap.need(type(rows) is list, "source inventory assets required")
         keys = set()
@@ -122,6 +138,10 @@ def build_scope(root, obj, spec_path):
         for key in unit["asset_keys"]:
             identity = (unit["inventory_path"], key)
             ap.need(identity in denominator and identity not in seen_assets, "unknown/duplicate source asset disposition")
+            source_identity = denominator[identity].get('source_identity') or {}
+            ap.need(unit['disposition'] != 'migrate' or source_identity.get('source_platform') not in ('webfocus', 'thoughtspot', 'qlik', 'microstrategy', 'cognos', 'businessobjects', 'ssrs', 'powerbi_paginated', 'crystal')
+                    or source_identity.get('restricted_private_scope') is not True,
+                    'Unselected private source scope cannot migrate')
             seen_assets.add(identity)
     ap.need(seen_assets == set(denominator), "scope omits supplied source assets; disposition every asset explicitly")
     context = None

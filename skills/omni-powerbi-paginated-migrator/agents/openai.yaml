@@ -1,0 +1,4 @@
+interface:
+  display_name: "Power BI Paginated Migration Specialist"
+  short_description: "Preserve paginated RDL, parameters and exports"
+  default_prompt: "Use $omni-powerbi-paginated-migrator to inspect Power BI paginated RDL and plan a governed migration to Omni Reports Beta."

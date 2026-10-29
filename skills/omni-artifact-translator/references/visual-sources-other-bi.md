@@ -102,15 +102,16 @@ Remaining work is source-specific: qualify the customer's version, authorized op
 
 ## Additional-source coverage
 
-Vendor entry points below remain bounded research, not a complete API survey. Periscope/CDT and Metabase have dedicated OAA readers in this group; the others use explicit manual evidence until a typed bridge is implemented. No third-party MCP implementation is recommended.
+Vendor entry points below remain bounded research, not a complete API survey. Periscope/CDT, WebFOCUS, Metabase, ThoughtSpot, Qlik, MicroStrategy, Cognos and BusinessObjects reports have dedicated OAA readers in this group; the others use explicit manual evidence until a typed bridge is implemented. No third-party MCP implementation is recommended.
 
 | Source | Official evidence available | OAA coverage and remaining qualification |
 |---|---|---|
 | Periscope / Sisense for Cloud Data Teams | [Git configuration](https://dtdocs.sisense.com/article/git-configuration) preserves definitions and code sidecars; the separate [Render API](https://dtdocs.sisense.com/article/render-api) supplies dashboard PDF evidence. | Dedicated specialist, separate pinned DMA import and bounded evidence workflow. Real tenant operations and effective access still need qualification. Sisense Linux/Fusion is outside this CDT route. |
-| WebFOCUS | Versioned [9.3.3 repository REST documentation](https://docs.tibco.com/pub/wf-wf/9.3.3/doc/html/embedded-bi-user/02REST_WS16.htm) covers report parameters; [output documentation](https://docs.tibco.com/webfocus/8206/doc/html/topic/com.ibi.help.intro/source/Report_output_formats.htm) describes HTML/AHTML/PDF/PPTX/XLSX. | Manual OAA inventory only. DMA has an offline FEX/MAS/ACX reader, but no typed OAA bridge yet. Qualify installed version and procedure/style/parameter dependencies; older output docs are not a current-version promise. |
+| WebFOCUS | Scoped repository source/metadata reads and supplied state-bound PNG/PDF/results. No vendor MCP or universal page-render endpoint assumed. | Dedicated [specialist](../../omni-webfocus-migrator/SKILL.md), [contract](webfocus-source-contract.md) and [run guide](../../omni-artifact-accelerator/references/webfocus-visual-run.md). Original files, qualified DMA declarations and independent visual inventory; no procedure execution. |
 | Metabase | [Official MCP](https://www.metabase.com/docs/latest/ai/mcp) and [tool contracts](https://www.metabase.com/docs/latest/ai/mcp-tools) require explicit definition/layout inclusions and result pagination. [Serialization](https://www.metabase.com/docs/latest/installation-and-operation/serialization) is Pro/Enterprise and excludes users/groups/permissions. | Dedicated [specialist workflow](../../omni-artifact-accelerator/references/metabase-visual-run.md), typed snapshot/capture readers and bounded evidence operations. Qualify tenant/client and exact source scope; no automatic MBQL conversion, permission equivalence or DMA Metabase parser. |
-| ThoughtSpot | [Spotter MCP](https://developers.thoughtspot.com/docs/mcp-integration) supplies analytics/content discovery with versioned endpoints. Distinct [SpotterCode](https://developers.thoughtspot.com/docs/SpotterCode) offers docs and authenticated API execution. [Embed download controls](https://developers.thoughtspot.com/docs/liveboard-data-downloads) document PDF/data exports. | Research/manual evidence only; no dedicated OAA reader or capture wrapper. Pin version and licensed capability, retain Liveboard/Answer IDs and TML/query dependencies, and qualify read/export operations separately from writes. |
-| Qlik | [Official API catalog](https://portal.qlik.dev/apis/) documents REST, Associative Engine JSON-RPC, CLI and tenant-available MCP; [no-code catalog](https://qlik.dev/toolkits/no-code/) points to MCP and Reporting connectors. | Research/manual evidence only; no dedicated OAA reader or capture wrapper. Qualify tenant/version/export operations and preserve app/sheet/object definitions, selections, set analysis, alternate states, extensions and Section Access. |
+| ThoughtSpot | [Spotter MCP](https://developers.thoughtspot.com/docs/mcp-integration) supplies analytics/content discovery with versioned endpoints. Distinct [SpotterCode](https://developers.thoughtspot.com/docs/SpotterCode) offers docs and authenticated API execution. [Embed download controls](https://developers.thoughtspot.com/docs/liveboard-data-downloads) document PDF/data exports. | Dedicated [specialist](../../omni-thoughtspot-migrator/SKILL.md), [source contract](thoughtspot-source-contract.md) and [run guide](../../omni-artifact-accelerator/references/thoughtspot-visual-run.md): JSON TML, independent inventory, original mapping, bounded REST enrichment, saved-result/render grants and passive MCP checks. No arbitrary query compiler, YAML runtime, source writes or ThoughtSpot DMA producer. Live-tenant qualification remains pending. |
+| Qlik | [Official MCP tools](https://help.qlik.com/en-US/cloud-services/Subsystems/Hub/Content/Sense_Hub/QlikMCP/Qlik-MCP-server-tools.htm), [Engine JSON-RPC](https://qlik.dev/apis/json-rpc/) and [Reports API](https://qlik.dev/apis/rest/reports/) expose distinct metadata, result and visual-reference routes. | Dedicated [specialist](../../omni-qlik-migrator/SKILL.md), [contract](qlik-source-contract.md) and [workflow](../../omni-artifact-accelerator/references/qlik-visual-run.md): original JSON, independent inventory, selected-state evidence, bounded Cloud Reports and passive MCP checks. QIX transport, QlikView, binary decoding, general expression compilation and live qualification remain separate. No DMA Qlik producer is assumed. |
+| MicroStrategy / Strategy | [REST](https://microstrategy.github.io/rest-api-docs/) defines project-scoped metadata, instance analytics and PDF workflows. [MCP](https://www2.strategy.com/producthelp/Current/NextGenAI/en-us/Content/agent_mcpserverintegration.htm) supplies distinct Agent/Mosaic semantic-query tools. | Dedicated [specialist](../../omni-microstrategy-migrator/SKILL.md), [contract](microstrategy-source-contract.md) and [workflow](../../omni-artifact-accelerator/references/microstrategy-visual-run.md). Original definitions/independent scope, qualified instance/export capture and exact result bindings; unsupported documents/cubes/semantics remain obligations. No general compiler, source authoring or DMA producer. |
 
 ## Pilot acceptance criteria (recommended)
 
@@ -118,3 +119,34 @@ Vendor entry points below remain bounded research, not a complete API survey. Pe
 2. The same declared filters, time context and persona produce independently checked source numbers and an Omni candidate with explained differences; no unverified formula is promoted from an image.
 3. The package includes at least one changed-filter state, detail/navigation case and restricted-persona case; unavailable source or target execution remains pending, not passed.
 4. The design review distinguishes retained familiar cues, approved improvements, unsupported behavior and native-target evidence. Static success cannot close native interaction, security or business acceptance.
+
+## WebFOCUS
+
+Use the [source competencies](../../omni-webfocus-migrator/references/source-competencies.md)
+for versioned official authoring/API references reviewed 2026-10-28. Preserve report
+logic, chart styles, page composition and runtime state as separate evidence layers.
+GET requests are not intrinsically passive; only approved actions are allowed by
+the source reader. Source output, visual rendering, effective access and target
+acceptance stay separate. The initial route does not execute procedures or infer
+whole-page export support from an individual report output format.
+
+## Cognos report-first route
+
+Use the [Cognos specialist](../../omni-cognos-migrator/SKILL.md),
+[contract](cognos-source-contract.md) and
+[run guide](../../omni-artifact-accelerator/references/cognos-visual-run.md).
+The local reader covers supplied report specification XML with pinned identity,
+queries, layouts and independent scope. Modern dashboard evidence stays separate;
+its troubleshooting specification viewer is not a supported migration contract.
+No Cognos SDK, source execution, connected capture or numerical parity is implied.
+
+## SAP BusinessObjects route
+
+Use the [BusinessObjects specialist](../../omni-businessobjects-migrator/SKILL.md),
+[contract](businessobjects-source-contract.md) and
+[run guide](../../omni-artifact-accelerator/references/businessobjects-visual-run.md).
+The source reader preserves supplied WebI definitions and Universe/Crystal
+obligations; capture supports retained originals/results plus externally
+qualified metadata. The initial connected profile does not refresh, render, save,
+log out sessions or call source-provided URLs. No vendor SDK or third-party MCP
+is assumed. Crystal and UNV availability depend on exact product/version.

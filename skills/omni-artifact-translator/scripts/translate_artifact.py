@@ -390,7 +390,18 @@ def parse_dma(payload, raw, revision):
 
 def translate(raw, source_format, producer_revision=None):
     payload = decode(raw)
-    if source_format == "looker-api":
+    if source_format in ("rdl-report", "rdl-report-capture", "crystal-report"):
+        import importlib.util
+        name = {'rdl-report': 'rdl_report', 'rdl-report-capture': 'report_source_capture',
+                'crystal-report': 'crystal_report'}[source_format]
+        path = Path(__file__).with_name(name + '.py')
+        require(not any(p.is_symlink() for p in (path, *path.parents)), 'report.module_symlink')
+        spec = importlib.util.spec_from_file_location('analyst_' + name, path)
+        bridge = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(bridge)
+        helpers = {'base': base, 'add_asset': add_asset, 'gap': gap, 'facet': facet, 'FACETS': FACETS}
+        result = (bridge.parse_capture if source_format == 'rdl-report-capture' else bridge.translate)(payload, raw, helpers)
+    elif source_format == "looker-api":
         result = parse_looker(payload, raw)
     elif source_format in ("metabase-api", "metabase-capture"):
         import importlib.util
@@ -399,6 +410,54 @@ def translate(raw, source_format, producer_revision=None):
         spec.loader.exec_module(bridge)
         helpers = {"base": base, "add_asset": add_asset, "gap": gap, "facet": facet}
         result = (bridge.parse_capture if source_format == "metabase-capture" else bridge.parse_snapshot)(payload, raw, helpers)
+    elif source_format in ("businessobjects-api", "businessobjects-capture"):
+        import importlib.util
+        name = "businessobjects_visual" if source_format == "businessobjects-api" else "businessobjects_capture"
+        path = Path(__file__).with_name(name + ".py")
+        require(not any(p.is_symlink() for p in (path, *path.parents)), "businessobjects.module_symlink")
+        spec = importlib.util.spec_from_file_location("analyst_" + name, path)
+        bridge = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(bridge)
+        helpers = {"base": base, "add_asset": add_asset, "gap": gap, "facet": facet}
+        result = bridge.translate(payload, raw, helpers)
+    elif source_format == "cognos-report":
+        import importlib.util
+        path = Path(__file__).with_name("cognos_visual.py")
+        require(not any(p.is_symlink() for p in (path, *path.parents)), "cognos.module_symlink")
+        spec = importlib.util.spec_from_file_location("analyst_cognos_visual", path)
+        bridge = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(bridge)
+        helpers = {"base": base, "add_asset": add_asset, "gap": gap, "facet": facet}
+        result = bridge.translate(payload, raw, helpers)
+    elif source_format in ("microstrategy-api", "microstrategy-capture"):
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("analyst_microstrategy_visual", Path(__file__).with_name("microstrategy_visual.py"))
+        bridge = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(bridge)
+        helpers = {"base": base, "add_asset": add_asset, "gap": gap, "facet": facet}
+        result = (bridge.parse_capture if source_format == "microstrategy-capture" else bridge.parse_snapshot)(payload, raw, helpers)
+    elif source_format in ("qlik-api", "qlik-capture"):
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("analyst_qlik_visual", Path(__file__).with_name("qlik_visual.py"))
+        bridge = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(bridge)
+        helpers = {"base": base, "add_asset": add_asset, "gap": gap, "facet": facet}
+        result = (bridge.parse_capture if source_format == "qlik-capture" else bridge.parse_snapshot)(payload, raw, helpers)
+    elif source_format in ("thoughtspot-api", "thoughtspot-capture"):
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("analyst_thoughtspot_visual", Path(__file__).with_name("thoughtspot_visual.py"))
+        bridge = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(bridge)
+        helpers = {"base": base, "add_asset": add_asset, "gap": gap, "facet": facet}
+        result = (bridge.parse_capture if source_format == "thoughtspot-capture" else bridge.parse_snapshot)(payload, raw, helpers)
+    elif source_format in ("webfocus-adapter", "webfocus-capture"):
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("analyst_webfocus_visual", Path(__file__).with_name("webfocus_visual.py"))
+        bridge = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(bridge)
+        helpers = {"base": base, "add_asset": add_asset, "gap": gap, "facet": facet}
+        result = (bridge.parse_capture(payload, raw, helpers) if source_format == "webfocus-capture" else
+                  bridge.parse_adapter(payload, raw, helpers, producer_revision))
     elif source_format in ("periscope-adapter", "periscope-capture"):
         import importlib.util
         spec = importlib.util.spec_from_file_location("analyst_periscope_visual", Path(__file__).with_name("periscope_visual.py"))
@@ -527,7 +586,7 @@ def write_new(path, value):
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("input", type=Path)
-    parser.add_argument("--format", required=True, choices=("looker-api", "looker-capture", "looker-canonical", "looker-adapter", "hex-capture", "hex-adapter", "normalized-inventory", "dma-inventory", "domo-agent", "sigma-agent", "tableau-capture", "powerbi-capture", "powerbi-adapter", "periscope-adapter", "periscope-capture", "metabase-api", "metabase-capture"))
+    parser.add_argument("--format", required=True, choices=("rdl-report", "rdl-report-capture", "crystal-report", "looker-api", "looker-capture", "looker-canonical", "looker-adapter", "hex-capture", "hex-adapter", "normalized-inventory", "dma-inventory", "domo-agent", "sigma-agent", "tableau-capture", "powerbi-capture", "powerbi-adapter", "periscope-adapter", "periscope-capture", "metabase-api", "metabase-capture", "webfocus-adapter", "webfocus-capture", "thoughtspot-api", "thoughtspot-capture", "qlik-api", "qlik-capture", "microstrategy-api", "microstrategy-capture", "cognos-report", "businessobjects-api", "businessobjects-capture"))
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--producer-revision")
     args = parser.parse_args(argv)

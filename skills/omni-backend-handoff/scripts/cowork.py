@@ -142,6 +142,142 @@ def verify_metabase_inventory(root, obj, path, inputs=()):
     return original
 
 
+def verify_report_source_inventory(root, obj, path, inputs=()):
+    """Reproject every retained report original before a DMA round trip."""
+    value, _ = ap.read_json(ap.relative_file(root, path))
+    if value.get('source', {}).get('platform') not in ('ssrs', 'powerbi_paginated', 'crystal'):
+        return None
+    expected = value['source'].get('input_sha256')
+    candidates = list(dict.fromkeys([*inputs, *[r['path'] for r in obj['sources']]]))
+    matches = [file_pin(root, p, obj) for p in candidates if p.endswith('.json') and p != path
+               and file_pin(root, p, obj)['sha256'] == expected]
+    ap.need(bool(matches), 'Report inventory requires its pinned original source in the engagement')
+    ap.routing_helper('visual_workflow').source_inventory(root, matches[0]['path'], path)
+    return matches[0]
+
+
+def verify_businessobjects_inventory(root, obj, path, inputs=()):
+    """Reproject BusinessObjects originals and projection on every round trip."""
+    value, _ = ap.read_json(ap.relative_file(root, path))
+    if value.get('source', {}).get('platform') != 'businessobjects':
+        return None
+    expected = value['source'].get('input_sha256')
+    candidates = list(dict.fromkeys([*inputs, *[r['path'] for r in obj['sources']]]))
+    matches = []
+    for candidate in candidates:
+        if candidate.endswith('.json') and candidate != path:
+            record = file_pin(root, candidate, obj)
+            if record['sha256'] == expected:
+                matches.append(record)
+    ap.need(bool(matches), 'BusinessObjects inventory requires its pinned original source in the engagement')
+    original = matches[0]
+    workflow = ap.routing_helper('visual_workflow')
+    workflow.source_inventory(root, original['path'], path)
+    return original
+
+
+def verify_cognos_inventory(root, obj, path, inputs=()):
+    """Reproject Cognos report original and projection on every round trip."""
+    value, _ = ap.read_json(ap.relative_file(root, path))
+    if value.get('source', {}).get('platform') != 'cognos':
+        return None
+    expected = value['source'].get('input_sha256')
+    candidates = list(dict.fromkeys([*inputs, *[r['path'] for r in obj['sources']]]))
+    matches = []
+    for candidate in candidates:
+        if candidate.endswith('.json') and candidate != path:
+            record = file_pin(root, candidate, obj)
+            if record['sha256'] == expected:
+                matches.append(record)
+    ap.need(bool(matches), 'Cognos inventory requires its pinned original source in the engagement')
+    original = matches[0]
+    workflow = ap.routing_helper('visual_workflow')
+    workflow.source_inventory(root, original['path'], path)
+    return original
+
+
+def verify_microstrategy_inventory(root, obj, path, inputs=()):
+    """Reproject MicroStrategy originals and check capture attachments on every round trip."""
+    value, _ = ap.read_json(ap.relative_file(root, path))
+    if value.get('source', {}).get('platform') != 'microstrategy':
+        return None
+    expected = value['source'].get('input_sha256')
+    candidates = list(dict.fromkeys([*inputs, *[r['path'] for r in obj['sources']]]))
+    matches = []
+    for candidate in candidates:
+        if candidate.endswith('.json') and candidate != path:
+            record = file_pin(root, candidate, obj)
+            if record['sha256'] == expected:
+                matches.append(record)
+    ap.need(bool(matches), 'MicroStrategy inventory requires its pinned original source in the engagement')
+    original = matches[0]
+    workflow = ap.routing_helper('visual_workflow')
+    workflow.source_inventory(root, original['path'], path)
+    return original
+
+
+
+def verify_qlik_inventory(root, obj, path, inputs=()):
+    """Reproject Qlik originals and check capture attachments on every round trip."""
+    value, _ = ap.read_json(ap.relative_file(root, path))
+    if value.get('source', {}).get('platform') != 'qlik':
+        return None
+    expected = value['source'].get('input_sha256')
+    candidates = list(dict.fromkeys([*inputs, *[r['path'] for r in obj['sources']]]))
+    matches = []
+    for candidate in candidates:
+        if candidate.endswith('.json') and candidate != path:
+            record = file_pin(root, candidate, obj)
+            if record['sha256'] == expected:
+                matches.append(record)
+    ap.need(bool(matches), 'Qlik inventory requires its pinned original source in the engagement')
+    original = matches[0]
+    workflow = ap.routing_helper('visual_workflow')
+    workflow.source_inventory(root, original['path'], path)
+    return original
+
+
+
+def verify_thoughtspot_inventory(root, obj, path, inputs=()):
+    """Reproject ThoughtSpot originals and check capture attachments on every round trip."""
+    value, _ = ap.read_json(ap.relative_file(root, path))
+    if value.get('source', {}).get('platform') != 'thoughtspot':
+        return None
+    expected = value['source'].get('input_sha256')
+    candidates = list(dict.fromkeys([*inputs, *[r['path'] for r in obj['sources']]]))
+    matches = []
+    for candidate in candidates:
+        if candidate.endswith('.json') and candidate != path:
+            record = file_pin(root, candidate, obj)
+            if record['sha256'] == expected:
+                matches.append(record)
+    ap.need(bool(matches), 'ThoughtSpot inventory requires its pinned original source in the engagement')
+    original = matches[0]
+    workflow = ap.routing_helper('visual_workflow')
+    workflow.source_inventory(root, original['path'], path)
+    return original
+
+
+def verify_webfocus_inventory(root, obj, path, inputs=()):
+    """Reproject WebFOCUS originals and check capture attachments on every round trip."""
+    value, _ = ap.read_json(ap.relative_file(root, path))
+    if value.get('source', {}).get('platform') != 'webfocus':
+        return None
+    expected = value['source'].get('input_sha256')
+    candidates = list(dict.fromkeys([*inputs, *[r['path'] for r in obj['sources']]]))
+    matches = []
+    for candidate in candidates:
+        if candidate.endswith('.json') and candidate != path:
+            record = file_pin(root, candidate, obj)
+            if record['sha256'] == expected:
+                matches.append(record)
+    ap.need(bool(matches), 'WebFOCUS inventory requires its pinned original source in the engagement')
+    original = matches[0]
+    workflow = ap.routing_helper('visual_workflow')
+    workflow.source_inventory(root, original['path'], path)
+    return original
+
+
 def migration_sources(root, obj, spec, inputs):
     """Bind route checks to the selected export evidence, not just an action label."""
     explicit = spec.get("source_inventory_paths")
@@ -180,7 +316,20 @@ def migration_sources(root, obj, spec, inputs):
         ap.need(route is None or spec["route"] in (route, "unselected", "reuse_existing"),
                 "request route conflicts with selected source inventory")
         original = (verify_periscope_inventory(root, obj, path, inputs) if platform == 'periscope' else
-                    verify_metabase_inventory(root, obj, path, inputs) if platform == 'metabase' else None)
+                    verify_metabase_inventory(root, obj, path, inputs) if platform == 'metabase' else
+                    verify_webfocus_inventory(root, obj, path, inputs) if platform == 'webfocus' else
+                    verify_thoughtspot_inventory(root, obj, path, inputs) if platform == 'thoughtspot' else
+                    verify_qlik_inventory(root, obj, path, inputs) if platform == 'qlik' else
+                    verify_microstrategy_inventory(root, obj, path, inputs) if platform == 'microstrategy' else
+                    verify_cognos_inventory(root, obj, path, inputs) if platform == 'cognos' else
+                    verify_businessobjects_inventory(root, obj, path, inputs) if platform == 'businessobjects' else
+                    verify_report_source_inventory(root, obj, path, inputs) if platform in ('ssrs', 'powerbi_paginated', 'crystal') else None)
+        if platform in ('webfocus', 'thoughtspot', 'qlik', 'microstrategy', 'cognos', 'businessobjects', 'ssrs', 'powerbi_paginated', 'crystal'):
+            restricted = {a['asset_key'] for a in value['assets'] if
+                          a.get('source_identity', {}).get('restricted_private_scope') is True}
+            requested = {key for r in spec['requirements'] for key in r['frontend_asset_ids']}
+            requested.update(c['asset_id'] for c in spec['consumer_bindings'])
+            ap.need(not requested.intersection(restricted), 'Unselected private source scope cannot migrate')
         records.append({**pin, "platform": platform, "route": route,
                         "route_status": context.get("route_status", "not_supplied"),
                         **({'original_source': original} if original else {})})

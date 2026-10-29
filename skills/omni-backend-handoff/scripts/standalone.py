@@ -76,7 +76,7 @@ def control_source_keys(requirements, surface="dashboard"):
         for key in ("visual", "value", "visual", "visualType"):
             visual = visual.get(key) if isinstance(visual, dict) else None
         if item["disposition"] == "migrate" and (item["kind"] == "control" or visual == "slicer" or
-                (item.get("source_identity", {}).get("source_platform") in {"periscope", "metabase"} and
+                (item.get("source_identity", {}).get("source_platform") in {"periscope", "metabase", "webfocus", "thoughtspot", "qlik", "microstrategy", "cognos", "businessobjects", "ssrs", "powerbi_paginated", "crystal"} and
                  item["kind"] in {"filter", "parameter"})):
             result.add(item["asset_key"])
     return result
@@ -144,7 +144,7 @@ def validate_control_bindings(root, spec, requirements, workflow):
         cw.strings(control["evidence_paths"], "standalone.control_evidence_required", nonempty=True)
         for path in control["evidence_paths"]:
             workflow.pin(root, path)
-    if inventory.get("source", {}).get("platform") in {"powerbi", "looker", "hex", "periscope", "metabase"}:
+    if inventory.get("source", {}).get("platform") in {"powerbi", "looker", "hex", "periscope", "metabase", "webfocus", "thoughtspot", "qlik", "microstrategy", "cognos", "businessobjects", "ssrs", "powerbi_paginated", "crystal"}:
         ap.need(bound == required, "standalone.retained_source_control_unbound")
     return controls
 
@@ -172,7 +172,7 @@ def validate_spec(root, spec, workflow):
     ap.need(cw.text(spec.get("review_ref")), "standalone.review_required")
     _, requirements = workflow.requirements(root, spec.get("requirements_path"))
     inventory = workflow.load(root, requirements["source_files"][1]["path"])
-    if inventory.get("source", {}).get("platform") in {"looker", "hex", "periscope", "metabase"}:
+    if inventory.get("source", {}).get("platform") in {"looker", "hex", "periscope", "metabase", "webfocus", "thoughtspot", "qlik", "microstrategy", "cognos", "businessobjects", "ssrs", "powerbi_paginated", "crystal"}:
         ap.need(requirements["route"] != "unselected", "standalone.explicit_route_required")
         selected_backend(root, requirements, workflow)
     else:
@@ -383,16 +383,17 @@ def verify_delivery(root, spec):
 
 
 def build_both_return(root, project, scope_relative, spec_path, migration):
-    """Aggregate independently recomputed App/dashboard evidence, without DMA."""
+    """Aggregate independently recomputed surface evidence, without DMA."""
     scope = migration.load_scope(root, project, scope_relative)
     ap.need(scope["migration_scope"] == "standalone_frontend" and scope["backend_context"] is None and
             not project.get("dma_import"), "standalone.no_dma_scope_required")
     spec, _ = ap.read_json(ap.relative_file(root, spec_path))
     migration.envelope(spec, "analyst_standalone_migration_return_spec")
     ap.need(set(spec) == {"schema_version", "kind", "surface", "scope_sha256", "surface_deliveries", "unresolved"} and
-            spec["surface"] == "both" and spec["scope_sha256"] == scope["sha256"], "standalone.both_return_shape")
+            spec["surface"] in ("both", "report") and spec["scope_sha256"] == scope["sha256"], "standalone.both_return_shape")
     selected = {surface for unit in scope["units"] if unit["disposition"] == "migrate" for surface in unit["surfaces"]}
-    ap.need(selected == {"app", "dashboard"} and bool(spec["surface_deliveries"]), "standalone.both_scope_required")
+    expected = {"app", "dashboard"} if spec["surface"] == "both" else {"report"}
+    ap.need(selected == expected and bool(spec["surface_deliveries"]), "standalone.both_scope_required")
     cw.strings(spec["unresolved"], "standalone.unresolved_required")
     deliveries, files, gaps, _ = migration.surface_deliveries(root, project, scope, spec)
     # Each received surface has already checked its current baseline, source,
@@ -410,22 +411,28 @@ def build_both_return(root, project, scope_relative, spec_path, migration):
         requirements, _ = ap.read_json(ap.relative_file(root, delivery["requirements"]["path"]))
         for pin in requirements["source_files"]:
             sources[pin["path"]] = cw.file_pin(root, pin["path"], project)
-    return cw.sealed({"schema_version": 1, "kind": RETURN_KIND, "surface": "both", "project_id": project["id"],
+    missing_lanes = {gap['case_id'].split('/')[-2] for gap in gaps if gap['code'] == 'pending_case'}
+    missing_lanes.update(gap['lane'] for gap in gaps if gap['code'] == 'pending_report_source_parity')
+    if any(gap['code'] == 'pending_report_case' for gap in gaps):
+        missing_lanes.add('report_output')
+    report_only = spec['surface'] == 'report'
+    return cw.sealed({"schema_version": 1, "kind": RETURN_KIND, "surface": spec["surface"], "project_id": project["id"],
         "scope": cw.file_pin(root, scope_relative, project), "scope_sha256": scope["sha256"],
         "migration_scope": "standalone_frontend", "backend_context": None, "spec": cw.file_pin(root, spec_path, project),
         "surface_deliveries": deliveries, "files": list(files.values()), "source_files": list(sources.values()),
         "source_gaps": source_gaps, "candidate_coverage": "complete" if not gaps else "incomplete", "gaps": gaps,
-        "coverage_basis": "recomputed_source_scope_independent_dashboard_and_app_evidence",
-        "missing_lanes": sorted({gap["case_id"].split("/")[-2] for gap in gaps if gap["code"] == "pending_case"}),
-        "unresolved": spec["unresolved"], "acceptance": "not_assessed", "native_verification": "recorded_readback_only",
+        "coverage_basis": "recomputed_source_scope_independent_surface_evidence",
+        "missing_lanes": sorted(missing_lanes),
+        "unresolved": spec["unresolved"], "acceptance": "not_assessed",
+        "native_verification": "supplied_observation_only" if report_only else "recorded_readback_only",
         "business_acceptance": "not_assessed", "source_completeness": "not_established",
-        "remote_freshness": "last_recorded_native_inspection_only", "authorizes_target_write": False,
+        "remote_freshness": "unverified_remote" if report_only else "last_recorded_native_inspection_only", "authorizes_target_write": False,
         "origin_authenticated": False, "migration_accepted": False})
 
 
 def build_return(root, project, scope_relative, spec_path, migration):
     supplied, _ = ap.read_json(ap.relative_file(root, spec_path))
-    if supplied.get("surface") == "both":
+    if supplied.get("surface") in ("both", "report"):
         return build_both_return(root, project, scope_relative, spec_path, migration)
     if supplied.get("surface") == "app":
         return _app_module().build_return(root, project, scope_relative, spec_path, migration)
@@ -461,7 +468,7 @@ def build_return(root, project, scope_relative, spec_path, migration):
     bound_assets = {key for binding in [*baseline["bindings"], *baseline.get("control_bindings", [])]
                     for key in binding["source_asset_keys"]}
     control_bound = {key for binding in baseline.get("control_bindings", []) for key in binding["source_asset_keys"]}
-    if workflow.load(root, inventory["path"]).get("source", {}).get("platform") in {"powerbi", "looker", "hex", "periscope", "metabase"} or baseline.get("control_bindings"):
+    if workflow.load(root, inventory["path"]).get("source", {}).get("platform") in {"powerbi", "looker", "hex", "periscope", "metabase", "webfocus", "thoughtspot", "qlik", "microstrategy", "cognos", "businessobjects", "ssrs", "powerbi_paginated", "crystal"} or baseline.get("control_bindings"):
         gaps += [{"code": "source_control_not_bound", "asset_key": key}
                  for key in sorted(control_source_keys(requirements) - control_bound)]
     gaps += [{"code": "source_query_not_bound", "asset_key": key}
@@ -501,6 +508,6 @@ def verify_return(project_path, receipt_relative, migration):
             "standalone.return_changed")
     return {"status": "consistent", "candidate_coverage": receipt["candidate_coverage"],
             "design_completion": ap.design_completion(root),
-            "native_verification": "recorded_readback_only", "business_acceptance": "not_assessed",
-            "remote_freshness": "last_recorded_native_inspection_only",
+            "native_verification": receipt.get("native_verification", "recorded_readback_only"), "business_acceptance": "not_assessed",
+            "remote_freshness": receipt.get("remote_freshness", "last_recorded_native_inspection_only"),
             "migration_accepted": False, "authorizes_target_write": False}

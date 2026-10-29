@@ -20,7 +20,7 @@ EFFECTS = {
     "expectation": {"numerical", "native_behavior", "human_usability"},
 }
 CHANGES = {"material_new", "material_redesign", "focused_edit", "faithful_migration"}
-DESIGNERS = {"app-designer", "dashboard-designer", "design-systems"}
+DESIGNERS = {"app-designer", "dashboard-designer", "report-designer", "design-systems"}
 
 
 def intent_helper():
@@ -72,6 +72,8 @@ def file_pin(root, path):
 def target(value, surface):
     P.need(type(value) is dict and value.get("surface") == surface, "candidate target surface mismatch")
     P.need(value.get("state") in {"local", "draft", "published"}, "target state required")
+    if surface == 'report':
+        intent_helper().validate_report_target(value)
     if value["state"] != "local":
         text(value.get("document_id"), "target document_id")
         origin = urlsplit(value.get("instance", ""))
@@ -192,7 +194,7 @@ def validate(spec, project):
             text(ident, "journey obligation_id")
             P.need(ident not in seen, "duplicate journey observation")
             seen.add(ident)
-            P.need(type(observation.get("path")) is list and len(observation["path"]) >= 2 and
+            P.need(type(observation.get("path")) is list and len(observation["path"]) >= (1 if case['surface'] == 'report' else 2) and
                    all(has_text(i) for i in observation["path"]), "journey path required")
             for field in ("action", "start_state", "end_state", "retained_context", "return_behavior", "observation"):
                 text(observation.get(field), "journey " + field)
@@ -207,6 +209,9 @@ def validate(spec, project):
 def references(spec, root=None):
     """Enumerate every declared file; the frozen manifest cannot omit embedded references."""
     paths = {relative(d["path"]) for d in spec["dependencies"]}
+    paths.update(relative(d['target']['capability_evidence_path']) for d in spec['dependencies']
+                 if d['kind'] == 'candidate' and d['surface'] == 'report'
+                 and d['target'].get('capability_evidence_path'))
     if spec.get("intent"):
         P.need(root is not None, "engagement root required for intent references")
         intent = intent_helper()
@@ -281,6 +286,9 @@ def evaluate(root, spec, pins, stale, destination_version=None):
         else:
             if case.get("target") != candidate["target"]:
                 reasons.append("target_identity_mismatch")
+            capability = candidate['target'].get('capability_evidence_path') if candidate['surface'] == 'report' else None
+            if capability and (capability not in pins or capability in stale):
+                reasons.append('report_capability_evidence_missing_or_stale')
         required = {ident: d for ident, d in deps.items() if
                     d["surface"] in {case["surface"], "shared"} and case["lane"] in EFFECTS[d["kind"]]}
         if case["lane"] == "numerical" and case["status"] == "pass" and not {

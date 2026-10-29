@@ -104,3 +104,79 @@ Checked **2026-10-21** against local repository contents, read-only. These commi
 - Sigma `f4eda45b0f49dc7335496d028665f7339ed82e8f`: [README](https://github.com/atx-omni/SigmaMigrationAgent/blob/f4eda45b0f49dc7335496d028665f7339ed82e8f/README.md), [operator skill](https://github.com/atx-omni/SigmaMigrationAgent/blob/f4eda45b0f49dc7335496d028665f7339ed82e8f/.agents/skills/sigma-to-omni-migration/SKILL.md), [advanced Phase 0 catalog](https://github.com/atx-omni/SigmaMigrationAgent/blob/f4eda45b0f49dc7335496d028665f7339ed82e8f/agents/sigma/README.md).
 
 Upstream repository links are provenance references, not bundled dependencies or a promise of access. Some source-engine repositories may require separate permission; offline contract import remains available without that access.
+
+## WebFOCUS cases
+
+Use the [specialist handoff](../../omni-webfocus-migrator/references/behavior-handoff.md)
+for source obligations. Independently check DEFINE versus COMPUTE, PRINT versus SUM,
+BY/ACROSS grain, totals, JOIN fanout, ordered styles, repeated placements, prompts,
+cascades, drill/Auto Linking and custom container behavior. Bind exports to actual
+state, principal, population, preview mode/limit stage, watermark and freshness.
+An interactive document export need not contain the browser's computed view.
+Unknowns keep parity inconclusive; native readback does not prove effective access,
+rendered quality or ReportCaster replacement. Report procedures remain inert during
+package checks, and runtime execution requires separate qualification and authority.
+
+## ThoughtSpot cases
+
+Use the [specialist handoff](../../omni-thoughtspot-migrator/references/behavior-handoff.md).
+Compare distinct saved/pinned/inline identities and repeated placements; verify
+linked filters/exclusions, tab/group/private-view scope, runtime overrides,
+parameters/reset, custom actions and export selection. Require observed population,
+completeness, aggregation/limit stage and freshness as well as numerical equality.
+Source cache declarations never override the selected target refresh policy.
+Retain missing/unsupported obligations and separate App/dashboard acceptance.
+MCP discovery is not native definition evidence; session completion is not saved
+Answer identity. Fixture passes do not prove live effective access or rendering.
+
+## Qlik
+
+Use the [specialist handoff](../../omni-qlik-migrator/references/behavior-handoff.md).
+Verify selection/alternate-state/bookmark populations, locked/excluded values,
+master-item reuse, totals and expression scope. Require full qualified result
+regions with straight/pivot mode and exact source/target state, freshness and
+persona binding. Test Section Access row/column restrictions independently.
+A private or unsupported item stays in scope accounting until explicitly resolved;
+no screenshot, partial export, parser pass or successful publish closes acceptance.
+
+## MicroStrategy / Strategy
+
+Use the [behavior handoff](../../omni-microstrategy-migrator/references/behavior-handoff.md).
+Check independent coverage, source-byte continuity, repeated placements, prompt
+keys/defaults/unanswered states, selector readback and all four filter stages.
+Bind source results to definition, instance, project/principal, observed state
+and freshness. Test raw/formatted metric values, attribute forms, totals, nulls
+and pagination independently. Unsupported result shapes are inconclusive.
+
+Keep numerical, rendered, interaction, effective-access and business acceptance
+lanes separate. Metadata success or a consistent MCP response is not query or
+render authority. Exercise denied identities, drift, expired/uncertain instances,
+credential echoes and owned-only cleanup in the qualified host. A source-only
+fixture pass cannot certify a live tenant, a sandbox or actual user access.
+
+## Cognos
+
+Use the [behavior handoff](../../omni-cognos-migrator/references/behavior-handoff.md).
+Test required/default/empty prompt states, detail versus summary filters,
+aggregation and totals, conditional rendering, repeated query placements,
+drill-through parameter transfer and return, pagination/export, and effective
+package/data-module permissions. Preserve excluded, denied and unobserved source
+scope. Report XML cannot establish result/state parity: the current comparison
+path stays inconclusive with `source.cognos_result_binding_unqualified` until a
+qualified result-evidence adapter exists. Do not relabel raw CSV equality as
+Cognos acceptance or substitute a manual observation to bypass this finding.
+
+## BusinessObjects
+
+Use the [behavior handoff](../../omni-businessobjects-migrator/references/behavior-handoff.md).
+Reconcile original inventory, provider scopes, merged dimensions, calculation
+contexts, prompts/controls, report/section totals and exact state/result evidence.
+Preserve unknowns and partial refresh. Check data-mode, row-limit and aggregation
+context before claiming comparable populations. Separate Universe security and
+Crystal print/delivery obligations from WebI visual correctness.
+
+Source comparisons require a case-pinned capture, typed raw normalization and
+complete observed provider/state evidence. Equal unbound files remain inconclusive.
+Snapshots, metadata reads and rendering do not establish effective user access,
+full source extraction or business acceptance. Target caching remains the user's
+explicit policy, not an inherited source default.

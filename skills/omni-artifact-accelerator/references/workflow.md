@@ -129,3 +129,42 @@ and record drill. Product-fit recommendation, independent creative critique and
 correctness remain separate. Under CLI-only constraints, fix source-observable
 requirement loss while leaving rendered quality unobserved; more structural checks
 cannot close that lane. No fixed layout or extra approval round is required.
+
+WebFOCUS migrations assign [omni-webfocus-migrator](../../omni-webfocus-migrator/SKILL.md)
+in the same engagement. Use the [run guide](webfocus-visual-run.md) to bind original
+source, page occurrences and runtime obligations before backend/design continuation.
+The source specialist adds neither a parallel orchestrator nor target-write authority.
+
+ThoughtSpot migrations assign [omni-thoughtspot-migrator](../../omni-thoughtspot-migrator/SKILL.md)
+inside the current engagement. Its [run guide](thoughtspot-visual-run.md) covers
+source qualification, JSON TML/original mapping, independent denominator,
+state-bound evidence and source-specific behavior. The specialist coordinates
+with analyst/design/engineering/QA roles; it is not a second orchestrator or a
+backend compiler. Typed source routing never authorizes early coding or writes.
+
+Qlik migrations assign [omni-qlik-migrator](../../omni-qlik-migrator/SKILL.md)
+inside the current engagement. The [run guide](qlik-visual-run.md) preserves
+original definitions, independent scope, selected-state evidence and source
+security obligations. The specialist cannot bypass A–F, redesign metrics,
+activate dependencies or grant publication. Backend gaps use the normal DMA
+requirements exchange; a native Qlik parser is not assumed.
+
+Strategy/MicroStrategy migrations use
+[omni-microstrategy-migrator](../../omni-microstrategy-migrator/SKILL.md) inside the
+current engagement. Follow the [run guide](microstrategy-visual-run.md), with
+independent inventory, original definitions, observed instance/prompt/selector
+state and separate execution/export grants. Keep A–F, actual three-option choice,
+existing Omni reuse and scoped DMA exchange intact. Unknown source profiles and
+unperformed access/render/acceptance checks remain unresolved.
+
+Cognos migrations use [omni-cognos-migrator](../../omni-cognos-migrator/SKILL.md)
+inside this engagement. Follow the [run guide](cognos-visual-run.md) for retained
+report XML, independent selected inventory and behavioral obligations. Dashboard
+specifications, results and effective access require separate qualified evidence;
+the report reader does not provide an execution or parity shortcut.
+
+BusinessObjects migrations use [omni-businessobjects-migrator](../../omni-businessobjects-migrator/SKILL.md)
+inside this engagement. Follow the [run guide](businessobjects-visual-run.md).
+Preserve separate WebI, Universe and Crystal profiles, source/provider context,
+independent inventory and traceable calculation obligations. Local source scope
+cannot bypass A–F, select a target cache policy or authorize source/native writes.

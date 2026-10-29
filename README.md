@@ -1,6 +1,6 @@
 # Omni Artifact Accelerator
 
-An analyst's sidekick for designing, building and reviewing **native Omni dashboards and native Omni Apps**. The package brings together 17 specialist skills, source migration readers and local workflow helpers so an AI agent can carry a business question through design, implementation and independent QA.
+An analyst's sidekick for designing, building and reviewing **native Omni dashboards and native Omni Apps**, with a design and implementation-preparation foundation for **native Reports Beta**. The package brings together role-specific skills, source migration readers and local workflow helpers so an AI agent can carry a business question through design, implementation and independent QA.
 
 Start with an existing Omni model, bring an exported BI experience, or continue from the companion [Data Model Accelerator](https://github.com/exploreomni/Data-Model-Accelerator). Use only the specialists the task needs.
 
@@ -8,6 +8,7 @@ Start with an existing Omni model, bring an exported BI experience, or continue 
 
 - **Design a new dashboard:** define the decision, metrics, charts, filters and brand, then prepare a native candidate and review evidence.
 - **Build an analytical App:** design a task flow with governed queries, inputs, scenario state and recovery behavior.
+- **Prepare a page-precise Report:** specify physical pages, grouping, totals and distinct PDF/Excel outputs; qualify the beta native authoring interface before implementation. See the [report workflow](skills/omni-artifact-accelerator/references/report-workflow.md).
 - **Migrate an existing experience:** preserve source identities, calculations, controls, layout intent and unresolved behavior while making deliberate design improvements.
 - **Coordinate frontend and backend work:** send specific model gaps to Data Model Accelerator and reconcile its versioned response without repeating discovery.
 - **Create a consistent customer experience:** reuse approved logos, images, fonts and color semantics across the selected dashboard and App surfaces. Supply your official website and preferred logo file/URL, authorize sourcing its logo, or explicitly choose no logo; the package reuses that decision.
@@ -253,11 +254,19 @@ For migrations, choose the documented source path before exporting or running an
 | Domo | Selected companion-migrator evidence plus original configuration and visual references | [Domo pilot](skills/omni-artifact-translator/references/domo-visual-pilot.md) |
 | Periscope / Sisense CDT | Dedicated source specialist, pinned DMA evidence and bounded capture/result handoff; Linux/Fusion is a separate product | [CDT migration workflow](skills/omni-artifact-accelerator/references/periscope-visual-run.md) |
 | Metabase | Dedicated source specialist, typed API snapshots and bounded capture; preserved dashboard/tab/question identity, controls and query gaps | [Metabase migration workflow](skills/omni-artifact-accelerator/references/metabase-visual-run.md) |
+| WebFOCUS | Dedicated specialist, pinned DMA declarations, independent visual/page inventory and bounded repository reads; source procedures remain inert | [WebFOCUS migration workflow](skills/omni-artifact-accelerator/references/webfocus-visual-run.md) |
+| ThoughtSpot | Dedicated specialist, JSON TML and independent scope, bounded saved-result/render capture, retained MCP checks and explicit identity/behavior gaps | [ThoughtSpot migration workflow](skills/omni-artifact-accelerator/references/thoughtspot-visual-run.md) |
+| Qlik Cloud / Sense | Dedicated specialist, original object definitions and scope, retained selection/result evidence, bounded Cloud Reports and explicit source gaps | [Qlik migration workflow](skills/omni-artifact-accelerator/references/qlik-visual-run.md) |
+| MicroStrategy / Strategy | Dedicated specialist, original definitions and inventory, guarded instance/export capture, prompt/selector semantics and passive MCP checks | [Strategy migration workflow](skills/omni-artifact-accelerator/references/microstrategy-visual-run.md) |
+| SSRS / Power BI paginated | Separate specialists, passive RDL inspection, state-bound supplied results/exports and guarded native Report preparation | [Report workflow](skills/omni-artifact-accelerator/references/report-workflow.md) |
+| Crystal Reports | Supplied version-specific extraction, formula/subreport obligations and original evidence; no binary decoder or SDK execution | [Crystal specialist](skills/omni-crystal-reports-migrator/SKILL.md) |
+| SAP BusinessObjects | WebI evidence, Universe/DMA obligations, version-specific Crystal review, supplied results and externally qualified metadata capture | [BusinessObjects migration workflow](skills/omni-artifact-accelerator/references/businessobjects-visual-run.md) |
+| IBM Cognos Analytics | Dedicated specialist, bounded report XML import, independent inventory and behavior/DMA obligations; dashboards use reviewed manual evidence | [Cognos migration workflow](skills/omni-artifact-accelerator/references/cognos-visual-run.md) |
 | Other sources | Explicitly reviewed manual evidence inventory | [Inventory contract](skills/omni-artifact-translator/references/inventory-contract.md#normalized-inventory) |
 
 Read [parser coverage](docs/parser-coverage.md) for exact formats and limitations. A supported reader is not a universal chart or formula converter. Missing source objects, custom visualizations, interactions and security dependencies remain visible work.
 
-## The 17 roles
+## Specialist roles
 
 | Skill | Owns |
 | --- | --- |
@@ -269,6 +278,8 @@ Read [parser coverage](docs/parser-coverage.md) for exact formats and limitation
 | `omni-3d-modeler` | Original geometry, scale, materials, hierarchy and stable spatial identity |
 | `omni-app-designer` | Task flows, screens, interaction states and responsive behavior |
 | `omni-dashboard-designer` | Layout, chart selection, hierarchy and exploration |
+| `omni-report-designer` | Native Reports Beta page composition, pagination and output design |
+| `omni-report-builder` | Reviewed report definitions, query bindings and native qualification |
 | `omni-qa-analyst` | Independent numerical, interaction, visual, access and performance checks |
 | `omni-data-storyteller` | Evidence-backed titles, annotations and decision guidance |
 | `omni-motion-designer` | Purposeful feedback and reduced-motion equivalents |
@@ -277,6 +288,15 @@ Read [parser coverage](docs/parser-coverage.md) for exact formats and limitation
 | `omni-artifact-translator` | Original source inventory, behavior mapping and migration gaps |
 | `omni-periscope-migrator` | CDT source identity, capture/state, custom-logic obligations and coordinated migration evidence |
 | `omni-metabase-migrator` | Metabase source identity, query/placement/control evidence and coordinated migration obligations |
+| `omni-webfocus-migrator` | Procedure semantics, ordered visual styles, page composition and runtime migration obligations |
+| `omni-thoughtspot-migrator` | Liveboard/Answer identity, TML semantics, source-state evidence and migration coordination |
+| `omni-qlik-migrator` | Qlik sheet/object identity, selections, expressions, visual references and migration obligations |
+| `omni-microstrategy-migrator` | Strategy chapters, visual placements, report semantics, prompts/selectors and migration obligations |
+| `omni-businessobjects-migrator` | WebI providers, report contexts, Universe handoff and separate Crystal obligations |
+| `omni-cognos-migrator` | Cognos report queries, prompts, layouts and dependency obligations; separate dashboard evidence |
+| `omni-ssrs-migrator` | RDL reports, catalog identity, parameters, pagination and source evidence |
+| `omni-powerbi-paginated-migrator` | Power BI paginated RDL and separately qualified export evidence |
+| `omni-crystal-reports-migrator` | Explicit Crystal extractions, evaluation-order and subreport obligations |
 | `omni-backend-handoff` | Versioned DMA exchanges, current bindings and change-impact review |
 
 Each specialist can also be invoked directly. Design guidance draws from official Apple, Google, Microsoft, Samsung and other primary sources, with platform-specific advice distinguished from package recommendations. See [design foundations](skills/omni-design-systems/references/vendor-guidance.md).

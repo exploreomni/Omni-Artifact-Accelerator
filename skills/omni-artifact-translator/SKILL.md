@@ -76,3 +76,57 @@ Return the saved `source-inventory.json`, the mapping proposal, an analyst behav
 For Looker, use the [source contract](references/looker-source-contract.md) and [run guide](../omni-artifact-accelerator/references/looker-visual-run.md). Keep API, supplied LookML, canonical DMA and generic DMA evidence explicitly typed. Inventory query visuals, non-query content, placements and controls separately; retain unknown/merged/custom behavior. Pair results and renders with exact source identities and observed state; the blog example is mapping guidance, not execution authority.
 
 For Hex, use the [source contract](references/hex-source-contract.md) and [run guide](../omni-artifact-accelerator/references/hex-visual-run.md). `hex-capture` preserves original YAML and transferred evidence, all layouts/placements, inputs, content, generated files and unresolved interfaces. `hex-adapter` and legacy `dma-inventory` preserve the distinct actual DMA contracts. Neither replaces the complete visual inventory. Source Python, JavaScript and SQL remain inert evidence; no source execution or publishing for a screenshot. Numerical comparison requires matching workspace/version/cell/output, observed inputs and complete typed results.
+
+For WebFOCUS, use the [source specialist](../omni-webfocus-migrator/SKILL.md) and
+[source contract](references/webfocus-source-contract.md). `webfocus-adapter` reads
+qualified DMA declaration evidence; `webfocus-capture` adds original files,
+independent hierarchy/placements/controls and state-bound evidence. Preserve ordered
+style blocks and unsupported procedures/scripts. No imported source is executed;
+missing visual scope cannot be inferred from the number of report requests.
+
+For ThoughtSpot, use the [specialist](../omni-thoughtspot-migrator/SKILL.md) and
+[source contract](references/thoughtspot-source-contract.md). `thoughtspot-api`
+projects supplied JSON TML snapshots; `thoughtspot-capture` verifies original-file
+mapping and retained evidence. Keep independent scope, inline versus saved Answer
+identity, repeated placements, privacy and unknown fields. Do not fabricate a DMA
+adapter, execute source expressions or equate MCP search hits with definitions.
+
+For Qlik, use the [source contract](references/qlik-source-contract.md) and
+[run guide](../omni-artifact-accelerator/references/qlik-visual-run.md). Preserve
+native property JSON and independent app/sheet/object scope, linked master items,
+placements, controls, private content, expressions and observed state. The bounded
+Cloud Reports wrapper is separate from passive MCP evidence and externally
+qualified QIX acquisition. Do not confuse temporary handles with IDs, screenshots
+with full results, straight/pivot modes, or QlikView with Sense. Unknown code and
+binaries remain inert. No Qlik DMA producer or universal formula compiler exists.
+
+For Strategy/MicroStrategy, use the
+[source contract](references/microstrategy-source-contract.md) and
+[run guide](../omni-artifact-accelerator/references/microstrategy-visual-run.md).
+Preserve GUIDs, versions, original pointers, chapters/pages, repeated placements,
+prompts, selector/filter stages, metrics/forms and document export obligations.
+Never equate a definition or a successful export with complete executed results.
+Shared semantic dependencies and unsupported shapes remain explicit; no
+MicroStrategy DMA producer or universal expression compiler is assumed.
+
+For Cognos, coordinate with the [source specialist](../omni-cognos-migrator/SKILL.md)
+and [source contract](references/cognos-source-contract.md). `cognos-report` reads
+a supplied report snapshot with exact XML bytes, identity declarations and an
+independent inventory. It preserves query/layout references and unsupported
+behavior; it does not execute XML, compile expressions or parse dashboard specs.
+
+For BusinessObjects, coordinate with the [source specialist](../omni-businessobjects-migrator/SKILL.md)
+and [source contract](references/businessobjects-source-contract.md).
+`businessobjects-api` reads pinned original XML/JSON snapshots;
+`businessobjects-capture` verifies independent originals, state and supplied
+result/render evidence. Preserve every unknown and restricted obligation.
+Keep WebI report context, Universe semantics and Crystal engine-specific behavior
+separate. No SQL/formula execution or general binary decoding is performed.
+
+For page-oriented migrations, dispatch [SSRS](../omni-ssrs-migrator/SKILL.md),
+[Power BI paginated](../omni-powerbi-paginated-migrator/SKILL.md) or
+[Crystal Reports](../omni-crystal-reports-migrator/SKILL.md). Use `rdl-report`,
+`crystal-report` and the shared `rdl-report-capture` format (the latter also accepts
+Crystal extractions). Revalidate originals and every attachment before projection.
+Keep `report` distinct from Apps/dashboards; source extraction, numeric equality,
+report layout and native delivery are separate evidence lanes.

@@ -15,25 +15,27 @@ SHA = re.compile(r'[a-f0-9]{64}')
 ALIASES = {'omni_modeler': 'semantic_modeler', 'semantic_architect': 'semantic_modeler',
            'independent_qa': 'independent_reviewer'}
 STAGE_ROLES = {
-    'discovery': {'source_specialist', 'catalogue_specialist', 'artifact-translator', 'periscope-migrator', 'metabase-migrator', 'data-analyst', 'product-owner'},
+    'discovery': {'source_specialist', 'catalogue_specialist', 'artifact-translator', 'periscope-migrator', 'metabase-migrator', 'webfocus-migrator', 'thoughtspot-migrator', 'qlik-migrator', 'microstrategy-migrator', 'cognos-migrator', 'businessobjects-migrator', 'ssrs-migrator', 'powerbi-paginated-migrator', 'crystal-reports-migrator', 'data-analyst', 'product-owner'},
     'design': {'warehouse_architect', 'independent_reviewer', 'validation_analyst', 'data-analyst'},
-    'implementation': {'analytics_engineer', 'app-engineer', 'bi-engineer'},
+    'implementation': {'analytics_engineer', 'app-engineer', 'report-builder', 'bi-engineer'},
     'semantic': {'semantic_modeler', 'bi-engineer'},
-    'validation': {'validation_analyst', 'independent_reviewer', 'qa-analyst', 'periscope-migrator', 'metabase-migrator'},
+    'validation': {'validation_analyst', 'independent_reviewer', 'qa-analyst', 'periscope-migrator', 'metabase-migrator', 'webfocus-migrator', 'thoughtspot-migrator', 'qlik-migrator', 'microstrategy-migrator', 'cognos-migrator', 'businessobjects-migrator', 'ssrs-migrator', 'powerbi-paginated-migrator', 'crystal-reports-migrator'},
     'packaging': {'documentation_specialist', 'data-storyteller'},
-    'migration_plan': {'migration_project_manager', 'backend-handoff', 'periscope-migrator', 'metabase-migrator'},
+    'migration_plan': {'migration_project_manager', 'backend-handoff', 'periscope-migrator', 'metabase-migrator', 'webfocus-migrator', 'thoughtspot-migrator', 'qlik-migrator', 'microstrategy-migrator', 'cognos-migrator', 'businessobjects-migrator', 'ssrs-migrator', 'powerbi-paginated-migrator', 'crystal-reports-migrator'},
     'dashboard': {'product-owner', 'dashboard-designer', 'bi-engineer', 'data-analyst', 'artifact-translator',
                   'branding', 'design-systems', 'data-storyteller', 'qa-analyst'},
     'app': {'product-owner', 'app-designer', 'app-engineer', '3d-modeler', 'bi-engineer', 'motion-designer', 'branding',
             'design-systems', 'data-analyst', 'data-storyteller', 'qa-analyst'},
+    'report': {'product-owner', 'report-designer', 'report-builder', 'bi-engineer', 'data-analyst',
+               'artifact-translator', 'branding', 'design-systems', 'data-storyteller', 'qa-analyst'},
 }
 FIELDS = {'schema_version', 'task_id', 'domain_id', 'stage', 'role', 'scope_ids', 'objective',
           'outputs', 'acceptance', 'input_bindings', 'dependencies', 'unknowns', 'authoring_mode'}
 CHANGES = {'source', 'design', 'grain', 'keys', 'naming', 'sql', 'joins', 'filters', 'incremental',
-           'security', 'semantic', 'metrics', 'dashboard', 'app', 'presentation', 'documentation', 'business_rules'}
+           'security', 'semantic', 'metrics', 'dashboard', 'app', 'report', 'presentation', 'documentation', 'business_rules'}
 DEFAULT_CHANGES = {'discovery': ['source'], 'design': ['design'], 'implementation': ['sql'],
                    'semantic': ['semantic'], 'validation': ['business_rules'], 'packaging': ['presentation'],
-                   'migration_plan': ['documentation'], 'dashboard': ['dashboard'], 'app': ['app']}
+                   'migration_plan': ['documentation'], 'dashboard': ['dashboard'], 'app': ['app'], 'report': ['report']}
 
 
 def need(condition, message):
@@ -129,19 +131,19 @@ def route_reviews(assignment, changes=None, dependency_state='known'):
     # A caller's change label cannot waive minimum checks for executable outputs.
     if any(PurePosixPath(p).suffix.lower() == '.sql' for p in assignment['outputs']):
         changes.add('sql')
-    if assignment['stage'] in {'design', 'semantic', 'dashboard', 'app'}:
+    if assignment['stage'] in {'design', 'semantic', 'dashboard', 'app', 'report'}:
         changes.update(DEFAULT_CHANGES[assignment['stage']])
     disciplines = set()
     if changes & {'source', 'design', 'grain', 'keys', 'naming', 'business_rules'}:
         disciplines.add('model')
     if changes & {'sql', 'joins', 'filters', 'incremental', 'metrics', 'business_rules'}:
         disciplines.add('logic')
-    if changes & {'semantic', 'joins', 'filters', 'metrics', 'business_rules', 'dashboard', 'app'}:
+    if changes & {'semantic', 'joins', 'filters', 'metrics', 'business_rules', 'dashboard', 'app', 'report'}:
         disciplines.add('semantic')
     if changes & {'source', 'design', 'sql', 'joins', 'filters', 'incremental', 'security', 'semantic',
-                  'metrics', 'business_rules', 'dashboard', 'app'}:
+                  'metrics', 'business_rules', 'dashboard', 'app', 'report'}:
         disciplines.add('security')
-    if changes & {'dashboard', 'app', 'presentation', 'documentation'}:
+    if changes & {'dashboard', 'app', 'report', 'presentation', 'documentation'}:
         disciplines.add('experience')
     if dependency_state == 'unknown':
         disciplines.update({'model', 'logic', 'security'})
@@ -152,7 +154,7 @@ def route_reviews(assignment, changes=None, dependency_state='known'):
         'security': 'Effective access, tenant boundaries, sensitive fields and changed downstream exposure',
         'experience': 'Readable complete artifacts, navigation, rendering and interactions',
     }
-    frontend = assignment['role'] in set().union(STAGE_ROLES['dashboard'], STAGE_ROLES['app'], {'periscope-migrator', 'metabase-migrator'})
+    frontend = assignment['role'] in set().union(STAGE_ROLES['dashboard'], STAGE_ROLES['app'], STAGE_ROLES['report'], {'periscope-migrator', 'metabase-migrator', 'webfocus-migrator', 'thoughtspot-migrator', 'qlik-migrator', 'microstrategy-migrator', 'cognos-migrator', 'businessobjects-migrator', 'ssrs-migrator', 'powerbi-paginated-migrator', 'crystal-reports-migrator'})
     reviewers = []
     for name in sorted(disciplines):
         role = 'qa-analyst' if frontend else ('validation_analyst' if name in {'logic', 'semantic'} else 'independent_reviewer')

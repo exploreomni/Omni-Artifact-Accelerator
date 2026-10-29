@@ -1,0 +1,4 @@
+interface:
+  display_name: "Omni WebFOCUS Migrator"
+  short_description: "Preserve WebFOCUS visuals, procedures and behavior"
+  default_prompt: "Use $omni-webfocus-migrator to migrate selected WebFOCUS artifacts through the Omni Artifact Accelerator with traceable source evidence and explicit behavior gaps."

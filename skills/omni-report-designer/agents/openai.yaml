@@ -1,0 +1,4 @@
+interface:
+  display_name: "Omni Report Designer"
+  short_description: "Design precise native report pages and exports"
+  default_prompt: "Use $omni-report-designer to design a native Omni Report with explicit page, grouping, branding and export requirements."

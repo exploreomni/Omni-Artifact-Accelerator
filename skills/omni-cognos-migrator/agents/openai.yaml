@@ -1,0 +1,4 @@
+interface:
+  display_name: "Cognos Migration Specialist"
+  short_description: "Preserve Cognos reports, prompts and source logic"
+  default_prompt: "Use $omni-cognos-migrator to inspect supplied Cognos report evidence and prepare a governed migration to Omni."

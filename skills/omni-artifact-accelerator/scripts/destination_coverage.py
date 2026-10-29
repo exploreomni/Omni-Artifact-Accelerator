@@ -61,7 +61,9 @@ def derive(root, spec, state, api):
             for (s, kind, ident), item in targets.items():
                 if s == surface and kind == 'journey':
                     path = item.get('path')
-                    api.need(type(path) is list and len(path) >= 2 and all(type(p) is str and
+                    # A report can configure/render/export the same page. Other
+                    # surfaces retain their existing multi-destination journey rule.
+                    api.need(type(path) is list and len(path) >= (1 if surface == 'report' else 2) and all(type(p) is str and
                              (surface, 'destination', p) in targets for p in path), 'journey path must name selected destinations')
                     api.need(all(text(item.get(k)) for k in JOURNEY_FIELDS if k != 'path'),
                              'journey action, states, retained_context and return_behavior required')

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Omni Report Builder"
+  short_description: "Build reviewed report definitions and verify bindings"
+  default_prompt: "Use $omni-report-builder to prepare the selected Omni Report design with exact query bindings and separately qualified native output."

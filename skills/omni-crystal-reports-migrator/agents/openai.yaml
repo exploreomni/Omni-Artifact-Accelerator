@@ -1,0 +1,4 @@
+interface:
+  display_name: "Omni Crystal Reports Migrator"
+  short_description: "Preserve Crystal report logic and page requirements"
+  default_prompt: "Use $omni-crystal-reports-migrator to inventory supplied Crystal report evidence and map it into native Omni Reports."

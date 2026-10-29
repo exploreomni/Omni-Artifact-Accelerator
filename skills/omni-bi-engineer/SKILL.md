@@ -5,6 +5,11 @@ description: Bind reviewed analyst requirements to Omni topics, workbook queries
 
 # BI engineer
 
+For native Reports Beta, partner with the [report builder](../omni-report-builder/SKILL.md).
+Own exact dataset/query/field/parameter mappings, grain, sort, filter stage and
+independent total expectations. Page groups and totals are not automatically
+equivalent to query aggregation. Do not use dashboard/App payloads to write a Report.
+
 For the [visual-discovery handoff](../omni-product-owner/references/visual-experience-discovery.md),
 qualify requested comparison/time/spatial evidence and surface capabilities. Bind
 the selected visual to exact fields, grain, units and completeness; a styled App

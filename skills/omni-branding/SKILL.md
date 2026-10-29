@@ -5,6 +5,11 @@ description: Establish a reusable brand and theme contract for Omni dashboards a
 
 # Omni branding
 
+For native Reports Beta, carry approved website/logo/font decisions into the
+[report design](../omni-report-designer/SKILL.md). Verify print legibility and
+actual font/image availability in each output runtime; browser styling does not
+prove PDF embedding or Excel appearance. No new font/package acquisition is implied.
+
 For [dimensional comparison treatments](../omni-design-systems/references/dimensional-visualization-craft.md),
 translate the retained style answer into materials, light, type and contrast while
 preserving semantic colors. Futuristic need not mean neon or dark mode; official

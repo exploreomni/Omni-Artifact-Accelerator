@@ -34,6 +34,16 @@ These require only the existing runtimes, their standard libraries and reviewed 
 
 The [harness qualification contract](../harness/SECURITY.md) identifies those outstanding gates. Broaden checks only for changed behavior, failures or remaining integration concerns; no test run installs missing dependencies.
 
+## Report foundation checks
+
+Use `python3 -I -S -B scripts/validate_source.py --case report-contract` and
+`--case report-routing` for changed report contracts and routing. They cover
+physical page bounds, field/parameter/section references, output obligations,
+retained evidence, distinct report targets, one-page lifecycle coverage and A–F
+build gates. The `experience-contract` case checks shared concept/handoff behavior.
+These source-only checks do not render, load an engine, call native Reports APIs
+or certify print/PDF/Excel fidelity. Keep that qualification explicit.
+
 ## Experience-context checks
 
 The `stage-gates` and `stage-gate-integration` source cases cover A–F ordering,
@@ -245,3 +255,55 @@ preexisting work. Follow current publication authorization; implementation is no
 request to activate installed skills or push a release. After an authorized release,
 verify the published SHA; compare installed copies only in an authorized installed
 workflow. Never claim a disabled CI job ran validation.
+
+## MicroStrategy migration checks
+
+The source-only runner exposes `microstrategy-capture`, `microstrategy-projection`,
+`microstrategy-mcp`, `microstrategy-host` and `microstrategy-integration`. Use the
+[run guide](../skills/omni-artifact-accelerator/references/microstrategy-visual-run.md)
+for current supported shapes and qualification limits. Native-shaped projection
+fixtures validate documented contracts; injected transport state fixtures test
+fail-closed host behavior and do not certify a deployed server's response shape.
+Keep original scope/pin, prompt/filter, precision/pagination, credential/redirect,
+uncertain execution, A–F, DMA and separate target-surface checks focused.
+
+## Cognos source-only checks
+
+Run the fixed `cognos-projection`, `cognos-host` and `cognos-integration` cases
+through `python3 -I -S -B scripts/validate_source.py --case CASE`.
+Save any logs outside the checkout. Original synthetic XML exercises bounded
+parsing, scope/identity preservation, local MCP import, path rejection, A–F
+routing, projection drift and DMA handoff. Numeric comparisons must not pass
+from matching unqualified files. These checks neither execute Cognos nor verify
+actual report rendering, dashboard compatibility or effective tenant access.
+
+## BusinessObjects source-only checks
+
+Use `python3 -I -S -B scripts/validate_source.py --case NAME` with
+`businessobjects-projection`, `businessobjects-capture`, `businessobjects-host`,
+`businessobjects-integration` and `metadata`. These use original neutral fixtures
+and the existing standard library; no SDK, browser, source or target tenant.
+
+Check independent source denominators and hashes, repeated placements/provider
+contexts, version/profile limits, malformed XML/JSON and credential handling,
+operation-aware denial and journal resume boundaries, precise normalization,
+state-bound comparisons, source-pinned routing, A–F enforcement, DMA route
+restrictions and native-reuse obligations. A successful local result establishes
+only those checks. Preserve pending real-source access, provider completeness,
+Universe security, Crystal fidelity, native rendering and acceptance evidence.
+
+## Report migration qualification
+
+Run affected fixed cases `report-contract`, `report-routing`, `report-native`,
+`rdl-report`, `crystal-report`, `report-source-capture`, `report-source-host` and
+`report-source-integration`, followed by `metadata`. Fixtures are neutral and
+original. They exercise explicit requirement mappings, A–F denial, restricted
+source scope, inert XML/extraction, original-byte tamper rejection, state-bound
+precision-preserving comparisons and distinct Report delivery.
+
+They do not authenticate supplied observations, execute a source query or native
+Report API, decode Crystal binaries, render PDF/XLSX, prove effective tenant access
+or establish production acceptance. Keep live pilot results outside the repo;
+record actual versions, allowed/denied principals, empty/large data, parameter
+defaults/null/blank/multivalue, group totals, page overflow, PDF pagination and
+Excel row/type/sheet fidelity against independent original evidence.

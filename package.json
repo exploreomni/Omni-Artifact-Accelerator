@@ -1,8 +1,8 @@
 {
   "name": "omni-artifact-accelerator",
-  "version": "0.25.0",
+  "version": "0.33.0",
   "private": true,
-  "description": "Portable analyst skill bundle for native Omni Apps and dashboards",
+  "description": "Portable analyst skills for native Omni Apps, dashboards and Reports Beta preparation",
   "skills": [
     "omni-artifact-accelerator",
     "omni-product-owner",
@@ -12,6 +12,8 @@
     "omni-app-engineer",
     "omni-app-designer",
     "omni-dashboard-designer",
+    "omni-report-designer",
+    "omni-report-builder",
     "omni-data-storyteller",
     "omni-motion-designer",
     "omni-branding",
@@ -19,6 +21,15 @@
     "omni-artifact-translator",
     "omni-periscope-migrator",
     "omni-metabase-migrator",
+    "omni-webfocus-migrator",
+    "omni-thoughtspot-migrator",
+    "omni-qlik-migrator",
+    "omni-microstrategy-migrator",
+    "omni-cognos-migrator",
+    "omni-businessobjects-migrator",
+    "omni-ssrs-migrator",
+    "omni-powerbi-paginated-migrator",
+    "omni-crystal-reports-migrator",
     "omni-backend-handoff",
     "omni-3d-modeler"
   ]

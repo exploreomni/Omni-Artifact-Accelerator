@@ -1,0 +1,4 @@
+interface:
+  display_name: "SSRS Migration Specialist"
+  short_description: "Preserve RDL source logic and report behavior"
+  default_prompt: "Use $omni-ssrs-migrator to inventory supplied SSRS RDL and prepare an evidence-bound migration to Omni Reports Beta."

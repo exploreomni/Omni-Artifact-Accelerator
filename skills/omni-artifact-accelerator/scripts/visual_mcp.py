@@ -7,6 +7,7 @@ single-user boundary is not a hosted authorization or multi-tenant service.
 """
 import argparse
 import fcntl
+import hashlib
 import importlib.util
 import json
 import os
@@ -45,6 +46,52 @@ def tool(name, description, properties, required=None, read=False, external=Fals
 
 
 LOCAL_TOOLS = [
+    tool("rdl_prepare_snapshot", "Retain supplied RDL bytes with independently supplied identity and inventory; never evaluates report code.",
+         {"source": STRING, "metadata": STRING, "output": STRING}),
+    tool("rdl_check_snapshot", "Check supplied SSRS or Power BI paginated RDL evidence locally; no tenant verification.", {"source": STRING}, read=True),
+    tool("rdl_translate", "Project every retained RDL occurrence and unresolved dependency into migration obligations.", {"source": STRING, "output": STRING}),
+    tool("crystal_prepare_snapshot", "Retain a supplied Crystal extraction with identity and independent inventory; no binary decoder or SDK execution.",
+         {"source": STRING, "metadata": STRING, "output": STRING}),
+    tool("crystal_check_snapshot", "Check supplied Crystal extraction integrity; no native schema or tenant acceptance.", {"source": STRING}, read=True),
+    tool("crystal_translate", "Project supplied Crystal report objects and dependencies without evaluating formulas.", {"source": STRING, "output": STRING}),
+    tool("report_source_import_local", "Retain supplied RDL or Crystal original definition and inventory bytes in a new local capture.",
+         {"request": STRING, "source_root": STRING, "directory": STRING}),
+    tool("report_source_import_evidence", "Attach supplied report results or exports with observed state; never fetch URLs or execute queries.",
+         {"directory": STRING, "spec": STRING, "source_root": STRING}),
+    tool("report_source_check_capture", "Verify retained source report capture bytes; no access, completeness or acceptance claim.", {"source": STRING}, read=True),
+    tool("report_source_translate_capture", "Verify source report capture bytes before projecting original obligations.", {"source": STRING, "output": STRING}),
+    tool("report_source_normalize_results", "Normalize pinned supplied report results under an explicit profile and state binding.",
+         {"source": STRING, "profile": STRING, "binding": STRING, "output": STRING}),
+    tool("report_source_plan_operation", "Describe one bounded SSRS or Power BI paginated request without tokens, network execution or write authority.",
+         {"profile": STRING, "operation": STRING, "output": STRING}),
+    tool("report_prepare", "Prepare a locally gated native Report candidate; no authoring API execution.", {"spec": STRING, "output": STRING}),
+    tool("report_qualify", "Retain supplied runtime and schema evidence; does not authorize or qualify a native executor.", {"spec": STRING, "output": STRING}),
+    tool("report_observe", "Retain a supplied candidate-bound native readback or export observation; not authenticated execution.", {"spec": STRING, "output": STRING}),
+    tool("report_check", "Recompute a local Report candidate, qualification, observation or coverage from pinned evidence.",
+         {"kind": {**STRING, "enum": ["candidate", "qualification", "observation", "coverage"]}, "path": STRING}, read=True),
+    tool("report_coverage", "Account for report-specific QA and exports against the same candidate; unobserved cases remain pending.",
+         {"candidate": STRING, "observations": STRINGS, "cases": STRING, "output": STRING}),
+    tool("report_verify_delivery", "Recompute native Report evidence for a backend return; no publication or acceptance grant.", {"spec": STRING}, read=True),
+    tool("businessobjects_import_local", "Retain supplied BusinessObjects snapshot, independent inventory and original response bytes; local file operations only.",
+         {"request": STRING, "source_root": STRING, "directory": STRING}),
+    tool("businessobjects_import_evidence", "Attach already supplied BusinessObjects results or renders to a pinned capture; no source execution or URL fetch.",
+         {"source": STRING, "spec": STRING, "source_root": STRING}),
+    tool("businessobjects_translate", "Project original WebI and Universe evidence into version-qualified source obligations; unknowns stay visible.",
+         {"source": STRING, "output": STRING}),
+    tool("businessobjects_check_snapshot", "Check supplied BusinessObjects source shape and integrity; not tenant completeness or acceptance.",
+         {"source": STRING}, read=True),
+    tool("businessobjects_import_capture", "Verify original BusinessObjects capture bytes and project selected source obligations.",
+         {"source": STRING, "output": STRING}),
+    tool("businessobjects_check_capture", "Check retained BusinessObjects evidence locally; no source or target execution.",
+         {"source": STRING}, read=True),
+    tool("businessobjects_normalize_results", "Normalize a pinned raw export under an explicit parser and state binding; formatting and source errors remain separate.",
+         {"source": STRING, "profile": STRING, "binding": STRING, "output": STRING}),
+    tool("cognos_import_report", "Retain supplied Cognos report XML with identity and inventory metadata; no tenant calls or XML execution.",
+         {"source": STRING, "metadata": STRING, "output": STRING}),
+    tool("cognos_translate", "Project a pinned Cognos report snapshot into migration obligations; no result or rendered parity claim.",
+         {"source": STRING, "output": STRING}),
+    tool("cognos_check_snapshot", "Check retained report XML integrity and bounded source syntax locally; no tenant access or completeness certification.",
+         {"source": STRING}, read=True),
     tool("metabase_import_local", "Retain a scoped Metabase snapshot and original response evidence; no tenant calls or query execution.",
          {"request": STRING, "source_root": STRING, "directory": STRING}),
     tool("metabase_import_evidence", "Retain supplied Metabase visual/result bytes with identity and observed state; no URL fetching.",
@@ -56,6 +103,60 @@ LOCAL_TOOLS = [
     tool("metabase_check_capture", "Verify retained Metabase capture integrity; no native, access or business acceptance claim.",
          {"source": STRING}, read=True),
     tool("metabase_normalize_results", "Normalize supplied Metabase CSV/JSON with explicit columns and a capture binding; no query execution.",
+         {"source": STRING, "profile": STRING, "binding": STRING, "output": STRING}),
+    tool("microstrategy_import_local", "Retain a scoped MicroStrategy snapshot and original response evidence; no tenant calls or query execution.",
+         {"request": STRING, "source_root": STRING, "directory": STRING}),
+    tool("microstrategy_import_evidence", "Retain supplied MicroStrategy visual/result bytes with identity and observed state; no URL fetching.",
+         {"source": STRING, "spec": STRING, "source_root": STRING}),
+    tool("microstrategy_translate", "Project a typed supplied MicroStrategy API snapshot; preserve unsupported query and placement obligations.",
+         {"source": STRING, "output": STRING}),
+    tool("microstrategy_import_capture", "Verify MicroStrategy original and attachment bytes before projecting migration requirements.",
+         {"source": STRING, "output": STRING}),
+    tool("microstrategy_check_capture", "Verify retained MicroStrategy capture integrity; no native, access or business acceptance claim.",
+         {"source": STRING}, read=True),
+    tool("microstrategy_normalize_results", "Normalize a qualified supplied MicroStrategy result with exact metric, instance and state bindings; no query execution.",
+         {"source": STRING, "profile": STRING, "binding": STRING, "output": STRING}),
+    tool("microstrategy_check_mcp", "Validate retained MicroStrategy tool schemas, calls and session evidence locally; never invokes remote tools.",
+         {"source": STRING, "output": STRING}),
+    tool("qlik_import_local", "Retain a scoped Qlik snapshot and original response evidence; no tenant calls or query execution.",
+         {"request": STRING, "source_root": STRING, "directory": STRING}),
+    tool("qlik_import_evidence", "Retain supplied Qlik visual/result bytes with identity and observed state; no URL fetching.",
+         {"source": STRING, "spec": STRING, "source_root": STRING}),
+    tool("qlik_translate", "Project a typed supplied Qlik API snapshot; preserve unsupported query and placement obligations.",
+         {"source": STRING, "output": STRING}),
+    tool("qlik_import_capture", "Verify Qlik original and attachment bytes before projecting migration requirements.",
+         {"source": STRING, "output": STRING}),
+    tool("qlik_check_capture", "Verify retained Qlik capture integrity; no native, access or business acceptance claim.",
+         {"source": STRING}, read=True),
+    tool("qlik_normalize_results", "Normalize supplied Qlik CSV/JSON with explicit columns and a capture binding; no query execution.",
+         {"source": STRING, "profile": STRING, "binding": STRING, "output": STRING}),
+    tool("qlik_check_mcp", "Validate retained Qlik tool schemas, calls and session evidence locally; never invokes remote tools.",
+         {"source": STRING, "output": STRING}),
+    tool("thoughtspot_import_local", "Retain a scoped ThoughtSpot snapshot and original response evidence; no tenant calls or query execution.",
+         {"request": STRING, "source_root": STRING, "directory": STRING}),
+    tool("thoughtspot_import_evidence", "Retain supplied ThoughtSpot visual/result bytes with identity and observed state; no URL fetching.",
+         {"source": STRING, "spec": STRING, "source_root": STRING}),
+    tool("thoughtspot_translate", "Project a typed supplied ThoughtSpot API snapshot; preserve unsupported query and placement obligations.",
+         {"source": STRING, "output": STRING}),
+    tool("thoughtspot_import_capture", "Verify ThoughtSpot original and attachment bytes before projecting migration requirements.",
+         {"source": STRING, "output": STRING}),
+    tool("thoughtspot_check_capture", "Verify retained ThoughtSpot capture integrity; no native, access or business acceptance claim.",
+         {"source": STRING}, read=True),
+    tool("thoughtspot_normalize_results", "Normalize supplied ThoughtSpot CSV/JSON with explicit columns and a capture binding; no query execution.",
+         {"source": STRING, "profile": STRING, "binding": STRING, "output": STRING}),
+    tool("thoughtspot_check_mcp", "Validate retained Spotter tool schemas, calls and session evidence locally; never invokes remote tools.",
+         {"source": STRING, "output": STRING}),
+    tool("webfocus_import_local", "Retain WebFOCUS originals, independent inventory and an optional DMA report; no source code execution or tenant call.",
+         {"request": STRING, "source_root": STRING, "directory": STRING}),
+    tool("webfocus_import_evidence", "Retain supplied WebFOCUS render/result bytes and separately observed state; never fetch source URLs.",
+         {"source": STRING, "spec": STRING, "source_root": STRING}),
+    tool("webfocus_translate", "Translate the pinned DMA WebFOCUS adapter contract; supplied-file coverage is not visual completeness.",
+         {"source": STRING, "producer_revision": STRING, "output": STRING}),
+    tool("webfocus_import_capture", "Verify WebFOCUS source, inventory, crosswalk and attachment bytes before projecting migration obligations.",
+         {"source": STRING, "output": STRING}),
+    tool("webfocus_check_capture", "Verify retained WebFOCUS capture bytes and scope; no live, visual, or business acceptance claim.",
+         {"source": STRING}, read=True),
+    tool("webfocus_normalize_results", "Normalize supplied WebFOCUS CSV/JSON bytes using an explicit column profile and capture binding; no source query execution.",
          {"source": STRING, "profile": STRING, "binding": STRING, "output": STRING}),
     tool("periscope_import_local", "Retain a supplied CDT adapter report, original files and independent inventory; no source code execution or tenant call.",
          {"request": STRING, "source_root": STRING, "directory": STRING}),
@@ -536,6 +637,74 @@ class LookerBatch(CaptureBatch):
         return LookerCommand(project, executable, request, directory, runner, self.token_env, self.allow_query)
 
 
+def report_host_module(name):
+    workflow.need(name in ("rdl_report", "crystal_report", "report_source_capture", "translate_artifact", "report_native"),
+                  "host.source_module_rejected")
+    folder = Path(__file__).resolve().parents[2] / ("omni-report-builder/scripts" if name == "report_native" else "omni-artifact-translator/scripts")
+    path = workflow.ap.no_links(folder / (name + ".py"))
+    spec = importlib.util.spec_from_file_location("host_" + name, path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def businessobjects_host_module(name):
+    folder = Path(__file__).resolve().parents[2] / "omni-artifact-translator/scripts"
+    workflow.need(name in ("businessobjects_visual", "businessobjects_capture", "translate_artifact"), "host.source_module_rejected")
+    workflow.ap.no_links(folder / (name + ".py"))
+    spec = importlib.util.spec_from_file_location("host_" + name, folder / (name + ".py"))
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def cognos_host_module(name):
+    folder = Path(__file__).resolve().parents[2] / "omni-artifact-translator/scripts"
+    workflow.need(name in ("cognos_import", "cognos_visual", "translate_artifact"), "host.source_module_rejected")
+    workflow.ap.no_links(folder / (name + ".py"))
+    spec = importlib.util.spec_from_file_location("host_" + name, folder / (name + ".py"))
+    loaded = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(loaded)
+    return loaded
+
+def microstrategy_host_module(name):
+    folder = Path(__file__).resolve().parents[2] / "omni-artifact-translator/scripts"
+    workflow.need(name in ("microstrategy_capture", "microstrategy_visual", "microstrategy_mcp", "translate_artifact"), "host.source_module_rejected")
+    workflow.ap.no_links(folder / (name + ".py"))
+    spec = importlib.util.spec_from_file_location("host_" + name, folder / (name + ".py"))
+    loaded = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(loaded)
+    return loaded
+
+
+def qlik_host_module(name):
+    folder = Path(__file__).resolve().parents[2] / "omni-artifact-translator/scripts"
+    workflow.need(name in ("qlik_capture", "qlik_visual", "qlik_mcp", "translate_artifact"), "host.source_module_rejected")
+    workflow.ap.no_links(folder / (name + ".py"))
+    spec = importlib.util.spec_from_file_location("host_" + name, folder / (name + ".py"))
+    loaded = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(loaded)
+    return loaded
+
+
+def thoughtspot_host_module(name):
+    folder = Path(__file__).resolve().parents[2] / "omni-artifact-translator/scripts"
+    workflow.need(name in ("thoughtspot_capture", "thoughtspot_visual", "thoughtspot_mcp", "translate_artifact"), "host.source_module_rejected")
+    spec = importlib.util.spec_from_file_location("host_" + name, folder / (name + ".py"))
+    loaded = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(loaded)
+    return loaded
+
+
+def webfocus_host_module(name):
+    folder = Path(__file__).resolve().parents[2] / "omni-artifact-translator/scripts"
+    workflow.need(name in ("webfocus_capture", "webfocus_visual", "translate_artifact"), "host.source_module_rejected")
+    spec = importlib.util.spec_from_file_location("host_" + name, folder / (name + ".py"))
+    loaded = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(loaded)
+    return loaded
+
+
 def periscope_host_module(name):
     folder = Path(__file__).resolve().parents[2] / "omni-artifact-translator/scripts"
     workflow.need(name in ("periscope_capture", "periscope_visual", "translate_artifact"), "host.source_module_rejected")
@@ -552,6 +721,276 @@ def metabase_host_module(name):
     loaded = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(loaded)
     return loaded
+
+
+class MicrostrategyCommand:
+    """Fixed selected-instance lifecycle with separate startup grants.
+
+    Credentials are released only after checking the exact request and runtime
+    pins. This cooperating host does not isolate an operator controlling Python.
+    """
+    def __init__(self, project, request, directory, *, token_env="MICROSTRATEGY_AUTH_TOKEN", cookie_env="MICROSTRATEGY_COOKIES",
+                 allow_execution=False, allow_render=False, allow_cleanup=False, transport=None):
+        self.root, _ = workflow.ap.load_project(project)
+        self.request = workflow.pin(self.root, request)
+        self.directory = local_directory(self.root, directory)
+        workflow.need(type(token_env) is str and re.fullmatch(r"MICROSTRATEGY_[A-Z0-9_]+", token_env),
+                      "host.source_token_env")
+        workflow.need(type(cookie_env) is str and re.fullmatch(r"MICROSTRATEGY_[A-Z0-9_]+", cookie_env)
+                      and token_env != cookie_env, "host.source_cookie_env")
+        workflow.need(all(type(v) is bool for v in (allow_execution, allow_render, allow_cleanup)), "host.source_grant_invalid")
+        self.cookie_env = cookie_env
+        self.token_env, self.transport = token_env, transport
+        self.runtime = {}
+        folder = Path(__file__).resolve().parents[2] / "omni-artifact-translator/scripts"
+        for filename in ("microstrategy_capture.py", "microstrategy_visual.py", "powerbi_capture_files.py",
+                         "bounded_csv.py", "powerbi_visual.py", "tableau_visual.py", "tableau_capture_files.py"):
+            path = workflow.ap.no_links(folder / filename)
+            workflow.need(path.is_file(), "host.source_runtime_missing")
+            self.runtime[path] = workflow.ap.digest(path.read_bytes())
+        self.module = microstrategy_host_module("microstrategy_capture")
+        self.config = self.module.validate_request(workflow.load(self.root, request), require_service=True)
+        self.request_hash = self.module.sha(self.config)
+        self.grants = {"metadata": True, "execution": allow_execution, "render": allow_render, "cleanup": allow_cleanup}
+        for op in self.config['operations']:
+            scope = ('metadata' if op['kind'] in ('definition', 'prompts') else
+                     'render' if op['kind'] == 'pdf' else 'cleanup' if op['kind'] == 'cleanup' else 'execution')
+            workflow.need(self.grants.get(scope) is True, 'host.microstrategy_' + scope + '_grant_required')
+        source, latest = self.module.load_latest(self.directory, self.config)
+        self.source_pin = self.module.sha(source['source'])
+        self.journal_pin = workflow.pin(self.root, str(latest.relative_to(self.root)))
+
+    def check_scope(self):
+        workflow.check_pin(self.root, self.request)
+        for path, pin in self.runtime.items():
+            workflow.ap.no_links(path)
+            workflow.need(workflow.ap.digest(path.read_bytes()) == pin, "host.source_runtime_changed")
+        workflow.check_pin(self.root, self.journal_pin)
+        source, latest = self.module.load_latest(self.directory, self.config)
+        workflow.need(self.module.sha(source["source"]) == self.source_pin, "host.microstrategy_source_changed")
+        self.journal_pin = workflow.pin(self.root, str(latest.relative_to(self.root)))
+
+    def authorize(self, operation, fingerprint):
+        self.check_scope()
+        source, _ = self.module.load_latest(self.directory, self.config)
+        spec = self.module.pending_operation_spec(self.config, source)
+        expected = self.module.fingerprint(self.config, spec)
+        workflow.need(operation == spec['scope'] and self.grants.get(operation) is True and fingerprint == expected,
+                      'host.microstrategy_operation_scope')
+        token = os.environ.get(self.token_env, '')
+        workflow.need(0 < len(token) <= 8192 and all(32 < ord(c) < 127 for c in token),
+                      "host.source_credential_unavailable")
+        cookies = os.environ.get(self.cookie_env, '')
+        workflow.need(0 < len(cookies) <= 16384 and all(32 <= ord(c) < 127 for c in cookies)
+                      and all(re.fullmatch(r'[A-Za-z0-9_.-]+=[^;\r\n]+', part.strip()) for part in cookies.split(';')),
+                      'host.source_cookies_unavailable')
+        return {'X-MSTR-AuthToken': token, 'Cookie': cookies,
+                'X-MSTR-ProjectID': self.config['identity']['project_id']}
+
+    def capture(self, resume):
+        self.check_scope()
+        workflow.need(resume is True, "host.microstrategy_import_before_capture")
+        value = self.module.capture(self.config, self.directory, authority=self.authorize,
+                                    transport=self.transport, resume=True)
+        self.check_scope()
+        saved = Path(value['output'])
+        workflow.need(saved.is_absolute() and saved.is_relative_to(self.directory), 'host.capture_output_escaped')
+        return {'status': value['status'], 'evidence': workflow.pin(self.root, str(saved.relative_to(self.root))),
+                'native_validation': 'not_run'}
+
+
+class QlikCommand:
+    """Fixed Reports lifecycle with an independent render startup grant.
+
+    Credentials are released only after checking the exact request and runtime
+    pins. This cooperating host does not isolate an operator controlling Python.
+    """
+    def __init__(self, project, request, directory, *, token_env="QLIK_ACCESS_TOKEN",
+                 allow_render=False, transport=None):
+        self.root, _ = workflow.ap.load_project(project)
+        self.request = workflow.pin(self.root, request)
+        self.directory = local_directory(self.root, directory)
+        workflow.need(type(token_env) is str and re.fullmatch(r"QLIK_[A-Z0-9_]+", token_env),
+                      "host.source_token_env")
+        workflow.need(type(allow_render) is bool, "host.source_grant_invalid")
+        self.token_env, self.transport = token_env, transport
+        self.runtime = {}
+        folder = Path(__file__).resolve().parents[2] / "omni-artifact-translator/scripts"
+        for filename in ("qlik_capture.py", "qlik_visual.py", "powerbi_capture_files.py",
+                         "bounded_csv.py", "powerbi_visual.py", "tableau_visual.py", "tableau_capture_files.py"):
+            path = workflow.ap.no_links(folder / filename)
+            workflow.need(path.is_file(), "host.source_runtime_missing")
+            self.runtime[path] = workflow.ap.digest(path.read_bytes())
+        self.module = qlik_host_module("qlik_capture")
+        self.config = self.module.validate_request(workflow.load(self.root, request), require_service=True)
+        self.request_hash = self.module.sha(self.config)
+        grants = {"render": allow_render}
+        for op in self.config['operations']:
+            spec = self.module.operation_spec(self.config, op)
+            workflow.need(grants.get(spec['scope']) is True, "host.qlik_" + spec['scope'] + "_grant_required")
+        source, latest = self.module.load_latest(self.directory, self.config)
+        self.source_pin = self.module.sha(source['source'])
+        self.journal_pin = workflow.pin(self.root, str(latest.relative_to(self.root)))
+
+    def check_scope(self):
+        workflow.check_pin(self.root, self.request)
+        for path, pin in self.runtime.items():
+            workflow.ap.no_links(path)
+            workflow.need(workflow.ap.digest(path.read_bytes()) == pin, "host.source_runtime_changed")
+        workflow.check_pin(self.root, self.journal_pin)
+        source, latest = self.module.load_latest(self.directory, self.config)
+        workflow.need(self.module.sha(source["source"]) == self.source_pin, "host.qlik_source_changed")
+        self.journal_pin = workflow.pin(self.root, str(latest.relative_to(self.root)))
+
+    def authorize(self, operation, fingerprint):
+        self.check_scope()
+        source, _ = self.module.load_latest(self.directory, self.config)
+        spec = self.module.pending_operation_spec(self.config, source)
+        expected = {'request_sha256': self.request_hash, 'operation_id': spec['operation_id'],
+                    'phase': spec['phase'], 'method': spec['method'], 'url': spec['url'],
+                    'body_sha256': self.module.sha(spec['body'])}
+        workflow.need(operation == spec['scope'] == 'render' and fingerprint == expected,
+                      'host.qlik_operation_scope')
+        token = os.environ.get(self.token_env, '')
+        workflow.need(0 < len(token) <= 8192 and all(32 < ord(c) < 127 for c in token),
+                      "host.source_credential_unavailable")
+        return {'Authorization': 'Bearer ' + token}
+
+    def capture(self, resume):
+        self.check_scope()
+        workflow.need(resume is True, "host.qlik_import_before_capture")
+        value = self.module.capture(self.config, self.directory, authority=self.authorize,
+                                    transport=self.transport, resume=True)
+        self.check_scope()
+        saved = Path(value['output'])
+        workflow.need(saved.is_absolute() and saved.is_relative_to(self.directory), 'host.capture_output_escaped')
+        return {'status': value['status'], 'evidence': workflow.pin(self.root, str(saved.relative_to(self.root))),
+                'native_validation': 'not_run'}
+
+
+class ThoughtspotCommand:
+    """Fixed REST profile with independent metadata, query and render startup grants.
+
+    Credentials are released only after checking the exact request and runtime
+    pins. This cooperating host does not isolate an operator controlling Python.
+    """
+    def __init__(self, project, request, directory, *, token_env="THOUGHTSPOT_ACCESS_TOKEN",
+                 allow_query=False, allow_render=False, transport=None):
+        self.root, _ = workflow.ap.load_project(project)
+        self.request = workflow.pin(self.root, request)
+        self.directory = local_directory(self.root, directory)
+        workflow.need(type(token_env) is str and re.fullmatch(r"THOUGHTSPOT_[A-Z0-9_]+", token_env),
+                      "host.source_token_env")
+        workflow.need(type(allow_query) is bool and type(allow_render) is bool, "host.source_grant_invalid")
+        self.token_env, self.transport = token_env, transport
+        self.runtime = {}
+        folder = Path(__file__).resolve().parents[2] / "omni-artifact-translator/scripts"
+        for filename in ("thoughtspot_capture.py", "thoughtspot_visual.py", "powerbi_capture_files.py",
+                         "bounded_csv.py", "powerbi_visual.py", "tableau_visual.py", "tableau_capture_files.py"):
+            path = workflow.ap.no_links(folder / filename)
+            workflow.need(path.is_file(), "host.source_runtime_missing")
+            self.runtime[path] = workflow.ap.digest(path.read_bytes())
+        self.module = thoughtspot_host_module("thoughtspot_capture")
+        self.config = self.module.validate_request(workflow.load(self.root, request), require_service=True)
+        self.request_hash = self.module.sha(self.config)
+        grants = {"metadata": True, "query": allow_query, "render": allow_render}
+        self.requests = set()
+        for op in self.config['operations']:
+            spec = self.module.operation_spec(self.config, op)
+            workflow.need(grants.get(spec['scope']) is True, "host.thoughtspot_" + spec['scope'] + "_grant_required")
+            self.requests.add((spec['scope'], spec['method'], spec['url'], self.module.sha(spec['body'])))
+        source, latest = self.module.load_latest(self.directory, self.config)
+        self.source_pin = self.module.sha(source['source'])
+        self.journal_pin = workflow.pin(self.root, str(latest.relative_to(self.root)))
+
+    def check_scope(self):
+        workflow.check_pin(self.root, self.request)
+        for path, pin in self.runtime.items():
+            workflow.ap.no_links(path)
+            workflow.need(workflow.ap.digest(path.read_bytes()) == pin, "host.source_runtime_changed")
+        workflow.check_pin(self.root, self.journal_pin)
+        source, latest = self.module.load_latest(self.directory, self.config)
+        workflow.need(self.module.sha(source["source"]) == self.source_pin, "host.thoughtspot_source_changed")
+        self.journal_pin = workflow.pin(self.root, str(latest.relative_to(self.root)))
+
+    def authorize(self, operation, fingerprint):
+        self.check_scope()
+        workflow.need(type(fingerprint) is dict and set(fingerprint) ==
+                      {'request_sha256', 'method', 'url', 'body_sha256'} and
+                      fingerprint['request_sha256'] == self.request_hash, "host.thoughtspot_scope_changed")
+        workflow.need((operation, fingerprint['method'], fingerprint['url'], fingerprint['body_sha256'])
+                      in self.requests, "host.thoughtspot_operation_scope")
+        token = os.environ.get(self.token_env, '')
+        workflow.need(0 < len(token) <= 8192 and all(32 < ord(c) < 127 for c in token),
+                      "host.source_credential_unavailable")
+        return {'Authorization': 'Bearer ' + token}
+
+    def capture(self, resume):
+        self.check_scope()
+        workflow.need(resume is True, "host.thoughtspot_import_before_capture")
+        value = self.module.capture(self.config, self.directory, authority=self.authorize,
+                                    transport=self.transport, resume=True)
+        self.check_scope()
+        saved = Path(value['output'])
+        workflow.need(saved.is_absolute() and saved.is_relative_to(self.directory), 'host.capture_output_escaped')
+        return {'status': value['status'], 'evidence': workflow.pin(self.root, str(saved.relative_to(self.root))),
+                'native_validation': 'not_run'}
+
+
+class WebfocusCommand:
+    """Operator-selected repository reads only; no GET/POST procedure execution.
+
+    The fixed startup scope is a cooperating-host boundary, not isolation from
+    an operator who controls the interpreter, source files or environment.
+    """
+    def __init__(self, project, request, directory, *, token_env="WEBFOCUS_SESSION", transport=None):
+        self.root, _ = workflow.ap.load_project(project)
+        self.request = workflow.pin(self.root, request)
+        self.directory = local_directory(self.root, directory)
+        workflow.need(type(token_env) is str and re.fullmatch(r"WEBFOCUS_[A-Z0-9_]+", token_env),
+                      "host.source_token_env")
+        self.token_env, self.transport = token_env, transport
+        folder = Path(__file__).resolve().parents[2] / "omni-artifact-translator/scripts"
+        self.runtime = {}
+        for filename in ("webfocus_capture.py", "webfocus_visual.py", "powerbi_capture_files.py",
+                         "bounded_csv.py", "powerbi_visual.py", "tableau_visual.py", "tableau_capture_files.py"):
+            path = workflow.ap.no_links(folder / filename)
+            workflow.need(path.is_file(), "host.source_runtime_missing")
+            self.runtime[path] = workflow.ap.digest(path.read_bytes())
+        self.module = webfocus_host_module("webfocus_capture")
+        self.config = self.module.validate_request(workflow.load(self.root, request), require_service=True)
+        self.request_hash = self.module.sha(self.config)
+        self.read_requests = {(op['action'], self.module.operation_url(self.config, op))
+                              for op in self.config['operations']}
+
+    def check_scope(self):
+        workflow.check_pin(self.root, self.request)
+        for path, pin in self.runtime.items():
+            workflow.ap.no_links(path)
+            workflow.need(workflow.ap.digest(path.read_bytes()) == pin, "host.source_runtime_changed")
+
+    def authorize(self, operation, fingerprint):
+        self.check_scope()
+        workflow.need(type(fingerprint) is dict and set(fingerprint) ==
+                      {'request_sha256', 'method', 'url', 'body_sha256'} and
+                      fingerprint['request_sha256'] == self.request_hash, "host.webfocus_scope_changed")
+        workflow.need(operation in {'get', 'getContent', 'properties'} and
+                      fingerprint['method'] == 'GET' and fingerprint['body_sha256'] is None and
+                      (operation, fingerprint['url']) in self.read_requests, "host.webfocus_read_scope")
+        token = os.environ.get(self.token_env, '')
+        workflow.need(0 < len(token) <= 4096 and all(32 <= ord(c) < 127 for c in token),
+                      "host.source_credential_unavailable")
+        return {self.config['api_contract']['auth_header']: token}
+
+    def capture(self, resume):
+        self.check_scope()
+        workflow.need(resume is True, "host.webfocus_import_before_capture")
+        value = self.module.capture(self.config, self.directory, authority=self.authorize,
+                                    transport=self.transport, resume=resume)
+        saved = Path(value['output'])
+        workflow.need(saved.is_absolute() and saved.is_relative_to(self.directory), 'host.capture_output_escaped')
+        return {'status': value['status'], 'evidence': workflow.pin(self.root, str(saved.relative_to(self.root))),
+                'native_validation': 'not_run'}
 
 
 class MetabaseCommand:
@@ -703,13 +1142,62 @@ class PeriscopeCommand:
                 "native_validation": "not_run"}
 
 
+class BusinessObjectsCommand:
+    """Externally qualified metadata service; never enabled by an MCP argument.
+
+    The embedding host owns the authority callback and credentials. File hashes
+    detect drift; they cannot authenticate that callback or isolate Python.
+    """
+    def __init__(self, project, request, directory, *, authority, transport=None):
+        workflow.need(callable(authority), "host.businessobjects_external_authority_required")
+        self.root, _ = workflow.ap.load_project(project)
+        self.request_path = request
+        self.request_pin = workflow.pin(self.root, request)
+        self.module = businessobjects_host_module("businessobjects_capture")
+        self.config = self.module.validate_request(workflow.load(self.root, request), require_service=True)
+        self.directory = local_directory(self.root, directory)
+        original, _ = self.module.load_latest(self.directory, self.config)
+        self.source_fingerprint = original['source']['definition_fingerprint']
+        self.authority, self.transport = authority, transport
+        folder = Path(__file__).resolve().parents[2] / 'omni-artifact-translator/scripts'
+        self.runtime = {}
+        for name in ('businessobjects_capture.py', 'businessobjects_visual.py', 'powerbi_capture_files.py', 'bounded_csv.py'):
+            path = folder / name
+            workflow.ap.no_links(path)
+            self.runtime[path] = hashlib.sha256(path.read_bytes()).hexdigest()
+
+    def check_scope(self):
+        workflow.check_pin(self.root, self.request_pin)
+        for path, digest in self.runtime.items():
+            workflow.ap.no_links(path)
+            workflow.need(hashlib.sha256(path.read_bytes()).hexdigest() == digest, 'host.source_runtime_changed')
+        value, _ = self.module.load_latest(self.directory, self.config)
+        workflow.need(value['source']['definition_fingerprint'] == self.source_fingerprint, 'host.businessobjects_source_changed')
+        return value
+
+    def authorize(self, operation, fingerprint):
+        value = self.check_scope()
+        expected = self.module.fingerprint(self.config, self.module.pending_operation_spec(self.config, value), value)
+        workflow.need(operation == 'metadata' and fingerprint == expected, 'host.businessobjects_operation_changed')
+        return self.authority(operation, {**fingerprint, 'runtime_sha256': {p.name: h for p, h in self.runtime.items()}})
+
+    def capture(self, resume):
+        self.check_scope()
+        value = self.module.capture(self.config, self.directory, authority=self.authorize, transport=self.transport, resume=resume)
+        self.check_scope()
+        saved = Path(value['path'])
+        workflow.need(saved.is_absolute() and saved.is_relative_to(self.directory), 'host.capture_output_escaped')
+        return {'status': value['status'], 'evidence': workflow.pin(self.root, str(saved.relative_to(self.root))), 'native_validation': 'not_run'}
+
+
 class Bridge:
     def __init__(self, project, native=None, allowed_candidate=None, authorization_reference=None, sigma=None, tableau=None,
                  export_candidate=None, export_request=None, export_state=None, export_authorization_reference=None, powerbi=None,
                  looker=None, app=None, allowed_app_candidate=None, app_authorization_reference=None, hex_source=None,
-                 allowed_app_initial_candidate=None, app_initial_authorization_reference=None, periscope=None, metabase=None):
+                 allowed_app_initial_candidate=None, app_initial_authorization_reference=None, periscope=None, metabase=None, webfocus=None, thoughtspot=None, qlik=None, microstrategy=None, businessobjects=None):
         self.root, _ = workflow.ap.load_project(project)
         self.native = native
+        self.businessobjects = businessobjects
         self.allowed_candidate = allowed_candidate
         self.authorization_reference = authorization_reference
         self.sigma = sigma
@@ -719,6 +1207,10 @@ class Bridge:
         self.hex_source = hex_source
         self.periscope = periscope
         self.metabase = metabase
+        self.webfocus = webfocus
+        self.thoughtspot = thoughtspot
+        self.qlik = qlik
+        self.microstrategy = microstrategy
         self.allowed_app_initial_candidate = allowed_app_initial_candidate
         self.app_initial_authorization_reference = app_initial_authorization_reference
         workflow.need(not allowed_app_initial_candidate or (app and app_initial_authorization_reference),
@@ -746,6 +1238,9 @@ class Bridge:
 
     def definitions(self):
         values = list(LOCAL_TOOLS)
+        if self.businessobjects is not None:
+            values.append(tool("businessobjects_capture", "Capture only externally qualified, startup-pinned BusinessObjects metadata; no refresh, rendering, save or cleanup.",
+                               {"resume": {"type": "boolean"}}, ("resume",), external=True))
         if self.sigma is not None:
             properties = {"resume": {"type": "boolean"}}
             if isinstance(self.sigma, SigmaBatch):
@@ -773,6 +1268,18 @@ class Bridge:
         if self.hex_source is not None:
             values.append(tool("hex_capture", "Capture only the startup-selected Hex definitions and existing-run chart images; never execute source code.",
                                {"resume": {"type": "boolean"}}, external=True))
+        if self.microstrategy is not None:
+            values.append(tool("microstrategy_capture", "Capture only selected qualified Strategy metadata, instances and exports under separate startup grants; no arbitrary SQL or source authoring.",
+                               {"resume": {"type": "boolean"}}, ("resume",), external=True))
+        if self.qlik is not None:
+            values.append(tool("qlik_capture", "Render only startup-selected existing Qlik charts/sheets through the bounded Reports lifecycle; separate render grant, no source authoring or query endpoint.",
+                               {"resume": {"type": "boolean"}}, external=True))
+        if self.thoughtspot is not None:
+            values.append(tool("thoughtspot_capture", "Retain only startup-selected REST operations with separately granted execution; no source authoring or arbitrary query text.",
+                               {"resume": {"type": "boolean"}}, external=True))
+        if self.webfocus is not None:
+            values.append(tool("webfocus_capture", "Read only startup-selected repository metadata/source into an imported WebFOCUS capture; no procedure execution or target writes.",
+                               {"resume": {"type": "boolean"}}, read=True, external=True))
         if self.metabase is not None:
             values.append(tool("metabase_capture", "Capture only startup-selected Metabase definitions and explicitly allowed saved-question results; no arbitrary SQL or target writes.",
                                {"resume": {"type": "boolean"}}, external=True))
@@ -812,6 +1319,214 @@ class Bridge:
         definition = next((t for t in self.definitions() if t["name"] == name), None)
         workflow.need(definition is not None, "host.unknown_or_disabled_tool")
         validate_args(definition, args)
+        if name in ("report_prepare", "report_qualify", "report_observe", "report_check", "report_coverage", "report_verify_delivery"):
+            native = report_host_module("report_native")
+            if name == "report_check":
+                native.need(args["kind"] in ("candidate", "qualification", "observation", "coverage"), "check_kind")
+                value = getattr(native, "check_" + args["kind"])(self.root, args["path"])
+            elif name == "report_coverage":
+                value = native.coverage(self.root, args["candidate"], args["observations"],
+                    native.read(self.root, args["cases"]), args["output"])
+            elif name == "report_verify_delivery":
+                value = native.verify_delivery(self.root, native.read(self.root, args["spec"]))
+            else:
+                value = getattr(native, name.removeprefix("report_"))(self.root, native.read(self.root, args["spec"]), args["output"])
+            return {"status": "local_evidence_checked", "kind": value.get("kind", value.get("surface")),
+                    "evidence": workflow.pin(self.root, args.get("output", args.get("path", args.get("spec")))),
+                    "native_execution_qualified": False, "native_verified": False}
+        if name.startswith("report_source_"):
+            capture = report_host_module("report_source_capture")
+            if name == "report_source_plan_operation":
+                return workflow.output(self.root, args["output"], capture.plan_operation(
+                    workflow.load(self.root, args["profile"]), workflow.load(self.root, args["operation"])))
+            if name in ("report_source_import_local", "report_source_import_evidence"):
+                directory, source_root = local_directory(self.root, args["directory"]), local_directory(self.root, args["source_root"])
+                if name == "report_source_import_local":
+                    value = capture.import_local(workflow.load(self.root, args["request"]), source_root, directory)
+                else:
+                    value = capture.import_evidence(directory, workflow.load(self.root, args["spec"]), source_root)
+                saved = Path(value["output"])
+                workflow.need(saved.is_absolute() and saved.is_relative_to(self.root), "host.capture_output_escaped")
+                return {"status": value["status"], "evidence": workflow.pin(self.root, str(saved.relative_to(self.root))), "native_validation": "not_run"}
+            source = workflow.ap.relative_file(self.root, args["source"])
+            if name == "report_source_normalize_results":
+                return workflow.output(self.root, args["output"], capture.normalize_results(capture.F.read_file(source, capture.MAX_BYTES),
+                    workflow.load(self.root, args["profile"]), workflow.load(self.root, args["binding"])))
+            value, raw = workflow.ap.read_json(source)
+            capture.verify_capture_files(value, source.parent)
+            if name == "report_source_check_capture":
+                return {"status": "verified_supplied_bytes", "evidence": workflow.pin(self.root, args["source"]), "native_validation": "not_run"}
+            return workflow.output(self.root, args["output"], report_host_module("translate_artifact").translate(raw, "rdl-report-capture"))
+        if name.startswith("rdl_") or name.startswith("crystal_"):
+            crystal = name.startswith("crystal_")
+            module = report_host_module("crystal_report" if crystal else "rdl_report")
+            source = workflow.ap.relative_file(self.root, args["source"])
+            raw = module.F.read_file(source, module.F.MAX_FILE)
+            if name.endswith("prepare_snapshot"):
+                metadata = workflow.load(self.root, args["metadata"])
+                expected = {"identity", "inventory", "reference", "method", "extractor_version"} if crystal else {"identity", "inventory", "reference", "gaps"}
+                workflow.need(type(metadata) is dict and set(metadata) == expected, "host.report_metadata_contract")
+                if crystal:
+                    value = module.make_snapshot(raw, **metadata)
+                else:
+                    module.inspect_xml(raw)
+                    value = {"schema_version": module.SCHEMA, "identity": metadata["identity"], "inventory": metadata["inventory"],
+                        "gaps": metadata["gaps"], "report_xml": {"encoding": "utf-8", "content": raw.decode("utf-8"),
+                        "bytes": len(raw), "sha256": module.sha(raw), "reference": metadata["reference"]}}
+                    module.validate_snapshot(value)
+                return workflow.output(self.root, args["output"], value)
+            value = module.F.decode(raw); module.validate_snapshot(value)
+            if name.endswith("check_snapshot"):
+                return {"status": "consistent", "source": workflow.pin(self.root, args["source"]), "native_validation": "not_run", "export_completeness": "not_established"}
+            return workflow.output(self.root, args["output"], report_host_module("translate_artifact").translate(raw, "crystal-report" if crystal else "rdl-report"))
+        if name == "businessobjects_capture":
+            return self.businessobjects.capture(args["resume"])
+        if name.startswith("businessobjects_"):
+            capture = businessobjects_host_module("businessobjects_capture")
+            visual = businessobjects_host_module("businessobjects_visual")
+            if name in ("businessobjects_import_local", "businessobjects_import_evidence"):
+                source_root = local_directory(self.root, args["source_root"])
+                if name == "businessobjects_import_local":
+                    value = capture.import_local(workflow.load(self.root, args["request"]), source_root,
+                        local_directory(self.root, args["directory"]), allow_source_read=True)
+                else:
+                    value = capture.import_evidence(workflow.ap.relative_file(self.root, args["source"]),
+                        workflow.load(self.root, args["spec"]), source_root)
+                saved = Path(value["path"])
+                workflow.need(saved.is_absolute() and saved.is_relative_to(self.root), "host.capture_output_escaped")
+                return {"status": value["status"], "evidence": workflow.pin(self.root, str(saved.relative_to(self.root))),
+                        "native_validation": "not_run"}
+            source = workflow.ap.relative_file(self.root, args["source"])
+            if name == "businessobjects_normalize_results":
+                raw = capture.F.read_file(source, capture.F.MAX_FILE)
+                return workflow.output(self.root, args["output"], capture.normalize_results(raw,
+                    workflow.load(self.root, args["profile"]), workflow.load(self.root, args["binding"])))
+            value, raw = workflow.ap.read_json(source)
+            if name == "businessobjects_check_snapshot":
+                visual.validate_snapshot(value)
+                return {"status": "consistent", "source": workflow.pin(self.root, args["source"]),
+                        "native_validation": "not_run", "export_completeness": "not_established"}
+            if name in ("businessobjects_import_capture", "businessobjects_check_capture"):
+                capture.verify_capture_files(value, source.parent)
+                if name == "businessobjects_check_capture":
+                    return {"status": "consistent", "capture": workflow.pin(self.root, args["source"]), "native_validation": "not_run"}
+            selected_format = "businessobjects-api" if name == "businessobjects_translate" else "businessobjects-capture"
+            return workflow.output(self.root, args["output"], businessobjects_host_module("translate_artifact").translate(raw, selected_format))
+        if name == "cognos_import_report":
+            source = workflow.ap.relative_file(self.root, args["source"])
+            metadata = workflow.ap.relative_file(self.root, args["metadata"])
+            value = cognos_host_module("cognos_import").prepare_report(source, metadata)
+            return workflow.output(self.root, args["output"], value)
+        if name in ("cognos_translate", "cognos_check_snapshot"):
+            translator = cognos_host_module("translate_artifact")
+            source = workflow.ap.relative_file(self.root, args["source"])
+            raw = translator.read_input(source)
+            if name == "cognos_check_snapshot":
+                cognos_host_module("cognos_visual").validate_snapshot(translator.decode(raw))
+                return {"status": "consistent", "source": workflow.pin(self.root, args["source"]),
+                        "native_validation": "not_run", "export_completeness": "not_established"}
+            return workflow.output(self.root, args["output"], translator.translate(raw, "cognos-report"))
+        if name == "microstrategy_capture":
+            return self.microstrategy.capture(args["resume"])
+        if name == "qlik_capture":
+            return self.qlik.capture(args["resume"])
+        if name == "microstrategy_check_mcp":
+            module = microstrategy_host_module("microstrategy_mcp")
+            return workflow.output(self.root, args["output"], module.validate_evidence(workflow.load(self.root, args["source"])))
+        if name.startswith("microstrategy_"):
+            capture = microstrategy_host_module("microstrategy_capture")
+            visual = microstrategy_host_module("microstrategy_visual")
+            if name in ("microstrategy_import_local", "microstrategy_import_evidence"):
+                source_root = local_directory(self.root, args["source_root"])
+                if name == "microstrategy_import_local":
+                    value = capture.import_local(workflow.load(self.root, args["request"]), source_root,
+                        local_directory(self.root, args["directory"]), allow_source_read=True)
+                else:
+                    value = capture.import_evidence(workflow.ap.relative_file(self.root, args["source"]),
+                        workflow.load(self.root, args["spec"]), source_root)
+                saved = Path(value["output"])
+                workflow.need(saved.is_absolute() and saved.is_relative_to(self.root), "host.capture_output_escaped")
+                return {"status": value["status"], "evidence": workflow.pin(self.root, str(saved.relative_to(self.root))),
+                        "native_validation": "not_run"}
+            source = workflow.ap.relative_file(self.root, args["source"])
+            if name == "microstrategy_normalize_results":
+                raw = capture.F.read_file(source, capture.F.MAX_FILE)
+                return workflow.output(self.root, args["output"], visual.normalize_results(raw,
+                    workflow.load(self.root, args["profile"]), workflow.load(self.root, args["binding"])))
+            value, raw = workflow.ap.read_json(source)
+            if name != "microstrategy_translate":
+                visual.verify_capture_files(value, source.parent)
+                if name == "microstrategy_check_capture":
+                    return {"status": "consistent", "capture": workflow.pin(self.root, args["source"]), "native_validation": "not_run"}
+            selected_format = "microstrategy-api" if name == "microstrategy_translate" else "microstrategy-capture"
+            return workflow.output(self.root, args["output"], microstrategy_host_module("translate_artifact").translate(
+                raw, selected_format))
+        if name == "qlik_check_mcp":
+            module = qlik_host_module("qlik_mcp")
+            return workflow.output(self.root, args["output"], module.validate_evidence(workflow.load(self.root, args["source"])))
+        if name.startswith("qlik_"):
+            capture = qlik_host_module("qlik_capture")
+            visual = qlik_host_module("qlik_visual")
+            if name in ("qlik_import_local", "qlik_import_evidence"):
+                source_root = local_directory(self.root, args["source_root"])
+                if name == "qlik_import_local":
+                    value = capture.import_local(workflow.load(self.root, args["request"]), source_root,
+                        local_directory(self.root, args["directory"]), allow_source_read=True)
+                else:
+                    value = capture.import_evidence(workflow.ap.relative_file(self.root, args["source"]),
+                        workflow.load(self.root, args["spec"]), source_root)
+                saved = Path(value["output"])
+                workflow.need(saved.is_absolute() and saved.is_relative_to(self.root), "host.capture_output_escaped")
+                return {"status": value["status"], "evidence": workflow.pin(self.root, str(saved.relative_to(self.root))),
+                        "native_validation": "not_run"}
+            source = workflow.ap.relative_file(self.root, args["source"])
+            if name == "qlik_normalize_results":
+                raw = capture.F.read_file(source, capture.F.MAX_FILE)
+                return workflow.output(self.root, args["output"], visual.normalize_results(raw,
+                    workflow.load(self.root, args["profile"]), workflow.load(self.root, args["binding"])))
+            value, raw = workflow.ap.read_json(source)
+            if name != "qlik_translate":
+                visual.verify_capture_files(value, source.parent)
+                if name == "qlik_check_capture":
+                    return {"status": "consistent", "capture": workflow.pin(self.root, args["source"]), "native_validation": "not_run"}
+            selected_format = "qlik-api" if name == "qlik_translate" else "qlik-capture"
+            return workflow.output(self.root, args["output"], qlik_host_module("translate_artifact").translate(
+                raw, selected_format))
+        if name == "thoughtspot_capture":
+            return self.thoughtspot.capture(args["resume"])
+        if name == "thoughtspot_check_mcp":
+            module = thoughtspot_host_module("thoughtspot_mcp")
+            return workflow.output(self.root, args["output"], module.validate_evidence(workflow.load(self.root, args["source"])))
+        if name.startswith("thoughtspot_"):
+            capture = thoughtspot_host_module("thoughtspot_capture")
+            visual = thoughtspot_host_module("thoughtspot_visual")
+            if name in ("thoughtspot_import_local", "thoughtspot_import_evidence"):
+                source_root = local_directory(self.root, args["source_root"])
+                if name == "thoughtspot_import_local":
+                    value = capture.import_local(workflow.load(self.root, args["request"]), source_root,
+                        local_directory(self.root, args["directory"]), allow_source_read=True)
+                else:
+                    value = capture.import_evidence(workflow.ap.relative_file(self.root, args["source"]),
+                        workflow.load(self.root, args["spec"]), source_root)
+                saved = Path(value["output"])
+                workflow.need(saved.is_absolute() and saved.is_relative_to(self.root), "host.capture_output_escaped")
+                return {"status": value["status"], "evidence": workflow.pin(self.root, str(saved.relative_to(self.root))),
+                        "native_validation": "not_run"}
+            source = workflow.ap.relative_file(self.root, args["source"])
+            if name == "thoughtspot_normalize_results":
+                raw = capture.F.read_file(source, capture.F.MAX_FILE)
+                return workflow.output(self.root, args["output"], visual.normalize_results(raw,
+                    workflow.load(self.root, args["profile"]), workflow.load(self.root, args["binding"])))
+            value, raw = workflow.ap.read_json(source)
+            if name != "thoughtspot_translate":
+                visual.verify_capture_files(value, source.parent)
+                if name == "thoughtspot_check_capture":
+                    return {"status": "consistent", "capture": workflow.pin(self.root, args["source"]), "native_validation": "not_run"}
+            selected_format = "thoughtspot-api" if name == "thoughtspot_translate" else "thoughtspot-capture"
+            return workflow.output(self.root, args["output"], thoughtspot_host_module("translate_artifact").translate(
+                raw, selected_format))
+        if name == "webfocus_capture":
+            return self.webfocus.capture(args["resume"])
         if name == "metabase_capture":
             return self.metabase.capture(args["resume"])
         if name.startswith("metabase_"):
@@ -844,6 +1559,34 @@ class Bridge:
                 raw, selected_format))
         if name == "periscope_capture":
             return self.periscope.capture(args["resume"])
+        if name.startswith("webfocus_"):
+            capture = webfocus_host_module("webfocus_capture")
+            visual = webfocus_host_module("webfocus_visual")
+            if name in ("webfocus_import_local", "webfocus_import_evidence"):
+                source_root = local_directory(self.root, args["source_root"])
+                if name == "webfocus_import_local":
+                    value = capture.import_local(workflow.load(self.root, args["request"]), source_root,
+                        local_directory(self.root, args["directory"]), allow_source_read=True)
+                else:
+                    value = capture.import_evidence(workflow.ap.relative_file(self.root, args["source"]),
+                        workflow.load(self.root, args["spec"]), source_root)
+                saved = Path(value["output"])
+                workflow.need(saved.is_absolute() and saved.is_relative_to(self.root), "host.capture_output_escaped")
+                return {"status": value["status"], "evidence": workflow.pin(self.root, str(saved.relative_to(self.root))),
+                        "native_validation": "not_run"}
+            source = workflow.ap.relative_file(self.root, args["source"])
+            if name == "webfocus_normalize_results":
+                raw = capture.F.read_file(source, capture.F.MAX_FILE)
+                return workflow.output(self.root, args["output"], visual.normalize_results(raw,
+                    workflow.load(self.root, args["profile"]), workflow.load(self.root, args["binding"])))
+            value, raw = workflow.ap.read_json(source)
+            if name != "webfocus_translate":
+                visual.verify_capture_files(value, source.parent)
+                if name == "webfocus_check_capture":
+                    return {"status": "consistent", "capture": workflow.pin(self.root, args["source"]), "native_validation": "not_run"}
+            selected_format = "webfocus-adapter" if name == "webfocus_translate" else "webfocus-capture"
+            return workflow.output(self.root, args["output"], webfocus_host_module("translate_artifact").translate(
+                raw, selected_format, args.get("producer_revision")))
         if name.startswith("periscope_"):
             capture = periscope_host_module("periscope_capture")
             visual = periscope_host_module("periscope_visual")
@@ -1215,6 +1958,29 @@ def main(argv=None):
     parser.add_argument("--hex-directory", help="Private capture directory relative to the engagement")
     parser.add_argument("--hex-token-env", default="HEX_ACCESS_TOKEN")
     parser.add_argument("--enable-hex-capture", action="store_true")
+    parser.add_argument("--microstrategy-request", help="Exact Strategy capture request relative to engagement")
+    parser.add_argument("--microstrategy-directory", help="Already imported private Strategy capture directory")
+    parser.add_argument("--microstrategy-token-env", default="MICROSTRATEGY_AUTH_TOKEN")
+    parser.add_argument("--microstrategy-cookie-env", default="MICROSTRATEGY_COOKIES")
+    parser.add_argument("--enable-microstrategy-capture", action="store_true")
+    parser.add_argument("--enable-microstrategy-execution", action="store_true")
+    parser.add_argument("--enable-microstrategy-render", action="store_true")
+    parser.add_argument("--enable-microstrategy-cleanup", action="store_true")
+    parser.add_argument("--qlik-request", help="Exact Qlik capture request relative to engagement")
+    parser.add_argument("--qlik-directory", help="Already imported private Qlik capture directory")
+    parser.add_argument("--qlik-token-env", default="QLIK_ACCESS_TOKEN")
+    parser.add_argument("--enable-qlik-capture", action="store_true")
+    parser.add_argument("--enable-qlik-render", action="store_true")
+    parser.add_argument("--thoughtspot-request", help="Exact ThoughtSpot source request relative to engagement")
+    parser.add_argument("--thoughtspot-directory", help="Already imported private ThoughtSpot capture directory")
+    parser.add_argument("--thoughtspot-token-env", default="THOUGHTSPOT_ACCESS_TOKEN")
+    parser.add_argument("--enable-thoughtspot-capture", action="store_true")
+    parser.add_argument("--enable-thoughtspot-query", action="store_true")
+    parser.add_argument("--enable-thoughtspot-render", action="store_true")
+    parser.add_argument("--webfocus-request", help="Exact WebFOCUS repository-read request relative to engagement")
+    parser.add_argument("--webfocus-directory", help="Already imported private WebFOCUS capture directory")
+    parser.add_argument("--webfocus-token-env", default="WEBFOCUS_SESSION")
+    parser.add_argument("--enable-webfocus-capture", action="store_true")
     parser.add_argument("--metabase-request", help="Exact Metabase capture request relative to engagement")
     parser.add_argument("--metabase-directory", help="Private Metabase capture directory")
     parser.add_argument("--metabase-token-env", default="METABASE_API_KEY")
@@ -1301,6 +2067,39 @@ def main(argv=None):
                   "host.source_startup_authority_required")
     if all(configured_hex) and args.enable_hex_capture:
         hex_source = HexCommand(args.project, *configured_hex, token_env=args.hex_token_env)
+    microstrategy = None
+    configured_microstrategy = (args.microstrategy_request, args.microstrategy_directory)
+    workflow.need(not (args.enable_microstrategy_execution or args.enable_microstrategy_render or args.enable_microstrategy_cleanup)
+                  or args.enable_microstrategy_capture, "host.microstrategy_capture_grant_required")
+    workflow.need(not (any(configured_microstrategy) or args.enable_microstrategy_capture)
+                  or (all(configured_microstrategy) and args.enable_microstrategy_capture), "host.source_startup_authority_required")
+    if args.enable_microstrategy_capture:
+        microstrategy = MicrostrategyCommand(args.project, *configured_microstrategy, token_env=args.microstrategy_token_env,
+            cookie_env=args.microstrategy_cookie_env, allow_execution=args.enable_microstrategy_execution,
+            allow_render=args.enable_microstrategy_render, allow_cleanup=args.enable_microstrategy_cleanup)
+    qlik = None
+    configured_qlik = (args.qlik_request, args.qlik_directory)
+    workflow.need(not args.enable_qlik_render or args.enable_qlik_capture, "host.qlik_capture_grant_required")
+    workflow.need(not (any(configured_qlik) or args.enable_qlik_capture)
+                  or (all(configured_qlik) and args.enable_qlik_capture), "host.source_startup_authority_required")
+    if args.enable_qlik_capture:
+        qlik = QlikCommand(args.project, *configured_qlik, token_env=args.qlik_token_env,
+                           allow_render=args.enable_qlik_render)
+    thoughtspot = None
+    configured_thoughtspot = (args.thoughtspot_request, args.thoughtspot_directory)
+    workflow.need(not (args.enable_thoughtspot_query or args.enable_thoughtspot_render) or args.enable_thoughtspot_capture,
+                  "host.thoughtspot_capture_grant_required")
+    workflow.need(not (any(configured_thoughtspot) or args.enable_thoughtspot_capture)
+                  or (all(configured_thoughtspot) and args.enable_thoughtspot_capture), "host.source_startup_authority_required")
+    if args.enable_thoughtspot_capture:
+        thoughtspot = ThoughtspotCommand(args.project, *configured_thoughtspot, token_env=args.thoughtspot_token_env,
+                                        allow_query=args.enable_thoughtspot_query, allow_render=args.enable_thoughtspot_render)
+    webfocus = None
+    configured_webfocus = (args.webfocus_request, args.webfocus_directory)
+    workflow.need(not (any(configured_webfocus) or args.enable_webfocus_capture)
+                  or (all(configured_webfocus) and args.enable_webfocus_capture), "host.source_startup_authority_required")
+    if args.enable_webfocus_capture:
+        webfocus = WebfocusCommand(args.project, *configured_webfocus, token_env=args.webfocus_token_env)
     metabase = None
     configured_metabase = (args.metabase_request, args.metabase_directory)
     workflow.need(not args.enable_metabase_query or args.enable_metabase_capture, "host.metabase_query_grant_required")
@@ -1322,7 +2121,7 @@ def main(argv=None):
                     args.export_authorization_reference, powerbi=powerbi, looker=looker, app=app,
                     allowed_app_candidate=args.allow_app_candidate, app_authorization_reference=args.app_authorization_reference,
                     hex_source=hex_source, allowed_app_initial_candidate=args.allow_app_initial_candidate,
-                    app_initial_authorization_reference=args.app_initial_authorization_reference, periscope=periscope, metabase=metabase)
+                    app_initial_authorization_reference=args.app_initial_authorization_reference, periscope=periscope, metabase=metabase, webfocus=webfocus, thoughtspot=thoughtspot, qlik=qlik, microstrategy=microstrategy)
     serve(bridge, sys.stdin.buffer, sys.stdout)
 
 

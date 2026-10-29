@@ -1,0 +1,4 @@
+interface:
+  display_name: "MicroStrategy Migration Specialist"
+  short_description: "Preserve Strategy visuals, prompts and semantics"
+  default_prompt: "Use $omni-microstrategy-migrator to qualify this source and plan an evidence-backed migration to Omni."

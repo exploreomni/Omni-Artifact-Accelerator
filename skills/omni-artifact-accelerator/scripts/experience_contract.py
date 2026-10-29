@@ -503,10 +503,16 @@ def validate_handoff(root, design_path, spec, P):
                       name + '_destination_applicability_required')
             if choices == {'omitted'}:
                 _need(destination_surface not in capabilities[name], 'omitted_' + name + '_cannot_be_implemented')
-    pins = {p['path']: p for p in [design_pin, *concept['dependencies']]}
+    report = None
+    if 'report' in spec['surfaces']:
+        report = P.routing_helper('report_contract').validate_handoff(root, design, spec, P)
+    pins = {p['path']: p for p in [design_pin, *concept['dependencies'],
+                                 *(report['dependencies'] if report else [])]}
     return {'schema_version': 1, 'kind': 'analyst_handoff_validation',
             'metadata': {'option_id': concept['metadata']['option_id'], 'surface': surface, 'surfaces': sorted(spec['surfaces']),
                          'concept_manifest_path': handoff['concept_manifest_path'],
                          'quality_requirement_ids': sorted(active), 'destination_ids': sorted(ids),
+                         **({'report_capability_gaps': report['gaps'],
+                             'report_native_authoring_qualified': False} if report else {}),
                          'observation_limit': 'Declared design completeness only; no rendered, interaction, native or acceptance certification.'},
             'dependencies': [pins[path] for path in sorted(pins)]}

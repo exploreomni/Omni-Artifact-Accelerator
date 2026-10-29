@@ -1,0 +1,4 @@
+interface:
+  display_name: "Omni Qlik Migrator"
+  short_description: "Preserve Qlik visuals, selections and migration evidence"
+  default_prompt: "Use $omni-qlik-migrator to qualify Qlik source evidence and prepare a traceable Omni migration within the accelerator."

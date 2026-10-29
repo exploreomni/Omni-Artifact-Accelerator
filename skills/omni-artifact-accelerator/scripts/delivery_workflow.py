@@ -19,12 +19,12 @@ ID = re.compile(r'[a-z][a-z0-9-]{0,63}\Z')
 RESPONSIBILITIES = {'experience', 'brand', 'semantics', 'engineering', 'verification',
                     'design_systems', 'storytelling'}
 PRODUCT_RESPONSIBILITIES = {'product_intent', 'creative_review'}
-ROLE_OWNERS = {'experience': {'app-designer', 'dashboard-designer'}, 'brand': {'branding'},
-               'semantics': {'data-analyst', 'bi-engineer'}, 'engineering': {'app-engineer', 'bi-engineer'},
-               'verification': {'qa-analyst'}, 'design_systems': {'design-systems', 'app-designer', 'dashboard-designer'},
+ROLE_OWNERS = {'experience': {'app-designer', 'dashboard-designer', 'report-designer'}, 'brand': {'branding'},
+               'semantics': {'data-analyst', 'bi-engineer'}, 'engineering': {'app-engineer', 'bi-engineer', 'report-builder'},
+               'verification': {'qa-analyst'}, 'design_systems': {'design-systems', 'app-designer', 'dashboard-designer', 'report-designer'},
                'storytelling': {'data-storyteller', 'data-analyst'},
                'product_intent': {'product-owner'},
-               'creative_review': {'app-designer', 'dashboard-designer', 'design-systems'}}
+               'creative_review': {'app-designer', 'dashboard-designer', 'report-designer', 'design-systems'}}
 LANES = {'source', 'synthetic', 'numerical', 'native', 'rendered', 'access', 'publication', 'human'}
 IGNORED = {'.git', '.venv', 'venv', 'node_modules', '__pycache__', '.pytest_cache', '.ruff_cache'}
 QUALITY_POLICY = 'experience-evidence-v1'

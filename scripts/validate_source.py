@@ -19,6 +19,14 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 CASES = {
+    "report-native": "tests/test_report_native.py",
+    "rdl-report": "tests/test_rdl_report.py",
+    "report-source-capture": "tests/test_report_source_capture.py",
+    "crystal-report": "tests/test_crystal_report.py",
+    "report-source-host": "tests/test_report_source_host.py",
+    "report-source-integration": "tests/test_report_source_integration.py",
+    "report-contract": "tests/test_report_contract.py",
+    "report-routing": "tests/test_report_routing.py",
     "metadata": "scripts/check_package.py",
     "cli": "tests/test_security_cli.py",
     "app-resources": "tests/test_security_app_resources.py",
@@ -40,6 +48,32 @@ CASES = {
     "metabase-projection": "tests/test_metabase_visual.py",
     "metabase-integration": "tests/test_metabase_integration.py",
     "metabase-host": "tests/test_metabase_host.py",
+    "businessobjects-projection": "tests/test_businessobjects_visual.py",
+    "businessobjects-capture": "tests/test_businessobjects_capture.py",
+    "businessobjects-host": "tests/test_businessobjects_host.py",
+    "businessobjects-integration": "tests/test_businessobjects_integration.py",
+    "cognos-projection": "tests/test_cognos_visual.py",
+    "cognos-host": "tests/test_cognos_host.py",
+    "cognos-integration": "tests/test_cognos_integration.py",
+    "microstrategy-capture": "tests/test_microstrategy_capture.py",
+    "microstrategy-projection": "tests/test_microstrategy_visual.py",
+    "microstrategy-host": "tests/test_microstrategy_host.py",
+    "microstrategy-integration": "tests/test_microstrategy_integration.py",
+    "microstrategy-mcp": "tests/test_microstrategy_mcp.py",
+    "qlik-capture": "tests/test_qlik_capture.py",
+    "qlik-projection": "tests/test_qlik_visual.py",
+    "qlik-host": "tests/test_qlik_host.py",
+    "qlik-integration": "tests/test_qlik_integration.py",
+    "qlik-mcp": "tests/test_qlik_mcp.py",
+    "thoughtspot-capture": "tests/test_thoughtspot_capture.py",
+    "thoughtspot-projection": "tests/test_thoughtspot_visual.py",
+    "thoughtspot-host": "tests/test_thoughtspot_host.py",
+    "thoughtspot-integration": "tests/test_thoughtspot_integration.py",
+    "thoughtspot-mcp": "tests/test_thoughtspot_mcp.py",
+    "webfocus-bridge": "tests/test_webfocus_visual.py",
+    "webfocus-capture": "tests/test_webfocus_capture.py",
+    "webfocus-integration": "tests/test_webfocus_integration.py",
+    "webfocus-host": "tests/test_webfocus_host.py",
     "stage-gates": "tests/test_stage_gates.py",
     "stage-gate-integration": "tests/test_stage_gate_integration.py",
     "conversation-choice": "tests/test_conversation_choice.py",
@@ -52,7 +86,10 @@ CASES = {
 # Keep them bounded without turning a larger valid fixture into a false failure.
 CASE_TIMEOUTS = {name: 120 for name in ('workflow', 'product-intent', 'stage-gates',
     'stage-gate-integration', 'conversation-choice', 'native-stage-gates', 'native-create',
-    'experience-enforcement', 'data-refresh', 'periscope-integration', 'metabase-integration')}
+    'experience-enforcement', 'data-refresh', 'periscope-integration', 'metabase-integration', 'webfocus-integration', 'thoughtspot-integration', 'qlik-integration', 'microstrategy-integration', 'cognos-integration', 'businessobjects-integration', 'report-native', 'report-source-integration')}
+# The three-route native authorization suite repeats complete source-bound
+# lifecycles. Keep a bounded allowance separate from runtime transport deadlines.
+CASE_TIMEOUTS['native-stage-gates'] = 300
 IGNORED = {".git", ".venv", "venv", "node_modules", "__pycache__", ".pytest_cache", ".ruff_cache"}
 STDLIB_ROOTS = {Path(sysconfig.get_path(name)).resolve() for name in ("stdlib", "platstdlib")}
 FIRST_PARTY_IMPORTS = {

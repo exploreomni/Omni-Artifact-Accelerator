@@ -12,7 +12,7 @@ SPEC = 'analyst_design_intent_spec'
 KIND = 'analyst_design_intent'
 BRANDING = {'requested', 'none', 'unknown'}
 VISUAL = {'craft', 'native_behavior', 'responsive', 'accessibility', 'human_usability'}
-ROLES = {'product-owner', 'branding', 'design-systems', 'app-designer', 'dashboard-designer', 'app-engineer', 'bi-engineer', '3d-modeler',
+ROLES = {'product-owner', 'branding', 'design-systems', 'app-designer', 'dashboard-designer', 'report-designer', 'report-builder', 'app-engineer', 'bi-engineer', '3d-modeler',
          'qa-analyst', 'motion-designer', 'data-storyteller'}
 
 
@@ -59,8 +59,28 @@ def validate_surfaces(value, allowed):
          and len(set(value)) == len(value) and set(value) <= set(allowed), 'surfaces_invalid')
 
 
+def validate_report_target(value):
+    """Local candidates or pinned published observations; never native write authority."""
+    need(type(value) is dict and {'surface', 'state'} <= set(value) <=
+         {'surface', 'state', 'document_id', 'draft_id', 'instance', 'capability_evidence_path'}
+         and value['surface'] == 'report', 'report_target_invalid')
+    need(value['state'] in {'local', 'published'}, 'report_draft_lifecycle_unqualified')
+    need(value.get('draft_id') is None, 'report_draft_lifecycle_unqualified')
+    if value['state'] == 'local':
+        need(all(value.get(k) is None for k in ('document_id', 'instance', 'capability_evidence_path')),
+             'local_report_cannot_claim_native_identity')
+        return
+    url(value.get('instance'))
+    origin = urlsplit(value['instance'])
+    need(origin.path in {'', '/'} and not origin.query and not origin.fragment, 'report_origin_required')
+    ident = value.get('document_id')
+    need(text(ident) and len(ident) <= 256 and all(32 <= ord(c) < 127 for c in ident)
+         and not any(c in ident for c in '/\\?#'), 'report_document_required')
+    relative(value.get('capability_evidence_path'))
+
+
 def starter(surfaces, branding='unknown', website=None):
-    validate_surfaces(surfaces, {'app', 'dashboard'})
+    validate_surfaces(surfaces, {'app', 'dashboard', 'report'})
     need(branding in BRANDING, 'branding_invalid')
     if website is not None:
         url(website)
@@ -99,6 +119,8 @@ def validate(spec, project):
         if selection.get('candidate_path') is not None:
             need(type(target) is dict and target.get('surface') == selection['surface']
                  and target.get('state') in {'local', 'draft', 'published'}, 'candidate_target_required')
+            if selection['surface'] == 'report':
+                validate_report_target(target)
             if target['state'] != 'local':
                 url(target.get('instance'))
                 parsed = urlsplit(target['instance'])
@@ -166,6 +188,9 @@ def references(spec):
         paths.add(spec['product']['source_inventory_path'])
     for selection in spec['selections']:
         paths.update(selection[k] for k in ('design_path', 'brand_path', 'candidate_path') if selection.get(k))
+        target = selection.get('target') or {}
+        if selection['surface'] == 'report' and target.get('capability_evidence_path'):
+            paths.add(relative(target['capability_evidence_path']))
     paths.update(a['local_path'] for a in spec['assets'] if a.get('local_path'))
     paths.update(path for req in spec['requirements'] for path in req.get('delivery', {}).get('dependency_paths', []))
     return sorted(paths)

@@ -1080,9 +1080,10 @@ def record(root, request, *, P=None, provider=None):
                 _need(payload['subject'] is not None, 'stage_gate_trusted_choice_unverified')
         if stage == 'design':
             payload['selected_intent'] = project.get('design_intent')
-            _refresh_handoff(fd, project, payload, P)
             if project.get('workflow_quality_policy') == QUALITY_POLICY:
                 payload['experience_dependencies'] = _experience_handoff(root, fd, project, payload, state, P)
+            # Resolve the selected design before checking its refresh details.
+            _refresh_handoff(fd, project, payload, P)
         if stage == 'candidate':
             payload['artifacts'] = [_pin(fd, p, P) for p in payload['artifacts']]
             payload['candidate_sha256'] = _candidate_hash(payload['artifacts'], P)

@@ -6,7 +6,7 @@ Start with a business question, a migration source or an existing model. The orc
 
 Follow the [source-only quick start](../README.md#quick-start) and [package-use policy](../skills/omni-artifact-accelerator/references/dependency-policy.md). Do not install/import dependencies or activate skills without explicit scoped human sign-off. Existing installations and pinned versions are not automatic approval.
 
-All 15 skills form one portable bundle. Preview an existing directory without writing:
+All declared skills form one portable bundle. Preview an existing directory without writing:
 
 ```sh
 OAA_SKILLS_DIR="$HOME/.codex/skills"
@@ -17,6 +17,24 @@ python3 -I -S scripts/install_skills.py --destination "$OAA_SKILLS_DIR" --verify
 The public `--apply` path is disabled pending a qualified host approval gate. Do not use manual copies as a bypass. A reviewed `--upgrade-from` archive can support a read-only comparison; its manifest proves integrity only, not approval or publisher authenticity. Preserve customizations and resolve any conflict before a future authorized activation.
 
 The agent can review the orchestrator directly in the checkout. Role planning does not launch workers or install tools. Once separately authorized activation is implemented and verified, refresh the host's discovery and retain the exact installed-source evidence.
+
+## Native Reports Beta
+
+Use `--surface report` for a report engagement and follow the
+[report workflow](../skills/omni-artifact-accelerator/references/report-workflow.md).
+The report designer and builder reuse A–F, branding, BI and independent QA.
+Start with the report's decision and data, then ask about page geometry, grouping,
+parameters, output formats, freshness and delivery. Review three concrete concepts
+before implementation. The existing `both` option still selects dashboard plus App.
+
+Example: “Prepare a native Report for regional operations, with parameterized
+detail, group totals and a branded header. I need a readable PDF and a separate
+Excel output with stable sheet names. Keep existing caching, do not create a
+schedule, and confirm the beta's supported authoring and export behavior.”
+
+Local contracts/routing are implemented. Native Report API writing, renderer
+activation, tenant qualification and SSRS/RDL/Crystal conversion are separate
+work; no browser or package-install fallback is implied.
 
 ## New dashboard or App
 
@@ -441,3 +459,128 @@ write authority and any immediate-publication side effect. Neither a stage-relea
 status nor four source consultations erase outstanding delivery findings. See the
 [control cases](../skills/omni-app-engineer/references/control-primitives.md#assembled-control-regressions)
 for custom hidden panels, scope/status agreement and long-label regressions.
+
+## Migrate WebFOCUS content
+
+Invoke `omni-webfocus-migrator` within the accelerator engagement. Start with the
+[run guide](../skills/omni-artifact-accelerator/references/webfocus-visual-run.md):
+qualify the installed version and source scope, retain original files and an
+independent page/visual inventory, verify the capture, then project requirements.
+Use the existing backend exchange and A–F gates before native design/build.
+
+The initial connected reader only enriches already selected scope through explicitly
+allowed repository reads. It does not execute FEX, discover the whole tenant,
+render imported HTML, create target artifacts or reproduce ReportCaster schedules.
+Keep source exports/results private and outside the package. Capture completeness,
+numerical parity, runtime access and business acceptance require separate evidence.
+
+## Migrate ThoughtSpot Liveboards and Answers
+
+Ask: “Use the ThoughtSpot specialist to migrate these selected Liveboards and
+Answers. Preserve filters, repeated placements, notes, exports and access behavior;
+show unsupported requirements before offering the three target designs.”
+
+Follow the [ThoughtSpot workflow](../skills/omni-artifact-accelerator/references/thoughtspot-visual-run.md):
+qualify tenant/Org/version/principal, transfer JSON TML plus an independent inventory,
+retain originals and map exact pointers, then register the capture and projection.
+Optional connected metadata enrichment, saved-result queries and PNG/PDF renders
+need distinct source grants. The supplied Spotter MCP checker performs no remote
+calls. YAML/unknown code stays inert. Continue through A–F and the existing DMA
+handoff when real backend gaps exist; no ThoughtSpot DMA producer is assumed.
+Local validation does not certify a live migration.
+
+## Migrate Qlik sheets and analytical behavior
+
+Ask: “Use the Qlik specialist to migrate these selected sheets to Omni. Preserve
+our measures, selections and security, identify unsupported behavior, and offer
+three viable target designs after analysis.”
+
+Follow the [Qlik workflow](../skills/omni-artifact-accelerator/references/qlik-visual-run.md).
+Start with supplied original definitions and independent scope, or an already
+authorized official MCP connection. QIX needs a separately qualified transport;
+Cloud Reports rendering is optional and separately granted. Keep QlikView and
+client-managed profiles distinct. Use existing Omni fields or scoped DMA
+requirements; no Qlik DMA parser is assumed. Record cache/refresh choices in D,
+actual design selection in E, and distinct numerical/visual/access acceptance.
+
+## Migrate MicroStrategy and Strategy content
+
+Ask: “Use the MicroStrategy specialist to migrate these selected dashboards and
+reports to Omni. Preserve prompts, selector behavior, metric meaning and exports;
+show me exactly what needs redesign.”
+
+Follow the [Strategy workflow](../skills/omni-artifact-accelerator/references/microstrategy-visual-run.md).
+Qualify Library and Intelligence Server versions, context path, project and
+principal. Import original definitions and independently enumerated scope first.
+Keep metadata, saved-instance execution, rendering and owned-resource cleanup
+separate. Supplied documents/cubes and unsupported result shapes retain explicit
+obligations; there is no universal pixel-perfect or formula conversion.
+
+Use existing Omni fields or send scoped requirements to DMA. The product interview
+retains fidelity, quality ambition, branding, devices, dimensional visuals, exports
+and independent cache/refresh choices. Select one of exactly three concrete
+concepts before coding. Local checks do not replace live source/target acceptance.
+
+## Migrate Cognos reports
+
+Start with the [Cognos specialist workflow](../skills/omni-artifact-accelerator/references/cognos-visual-run.md).
+Export the selected report specification XML from Reporting and record the exact
+version, report identity, source principal and independent selected inventory.
+Use the local importer, then `translate_artifact.py --format cognos-report` to
+produce a reviewable inventory. Register both snapshot and inventory in the
+existing engagement; the package then routes the source specialist automatically.
+
+The workflow keeps A–F and your actual design choice intact. Reuse existing Omni
+models before requesting backend gaps from DMA. Dashboard specs, live capture,
+result parity, publication and acceptance remain separate qualification work;
+this export-first reader does not make those claims.
+
+## Migrate SAP BusinessObjects reports
+
+Start with the [BusinessObjects workflow](../skills/omni-artifact-accelerator/references/businessobjects-visual-run.md)
+and [source contract](../skills/omni-artifact-translator/references/businessobjects-source-contract.md).
+Identify WebI/Universe/Crystal versions first. Import an original-evidence snapshot
+or retain independent originals in a capture, translate it, register both source
+and inventory, then prepare visual requirements. Reuse existing Omni bindings
+or route genuine model gaps through DMA. Complete the A–F gates before coding.
+
+For example, migrate a WebI regional-performance document while preserving its
+provider-specific filters, context-sensitive totals and prompts; or reuse an
+existing Omni topic and redesign the selected report as a native App after the
+user chooses one of three concepts. Capture the target cache/refresh policy
+independently. Full Universe extraction and Crystal print fidelity are separate
+obligations. Local tools do not authorize refresh, rendering, save or publication.
+
+## Migrate SSRS, Power BI paginated or Crystal reports
+
+1. Choose the source specialist: [SSRS](../skills/omni-ssrs-migrator/SKILL.md),
+   [Power BI paginated](../skills/omni-powerbi-paginated-migrator/SKILL.md) or
+   [Crystal](../skills/omni-crystal-reports-migrator/SKILL.md). Start a `report`
+   engagement for native Reports Beta; `both` still means App plus dashboard.
+2. Retain approved original RDL bytes or an explicit Crystal extraction in the
+   private engagement. Supply version/identity and an independent inventory,
+   including missing objects. No credentials, SDK install or source code execution.
+3. Use `rdl_prepare_snapshot` or `crystal_prepare_snapshot` with source/metadata
+   paths, then their `*_check_snapshot` and `*_translate` MCP tools. See the
+   [RDL contract](../skills/omni-artifact-translator/references/rdl-report-source-contract.md)
+   and [Crystal contract](../skills/omni-artifact-translator/references/crystal-report-source-contract.md).
+4. Use `report_source_import_local` to seal originals and independent inventory.
+   `report_source_import_evidence` retains supplied result/render files with exact
+   parameters, principal, population and freshness. `report_source_normalize_results`
+   preserves decimal/integer precision; use format `report-normalized` for comparison.
+   Data-result exports do not prove report calculations or pagination.
+5. Continue A–F: analyze source/target, select reuse or a DMA route, establish
+   narrative and output requirements, choose one of three concepts, then resolve
+   report design before authoring. Track all missing/unsupported behavior.
+6. Prepare a gated native candidate with `report_prepare`. Qualify the actual native
+   interface and preserve actual readback/exports through the
+   [report workflow](../skills/omni-artifact-accelerator/references/report-workflow.md).
+   Current helpers retain supplied evidence; they do not execute an unverified
+   Report API. A report-only standalone return uses `surface: report` and
+   `surface_deliveries.report`; a DMA return uses the same independent report proof.
+
+`report_source_plan_operation` describes bounded documented SSRS metadata/definition
+requests or Power BI paginated definition/async-export/status/file requests. It
+never sends them. Tenant access, capacity, RLS/SSO, engine/schema version, source
+execution permission, native rendering and customer acceptance still need their
+own evidence. A Report page is not an App or a dashboard export.

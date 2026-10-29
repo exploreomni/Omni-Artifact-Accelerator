@@ -1,0 +1,4 @@
+interface:
+  display_name: "BusinessObjects Migration Specialist"
+  short_description: "Preserve WebI logic and Universe migration evidence"
+  default_prompt: "Use $omni-businessobjects-migrator to inspect BusinessObjects evidence and prepare a governed WebI and Universe migration to Omni."

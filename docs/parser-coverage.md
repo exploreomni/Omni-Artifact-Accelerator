@@ -1,9 +1,9 @@
 # Analyst migration parser coverage
 
-Historical source evidence reviewed 2026-10-22; Periscope/CDT and Metabase interfaces reviewed
+Historical source evidence reviewed 2026-10-22; Periscope/CDT, Metabase and WebFOCUS interfaces reviewed
 2026-10-28. Compatibility and fixture results describe only their retained scope;
 they do not establish a live source/Omni migration, native rendering, effective
-access or business acceptance. CDT and Metabase real-tenant pilots remain unqualified.
+access or business acceptance. CDT, Metabase and WebFOCUS real-tenant pilots remain unqualified.
 
 ## Producer compatibility
 
@@ -52,7 +52,14 @@ capture and result normalization are separate from source interpretation. The
 defines the supported subset; no arbitrary MBQL compiler, YAML serialization
 parser, Domo runtime import or DMA Metabase adapter is supplied.
 
-All parser outputs remain partial evidence. Read the skill's [input/output contract](../skills/omni-artifact-translator/references/inventory-contract.md), [Looker source contract](../skills/omni-artifact-translator/references/looker-source-contract.md), [Power BI source contract](../skills/omni-artifact-translator/references/powerbi-source-contract.md) and [Tableau source contract](../skills/omni-artifact-translator/references/tableau-source-contract.md) for exact shapes and limits. The offline translator has no live acquisition or target write behavior. Hex/Looker/Power BI/Tableau/CDT/Metabase acquisition uses separate bounded source wrappers; native candidate construction is separately configured. Parser support alone does not recreate charts, Apps, filters, actions, layouts or security in Omni.
+11. **WebFOCUS:** `webfocus-adapter` accepts qualified DMA declaration reports;
+`webfocus-capture` accepts the OAA original-file, independent visual inventory and
+state-bound capture contract. Read the [WebFOCUS contract](../skills/omni-artifact-translator/references/webfocus-source-contract.md).
+FEX/MAS/ACX declaration recognition is separate from page/visual completeness.
+Bounded style interpretation retains opaque/dynamic blocks rather than evaluating
+scripts; unknown wrappers/extensions and runtime behavior stay review obligations.
+
+All parser outputs remain partial evidence. Read the skill's [input/output contract](../skills/omni-artifact-translator/references/inventory-contract.md), [Looker source contract](../skills/omni-artifact-translator/references/looker-source-contract.md), [Power BI source contract](../skills/omni-artifact-translator/references/powerbi-source-contract.md) and [Tableau source contract](../skills/omni-artifact-translator/references/tableau-source-contract.md) for exact shapes and limits. The offline translator has no live acquisition or target write behavior. Hex/Looker/Power BI/Tableau/CDT/Metabase/WebFOCUS acquisition uses separate bounded source wrappers; native candidate construction is separately configured. Parser support alone does not recreate charts, Apps, filters, actions, layouts or security in Omni.
 
 ## Existing BI capabilities and analyst gaps
 
@@ -65,6 +72,7 @@ All parser outputs remain partial evidence. Read the skill's [input/output contr
 | Domo | `DMA/adapters/domo.py`: Platform v1 DataSet detail/list JSON, Product v1 Beast Mode template/search JSON, unversioned Magic ETL clipboard `domo/dataflow-actions` JSON. `Domo/engine/extractors/domo/{manual.py,models.py,dataflow_definition.py,evidence.py}`: typed customer manifest, serialized evidence bundle/envelope and bounded DataFlow graph/SQL analysis. | DMA captures datasets, schema/PDP declarations, expressions and selected ETL actions. Dedicated Domo engine has evidence types for cards, pages, app definitions, layout/interactions/visibility, workflows and policies. DataFlow definitions preserve graph IDs, dataset references, scripts/SQL and unsupported transforms. | New `domo-agent` bridge reads the four emitted contracts above. It does not parse raw live Product API responses, customer ZIP manifests or generic MigrationBundle envelopes. DMA still excludes card definitions/SQL DataFlow envelopes; use the dedicated Domo evidence owner. No automatic behavioral translation or store-backed acceptance. |
 | Sigma | `DMA/adapters/sigma.py`: REST v2 workbook/page/element/column/query/dataset/grant and element-lineage JSON. `Sigma/engine/extractors/sigma/{extractor.py,source_contracts.py,dashboard.py,capability_contracts.py,visual_capture.py}` and `prepush/{build,scope,session}.py`: `sigma-api-v2`, Data Model `/spec`, workbook graph/behavior/routing artifacts, source-bound context and reviewed prepush manifest. | Source/element identities, formulas, scoped model bindings, metric/relationship declarations and workbook pages/elements. Dashboard code explicitly retains unsupported controls/actions/input tables/writeback and unresolved fields. | New `sigma-agent` bridge imports these explicit JSON shapes. It preserves full source even when a pilot excludes charts. Existing API layout/control gaps remain; generated SQL stays supplied evidence. Beta/Deprecated labels in the DMA profile require official refresh before a customer claim. Actual API acquisition markers, verified native aliases, bulk-only placements, capability aggregates and versioned visual-capture envelopes have bounded bridge coverage. A bare tagged snapshot remains unsupported. Envelope attachment bytes/journal chains are not read; source capture completeness is not analyst parity. |
 | Metabase | OAA `metabase-api-snapshot.v1` and `metabase-visual-capture.v1`; inspected Domo `extractors/metabase/` code remains design precedent, not an imported producer. | Dedicated specialist and independent visual inventory preserve tabs, placements, parameters/mappings, content, raw MBQL/SQL, dependencies and unresolved clauses. Capture and result evidence use explicit source/state bindings. | No complete MBQL compilation, automatic semantic model creation, YAML serialization parsing or effective-access equivalence. Native SQL, nested/multistage queries and unsupported expressions remain reviewed obligations. Original-byte verification and local checks do not establish a qualified tenant migration. |
+| WebFOCUS | Qualified DMA FEX/MAS/ACX declaration report and OAA capture with independent expected hierarchy. | Specialist, original hashes, report obligations, chart/style declarations, pages/repeated placements/controls, supplied outputs and bounded repository-read enrichment. | No FEX/Dialogue Manager execution, arbitrary JS interpretation, universal CM manifest decoding, tenant render API or source-to-Omni compiler. Local qualification is not live migration acceptance. |
 
 The [Looker Dashboard API](https://docs.cloud.google.com/looker/docs/reference/looker-api/latest/methods/Dashboard/dashboard) was checked live on 2026-10-21 to confirm the direct input contract. The other rows describe inspected local code and its declared limitations; they are not freshly verified vendor support matrices.
 
@@ -101,3 +109,131 @@ Reuse approved DMA inventories for source semantics and physical bindings; prese
 The focused tests are synthetic and establish parser/projection behavior only. Optional `test_sigma_visual_bridge.py` cases use actual Sigma producers behind in-memory transport and denied sockets (set `OMNI_ARTIFACT_SIGMA_CHECKOUT` and, when needed, `OMNI_ARTIFACT_SIGMA_PYTHON`); runtime imports are isolated to tests, never the offline importer. They check evidence retention, unresolved references, identity conflicts, DMA imports, bounded source-agent fingerprints, Domo membership/behavior/security omissions, Sigma route/context/graph consistency, unsupported claims, resource limits, unchanged inputs, private outputs and console-log boundaries. The Domo Page-plan/external-handoff examples and Sigma retail/routing examples from the inspected repositories were also projected read-only, without importing either runtime. None proves compatibility with all vendor exports or a customer production workflow.
 
 The detailed producer contracts are [Domo](../skills/omni-artifact-translator/references/domo-agent-bridge.md) and [Sigma](../skills/omni-artifact-translator/references/sigma-agent-bridge.md).
+
+## ThoughtSpot
+
+`thoughtspot-api` reads `thoughtspot-api-snapshot.v1`; `thoughtspot-capture` reads
+`thoughtspot-visual-capture.v1`. The dedicated specialist reconciles independent
+scope with JSON TML, keeping Liveboard/saved Answer/pinned visualization/local ID/
+placement identity distinct. Original-file mapping, retained state/results,
+private-view obligations, explicit normalization and source-specific cases feed
+the shared A–F, standalone and DMA paths. See the [source contract](../skills/omni-artifact-translator/references/thoughtspot-source-contract.md)
+and [workflow](../skills/omni-artifact-accelerator/references/thoughtspot-visual-run.md).
+
+Official interfaces reviewed 2026-10-28. The initial REST profile is Cloud26.10;
+other versions use supplied evidence until qualified. Bounded enrichment supports
+fixed metadata search/TML export, saved Answer/Liveboard results and PNG/PDF;
+queries and renders require separate host grants. Retained Spotter schema/session
+checks are local only. There is no general search/formula compiler, YAML decoder,
+source authoring, arbitrary query endpoint, DMA ThoughtSpot adapter or qualified
+live-tenant migration. PINNED Answer renders remain blocked because official
+identifier guidance is inconsistent. Local fixtures do not establish native,
+security, rendered or business acceptance.
+
+## Qlik Cloud and Qlik Sense
+
+`qlik-api` reads `qlik-api-snapshot.v1`; `qlik-capture` reads
+`qlik-visual-capture.v1`. The [specialist](../skills/omni-qlik-migrator/SKILL.md)
+reconciles original property definitions with independent app/sheet/object scope,
+master dependencies, repeated placements, controls, private/missing content,
+expressions and observed selection state. Straight/pivot normalization preserves
+numeric/display distinctions, page coverage and source bindings. See the
+[source contract](../skills/omni-artifact-translator/references/qlik-source-contract.md).
+
+Official interfaces reviewed 2026-10-28. Optional bounded Cloud Reports capture
+supports selected existing chart/sheet renders and their job lifecycle. Retained
+MCP checks are passive; QIX acquisition belongs to an already approved external
+host, not a bundled WebSocket transport. Client-managed sources use qualified
+supplied evidence initially. QlikView, QVF/QVW/QVD decoding, extension execution,
+source authoring, general expression compilation and a DMA Qlik producer are not
+implemented. Local checks do not establish live tenant or business acceptance.
+
+## MicroStrategy / Strategy
+
+`microstrategy-api` accepts `microstrategy-api-snapshot.v1`;
+`microstrategy-capture` accepts `microstrategy-visual-capture.v1`. The
+[specialist](../skills/omni-microstrategy-migrator/SKILL.md) preserves original
+definitions, an independent denominator, repeated placements, shared dependencies,
+prompts/selectors, filter stages and unavailable/private/unsupported obligations.
+See the [source contract](../skills/omni-artifact-translator/references/microstrategy-source-contract.md)
+for supported raw response shapes and exact result bindings.
+
+Optional connected operations require a version/schema-qualified selected-object
+profile and separate metadata/execution/render/cleanup grants. Unknown deployments
+use supplied evidence. Numerical normalization covers only the explicitly
+qualified JSON Data tree or explicit CSV profile; it rejects incomplete/error
+results and unsupported subtotals rather than flattening them. MCP validation is
+passive and does not obtain dashboard layout or exports. No automatic connector
+setup, package decoding, source authoring, arbitrary SQL, universal expression
+compiler, pixel-perfect document converter or MicroStrategy DMA producer.
+Live-tenant qualification remains separate from local package checks.
+
+## IBM Cognos Analytics
+
+`cognos-report` reads `cognos-report-snapshot.v1`. The
+[specialist](../skills/omni-cognos-migrator/SKILL.md) and
+[report importer](../skills/omni-artifact-translator/scripts/cognos_import.py)
+retain exact supplied UTF-8 XML and identity/inventory metadata, then project
+query, prompt, layout and dependency obligations. The parser rejects DTD/entity
+inputs and bounds XML size, nesting and node count; it never resolves remote
+schemas, includes, links or source code. Unknown vocabulary remains evidence.
+
+See the [contract](../skills/omni-artifact-translator/references/cognos-source-contract.md)
+and [workflow](../skills/omni-artifact-accelerator/references/cognos-visual-run.md).
+Original and projection hashes are replayed through typed routing, A–F,
+standalone bindings and DMA requests. Source-defined access remains unverified.
+
+Connected acquisition/execution, dashboard specification decoding, deployment
+archives, Framework Manager/data-module parsing, formula compilation, native
+result normalization and live-tenant qualification are not implemented. Supplied
+visual references support manual review, not automated parity. Numeric comparison
+stays inconclusive until a qualified Cognos result/state binding exists.
+
+## SAP BusinessObjects
+
+The [specialist](../skills/omni-businessobjects-migrator/SKILL.md) uses
+`businessobjects-api` and `businessobjects-capture`. The bounded snapshot reader
+preserves original XML/JSON response bytes and independent inventory, recognizes
+selected WebI structural shapes, and retains omitted/unknown obligations.
+Modeled/unknown evidence cannot self-declare source-native support.
+
+The capture helper embeds and rechecks originals, supplied raw results and
+rendered evidence, with append-only journals and exact state/result bindings.
+Numeric normalization preserves decimal precision and nulls, and rejects recognized source errors; it
+does not infer full populations from preview data or format strings.
+
+A separately injected trusted host can qualify selected metadata GETs. There is
+no default connected activation, query/refresh/render/save/cleanup dispatch,
+SDK/decoder installation, general formula compiler, complete Universe extraction,
+Crystal binary parser or universal print-fidelity claim. Unknown engine/version,
+missing security/provider state and unsupported behavior remain explicit gaps.
+Local checks are not live-tenant or native/business acceptance. See the
+[contract](../skills/omni-artifact-translator/references/businessobjects-source-contract.md)
+and [workflow](../skills/omni-artifact-accelerator/references/businessobjects-visual-run.md).
+
+## SSRS, Power BI paginated and Crystal Reports
+
+`rdl-report` accepts the package's `rdl-report-snapshot.v1` wrapper around original
+UTF-8 Microsoft RDL. The passive bounded XML reader preserves queries, expressions,
+page/section geometry, tablix/group structures, prompts, code and references as
+evidence. It does not execute them, resolve remote resources or validate complete
+vendor schemas. Unknown/extension occurrences remain obligations. SSRS and Power BI
+paginated identities/routes remain distinct from interactive PBIR/PBIP.
+
+`crystal-report` accepts `crystal-report-snapshot.v1`: a supplied package-owned
+extraction with exact original bytes, engine/version and independent inventory.
+It does not open `.rpt` binaries, install SDKs, refresh saved data, evaluate formulas
+or guarantee classic/Enterprise equivalence. Repeated placements and unresolved
+subreport/formula dependencies are retained.
+
+`rdl-report-capture` accepts the shared `report-source-capture.v1` for either source
+family. Capture is supplied-file only; original definition and inventory must
+match exactly. Numeric attachments pin parser profile, requested/observed state,
+parameters, principal, population and completeness. Normalization alone is not
+parity. Native Report candidate/readback/export/QA is a distinct local evidence
+lane; automatic native execution and live source pilots remain unqualified.
+
+See [RDL](../skills/omni-artifact-translator/references/rdl-report-source-contract.md),
+[Crystal](../skills/omni-artifact-translator/references/crystal-report-source-contract.md)
+and [capture](../skills/omni-artifact-translator/references/report-source-capture.md)
+for exact schemas, bounds and current support limits.

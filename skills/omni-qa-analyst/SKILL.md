@@ -5,6 +5,11 @@ description: Independently verify Omni dashboard and App numbers, migration pari
 
 # QA analyst
 
+For native Reports Beta, use [report QA](references/report-qa.md) with the existing
+independent evidence lanes. Inspect actual pages/exports against declared geometry,
+grouping, totals and output-specific rules. A successful local contract check or
+first-page screenshot cannot establish complete report fidelity.
+
 For [dimensional comparisons](../omni-design-systems/references/dimensional-visualization-craft.md),
 check original scale/value semantics independently, then perspective, occlusion,
 labels, controls and constrained-space behavior only in permitted observation lanes.

@@ -104,13 +104,78 @@ def metabase_module():
     spec.loader.exec_module(module)
     return module
 
+def report_source_module(name="report_source_capture"):
+    need(name in ("report_source_capture", "rdl_report", "crystal_report"), "source.module_rejected")
+    path = Path(__file__).resolve().parents[2] / ("omni-artifact-translator/scripts/" + name + ".py")
+    ap.no_links(path)
+    spec = importlib.util.spec_from_file_location("visual_" + name, path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def businessobjects_module(name="businessobjects_visual"):
+    need(name in ("businessobjects_visual", "businessobjects_capture"), "source.module_rejected")
+    path = Path(__file__).resolve().parents[2] / ("omni-artifact-translator/scripts/" + name + ".py")
+    ap.no_links(path)
+    spec = importlib.util.spec_from_file_location("visual_" + name, path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def businessobjects_capture_module():
+    return businessobjects_module("businessobjects_capture")
+
+
+def cognos_module():
+    path = Path(__file__).resolve().parents[2] / "omni-artifact-translator/scripts/cognos_visual.py"
+    ap.no_links(path)
+    spec = importlib.util.spec_from_file_location("visual_cognos_validation", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def microstrategy_module():
+    path = Path(__file__).resolve().parents[2] / "omni-artifact-translator/scripts/microstrategy_visual.py"
+    spec = importlib.util.spec_from_file_location("visual_microstrategy_validation", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+
+def qlik_module():
+    path = Path(__file__).resolve().parents[2] / "omni-artifact-translator/scripts/qlik_visual.py"
+    spec = importlib.util.spec_from_file_location("visual_qlik_validation", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+
+def thoughtspot_module():
+    path = Path(__file__).resolve().parents[2] / "omni-artifact-translator/scripts/thoughtspot_visual.py"
+    spec = importlib.util.spec_from_file_location("visual_thoughtspot_validation", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+def webfocus_module():
+    path = Path(__file__).resolve().parents[2] / "omni-artifact-translator/scripts/webfocus_visual.py"
+    spec = importlib.util.spec_from_file_location("visual_webfocus_validation", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
 
 def item_surfaces(requirements, item):
     return item.get("target_surfaces", requirements.get("surface", ["dashboard", "app"]))
 
 
 def surface_items(requirements, surface):
-    need(surface in ("dashboard", "app"), "requirements.invalid_surface")
+    need(surface in ("dashboard", "app", "report"), "requirements.invalid_surface")
     return [i for i in requirements["items"] if i["disposition"] == "migrate"
             and surface in item_surfaces(requirements, i)]
 
@@ -138,7 +203,21 @@ def source_inventory(root, original, inventory):
                "supplied_periscope_source_adapter_result": "periscope-adapter",
                "supplied_periscope_visual_capture": "periscope-capture",
                "supplied_metabase_api_snapshot": "metabase-api",
-               "supplied_metabase_visual_capture": "metabase-capture"}
+               "supplied_metabase_visual_capture": "metabase-capture",
+               "supplied_webfocus_source_adapter_result": "webfocus-adapter",
+               "supplied_webfocus_visual_capture": "webfocus-capture",
+               "supplied_thoughtspot_api_snapshot": "thoughtspot-api",
+               "supplied_thoughtspot_visual_capture": "thoughtspot-capture",
+               "supplied_qlik_api_snapshot": "qlik-api",
+               "supplied_qlik_visual_capture": "qlik-capture",
+               "supplied_microstrategy_api_snapshot": "microstrategy-api",
+               "supplied_microstrategy_visual_capture": "microstrategy-capture",
+               "supplied_cognos_report_snapshot": "cognos-report",
+               "supplied_businessobjects_api_snapshot": "businessobjects-api",
+               "supplied_businessobjects_visual_capture": "businessobjects-capture",
+               "supplied_rdl_report_snapshot": "rdl-report",
+               "supplied_crystal_report_snapshot": "crystal-report",
+               "supplied_report_source_capture": "rdl-report-capture"}
     source_format = formats.get(data["source"].get("format"))
     need(source_format is not None, "source.unrecognized_projection")
     module_path = Path(__file__).resolve().parents[2] / "omni-artifact-translator/scripts/translate_artifact.py"
@@ -150,7 +229,11 @@ def source_inventory(root, original, inventory):
         need(data["source"]["input_filename"] == Path(original).name, "source.filename_mismatch")
         rebuilt["source"]["input_filename"] = Path(original).name
     need(data == rebuilt, "source.projection_changed")
-    if source_format == "tableau-capture":
+    if source_format == "rdl-report-capture":
+        report_source_module().verify_capture_files(original_value, ap.relative_file(root, original).parent)
+    elif source_format == "businessobjects-capture":
+        businessobjects_capture_module().verify_capture_files(original_value, ap.relative_file(root, original).parent)
+    elif source_format == "tableau-capture":
         tableau_module().verify_capture_files(original_value, ap.relative_file(root, original).parent)
     elif source_format == "powerbi-capture":
         powerbi_module().verify_capture_files(original_value, ap.relative_file(root, original).parent)
@@ -160,6 +243,14 @@ def source_inventory(root, original, inventory):
         hex_module().verify_capture_files(original_value, ap.relative_file(root, original).parent)
     elif source_format == "periscope-capture":
         periscope_module().verify_capture_files(original_value, ap.relative_file(root, original).parent)
+    elif source_format == "microstrategy-capture":
+        microstrategy_module().verify_capture_files(original_value, ap.relative_file(root, original).parent)
+    elif source_format == "qlik-capture":
+        qlik_module().verify_capture_files(original_value, ap.relative_file(root, original).parent)
+    elif source_format == "thoughtspot-capture":
+        thoughtspot_module().verify_capture_files(original_value, ap.relative_file(root, original).parent)
+    elif source_format == "webfocus-capture":
+        webfocus_module().verify_capture_files(original_value, ap.relative_file(root, original).parent)
     elif source_format == "metabase-capture":
         metabase_module().verify_capture_files(original_value, ap.relative_file(root, original).parent)
     need(type(data.get("assets")) is list and bool(data["assets"]), "source.assets_required")
@@ -170,6 +261,24 @@ def source_inventory(root, original, inventory):
 def capture_value(root, record):
     path = check_pin(root, record)
     value, raw = ap.read_json(path)
+    if value.get("schema_version") == "report-source-capture.v1":
+        report_source_module().verify_capture_files(value, path.parent)
+        return value
+    if value.get("schema_version") == "businessobjects-visual-capture.v1":
+        businessobjects_capture_module().verify_capture_files(value, path.parent)
+        return value
+    if value.get("schema_version") == "microstrategy-visual-capture.v1":
+        microstrategy_module().verify_capture_files(value, path.parent)
+        return value
+    if value.get("schema_version") == "qlik-visual-capture.v1":
+        qlik_module().verify_capture_files(value, path.parent)
+        return value
+    if value.get("schema_version") == "thoughtspot-visual-capture.v1":
+        thoughtspot_module().verify_capture_files(value, path.parent)
+        return value
+    if value.get("schema_version") == "webfocus-visual-capture.v1":
+        webfocus_module().verify_capture_files(value, path.parent)
+        return value
     if value.get("schema_version") == "metabase-visual-capture.v1":
         metabase_module().verify_capture_files(value, path.parent)
         return value
@@ -364,12 +473,17 @@ def hex_comparison_gaps(root, source, target, capture, asset, case, columns=None
 def cases(asset):
     scenarios = [("visual", "default"), ("visual", "narrow"), ("interaction", "default_filter_reset"),
                  ("access", "allowed"), ("access", "denied"), ("accessibility", "keyboard_labels")]
+    if asset["source_identity"].get("source_platform") in {"ssrs", "powerbi_paginated", "crystal"}:
+        scenarios = [("visual", "page_geometry_and_overflow"), ("visual", "pdf_pagination"),
+                     ("visual", "xlsx_sheets_types_and_population"), ("interaction", "parameter_defaults_null_blank_and_all"),
+                     ("interaction", "group_totals_and_suppression"), ("interaction", "empty_and_large_result"),
+                     ("access", "allowed"), ("access", "denied"), ("accessibility", "reading_order_and_labels")]
     numeric = asset["kind"] in KINDS
     if asset["source_identity"].get("source_platform") == "looker" and asset["kind"] == "placement":
         numeric = asset["source_identity"].get("query_visual") is True
     if asset["source_identity"].get("source_platform") == "looker" and asset["source_identity"].get("expected_kind") in KINDS:
         numeric = True
-    if asset["source_identity"].get("source_platform") in {"hex", "periscope", "metabase"}:
+    if asset["source_identity"].get("source_platform") in {"hex", "periscope", "metabase", "webfocus", "thoughtspot", "qlik", "microstrategy", "cognos", "businessobjects", "ssrs", "powerbi_paginated", "crystal"}:
         numeric = asset["source_identity"].get("query_visual") is True
     if numeric:
         scenarios.extend([("numeric", "default"), ("numeric", "changed_filter"),
@@ -377,12 +491,72 @@ def cases(asset):
     if asset["source_identity"].get("definition_sha256"):
         scenarios.extend([("interaction", "changed_parameter"), ("interaction", "empty_result"),
                           ("interaction", "action_state")])
-    if asset["source_identity"].get("report_id") or asset["source_identity"].get("source_platform") == "powerbi":
+    if ((asset["source_identity"].get("report_id") and asset["source_identity"].get("source_platform") not in ("cognos", "businessobjects", "ssrs", "powerbi_paginated", "crystal"))
+            or asset["source_identity"].get("source_platform") == "powerbi"):
         scenarios.extend([("interaction", "bookmark_state"), ("interaction", "slicer_crossfilter"),
                           ("interaction", "drillthrough_reset"), ("visual", "hidden_mobile_state")])
     if asset["source_identity"].get("source_platform") == "looker":
         scenarios.extend([("interaction", "filter_listener_exclusions"), ("interaction", "tab_navigation"),
                           ("visual", "content_and_custom_behavior")])
+    if asset["source_identity"].get("source_platform") == "businessobjects":
+        scenarios.extend([("interaction", "prompt_input_control_and_filter_scope"),
+                          ("interaction", "provider_merge_and_calculation_context"),
+                          ("interaction", "refresh_partial_failure_and_reset"),
+                          ("visual", "sections_breaks_pagination_and_export"),
+                          ("access", "universe_and_document_effective_persona")])
+        if numeric:
+            scenarios.append(("numeric", "provider_context_totals_and_population"))
+        if asset["kind"] == "definition":
+            scenarios = [("interaction", "dependency_disposition"), ("access", "source_security_review")]
+    if asset["source_identity"].get("source_platform") == "cognos":
+        scenarios.extend([("interaction", "prompt_required_default_and_reset"),
+                          ("interaction", "detail_summary_filter_order"),
+                          ("interaction", "conditional_layout_and_drillthrough"),
+                          ("visual", "pagination_and_export"),
+                          ("access", "package_data_module_effective_persona")])
+        if numeric:
+            scenarios.append(("numeric", "aggregation_totals_and_population"))
+        if asset["kind"] == "definition":
+            scenarios = [("interaction", "dependency_disposition"), ("access", "source_security_review")]
+    if asset["source_identity"].get("source_platform") == "microstrategy":
+        scenarios.extend([("interaction", "prompt_key_and_selector_state"),
+                          ("interaction", "filter_stages_and_placement_scope"),
+                          ("access", "security_filter_effective_persona")])
+        if numeric:
+            scenarios.append(("numeric", "aggregation_subtotal_and_pagination"))
+    if asset["source_identity"].get("source_platform") == "qlik":
+        scenarios.extend([("interaction", "selection_bookmark_alternate_state"),
+                          ("interaction", "master_item_and_placement_scope"),
+                          ("access", "section_access_row_and_column")])
+        if numeric:
+            scenarios.extend([("numeric", "expression_population_and_totals"),
+                              ("interaction", "drill_variable_reset"),
+                              ("interaction", "refresh_and_stale_recovery")])
+        if asset["kind"] == "definition":
+            scenarios = [("interaction", "dependency_disposition"), ("access", "source_security_review")]
+    if asset["source_identity"].get("source_platform") == "thoughtspot":
+        if asset["kind"] in {"control", "filter", "parameter", "placement", "page", "dashboard"}:
+            scenarios.extend([("interaction", "filter_layers_linked_exclusions"),
+                              ("interaction", "tab_group_view_scope"),
+                              ("interaction", "parameter_apply_reset")])
+        if numeric:
+            scenarios.extend([("interaction", "drill_crossfilter_action_scope"),
+                              ("interaction", "export_scope_and_hidden_columns"),
+                              ("interaction", "refresh_and_stale_recovery"),
+                              ("numeric", "result_population_and_limit")])
+        if asset["kind"] == "definition":
+            scenarios = [("interaction", "dependency_disposition"), ("access", "source_security_review")]
+    if asset["source_identity"].get("source_platform") == "webfocus":
+        if asset["kind"] in {"control", "filter", "parameter", "placement", "page", "dashboard"}:
+            scenarios.extend([("interaction", "required_prompt_cascade_reset"),
+                              ("interaction", "container_navigation_and_reuse")])
+        if numeric:
+            scenarios.extend([("interaction", "drill_autolink_parameter_scope"),
+                              ("interaction", "export_and_in_document_calculation"),
+                              ("interaction", "refresh_and_stale_recovery"),
+                              ("numeric", "preview_limit_and_aggregation_stage")])
+        if asset["kind"] == "definition":
+            scenarios = [("interaction", "dependency_disposition"), ("access", "source_security_review")]
     if asset["source_identity"].get("source_platform") == "metabase":
         if asset["kind"] in {"control", "parameter", "placement", "page", "dashboard"}:
             scenarios.extend([("interaction", "tab_parameter_mapping"), ("interaction", "linked_filters_apply_reset")])
@@ -463,11 +637,25 @@ def prepare(root, original, inventory, destination, website=None):
               "items": [], "source_gaps": copy.deepcopy(source.get("gaps", [])),
               "native_validation": "not_run", "business_acceptance": "not_recorded"}
     for asset in source["assets"]:
+        restricted = (asset['source_identity'].get('source_platform') in ('webfocus', 'thoughtspot', 'qlik', 'microstrategy', 'cognos', 'businessobjects', 'ssrs', 'powerbi_paginated', 'crystal') and
+                      asset['source_identity'].get('restricted_private_scope') is True)
+        source_review = (asset['source_identity'].get('source_platform') in ('cognos', 'businessobjects', 'ssrs', 'powerbi_paginated', 'crystal') and
+                         (asset['source_identity'].get('declared_disposition') != 'include' or
+                          asset['source_identity'].get('requires_source_review') is True))
+        source_review = source_review or (asset['source_identity'].get('source_platform') == 'webfocus' and
+                                         asset['source_identity'].get('requires_source_review') is True)
+        scope_decision = None
+        if restricted:
+            scope_decision = {"reason": "Source scope is unavailable or not selected; retain obligation pending explicit source review",
+                              "reference": "source-private-scope-guard:" + source['source']['input_sha256']}
+        elif source_review:
+            scope_decision = {"reason": "Source obligation requires a reviewed disposition before migration",
+                              "reference": "source-review-obligation:" + source['source']['input_sha256']}
         result["items"].append({"asset_key": asset["asset_key"], "source_id": asset["source_id"],
             "source_identity": copy.deepcopy(asset["source_identity"]), "source_path": asset["source_path"],
             "source_payload_sha256": asset["source_payload_sha256"], "kind": asset["kind"],
-            "source_facets": copy.deepcopy(asset["facets"]), "disposition": "migrate",
-            "scope_decision": None, "target_surfaces": list(project["surfaces"]), "assignment_reference": None,
+            "source_facets": copy.deepcopy(asset["facets"]), "disposition": "defer" if restricted or source_review else "migrate",
+            "scope_decision": scope_decision, "target_surfaces": list(project["surfaces"]), "assignment_reference": None,
             "business_question": None, "target_binding": None,
             "implementation_route": None, "parity": {facet: "unknown" for facet in asset["facets"]},
             "design_changes": [], "required_cases": cases(asset)})
@@ -506,6 +694,20 @@ def requirements(root, path):
             need(item.get(field) == asset[field], "requirements.source_identity_changed")
         need(item.get("source_facets") == asset["facets"], "requirements.source_facets_changed")
         need(item.get("disposition") in ("migrate", "defer", "exclude"), "requirements.invalid_disposition")
+        if asset['source_identity'].get('source_platform') in ('webfocus', 'thoughtspot', 'qlik', 'microstrategy', 'cognos', 'businessobjects', 'ssrs', 'powerbi_paginated', 'crystal'):
+            need(item['disposition'] != 'migrate' or asset['source_identity'].get('restricted_private_scope') is not True,
+                 'requirements.private_scope_not_selected')
+        source_review = (asset['source_identity'].get('source_platform') in ('cognos', 'businessobjects', 'ssrs', 'powerbi_paginated', 'crystal') and
+                         (asset['source_identity'].get('declared_disposition') != 'include' or
+                          asset['source_identity'].get('requires_source_review') is True))
+        source_review = source_review or (asset['source_identity'].get('source_platform') == 'webfocus' and
+                                         asset['source_identity'].get('requires_source_review') is True)
+        if source_review and item['disposition'] == 'migrate':
+            review = item.get('scope_decision')
+            need(type(review) is dict and type(review.get('reference')) is str and review['reference'].strip()
+                 and not review['reference'].startswith('source-review-obligation:')
+                 and type(review.get('reason')) is str and review['reason'].strip(),
+                 'requirements.' + asset['source_identity']['source_platform'] + '_source_review_required')
         if item["disposition"] != "migrate":
             decision = item.get("scope_decision")
             need(type(decision) is dict and decision.get("reason") and decision.get("reference"),
@@ -522,15 +724,34 @@ def requirements(root, path):
                                      "sigma": "sigma-visual-capture.v1", "looker": "looker-visual-capture.v1",
                                      "hex": "hex-visual-capture.v1",
                                      "periscope": "periscope-visual-capture.v1",
-                                     "metabase": "metabase-visual-capture.v1"}.get(source["source"].get("platform"))
+                                     "metabase": "metabase-visual-capture.v1",
+                                     "webfocus": "webfocus-visual-capture.v1",
+                                     "thoughtspot": "thoughtspot-visual-capture.v1",
+                                     "qlik": "qlik-visual-capture.v1",
+                                     "microstrategy": "microstrategy-visual-capture.v1",
+                                     "businessobjects": "businessobjects-visual-capture.v1",
+                                     "ssrs": "report-source-capture.v1", "powerbi_paginated": "report-source-capture.v1",
+                                     "crystal": "report-source-capture.v1"}.get(source["source"].get("platform"))
                 need(expected_provider is not None and capture["schema_version"] == expected_provider,
                      "requirements.capture_provider_mismatch")
-                if capture["schema_version"] == "tableau-visual-capture.v1":
+                if capture["schema_version"] == "report-source-capture.v1":
+                    report_source_module().case_binding(asset, case, capture)
+                elif capture["schema_version"] == "businessobjects-visual-capture.v1":
+                    businessobjects_capture_module().case_binding(asset, case, capture)
+                elif capture["schema_version"] == "tableau-visual-capture.v1":
                     tableau_case_binding(asset, case, capture)
                 elif capture["schema_version"] == "powerbi-visual-capture.v1":
                     powerbi_case_binding(asset, case, capture)
                 elif capture["schema_version"] == "looker-visual-capture.v1":
                     looker_case_binding(asset, case, capture)
+                elif capture["schema_version"] == "microstrategy-visual-capture.v1":
+                    microstrategy_module().case_binding(asset, case, capture)
+                elif capture["schema_version"] == "qlik-visual-capture.v1":
+                    qlik_module().case_binding(asset, case, capture)
+                elif capture["schema_version"] == "thoughtspot-visual-capture.v1":
+                    thoughtspot_module().case_binding(asset, case, capture)
+                elif capture["schema_version"] == "webfocus-visual-capture.v1":
+                    webfocus_module().case_binding(asset, case, capture)
                 elif capture["schema_version"] == "metabase-visual-capture.v1":
                     metabase_module().case_binding(asset, case, capture)
                 elif capture["schema_version"] == "periscope-visual-capture.v1":
@@ -593,6 +814,53 @@ def rows(root, record):
         raw = check_pin(root, record.get("raw_file")).read_bytes()
         rebuilt = hex_module().normalize_results(raw, value.get("parser_profile"), value.get("binding"))
         need(value == rebuilt, "results.hex_normalization_changed")
+        value = value["rows"]
+    elif record.get("format") == "report-normalized":
+        value, _ = ap.read_json(file)
+        need(type(value) is dict and value.get("kind") == "report_source_normalized_results", "results.report_normalization_required")
+        raw = check_pin(root, record.get("raw_file")).read_bytes()
+        rebuilt = report_source_module().normalize_results(raw, value.get("parser_profile"), value.get("binding"))
+        need(value == rebuilt, "results.report_normalization_changed")
+        value = value["rows"]
+    elif record.get("format") == "businessobjects-normalized":
+        value, _ = ap.read_json(file)
+        need(type(value) is dict and value.get("kind") == "businessobjects_normalized_results",
+             "results.businessobjects_normalization_required")
+        raw = check_pin(root, record.get("raw_file")).read_bytes()
+        rebuilt = businessobjects_capture_module().normalize_results(raw, value.get("parser_profile"), value.get("binding"))
+        need(value == rebuilt, "results.businessobjects_normalization_changed")
+        value = value["rows"]
+    elif record.get("format") == "microstrategy-normalized":
+        value, _ = ap.read_json(file)
+        need(type(value) is dict and value.get("kind") == "microstrategy_normalized_results",
+             "results.microstrategy_normalization_required")
+        raw = check_pin(root, record.get("raw_file")).read_bytes()
+        rebuilt = microstrategy_module().normalize_results(raw, value.get("parser_profile"), value.get("binding"))
+        need(value == rebuilt, "results.microstrategy_normalization_changed")
+        value = value["rows"]
+    elif record.get("format") == "qlik-normalized":
+        value, _ = ap.read_json(file)
+        need(type(value) is dict and value.get("kind") == "qlik_normalized_results",
+             "results.qlik_normalization_required")
+        raw = check_pin(root, record.get("raw_file")).read_bytes()
+        rebuilt = qlik_module().normalize_results(raw, value.get("parser_profile"), value.get("binding"))
+        need(value == rebuilt, "results.qlik_normalization_changed")
+        value = value["rows"]
+    elif record.get("format") == "thoughtspot-normalized":
+        value, _ = ap.read_json(file)
+        need(type(value) is dict and value.get("kind") == "thoughtspot_normalized_results",
+             "results.thoughtspot_normalization_required")
+        raw = check_pin(root, record.get("raw_file")).read_bytes()
+        rebuilt = thoughtspot_module().normalize_results(raw, value.get("parser_profile"), value.get("binding"))
+        need(value == rebuilt, "results.thoughtspot_normalization_changed")
+        value = value["rows"]
+    elif record.get("format") == "webfocus-normalized":
+        value, _ = ap.read_json(file)
+        need(type(value) is dict and value.get("kind") == "webfocus_normalized_results",
+             "results.webfocus_normalization_required")
+        raw = check_pin(root, record.get("raw_file")).read_bytes()
+        rebuilt = webfocus_module().normalize_results(raw, value.get("parser_profile"), value.get("binding"))
+        need(value == rebuilt, "results.webfocus_normalization_changed")
         value = value["rows"]
     elif record.get("format") == "metabase-normalized":
         value, _ = ap.read_json(file)
@@ -853,12 +1121,16 @@ def compare(root, spec_path, destination):
     selected_case = next(c for c in applicable if c["case_id"] == spec["case_id"])
     inventory_source = load(root, req["source_files"][1]["path"])["source"]
     source_platform = inventory_source["platform"]
+    if source_platform == "cognos":
+        # Report definitions are not observed result/state evidence. A matching
+        # hand-authored CSV must never certify a Cognos migration's parity.
+        gaps.append("source.cognos_result_binding_unqualified")
     if source_platform == "hex" and not all(inventory_source.get("source_identity", {}).get(k)
                                              for k in ("source_origin", "workspace_id")):
         gaps.append("source.hex_frozen_workspace_identity_unknown")
     if source_platform == "hex" and not spec.get("persona_equivalence_reference"):
         gaps.append("source.hex_persona_equivalence_required")
-    if source_platform in ("looker", "hex", "periscope", "metabase") and selected_case.get("source_capture") is None:
+    if source_platform in ("looker", "hex", "periscope", "metabase", "webfocus", "thoughtspot", "qlik", "microstrategy", "businessobjects", "ssrs", "powerbi_paginated", "crystal") and selected_case.get("source_capture") is None:
         gaps.append("source." + source_platform + "_case_capture_required")
     if selected_case.get("source_capture") is not None:
         selected_capture = capture_value(root, selected_case["source_capture"])
@@ -878,6 +1150,36 @@ def compare(root, spec_path, destination):
     if original.get("schema_version") == "hex-visual-capture.v1":
         selected = next(i for i in req["items"] if any(c["case_id"] == spec["case_id"] for c in i["required_cases"]))
         gaps.extend(hex_comparison_gaps(root, source, target, original, selected, selected_case, spec.get("columns")))
+    if source_platform in ("ssrs", "powerbi_paginated", "crystal") and original.get("schema_version") == "report-source-capture.v1":
+        selected = next(i for i in req["items"] if any(c["case_id"] == spec["case_id"] for c in i["required_cases"]))
+        normalized = load(root, source["file"]["path"]) if source.get("format") == "report-normalized" else None
+        gaps.extend(report_source_module().comparison_gaps(original, selected, selected_case, source, target,
+                                                          normalized=normalized, columns=spec.get("columns")))
+    if source_platform == "businessobjects" and original.get("schema_version") == "businessobjects-visual-capture.v1":
+        selected = next(i for i in req["items"] if any(c["case_id"] == spec["case_id"] for c in i["required_cases"]))
+        normalized = load(root, source["file"]["path"]) if source.get("format") == "businessobjects-normalized" else None
+        gaps.extend(businessobjects_capture_module().comparison_gaps(original, selected, selected_case, source, target,
+                                                                   normalized=normalized, columns=spec.get("columns")))
+    if source_platform == "microstrategy" and original.get("schema_version") == "microstrategy-visual-capture.v1":
+        selected = next(i for i in req["items"] if any(c["case_id"] == spec["case_id"] for c in i["required_cases"]))
+        normalized = load(root, source["file"]["path"]) if source.get("format") == "microstrategy-normalized" else None
+        gaps.extend(microstrategy_module().comparison_gaps(original, selected, selected_case, source, target,
+                                                      normalized=normalized, columns=spec.get("columns")))
+    if source_platform == "qlik" and original.get("schema_version") == "qlik-visual-capture.v1":
+        selected = next(i for i in req["items"] if any(c["case_id"] == spec["case_id"] for c in i["required_cases"]))
+        normalized = load(root, source["file"]["path"]) if source.get("format") == "qlik-normalized" else None
+        gaps.extend(qlik_module().comparison_gaps(original, selected, selected_case, source, target,
+                                                      normalized=normalized, columns=spec.get("columns")))
+    if source_platform == "thoughtspot" and original.get("schema_version") == "thoughtspot-visual-capture.v1":
+        selected = next(i for i in req["items"] if any(c["case_id"] == spec["case_id"] for c in i["required_cases"]))
+        normalized = load(root, source["file"]["path"]) if source.get("format") == "thoughtspot-normalized" else None
+        gaps.extend(thoughtspot_module().comparison_gaps(original, selected, selected_case, source, target,
+                                                      normalized=normalized, columns=spec.get("columns")))
+    if source_platform == "webfocus" and original.get("schema_version") == "webfocus-visual-capture.v1":
+        selected = next(i for i in req["items"] if any(c["case_id"] == spec["case_id"] for c in i["required_cases"]))
+        normalized = load(root, source["file"]["path"]) if source.get("format") == "webfocus-normalized" else None
+        gaps.extend(webfocus_module().comparison_gaps(original, selected, selected_case, source, target,
+                                                      normalized=normalized, columns=spec.get("columns")))
     if source_platform == "periscope" and original.get("schema_version") == "periscope-visual-capture.v1":
         selected = next(i for i in req["items"] if any(c["case_id"] == spec["case_id"] for c in i["required_cases"]))
         normalized = load(root, source["file"]["path"]) if source.get("format") == "periscope-normalized" else None
@@ -969,7 +1271,9 @@ def coverage(root, requirements_path, candidate_path, evidence_paths, destinatio
     surface = candidate.get("surface")
     if candidate.get("contract") == "oaa-omni-native-v1":
         surface = "dashboard"
-    selected_items = surface_items(req, surface) if surface in ("app", "dashboard") else [
+    if 'report' in req['surface']:
+        need(surface in req['surface'], 'coverage.report_candidate_surface_required')
+    selected_items = surface_items(req, surface) if surface in ("app", "dashboard", "report") else [
         i for i in req["items"] if i["disposition"] == "migrate"]
     expected = {c["case_id"]: c for i in selected_items for c in i["required_cases"]}
     observed, evidence_pins = {}, []
@@ -1006,7 +1310,7 @@ def coverage(root, requirements_path, candidate_path, evidence_paths, destinatio
     pending = [case for case in expected if observed.get(case) not in ("pass", "not_applicable")]
     deferred = [i["asset_key"] for i in req["items"] if i["disposition"] == "defer"]
     unresolved = [i["asset_key"] for i in req["items"] if i["disposition"] != "exclude"
-                  and (surface not in ("app", "dashboard") or surface in item_surfaces(req, i))
+                  and (surface not in ("app", "dashboard", "report") or surface in item_surfaces(req, i))
                   and any(v in ("unknown", "unsupported") for v in i["parity"].values())]
     report = {"schema_version": 1, "kind": "analyst_visual_coverage", "requirements": req_pin,
               "candidate": target_pin, "evidence": evidence_pins, "assets_received": len(req["items"]),

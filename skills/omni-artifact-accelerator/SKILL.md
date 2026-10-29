@@ -1,6 +1,6 @@
 ---
 name: omni-artifact-accelerator
-description: Orchestrate Omni dashboard and native Omni App design, analysis, implementation, QA, and lift-and-shift migrations; reuse Hex, Looker, Power BI, Tableau, Sigma, Domo, Periscope/CDT and Metabase evidence and collaborate bidirectionally with Data Model Accelerator or work standalone.
+description: Orchestrate Omni dashboard, native App and Reports Beta design, analysis, implementation preparation, QA and migrations; reuse typed BI source evidence and collaborate bidirectionally with Data Model Accelerator or work standalone.
 ---
 
 # Omni Artifact Accelerator
@@ -8,6 +8,20 @@ description: Orchestrate Omni dashboard and native Omni App design, analysis, im
 Apply the [dependency policy](references/dependency-policy.md) before any package installation, import/load, update or skill activation, including CI, subagents and browser modules. Explicit scoped human sign-off is required; available or previously used packages are not automatically approved. No Blender implementation or generated-script execution is permitted. Continue original source/design work when a runtime gate is unavailable.
 
 Be the analyst's sidekick: turn a business decision into a useful, trustworthy data experience. Own the shared engagement, requirements, task boundaries, reconciliation, and final handoff. Use native Omni dashboards and native Omni Apps as distinct targets; an external embedded application is an explicit additional choice. Do not replace a requested native dashboard with an app or a mockup.
+
+Use native Reports Beta as the distinct `report` target for page-precise tabular,
+print/PDF and spreadsheet reporting. Route the [report foundation](references/report-workflow.md)
+to the [designer](../omni-report-designer/SKILL.md) and [builder](../omni-report-builder/SKILL.md),
+with existing PO, analyst, BI, branding and independent QA responsibilities.
+Preserve the A–F sequence, report-specific output requirements and actual native
+capability gaps. Local report preparation is supported; no automatic Reports API
+executor or universal report compiler is implied.
+For RDL sources, route to the [SSRS specialist](../omni-ssrs-migrator/SKILL.md) or
+[Power BI paginated specialist](../omni-powerbi-paginated-migrator/SKILL.md);
+interactive PBIR remains the existing Power BI route. Use the
+[Crystal specialist](../omni-crystal-reports-migrator/SKILL.md) for supplied
+version-specific extractions. All preserve original source obligations, use the
+shared report target foundation, and keep unqualified native behavior explicit.
 
 For every new engagement, including migration and enhancement modes, follow the authoritative
 [data-first product workflow](references/data-first-product-workflow.md): **A verify
@@ -47,6 +61,17 @@ For material experience work, use the [shared experience brief](../omni-design-s
 Use the [current-context and resume check](references/design-intent.md#current-context-and-resume) when work resumes or feedback changes a decision. Keep one current selection and explicitly historical proposals. For query-backed Apps, route the exact [native data-input contract](../omni-app-engineer/references/native-data-input.md) to BI/App engineering. Capture usable content width and height in the existing design contexts. Branded demos also resolve [presentation naming](../omni-branding/references/demo-presentation.md) separately from logo permission; retain source identity and numbers.
 
 For control-level quality feedback or substantial interactive work, route the affected families through [control craft](../omni-design-systems/references/control-craft.md). Design systems owns shared anatomy/tokens, the designer chooses controls for the task, engineering binds existing state/query mechanisms, and QA reviews the affected journey. Reuse current brand/interaction decisions and ask only material missing questions; neither a universal shell nor another permanent specialist is required.
+
+For BusinessObjects migrations, assign the [source specialist](../omni-businessobjects-migrator/SKILL.md)
+and use the [WebI and Universe workflow](references/businessobjects-visual-run.md).
+Preserve report/provider contexts and version-specific Crystal obligations.
+Connected metadata requires external host qualification; source refresh/render/save
+and SDK loading are not enabled by an import or local task packet.
+
+For Cognos migrations, assign the [source specialist](../omni-cognos-migrator/SKILL.md)
+and use its [report-first workflow](references/cognos-visual-run.md). Supplied XML
+is definition evidence, not observed results or complete dashboard scope. Typed
+routing retains the same A–F and DMA boundaries.
 
 ## Intake and resume
 
@@ -92,7 +117,7 @@ Read [workflow](references/workflow.md) for routing and [contracts](references/c
 
 For a `continuation.json` input from DMA, follow the [opt-in continuation protocol](../omni-backend-handoff/references/dma-continuation.md) before generic initialization or import. Reuse the recorded scope, decisions and requested Topics; invoke the bounded handoff helper to initialize or resume the linked project exactly once. Ask only for missing experience requirements, without repeating generic intake. `prepare_handoff` stops at preparation; `continue_now` requires actual host dispatch after checks. Do not create a second project, silently expand semantic-only scope or infer deployed Topics from the candidate.
 
-For a new local engagement, run `scripts/analyst_project.py init --output /absolute/new-run --name 'Engagement' --mode net-new --surface dashboard --selection-policy conversation-evidence-v1` (modes: `net-new`, `migration`, `enhancement`; surfaces: `dashboard`, `app`, `both`). The helper creates a saved workspace and role plan; it does not run agents or build content. Use `--branding requested|none|unknown` and optional `--website URL` to retain the initial brand intent; a website alone does not select a logo. Fill the working contracts and [saved design intent](references/design-intent.md) as evidence arrives. Separate required decisions from optional preferences, and derive the next short question batch from unresolved requirements. Agent proposals stay proposals. Never keep customer data in the skill installation or package source tree.
+For a new local engagement, run `scripts/analyst_project.py init --output /absolute/new-run --name 'Engagement' --mode net-new --surface dashboard --selection-policy conversation-evidence-v1` (modes: `net-new`, `migration`, `enhancement`; surfaces: `dashboard`, `app`, `both`, `report`). The helper creates a saved workspace and role plan; it does not run agents or build content. Use `--branding requested|none|unknown` and optional `--website URL` to retain the initial brand intent; a website alone does not select a logo. Fill the working contracts and [saved design intent](references/design-intent.md) as evidence arrives. Separate required decisions from optional preferences, and derive the next short question batch from unresolved requirements. Agent proposals stay proposals. Never keep customer data in the skill installation or package source tree.
 
 Separate [essential principles, engagement choices and optional patterns](../omni-design-systems/references/experience-brief.md) before selecting reusable components. Route only justified behavior to the App engineer; [portable assembly](../omni-app-engineer/references/portable-assembly.md) is optional App tooling, not a dashboard or universal UI template. New products use three options and an attributable user selection; record comparative exploration in `selection[surface].exploration` and the stage journal. A direct direction applies to focused work or an already selected product, not an agent shortcut around stage E. Existing intent consistency checks alone do not establish that choice; use the executable stage gate with the actual conversation evidence or the separately qualified strict host verifier.
 
@@ -175,3 +200,36 @@ Reuse authorization already given. Before a separately authorized external actio
 Sibling skills can be invoked directly and share these contracts: `omni-product-owner`, `omni-data-analyst`, `omni-bi-engineer`, `omni-qa-analyst`, `omni-app-engineer`, `omni-app-designer`, `omni-dashboard-designer`, `omni-data-storyteller`, `omni-motion-designer`, `omni-branding`, `omni-design-systems`, `omni-artifact-translator`, `omni-backend-handoff`, and `omni-3d-modeler`. Keep the complete sibling bundle together when installation is separately approved. They do not require loading this entire orchestrator into every worker.
 
 For each new frozen design review, derive destination/context/lane and applicable journey obligations from the selected design and intent. Have the experience owner and independent verifier reconcile them before first delivery; a reviewed opening cannot close an unreviewed workspace. Scope focused edits explicitly and preserve historical evidence without treating it as a new whole-experience pass. Use the existing [first-delivery review loop](references/first-delivery.md#review-the-assembled-experience) and [evidence contract](../omni-qa-analyst/references/design-evidence.md), keeping prompting and internal revision history in the engagement.
+
+For WebFOCUS, assign the [source specialist](../omni-webfocus-migrator/SKILL.md) and
+follow the [WebFOCUS run guide](references/webfocus-visual-run.md). Keep procedure
+semantics, visual styles, page placements and runtime behavior separate. Use typed
+DMA evidence plus an independent visual denominator; source parsing never proves
+complete pages, effective access or report execution safety. GET is not a source
+execution permission. Preserve A–F, actual option choice and target cache policy.
+
+For ThoughtSpot, assign the [source specialist](../omni-thoughtspot-migrator/SKILL.md)
+and follow the [run guide](references/thoughtspot-visual-run.md). Require typed,
+pinned source scope; preserve original TML and independent visual obligations.
+Saved queries, renders and metadata reads use separate grants; retained Spotter
+MCP checks do not execute tools. There is no ThoughtSpot DMA producer. Keep A–F,
+three actual concepts/user selection, target cache policy, current baselines and
+separate App/dashboard delivery evidence intact.
+
+For Qlik Cloud or qualified Qlik Sense evidence, assign the
+[source specialist](../omni-qlik-migrator/SKILL.md) and follow the
+[run guide](references/qlik-visual-run.md). Preserve independent sheet/object scope,
+master dependencies, repeated placements, selections/alternate states, expressions
+and Section Access obligations. Supplied evidence, approved external MCP/QIX
+acquisition and bounded Cloud Reports have different qualification boundaries.
+No QlikView conversion, QIX transport installation or DMA Qlik producer is implied.
+Use the same A–F gates, target refresh interview and independent acceptance lanes.
+
+For Strategy/MicroStrategy sources, assign the
+[source specialist](../omni-microstrategy-migrator/SKILL.md) and follow the
+[run guide](references/microstrategy-visual-run.md). Pin Library and Intelligence
+Server versions, project/principal and application context independently. Preserve
+originals, scope, prompts, selector/filter stages and private or unsupported
+obligations. Separate metadata, instance execution, rendering and owned cleanup;
+source evidence never grants coding or publication authority. No DMA producer
+or general expression/document converter is implied.

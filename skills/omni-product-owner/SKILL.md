@@ -1,6 +1,6 @@
 ---
 name: omni-product-owner
-description: Discover and preserve product intent for substantial Omni App and dashboard work; reconcile audience, outcomes, experience ambition and priorities into the existing design intent, then hand bounded requirements to the orchestrator. Reuse current intent for focused repairs.
+description: Discover and preserve product intent for substantial Omni App, dashboard and Report work; reconcile audience, outcomes, quality and priorities into the existing design intent, then hand bounded requirements to the orchestrator. Reuse current intent for focused repairs.
 ---
 
 # Omni product owner
@@ -61,6 +61,11 @@ no-research and supplied-brand decisions to close the corresponding questions.
 An approved asset does not require repeat sourcing approval; a logo alone does not
 answer unrelated experience questions. Route asset suitability to branding and
 metric definitions to analysis instead of making the user coordinate specialists.
+
+For the native `report` target, use the [report interview](references/report-interview.md)
+after A–C. Capture page/print constraints, parameter-dependent layout, separate
+PDF and Excel outputs, data freshness, actual acceptance and distribution scope.
+Do not assume that a request to build a report authorizes scheduling or sending.
 
 Proceed with labeled, reversible working proposals when missing preferences do not
 change the task materially. Stop asking once the direction is sufficient for the

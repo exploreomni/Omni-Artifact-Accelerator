@@ -1,0 +1,4 @@
+interface:
+  display_name: "Omni ThoughtSpot Migrator"
+  short_description: "Preserve ThoughtSpot visuals and interaction evidence"
+  default_prompt: "Use $omni-thoughtspot-migrator within the Omni Artifact Accelerator to migrate selected ThoughtSpot Liveboards or Answers with pinned source evidence, explicit behavior gaps and separate Omni validation."

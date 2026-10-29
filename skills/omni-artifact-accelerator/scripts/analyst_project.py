@@ -18,6 +18,15 @@ STARTER_QUESTIONS = ["Who uses this and what decision or task must it support?",
                      "Which metrics and source behaviors are accepted or unresolved?",
                      "What branding, device, access and completion scope is required?"]
 ROLES = {
+    "ssrs-migrator": "Preserve scoped SSRS RDL source requirements and evidence",
+    "powerbi-paginated-migrator": "Preserve Power BI paginated RDL, parameters and export evidence",
+    "crystal-reports-migrator": "Preserve supplied Crystal extraction, formulas, sections and export requirements",
+    "businessobjects-migrator": "Interpret pinned BusinessObjects reports, Universe dependencies and source migration obligations",
+    "cognos-migrator": "Interpret pinned Cognos report XML, prompts, layouts and source migration obligations",
+    "microstrategy-migrator": "Interpret pinned Strategy definitions, instances, prompts and source migration obligations",
+    "qlik-migrator": "Interpret Qlik app, sheet, object, selection and source-state evidence; coordinate migration obligations",
+    "thoughtspot-migrator": "Interpret ThoughtSpot Liveboard, Answer, TML and source-state evidence; coordinate migration obligations",
+    "webfocus-migrator": "Interpret WebFOCUS procedure, visual, page and runtime evidence; coordinate source obligations",
     "metabase-migrator": "Interpret scoped Metabase evidence, preserve query and placement behavior, coordinate migration obligations",
     "periscope-migrator": "Interpret verified Periscope/CDT evidence, preserve source behavior and coordinate migration obligations",
     "product-owner": "Recover user intent, interview only material gaps, and return a versioned product North Star",
@@ -28,6 +37,8 @@ ROLES = {
     "app-engineer": "Implement native App using the query and interaction contracts",
     "app-designer": "Design task flows, states and responsive App screens",
     "dashboard-designer": "Design native dashboard hierarchy, tiles and controls",
+    "report-designer": "Design native Report page composition, print behavior and evidence-backed presentation",
+    "report-builder": "Build reviewed native Report specifications with explicit capability and verification boundaries",
     "data-storyteller": "Write claims and annotations grounded in scoped evidence",
     "motion-designer": "Specify purposeful motion and an equivalent reduced-motion path",
     "branding": "Resolve brand questions and map tokens to selected Omni surfaces",
@@ -131,7 +142,11 @@ def load_project(root):
     surfaces = obj.get("surfaces")
     need(type(surfaces) is list and bool(surfaces) and all(type(s) is str for s in surfaces) and
          len(surfaces) == len(set(surfaces)) and
-         all(s in ("dashboard", "app") for s in surfaces), "invalid surfaces")
+         all(s in ("dashboard", "app", "report") for s in surfaces), "invalid surfaces")
+    if 'report' in surfaces:
+        need(obj.get('stage_gate_policy') == 'data-first-v1' and
+             obj.get('workflow_quality_policy') == 'experience-evidence-v1',
+             'report_requires_current_stage_and_quality_gates')
     for key in ("sources", "artifacts", "decisions", "open_questions"):
         need(type(obj.get(key)) is list, "project requires list: " + key)
     return root, obj
@@ -140,7 +155,7 @@ def load_project(root):
 def init(output, name, mode, surface, branding=None, website=None, selection_policy='host-verified-v1'):
     root = no_links(output)
     need(mode in ("net-new", "migration", "enhancement"), "invalid mode")
-    need(surface in ("dashboard", "app", "both"), "invalid surface")
+    need(surface in ("dashboard", "app", "report", "both"), "invalid surface")
     need(isinstance(name, str) and name.strip(), "name required")
     need(selection_policy in {'host-verified-v1', 'conversation-evidence-v1'}, 'unknown selection policy')
     selected_surfaces = ["dashboard", "app"] if surface == "both" else [surface]
@@ -251,6 +266,189 @@ def metabase_scope(root, obj):
     return False
 
 
+REPORT_SOURCE_ROLES = {'ssrs': 'ssrs-migrator', 'powerbi_paginated': 'powerbi-paginated-migrator',
+                       'crystal': 'crystal-reports-migrator'}
+
+
+def report_source_scope(root, obj):
+    platforms = set()
+    for record in obj['sources']:
+        if not record.get('path', '').endswith('.json'):
+            continue
+        value, raw = read_json(relative_file(root, record['path']))
+        need(digest(raw) == record.get('sha256'), 'registered source changed; review before routing')
+        if type(value) is not dict:
+            continue
+        kind = value.get('schema_version')
+        platform = None
+        if kind in ('rdl-report-snapshot.v1', 'crystal-report-snapshot.v1'):
+            workflow = routing_helper('visual_workflow')
+            name = 'rdl_report' if kind == 'rdl-report-snapshot.v1' else 'crystal_report'
+            workflow.report_source_module(name).validate_snapshot(value)
+            platform = value['identity']['source_platform']
+        elif kind == 'report-source-capture.v1':
+            workflow = routing_helper('visual_workflow')
+            workflow.report_source_module().verify_capture_files(value, relative_file(root, record['path']).parent)
+            platform = value['source']['snapshot']['identity']['source_platform']
+        elif value.get('kind') == 'omni_analyst_source_inventory' and value.get('source', {}).get('platform') in REPORT_SOURCE_ROLES:
+            matches = [r for r in obj['sources'] if r.get('sha256') == value['source'].get('input_sha256')]
+            need(bool(matches), 'Report source routing requires its registered original source')
+            workflow = routing_helper('visual_workflow')
+            workflow.source_inventory(root, matches[0]['path'], record['path'])
+            platform = value['source']['platform']
+        if platform:
+            need(platform in REPORT_SOURCE_ROLES, 'Report source platform unsupported')
+            platforms.add(platform)
+    return platforms
+
+
+def businessobjects_scope(root, obj):
+    """Only pinned, typed source evidence selects the BusinessObjects specialist."""
+    for record in obj['sources']:
+        if not record.get('path', '').endswith('.json'):
+            continue
+        value, raw = read_json(relative_file(root, record['path']))
+        need(digest(raw) == record.get('sha256'), 'registered source changed; review before routing')
+        if type(value) is not dict:
+            continue
+        kind = value.get('schema_version')
+        if kind == 'businessobjects-api-snapshot.v1':
+            workflow = routing_helper('visual_workflow')
+            workflow.businessobjects_module().validate_snapshot(value)
+            return True
+        if kind == 'businessobjects-visual-capture.v1':
+            workflow = routing_helper('visual_workflow')
+            workflow.businessobjects_capture_module().verify_capture_files(value, relative_file(root, record['path']).parent)
+            return True
+        if value.get('kind') == 'omni_analyst_source_inventory' and value.get('source', {}).get('platform') == 'businessobjects':
+            matches = [r for r in obj['sources'] if r.get('sha256') == value['source'].get('input_sha256')]
+            need(bool(matches), 'BusinessObjects routing requires its registered original source')
+            workflow = routing_helper('visual_workflow')
+            workflow.source_inventory(root, matches[0]['path'], record['path'])
+            return True
+    return False
+
+
+def cognos_scope(root, obj):
+    """Only pinned, typed Cognos evidence selects the source specialist."""
+    for record in obj['sources']:
+        if not record.get('path', '').endswith('.json'):
+            continue
+        value, raw = read_json(relative_file(root, record['path']))
+        need(digest(raw) == record.get('sha256'), 'registered source changed; review before routing')
+        if type(value) is not dict:
+            continue
+        kind = value.get('schema_version')
+        if kind == 'cognos-report-snapshot.v1':
+            routing_helper('visual_workflow').cognos_module().validate_snapshot(value)
+            return True
+        if value.get('kind') == 'omni_analyst_source_inventory' and value.get('source', {}).get('platform') == 'cognos':
+            matches = [r for r in obj['sources'] if r.get('sha256') == value['source'].get('input_sha256')]
+            need(bool(matches), 'Cognos routing requires its registered original source')
+            routing_helper('visual_workflow').source_inventory(root, matches[0]['path'], record['path'])
+            return True
+    return False
+
+
+def microstrategy_scope(root, obj):
+    """Only pinned, typed MicroStrategy evidence selects the source specialist."""
+    for record in obj['sources']:
+        if not record.get('path', '').endswith('.json'):
+            continue
+        value, raw = read_json(relative_file(root, record['path']))
+        need(digest(raw) == record.get('sha256'), 'registered source changed; review before routing')
+        if type(value) is not dict:
+            continue
+        kind = value.get('schema_version')
+        if kind in ('microstrategy-api-snapshot.v1', 'microstrategy-visual-capture.v1'):
+            workflow = routing_helper('visual_workflow')
+            if kind == 'microstrategy-api-snapshot.v1':
+                workflow.microstrategy_module().validate_snapshot(value)
+            else:
+                workflow.microstrategy_module().verify_capture_files(value, relative_file(root, record['path']).parent)
+            return True
+        if value.get('kind') == 'omni_analyst_source_inventory' and value.get('source', {}).get('platform') == 'microstrategy':
+            matches = [r for r in obj['sources'] if r.get('sha256') == value['source'].get('input_sha256')]
+            need(bool(matches), 'MicroStrategy routing requires its registered original source')
+            routing_helper('visual_workflow').source_inventory(root, matches[0]['path'], record['path'])
+            return True
+    return False
+
+
+
+def qlik_scope(root, obj):
+    """Only pinned, typed Qlik evidence selects the source specialist."""
+    for record in obj['sources']:
+        if not record.get('path', '').endswith('.json'):
+            continue
+        value, raw = read_json(relative_file(root, record['path']))
+        need(digest(raw) == record.get('sha256'), 'registered source changed; review before routing')
+        if type(value) is not dict:
+            continue
+        kind = value.get('schema_version')
+        if kind in ('qlik-api-snapshot.v1', 'qlik-visual-capture.v1'):
+            workflow = routing_helper('visual_workflow')
+            if kind == 'qlik-api-snapshot.v1':
+                workflow.qlik_module().validate_snapshot(value)
+            else:
+                workflow.qlik_module().verify_capture_files(value, relative_file(root, record['path']).parent)
+            return True
+        if value.get('kind') == 'omni_analyst_source_inventory' and value.get('source', {}).get('platform') == 'qlik':
+            matches = [r for r in obj['sources'] if r.get('sha256') == value['source'].get('input_sha256')]
+            need(bool(matches), 'Qlik routing requires its registered original source')
+            routing_helper('visual_workflow').source_inventory(root, matches[0]['path'], record['path'])
+            return True
+    return False
+
+
+
+def thoughtspot_scope(root, obj):
+    """Only pinned, typed ThoughtSpot evidence selects the source specialist."""
+    for record in obj['sources']:
+        if not record.get('path', '').endswith('.json'):
+            continue
+        value, raw = read_json(relative_file(root, record['path']))
+        need(digest(raw) == record.get('sha256'), 'registered source changed; review before routing')
+        if type(value) is not dict:
+            continue
+        kind = value.get('schema_version')
+        if kind in ('thoughtspot-api-snapshot.v1', 'thoughtspot-visual-capture.v1'):
+            workflow = routing_helper('visual_workflow')
+            if kind == 'thoughtspot-api-snapshot.v1':
+                workflow.thoughtspot_module().validate_snapshot(value)
+            else:
+                workflow.thoughtspot_module().verify_capture_files(value, relative_file(root, record['path']).parent)
+            return True
+        if value.get('kind') == 'omni_analyst_source_inventory' and value.get('source', {}).get('platform') == 'thoughtspot':
+            matches = [r for r in obj['sources'] if r.get('sha256') == value['source'].get('input_sha256')]
+            need(bool(matches), 'ThoughtSpot routing requires its registered original source')
+            routing_helper('visual_workflow').source_inventory(root, matches[0]['path'], record['path'])
+            return True
+    return False
+
+
+def webfocus_scope(root, obj):
+    """Only pinned, typed WebFOCUS evidence selects the source specialist."""
+    for record in obj['sources']:
+        if not record.get('path', '').endswith('.json'):
+            continue
+        value, raw = read_json(relative_file(root, record['path']))
+        need(digest(raw) == record.get('sha256'), 'registered source changed; review before routing')
+        if type(value) is not dict:
+            continue
+        kind = value.get('schema_version')
+        if kind == 'webfocus-visual-capture.v1':
+            workflow = routing_helper('visual_workflow')
+            workflow.webfocus_module().verify_capture_files(value, relative_file(root, record['path']).parent)
+            return True
+        if value.get('kind') == 'omni_analyst_source_inventory' and value.get('source', {}).get('platform') == 'webfocus':
+            matches = [r for r in obj['sources'] if r.get('sha256') == value['source'].get('input_sha256')]
+            need(bool(matches), 'WebFOCUS routing requires its registered original source')
+            routing_helper('visual_workflow').source_inventory(root, matches[0]['path'], record['path'])
+            return True
+    return False
+
+
 def plan(root, scope_ids=None):
     root, obj = load_project(root)
     product = routing_helper('product_intent').check(root)
@@ -262,6 +460,26 @@ def plan(root, scope_ids=None):
     roles = ["product-owner", "data-analyst", "branding", "bi-engineer"]
     if obj["mode"] == "migration":
         roles.insert(0, "artifact-translator")
+    report_sources = report_source_scope(root, obj)
+    roles[:0] = [REPORT_SOURCE_ROLES[p] for p in sorted(report_sources)]
+    businessobjects = businessobjects_scope(root, obj)
+    if businessobjects:
+        roles.insert(0, "businessobjects-migrator")
+    cognos = cognos_scope(root, obj)
+    if cognos:
+        roles.insert(0, "cognos-migrator")
+    microstrategy = microstrategy_scope(root, obj)
+    if microstrategy:
+        roles.insert(0, "microstrategy-migrator")
+    qlik = qlik_scope(root, obj)
+    if qlik:
+        roles.insert(0, "qlik-migrator")
+    thoughtspot = thoughtspot_scope(root, obj)
+    if thoughtspot:
+        roles.insert(0, "thoughtspot-migrator")
+    webfocus = webfocus_scope(root, obj)
+    if webfocus:
+        roles.insert(0, "webfocus-migrator")
     metabase = metabase_scope(root, obj)
     if metabase:
         roles.insert(0, 'metabase-migrator')
@@ -272,6 +490,8 @@ def plan(root, scope_ids=None):
         roles.append("dashboard-designer")
     if "app" in obj["surfaces"]:
         roles.extend(["app-designer", "app-engineer"])
+    if "report" in obj["surfaces"]:
+        roles.extend(["report-designer", "report-builder"])
     roles.append("qa-analyst")
     coverage = experience_check(root)
     for role in coverage["role_requirements"]:
@@ -291,8 +511,22 @@ def plan(root, scope_ids=None):
     if gates['required']:
         stage = gates.get('next_stage')
         eligible = set(stage_roles(stage))
+        if stage in {'access', 'analysis', 'narrative', 'brief', 'options', 'design', 'candidate', 'review'}:
+            eligible.update(REPORT_SOURCE_ROLES[p] for p in report_sources)
         if periscope and stage in {'access', 'analysis', 'narrative', 'brief', 'options', 'design', 'candidate', 'review'}:
             eligible.add('periscope-migrator')
+        if businessobjects and stage in {'access', 'analysis', 'narrative', 'brief', 'options', 'design', 'candidate', 'review'}:
+            eligible.add('businessobjects-migrator')
+        if cognos and stage in {'access', 'analysis', 'narrative', 'brief', 'options', 'design', 'candidate', 'review'}:
+            eligible.add('cognos-migrator')
+        if microstrategy and stage in {'access', 'analysis', 'narrative', 'brief', 'options', 'design', 'candidate', 'review'}:
+            eligible.add('microstrategy-migrator')
+        if qlik and stage in {'access', 'analysis', 'narrative', 'brief', 'options', 'design', 'candidate', 'review'}:
+            eligible.add('qlik-migrator')
+        if thoughtspot and stage in {'access', 'analysis', 'narrative', 'brief', 'options', 'design', 'candidate', 'review'}:
+            eligible.add('thoughtspot-migrator')
+        if webfocus and stage in {'access', 'analysis', 'narrative', 'brief', 'options', 'design', 'candidate', 'review'}:
+            eligible.add('webfocus-migrator')
         if metabase and stage in {'access', 'analysis', 'narrative', 'brief', 'options', 'design', 'candidate', 'review'}:
             eligible.add('metabase-migrator')
         # Preserve scoped capabilities at their permitted phase; stage advice
@@ -304,7 +538,9 @@ def plan(root, scope_ids=None):
         roles = [r for r in (roles if focused or scope_ids is not None else
                  list(dict.fromkeys([*stage_roles(stage), *roles]))) if r in eligible and r in ROLES and
                  (r != 'app-designer' or 'app' in obj['surfaces']) and
-                 (r != 'dashboard-designer' or 'dashboard' in obj['surfaces'])]
+                 (r != 'dashboard-designer' or 'dashboard' in obj['surfaces']) and
+                 (r != 'app-engineer' or 'report' not in obj['surfaces'] or 'app' in obj['surfaces']) and
+                 (r not in {'report-designer', 'report-builder'} or 'report' in obj['surfaces'])]
     return {"kind": "suggested_role_plan", "agents_dispatched": False,
             "stage_gates": gates,
             "scope_ids": scope_ids, "focused_scope_missing": focused and scope_ids is None,
@@ -532,7 +768,7 @@ def import_dma(root, review):
 
 def routing_helper(name='task_routing'):
     import importlib.util
-    need(name in {'task_routing', 'task_operations', 'delivery_workflow', 'product_intent', 'stage_gates', 'experience_contract', 'visual_workflow'}, 'unknown routing helper')
+    need(name in {'task_routing', 'task_operations', 'delivery_workflow', 'product_intent', 'stage_gates', 'experience_contract', 'report_contract', 'visual_workflow'}, 'unknown routing helper')
     # Fixed first-party module only. The host verifier never comes from a request,
     # file path or environment variable. Share its scope across helper imports.
     cache_key = '_oaa_stage_gates_' + digest(str(Path(__file__).resolve().parent).encode())
@@ -584,10 +820,10 @@ def stage_roles(stage):
         'analysis': ['data-analyst', 'bi-engineer', 'qa-analyst'],
         'narrative': ['data-storyteller', 'data-analyst', 'qa-analyst'],
         'brief': ['product-owner', 'qa-analyst'],
-        'options': ['product-owner', 'app-designer', 'dashboard-designer', 'branding', 'design-systems', 'qa-analyst'],
+        'options': ['product-owner', 'app-designer', 'dashboard-designer', 'report-designer', 'branding', 'design-systems', 'qa-analyst'],
         'choice': ['product-owner'],
-        'design': ['app-designer', 'dashboard-designer', 'branding', 'design-systems', 'motion-designer', '3d-modeler'],
-        'candidate': ['app-engineer', 'bi-engineer', 'qa-analyst'],
+        'design': ['app-designer', 'dashboard-designer', 'report-designer', 'branding', 'design-systems', 'motion-designer', '3d-modeler'],
+        'candidate': ['app-engineer', 'report-builder', 'bi-engineer', 'qa-analyst'],
         'review': ['qa-analyst', 'design-systems', 'product-owner'],
         'release': ['qa-analyst', 'product-owner'],
     }.get(stage, [])
@@ -595,6 +831,35 @@ def stage_roles(stage):
 
 def stage_packet_gate(root, role, assignment=None):
     """Role names and provisional labels never waive authoring prerequisites."""
+    stage = assignment.get('stage') if type(assignment) is dict else None
+    outputs = assignment.get('outputs', []) if type(assignment) is dict else []
+    need(type(outputs) is list and all(type(p) is str for p in outputs), 'Invalid assignment outputs')
+    report_output = any(Path(p).suffix.casefold() in {'.rdlx-json', '.rdl', '.rdlc'} for p in outputs)
+    if role in {'report-designer', 'report-builder'} or stage == 'report':
+        root, obj = load_project(root)
+        need('report' in obj['surfaces'], 'report_role_requires_selected_report_surface')
+    if role in REPORT_SOURCE_ROLES.values():
+        root, obj = load_project(root)
+        need(role in {REPORT_SOURCE_ROLES[p] for p in report_source_scope(root, obj)},
+             'Report source specialist requires pinned source evidence')
+    if role == 'businessobjects-migrator':
+        root, obj = load_project(root)
+        need(businessobjects_scope(root, obj), 'BusinessObjects specialist requires pinned source evidence')
+    if role == 'cognos-migrator':
+        root, obj = load_project(root)
+        need(cognos_scope(root, obj), 'Cognos specialist requires pinned source evidence')
+    if role == 'microstrategy-migrator':
+        root, obj = load_project(root)
+        need(microstrategy_scope(root, obj), 'MicroStrategy specialist requires pinned source evidence')
+    if role == 'qlik-migrator':
+        root, obj = load_project(root)
+        need(qlik_scope(root, obj), 'Qlik specialist requires pinned source evidence')
+    if role == 'thoughtspot-migrator':
+        root, obj = load_project(root)
+        need(thoughtspot_scope(root, obj), 'ThoughtSpot specialist requires pinned source evidence')
+    if role == 'webfocus-migrator':
+        root, obj = load_project(root)
+        need(webfocus_scope(root, obj), 'WebFOCUS specialist requires pinned source evidence')
     if role == 'metabase-migrator':
         root, obj = load_project(root)
         need(metabase_scope(root, obj), 'Metabase specialist requires pinned source evidence')
@@ -602,15 +867,15 @@ def stage_packet_gate(root, role, assignment=None):
         root, obj = load_project(root)
         need(periscope_scope(root, obj), 'Periscope specialist requires pinned CDT source evidence')
     status = stage_status(root)
+    if report_output or role == 'report-builder' or stage == 'report':
+        need(status['required'], 'stage_gate_report_build_requires_current_policy')
     if not status['required']:
         return status
-    stage = assignment.get('stage') if type(assignment) is dict else None
-    outputs = assignment.get('outputs', []) if type(assignment) is dict else []
-    need(type(outputs) is list and all(type(p) is str for p in outputs), 'Invalid assignment outputs')
     if any(Path(p).suffix.casefold() in {'.html', '.htm', '.js', '.mjs', '.cjs', '.css',
-                                       '.ts', '.tsx', '.jsx', '.vue', '.svelte', '.glb', '.gltf'} for p in outputs):
+                                       '.ts', '.tsx', '.jsx', '.vue', '.svelte', '.glb', '.gltf',
+                                       '.rdlx-json', '.rdl', '.rdlc'} for p in outputs):
         return stage_require(root, 'build')
-    if role == 'app-engineer' or stage == 'implementation':
+    if role in {'app-engineer', 'report-builder'} or stage == 'implementation':
         return stage_require(root, 'build')
     if role in {'3d-modeler', 'motion-designer'}:
         # Concept advice and inert visual specimens are not application/model
@@ -618,10 +883,10 @@ def stage_packet_gate(root, role, assignment=None):
         if not outputs or all(Path(p).suffix.casefold() in {'.md', '.txt', '.svg'} for p in outputs):
             return stage_require(root, 'options')
         return stage_require(root, 'design')
-    if stage in {'app', 'dashboard'} and role not in {
-            'qa-analyst', 'product-owner', 'app-designer', 'dashboard-designer', 'branding', 'design-systems'}:
+    if stage in {'app', 'dashboard', 'report'} and role not in {
+            'qa-analyst', 'product-owner', 'app-designer', 'dashboard-designer', 'report-designer', 'branding', 'design-systems'}:
         return stage_require(root, 'build')
-    if role in {'app-designer', 'dashboard-designer', 'branding', 'design-systems'}:
+    if role in {'app-designer', 'dashboard-designer', 'report-designer', 'branding', 'design-systems'}:
         return stage_require(root, 'options')
     if role == 'data-storyteller':
         return stage_require(root, 'narrative')
@@ -629,7 +894,7 @@ def stage_packet_gate(root, role, assignment=None):
         return stage_require(root, 'brief')
     if role == 'data-analyst':
         return stage_require(root, 'analysis')
-    if role in {'bi-engineer', 'qa-analyst', 'backend-handoff', 'artifact-translator', 'periscope-migrator', 'metabase-migrator'}:
+    if role in {'bi-engineer', 'qa-analyst', 'backend-handoff', 'artifact-translator', 'periscope-migrator', 'metabase-migrator', 'webfocus-migrator', 'thoughtspot-migrator', 'qlik-migrator', 'microstrategy-migrator', 'cognos-migrator', 'businessobjects-migrator', 'ssrs-migrator', 'powerbi-paginated-migrator', 'crystal-reports-migrator'}:
         # Read-only investigation still uses the actual startup source. It does
         # not need a finished product or a build grant.
         action = 'analysis' if stage in {'semantic', 'design'} else 'access'
@@ -776,7 +1041,7 @@ def main():
     cmd.add_argument("--output", required=True)
     cmd.add_argument("--name", required=True)
     cmd.add_argument("--mode", choices=("net-new", "migration", "enhancement"), required=True)
-    cmd.add_argument("--surface", choices=("dashboard", "app", "both"), required=True)
+    cmd.add_argument("--surface", choices=("dashboard", "app", "report", "both"), required=True)
     cmd.add_argument("--branding", choices=("unknown", "requested", "none"),
                      help="defaults to requested with --website, otherwise unknown")
     cmd.add_argument("--website", help="official company HTTPS website; does not select a logo")

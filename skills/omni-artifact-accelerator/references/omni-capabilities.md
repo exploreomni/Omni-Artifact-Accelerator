@@ -15,6 +15,16 @@ Checked 2026-10-21 against official documentation. Refresh the selected capabili
 
 ## Authoring routes
 
+For native **Reports Beta**, use the [report qualification contract](../../omni-report-builder/references/native-report-qualification.md)
+and [report workflow](report-workflow.md). This is a separately selected target.
+The foundation records the supplied Beta status; the historical Apps/dashboard
+documentation check above does not establish a Reports release or API contract.
+Verify the exact tenant, native definition schema, query bindings and output
+engine. A code editor or native-AI path does not prove external API availability.
+The package supplies local design/routing checks, not a Reports mutation executor.
+Do not reuse dashboard/App draft mechanics or claim engine-level export features
+without runtime evidence. Preserve per-format qualification and acceptance gaps.
+
 Use the best available documented connector, CLI/API or native UI for the selected operation. Read its actual capabilities before selecting it. Existing content-builder, query, embed or customer-customization skills may help when installed; they are optional adapters, not hidden dependencies. A tool name or endpoint in an old example does not establish current availability.
 
 For Apps, native Omni editing is the target. If only local files can be created, produce a clearly labeled HTML/CSS/JS candidate plus query bindings, explicit runtime-integration gaps and a native verification checklist. Do not pretend a local data array is a live model. Do not embed API keys in client code. Current docs describe input-column writes and a limited read-only metadata API path; these are separate capabilities, not generic warehouse writeback or arbitrary REST access.
