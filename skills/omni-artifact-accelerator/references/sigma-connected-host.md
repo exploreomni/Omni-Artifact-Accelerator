@@ -165,6 +165,7 @@ secret handling and storage policy. This package provisions no service or tunnel
 
 Release the Sigma extension first, record its reviewed release revision/runtime
 manifest, then update the accelerator compatibility registry and qualify that
-pair. Do not replace the null release revision with the earlier base commit.
+pair. The compatibility registry records the published extension commit separately
+from the earlier base commit. Source publication does not qualify a runtime or host.
 Keep plans, live captures, credentials, runtime archives and rehearsal outputs
 outside both repositories. A clean source release may retain explicit live gaps.

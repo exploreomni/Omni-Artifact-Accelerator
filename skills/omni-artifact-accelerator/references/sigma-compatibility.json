@@ -12,8 +12,8 @@
     "request_schema": "sigma-source-operation-request.v1",
     "result_schema": "sigma-source-operation.v1",
     "producer_profile": "sigma-source-operations@0.1.0",
-    "release_revision": null,
-    "release_status": "requires_source_release_and_verified_runtime_pins"
+    "release_revision": "e1a37409601a325383f9c10f9573089dc26832ef",
+    "release_status": "source_published_requires_verified_runtime_pins_and_host_qualification"
   },
   "passive_evidence_profile": "oaa-sigma-evidence@1",
   "policy": "Contract recognition and hashes are not dependency approval, authenticated provenance, live qualification or publication authority. Requalify unknown versions; never auto-install or claim the legacy commit includes the extension."
