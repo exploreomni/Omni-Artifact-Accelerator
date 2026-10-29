@@ -19,6 +19,8 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 CASES = {
+    "sigma-evidence": "tests/test_sigma_evidence.py",
+    "sigma-connected": "tests/test_sigma_connected.py",
     "report-native": "tests/test_report_native.py",
     "rdl-report": "tests/test_rdl_report.py",
     "report-source-capture": "tests/test_report_source_capture.py",

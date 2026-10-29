@@ -65,6 +65,34 @@ def tableau_module():
     return module
 
 
+def sigma_module():
+    path = Path(__file__).resolve().parents[2] / 'omni-artifact-translator/scripts/sigma_visual.py'
+    spec = importlib.util.spec_from_file_location('visual_sigma_validation', path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def verify_sigma_operation_files(value, folder):
+    """A source-operation capture is a receipt for a retained visual journal."""
+    if value.get('schema_version') != 'sigma-source-operation.v1' or value.get('operation') != 'capture':
+        return None
+    record = value.get('result', {}).get('visual_capture')
+    if record is None:
+        need(value.get('status') == 'pending', 'sigma.visual_capture_receipt_missing')
+        return None
+    need(type(record) is dict, 'sigma.visual_capture_receipt')
+    path = ap.relative_file(Path(folder), record.get('path'))
+    child, raw = ap.read_json(path)
+    need(ap.digest(raw) == record.get('sha256') and len(raw) == record.get('bytes')
+         and child.get('schema_version') == record.get('schema_version') == 'sigma-visual-capture.v1'
+         and child.get('status') == record.get('status')
+         and child.get('original_request') == value.get('request', {}).get('visual_capture_request'),
+         'sigma.visual_capture_receipt_mismatch')
+    sigma_module().verify_capture_files(child, path.parent)
+    return path
+
+
 def powerbi_module():
     path = Path(__file__).resolve().parents[2] / "omni-artifact-translator/scripts/powerbi_visual.py"
     spec = importlib.util.spec_from_file_location("visual_powerbi_validation", path)
@@ -229,7 +257,13 @@ def source_inventory(root, original, inventory):
         need(data["source"]["input_filename"] == Path(original).name, "source.filename_mismatch")
         rebuilt["source"]["input_filename"] = Path(original).name
     need(data == rebuilt, "source.projection_changed")
-    if source_format == "rdl-report-capture":
+    if source_format == 'sigma-agent' and original_value.get('schema_version') in ('sigma-visual-capture.v1', 'sigma-source-evidence-bundle.v1'):
+        sigma_module().verify_capture_files(original_value, ap.relative_file(root, original).parent)
+    elif source_format == 'sigma-agent' and original_value.get('schema_version') == 'sigma-source-operation.v1':
+        verify_sigma_operation_files(original_value, ap.relative_file(root, original).parent)
+    elif source_format == 'sigma-agent' and original_value.get('schema_version') == 'sigma-prepush-package.v1':
+        sigma_module().verify_package_files(original_value, ap.relative_file(root, original).parent)
+    elif source_format == "rdl-report-capture":
         report_source_module().verify_capture_files(original_value, ap.relative_file(root, original).parent)
     elif source_format == "businessobjects-capture":
         businessobjects_capture_module().verify_capture_files(original_value, ap.relative_file(root, original).parent)
@@ -297,13 +331,9 @@ def capture_value(root, record):
     if value.get("schema_version") == "hex-visual-capture.v1":
         hex_module().verify_capture_files(value, path.parent)
         return value
-    need(value.get("schema_version") == "sigma-visual-capture.v1", "comparison.visual_capture_required")
-    module_path = Path(__file__).resolve().parents[2] / "omni-artifact-translator/scripts/translate_artifact.py"
-    spec = importlib.util.spec_from_file_location("visual_capture_validation", module_path)
-    translator = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(translator)
-    # Same maintained producer contract as inventory import, including embedded bindings.
-    translator.translate(raw, "sigma-agent", "f4eda45b0f49dc7335496d028665f7339ed82e8f")
+    need(value.get('schema_version') in ('sigma-visual-capture.v1', 'sigma-source-evidence-bundle.v1'),
+         'comparison.visual_capture_required')
+    sigma_module().verify_capture_files(value, path.parent)
     return value
 
 
@@ -637,9 +667,9 @@ def prepare(root, original, inventory, destination, website=None):
               "items": [], "source_gaps": copy.deepcopy(source.get("gaps", [])),
               "native_validation": "not_run", "business_acceptance": "not_recorded"}
     for asset in source["assets"]:
-        restricted = (asset['source_identity'].get('source_platform') in ('webfocus', 'thoughtspot', 'qlik', 'microstrategy', 'cognos', 'businessobjects', 'ssrs', 'powerbi_paginated', 'crystal') and
+        restricted = (asset['source_identity'].get('source_platform') in ('sigma', 'webfocus', 'thoughtspot', 'qlik', 'microstrategy', 'cognos', 'businessobjects', 'ssrs', 'powerbi_paginated', 'crystal') and
                       asset['source_identity'].get('restricted_private_scope') is True)
-        source_review = (asset['source_identity'].get('source_platform') in ('cognos', 'businessobjects', 'ssrs', 'powerbi_paginated', 'crystal') and
+        source_review = (asset['source_identity'].get('source_platform') in ('sigma', 'cognos', 'businessobjects', 'ssrs', 'powerbi_paginated', 'crystal') and
                          (asset['source_identity'].get('declared_disposition') != 'include' or
                           asset['source_identity'].get('requires_source_review') is True))
         source_review = source_review or (asset['source_identity'].get('source_platform') == 'webfocus' and
@@ -694,10 +724,10 @@ def requirements(root, path):
             need(item.get(field) == asset[field], "requirements.source_identity_changed")
         need(item.get("source_facets") == asset["facets"], "requirements.source_facets_changed")
         need(item.get("disposition") in ("migrate", "defer", "exclude"), "requirements.invalid_disposition")
-        if asset['source_identity'].get('source_platform') in ('webfocus', 'thoughtspot', 'qlik', 'microstrategy', 'cognos', 'businessobjects', 'ssrs', 'powerbi_paginated', 'crystal'):
+        if asset['source_identity'].get('source_platform') in ('sigma', 'webfocus', 'thoughtspot', 'qlik', 'microstrategy', 'cognos', 'businessobjects', 'ssrs', 'powerbi_paginated', 'crystal'):
             need(item['disposition'] != 'migrate' or asset['source_identity'].get('restricted_private_scope') is not True,
                  'requirements.private_scope_not_selected')
-        source_review = (asset['source_identity'].get('source_platform') in ('cognos', 'businessobjects', 'ssrs', 'powerbi_paginated', 'crystal') and
+        source_review = (asset['source_identity'].get('source_platform') in ('sigma', 'cognos', 'businessobjects', 'ssrs', 'powerbi_paginated', 'crystal') and
                          (asset['source_identity'].get('declared_disposition') != 'include' or
                           asset['source_identity'].get('requires_source_review') is True))
         source_review = source_review or (asset['source_identity'].get('source_platform') == 'webfocus' and
@@ -732,9 +762,12 @@ def requirements(root, path):
                                      "businessobjects": "businessobjects-visual-capture.v1",
                                      "ssrs": "report-source-capture.v1", "powerbi_paginated": "report-source-capture.v1",
                                      "crystal": "report-source-capture.v1"}.get(source["source"].get("platform"))
-                need(expected_provider is not None and capture["schema_version"] == expected_provider,
+                need(expected_provider is not None and (capture['schema_version'] == expected_provider or
+                     expected_provider == 'sigma-visual-capture.v1' and capture['schema_version'] == 'sigma-source-evidence-bundle.v1'),
                      "requirements.capture_provider_mismatch")
-                if capture["schema_version"] == "report-source-capture.v1":
+                if capture['schema_version'] == 'sigma-source-evidence-bundle.v1' or (expected_provider == 'sigma-visual-capture.v1' and case.get('source_binding')):
+                    sigma_module().case_binding(asset, case, capture)
+                elif capture["schema_version"] == "report-source-capture.v1":
                     report_source_module().case_binding(asset, case, capture)
                 elif capture["schema_version"] == "businessobjects-visual-capture.v1":
                     businessobjects_capture_module().case_binding(asset, case, capture)
@@ -786,6 +819,13 @@ def rows(root, record):
         need(names and all(names) and len(names) == len(set(names)), "results.invalid_csv_header")
         value = list(reader)
         need(all(None not in r and None not in r.values() for r in value), "results.ragged_csv")
+    elif record.get('format') == 'sigma-normalized':
+        value, _ = ap.read_json(file)
+        need(type(value) is dict and value.get('kind') == 'sigma_normalized_results', 'results.sigma_normalization_required')
+        raw = check_pin(root, record.get('raw_file')).read_bytes()
+        rebuilt = sigma_module().normalize_results(raw, value.get('parser_profile'), value.get('binding'))
+        need(value == rebuilt, 'results.sigma_normalization_changed')
+        value = value['rows']
     elif record.get("format") == "tableau-normalized":
         value, _ = ap.read_json(file)
         need(type(value) is dict and value.get("kind") == "tableau_normalized_results",
@@ -1130,7 +1170,7 @@ def compare(root, spec_path, destination):
         gaps.append("source.hex_frozen_workspace_identity_unknown")
     if source_platform == "hex" and not spec.get("persona_equivalence_reference"):
         gaps.append("source.hex_persona_equivalence_required")
-    if source_platform in ("looker", "hex", "periscope", "metabase", "webfocus", "thoughtspot", "qlik", "microstrategy", "businessobjects", "ssrs", "powerbi_paginated", "crystal") and selected_case.get("source_capture") is None:
+    if source_platform in ("sigma", "looker", "hex", "periscope", "metabase", "webfocus", "thoughtspot", "qlik", "microstrategy", "businessobjects", "ssrs", "powerbi_paginated", "crystal") and selected_case.get("source_capture") is None:
         gaps.append("source." + source_platform + "_case_capture_required")
     if selected_case.get("source_capture") is not None:
         selected_capture = capture_value(root, selected_case["source_capture"])
@@ -1190,23 +1230,14 @@ def compare(root, spec_path, destination):
         normalized = load(root, source["file"]["path"]) if source.get("format") == "metabase-normalized" else None
         gaps.extend(metabase_module().comparison_gaps(original, selected, selected_case, source, target,
                                                       normalized=normalized, columns=spec.get("columns")))
-    if original.get("schema_version") == "sigma-visual-capture.v1":
-        capture = original["request"]
+    if source_platform == 'sigma' and original.get('schema_version') in ('sigma-source-evidence-bundle.v1', 'sigma-visual-capture.v1'):
         selected = next(i for i in req["items"] if any(c["case_id"] == spec["case_id"] for c in i["required_cases"]))
-        if selected["source_id"] != capture["element_id"] or selected["source_identity"].get("page_id") != capture["page_id"]:
-            gaps.append("source.capture_is_for_another_visual")
-        for key, expected_value in (("parameters", capture["parameters"]), ("timezone", capture["timezone"]),
-                                    ("principal", capture["expected_user_id"])):
-            if source["context"].get(key) != expected_value:
-                gaps.append("source.capture_context." + key)
-        attachments = [a for a in original["attachments"] if a["format"] == "json"]
-        if len(attachments) != 1 or source["file"]["sha256"] != attachments[0]["sha256"]:
-            gaps.append("source.results_not_bound_to_capture")
-        if original.get("status") != "complete":
-            gaps.append("source.capture_incomplete")
-        # A caller cannot upgrade an unrecorded data-as-of by merely repeating it on both sides.
-        if not capture.get("data_as_of_reference") or source["context"].get("data_watermark") != capture["data_as_of_reference"]:
-            gaps.append("source.data_time_not_bound_to_capture")
+        normalized = load(root, source['file']['path']) if source.get('format') == 'sigma-normalized' else None
+        bound_source = copy.deepcopy(source)
+        file_key = 'raw_file' if source.get('format') == 'sigma-normalized' else 'file'
+        bound_source[file_key]['bytes'] = len(check_pin(root, source[file_key]).read_bytes())
+        gaps.extend(sigma_module().comparison_gaps(original, selected, selected_case, bound_source, target,
+                    normalized=normalized, columns=spec.get('columns')))
     columns, keys = spec.get("columns"), spec.get("keys")
     need(type(columns) is list and columns and type(keys) is list and keys, "comparison.columns_keys_required")
     names = [c.get("name") for c in columns]
@@ -1259,6 +1290,9 @@ def compare(root, spec_path, destination):
               "extra_keys": len(extra), "mismatch_count": len(mismatches),
               "mismatches": mismatches[:100], "gaps": gaps,
               "evidence_scope": "supplied_results_and_declared_context_only", "native_validation": "not_established"}
+    if source_platform == 'sigma':
+        result['sigma_execution_parity'] = 'inconclusive' if gaps else 'supplied_bound_evidence_only'
+        result['arithmetic_status'] = 'fail' if missing or extra or mismatches or order_mismatch else 'pass'
     if order_mode == "exact":
         result["order_mismatch"] = order_mismatch
     return output(root, destination, result)

@@ -18,6 +18,7 @@ STARTER_QUESTIONS = ["Who uses this and what decision or task must it support?",
                      "Which metrics and source behaviors are accepted or unresolved?",
                      "What branding, device, access and completion scope is required?"]
 ROLES = {
+    "sigma-migrator": "Guide connected Sigma evidence, source behavior and reviewed converter reuse",
     "ssrs-migrator": "Preserve scoped SSRS RDL source requirements and evidence",
     "powerbi-paginated-migrator": "Preserve Power BI paginated RDL, parameters and export evidence",
     "crystal-reports-migrator": "Preserve supplied Crystal extraction, formulas, sections and export requirements",
@@ -449,6 +450,24 @@ def webfocus_scope(root, obj):
     return False
 
 
+def sigma_scope(root, obj):
+    for record in obj['sources']:
+        if not record.get('path', '').endswith('.json'):
+            continue
+        value, raw = read_json(relative_file(root, record['path']))
+        need(digest(raw) == record.get('sha256'), 'registered source changed; review before Sigma routing')
+        if type(value) is not dict:
+            continue
+        if value.get('schema_version') == 'oaa-sigma-intake.v1':
+            return True
+        if value.get('kind') == 'omni_analyst_source_inventory' and value.get('source', {}).get('platform') == 'sigma':
+            matches = [r for r in obj['sources'] if r.get('sha256') == value['source'].get('input_sha256')]
+            need(bool(matches), 'Sigma routing requires its registered original source')
+            routing_helper('visual_workflow').source_inventory(root, matches[0]['path'], record['path'])
+            return True
+    return False
+
+
 def plan(root, scope_ids=None):
     root, obj = load_project(root)
     product = routing_helper('product_intent').check(root)
@@ -460,6 +479,9 @@ def plan(root, scope_ids=None):
     roles = ["product-owner", "data-analyst", "branding", "bi-engineer"]
     if obj["mode"] == "migration":
         roles.insert(0, "artifact-translator")
+    sigma = sigma_scope(root, obj)
+    if sigma:
+        roles.insert(0, "sigma-migrator")
     report_sources = report_source_scope(root, obj)
     roles[:0] = [REPORT_SOURCE_ROLES[p] for p in sorted(report_sources)]
     businessobjects = businessobjects_scope(root, obj)
@@ -511,6 +533,8 @@ def plan(root, scope_ids=None):
     if gates['required']:
         stage = gates.get('next_stage')
         eligible = set(stage_roles(stage))
+        if sigma and stage in {'access', 'analysis', 'narrative', 'brief', 'options', 'design', 'candidate', 'review'}:
+            eligible.add('sigma-migrator')
         if stage in {'access', 'analysis', 'narrative', 'brief', 'options', 'design', 'candidate', 'review'}:
             eligible.update(REPORT_SOURCE_ROLES[p] for p in report_sources)
         if periscope and stage in {'access', 'analysis', 'narrative', 'brief', 'options', 'design', 'candidate', 'review'}:
@@ -842,6 +866,9 @@ def stage_packet_gate(root, role, assignment=None):
         root, obj = load_project(root)
         need(role in {REPORT_SOURCE_ROLES[p] for p in report_source_scope(root, obj)},
              'Report source specialist requires pinned source evidence')
+    if role == 'sigma-migrator':
+        root, obj = load_project(root)
+        need(sigma_scope(root, obj), 'Sigma specialist requires pinned source intake or evidence')
     if role == 'businessobjects-migrator':
         root, obj = load_project(root)
         need(businessobjects_scope(root, obj), 'BusinessObjects specialist requires pinned source evidence')
@@ -894,7 +921,7 @@ def stage_packet_gate(root, role, assignment=None):
         return stage_require(root, 'brief')
     if role == 'data-analyst':
         return stage_require(root, 'analysis')
-    if role in {'bi-engineer', 'qa-analyst', 'backend-handoff', 'artifact-translator', 'periscope-migrator', 'metabase-migrator', 'webfocus-migrator', 'thoughtspot-migrator', 'qlik-migrator', 'microstrategy-migrator', 'cognos-migrator', 'businessobjects-migrator', 'ssrs-migrator', 'powerbi-paginated-migrator', 'crystal-reports-migrator'}:
+    if role in {'bi-engineer', 'qa-analyst', 'backend-handoff', 'artifact-translator', 'sigma-migrator', 'periscope-migrator', 'metabase-migrator', 'webfocus-migrator', 'thoughtspot-migrator', 'qlik-migrator', 'microstrategy-migrator', 'cognos-migrator', 'businessobjects-migrator', 'ssrs-migrator', 'powerbi-paginated-migrator', 'crystal-reports-migrator'}:
         # Read-only investigation still uses the actual startup source. It does
         # not need a finished product or a build grant.
         action = 'analysis' if stage in {'semantic', 'design'} else 'access'

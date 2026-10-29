@@ -1,38 +1,18 @@
-# Sigma visual migration: local implementation
+# Sigma visual migration
 
-**Source runtime prerequisite:** connected Sigma capture requires an independently obtained compatible SigmaMigrationAgent environment with the `capture-visual` command and its maintained producer fixtures. This source extension is not shipped in this repository and is not provided by the cited base revision alone. Confirm `sigma-migrate capture-visual --help` before following the capture steps. If it is unavailable, continue with supplied supported artifacts through the [Sigma bridge](../../omni-artifact-translator/references/sigma-agent-bridge.md); do not imply that source acquisition occurred.
+Use the [Sigma specialist](../../omni-sigma-migrator/SKILL.md) inside the existing
+Artifact Accelerator engagement. Start with the [connected host guide](sigma-connected-host.md)
+for guided intake, capability/version recognition, fixed source requests and
+check/inventory/snapshot/capture tools. No dependency installation or activation
+is automatic. Source and target credentials, query authorization and publication
+remain separate.
 
-Use this after selecting Sigma in the connected visual workflow. The package now includes an actual producer bridge, source-pinned requirements, keyed numerical comparison, evidence coverage, a local stdio MCP bridge and a named-draft Omni adapter. Source acquisition uses SigmaMigrationAgent's separate `capture-visual` command. None of these helpers turns a local test or supplied status into tenant acceptance.
-
-## Execution paths
-
-| Step | Owner/tool | Result |
-| --- | --- | --- |
-| Capture original evidence | SigmaMigrationAgent `capture-visual` or existing reviewed exports | Versioned private source packet and resumable export journal |
-| Translate | `omni-artifact-translator/scripts/translate_artifact.py --format sigma-agent` | Original-ID inventory; retained source payload, scope and gaps |
-| Requirements | `scripts/visual_workflow.py prepare` | One row for every supplied asset, brand intake, default/filtered/access/interaction QA cases |
-| Backend gaps | Existing `omni-backend-handoff/scripts/cowork.py`, `migration.py`, `dma_frontend.py` | Versioned DMA requests/candidates/returns with unchanged route authority |
-| Native candidate | `omni-bi-engineer/scripts/omni_native.py` | Existing development draft, scoped payload, before-state, intent and readback |
-| Compare | `scripts/visual_workflow.py compare` and `coverage` | Recomputed keyed results and complete accounting of retained obligations |
-| Host access | `scripts/visual_mcp.py` | Workspace-bound local tools; explicitly configured source/target operations |
-
-Paths above are relative to the relevant installed skill. Run each script's `--help` for its exact interface. Keep one private engagement outside the skill installation. A complete coverage ledger can still describe a partial migration.
-
-## Source capture and import
-
-Reuse the existing Sigma run and acquisition authorization. The source command requires its own explicit request, source-read/query flags, principal, origin, scope, tag and finite budgets. It never loads Omni credentials. Start and resume the same journal rather than recreating an uncertain export. A tagged definition is not an atomic data snapshot. Undefined processing responses remain unresolved instead of being polled as though they prove progress.
-
-```sh
-sigma-migrate capture-visual --request /private/run/inputs/capture-request.json \
-  --directory /private/run/inputs/sigma-capture \
-  --allow-source-read --allow-source-query
-# Resume a known capture; do not replace its request or journal.
-sigma-migrate capture-visual --request /private/run/inputs/capture-request.json \
-  --directory /private/run/inputs/sigma-capture \
-  --allow-source-read --allow-source-query --resume
-```
-
-See the [Sigma bridge](../../omni-artifact-translator/references/sigma-agent-bridge.md) for accepted shapes and the source repository's operator guide for the request schema. Retain the full capture directory, including image/result files; importing its JSON alone cannot verify the attachment bytes. Keep source limitations and `complete`/`partial`/failed acquisition separate from numerical completeness and migration readiness.
+The [compatibility registry](sigma-compatibility.json) distinguishes the legacy
+Sigma revision, the unreleased source-operation extension and passive OAA evidence.
+The earlier base SHA does not contain that extension. Capture supports page PNG
+and element PNG/JSON with optional associated model under the v2 request. Original
+configuration, independent inventory, behavior, state and results stay separate.
+Optional workbook contents are Beta current-definition evidence, not tagged data.
 
 ## Prepare requirements and design
 
@@ -73,15 +53,25 @@ Author `analyst_numeric_comparison_spec` JSON with these fields. Paths are relat
 | `schema_version`, `kind` | `1`, `analyst_numeric_comparison_spec` |
 | `case_id` | Exact numeric case ID from the requirements |
 | `requirements`, `candidate` | Pins of the completed requirements and exact native candidate record |
-| `source`, `target` | Each has `file`, `format` (`csv` or `json`), `context`, `complete`, `completeness_reference` |
-| `context` | Semantic `filters`, `timezone`, `data_watermark`, `population`, and actual `principal` |
+| `source`, `target` | Each has `file`, `format`, `context`, `complete`, `completeness_reference`. Ordinary target formats are `csv` or `json`. For bound Sigma evidence use `source.format: sigma-normalized`, a `file` pin to the normalized result and a separate `raw_file` pin to the exact original result attachment. |
+| `context` | Semantic `filters`, `timezone`, `data_watermark`, `population`, and actual `principal`. Bound Sigma comparison additionally retains explicit `parameters`, `locale`, `cache` and `freshness_reference`; preserve their exact observed values on the corresponding source/target state. |
 | `persona_equivalence_reference` | Evidence identifying the corresponding source/target access personas |
 | `keys` | Nonempty list of logical column names that uniquely identify each row |
 | `columns` | Each has logical `name`, source field `source`, target field `target`, `type` (`string`, `number`, `boolean`), optional `nullable`, `empty_is_null` and `absolute_tolerance`/`tolerance_basis` |
 
 JSON results are arrays of objects; CSV uses unique headers. No automatic string/date/currency coercion, empty-to-NULL conversion or relative tolerance is applied. Nonzero tolerance requires its metric-specific basis. Duplicate keys reject rather than collapse rows. Different/unknown populations, data times, filters, persona mapping or completeness produce `inconclusive`, even when supplied numbers match. Type/parse errors reject the input.
 
-For a captured Sigma visual, source context additionally includes the exact request `parameters`, its declared `timezone` and `principal` equal to the captured Sigma user ID. The comparison verifies the selected element/page, original JSON attachment hash, complete capture status and recorded data-as-of reference. Missing data time stays inconclusive. These checks do not prove that Sigma applied the declared timezone; qualify effective behavior separately. For another filter state or visual, pin its `sigma-visual-capture.v1` file in the corresponding requirement case as `source_capture`. The helper validates that capture and its placement; when the original is also a visual capture, changed configuration coherence is a comparison gap.
+For Sigma, every numerical requirement pins its source capture. Legacy captures
+verify actual PNG/JSON bytes but leave effective state and full-row completeness
+unqualified. An arbitrary matching CSV is reported as arithmetic agreement with
+Sigma parity inconclusive. The richer `sigma-source-evidence-bundle.v1` retains
+original definitions, per-object mappings, observed state, complete population,
+freshness and exact result attachment. `sigma-normalized` rows are recomputed
+from original bytes and explicit parser profile; they cannot hide errors, truncate
+precision or silently coerce formats. Bind `source_binding` to the selected object,
+definition fingerprint, state and attachment. See the [evidence contract](../../omni-artifact-translator/references/sigma-agent-bridge.md).
+Page PNGs never become numerical result evidence. Neither a passed comparison nor
+a supplied principal reference authenticates effective access or business acceptance.
 
 ```sh
 python3 scripts/visual_workflow.py --project /private/run compare \
@@ -96,33 +86,25 @@ For human/tool-observed cases, retain an `analyst_observed_case` object with `sc
 
 ## Local host bridge
 
-Start one process per private engagement:
-
-```sh
-python3 scripts/visual_mcp.py --project /private/run
-```
-
-Local tools include source translation, requirements, numerical comparison, coverage and bounded artifact reads. They cannot run arbitrary shell commands, fetch arbitrary URLs or read another engagement. Configure the same program/arguments as a local stdio MCP server in a supporting host.
-
-Optional source capture is fixed at operator startup:
-
-```sh
-python3 scripts/visual_mcp.py --project /private/run \
-  --sigma-executable /absolute/venv/bin/sigma-migrate \
-  --sigma-request inputs/capture-request.json --sigma-directory inputs/sigma-capture \
-  --enable-sigma-capture
-```
-
-The request is hashed at startup and cannot change during that process. The tool can only start/resume that scope. Source credentials stay in the configured environment. The source command has a finite invocation timeout; interrupted capture resumes from its persisted journal.
-
-For a selected page/workbook, use `--sigma-batch inputs/capture-batch.json` instead of `--sigma-request`/`--sigma-directory`. The batch has `kind: analyst_sigma_capture_batch`, `schema_version: 1`, explicit `max_total_requests` (at most 10,000), `max_invocations` (at most 200), and up to 100 `captures`, each containing `capture_id`, `request` and a unique `directory`. IDs must match their request files. Only configured IDs appear in the tool schema. Before each sequential invocation, the bridge durably reserves that request's full per-invocation budget, including failed calls, and preserves reservations across restarts. These are conservative upper bounds, not measured query/request counts. Keep the full source inventory in requirements, including items outside the current batch. Per-element captures are not page screenshots or an atomic workbook freeze; compare source versions/coherence across the batch before declaring a shared baseline.
-
-Add `--target /private/run/inputs/omni-target.json` to enable the native adapter's inspection/preparation/reconciliation tools. The model cannot select a different target through a tool argument. To enable writing one already reviewed candidate, restart with `--allow-candidate <exact SHA-256> --authorization-reference <existing authorization reference>`. Reuse authorization already given; the startup value is an enforcement binding, not a new permission policy. There is no publish tool.
-
-This is a single-user local bridge. [MCP stdio](https://modelcontextprotocol.io/specification/2025-11-25/basic/transports) uses newline-delimited JSON-RPC. ChatGPT can connect custom MCP through an appropriately configured [Secure MCP Tunnel or HTTPS deployment](https://developers.openai.com/plugins/deploy/connect-chatgpt); [Claude remote connectors](https://support.claude.com/en/articles/11175166-get-started-with-custom-connectors-using-remote-mcp) run from its cloud and differ from local Desktop connections. A remote deployment must supply its own authenticated user/tenant boundary and approved network/storage setup. Do not expose this local OS trust boundary as an unauthenticated public endpoint. No tunnel, remote service or connector is provisioned by the bundle.
+Follow [connected host setup](sigma-connected-host.md) rather than the retired
+unpinned `--enable-sigma-capture` wrapper. Local tools remain available without
+source credentials. External source tools appear only for startup-selected
+operations with pinned runtime, capability manifest and finite durable budgets.
+Source query/export permission does not grant native changes. Native authoring
+continues through existing adapters and candidate-specific startup authority.
+There is no Sigma publication tool or unauthenticated remote server.
 
 ## Qualification and operations
 
-Run package regressions, the actual Sigma-producer compatibility tests, source capture tests, native transport/readback tests and stdio protocol tests. Then record the chosen host's actual tool discovery, file handling, reconnect/resume and source/target identity behavior. Local protocol success does not establish Claude/ChatGPT account support.
+Source-only fixtures verify contract handling, original files, scope restrictions,
+precision and negative cases. They do not establish deployed runtime dependencies,
+source tenant access, native parity, visual quality or business acceptance. Host
+qualification must separately cover actual tool discovery, reconnect/resume,
+identity, secret routing and user/tenant isolation. Retain request/job IDs, original
+file hashes, reservations, source state and target revision in private evidence.
 
-Retain query/export counts, file sizes, elapsed time, request IDs, retry attempts, source state and exact target revision. Set finite source scope, export size/time budgets and retention at engagement setup. Keep customer images/results out of the repository and shared support bundles. Begin with one visual in context, then one page, then the selected workbook; deferred/unsupported items remain visible throughout.
+Begin a separately authorized live pilot with one visual in page context, then
+expand to the selected workbook only after independent acceptance evidence.
+Deferred, unsupported and unobserved cases remain in the denominator. For timeouts,
+resume the original source journal or reconcile the exact target intent; never
+retry an uncertain mutation in a new directory to evade its journal.

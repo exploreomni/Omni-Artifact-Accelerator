@@ -7,10 +7,13 @@ import copy
 import hashlib
 import json
 import re
+import importlib.util
+from pathlib import Path
 
 PINS = {"domo": "55eba0ca0690fbf14f39eddbc8a04c94a720c155",
         "sigma": "f4eda45b0f49dc7335496d028665f7339ed82e8f"}
 MODES = {"omni_semantic_reconstruction", "warehouse_first_refactor"}
+SIGMA_PROFILES = {PINS['sigma'], 'sigma-source-operations@0.1.0', 'oaa-sigma-evidence@1'}
 SHA = re.compile(r"[a-f0-9]{64}\Z")
 BEHAVIOR_FIELDS = ("field_ids", "measure_ids", "grouping_ids", "sort_ids", "filter_ids",
     "filter_context_ids", "control_ids", "interaction_ids", "drill_ids", "visualization_ids",
@@ -701,13 +704,99 @@ class Bridge:
             "dbt_planning_applicable": mode != "omni_semantic_reconstruction", "package_manifest": copy.deepcopy(payload)})
         self.gap(result, "sigma.package_files_and_os_review_not_reverified")
 
+    def sigma_extended(self, result, payload):
+        spec = importlib.util.spec_from_file_location('migration_sigma_visual', Path(__file__).with_name('sigma_visual.py'))
+        visual = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(visual)
+        schema = payload.get('schema_version')
+        if schema == 'sigma-source-operation.v1':
+            contract_spec = importlib.util.spec_from_file_location('migration_sigma_source_contract', Path(__file__).with_name('sigma_source_contract.py'))
+            contract = importlib.util.module_from_spec(contract_spec)
+            contract_spec.loader.exec_module(contract)
+            contract.envelope(payload)
+            self.reject_authority(payload)
+            request = self.obj(payload.get('request'))
+            source = self.obj(payload.get('result'))
+            canonical_ascii = lambda v: json.dumps(v, sort_keys=True, separators=(',', ':'), ensure_ascii=True, allow_nan=False).encode()
+            hashed = lambda v: hashlib.sha256(canonical_ascii(v)).hexdigest()
+            self.require(payload.get('request_sha256') == hashed(request) and payload.get('result_sha256') == hashed(source)
+                         and payload.get('content_hash') == hashed({k: v for k, v in payload.items() if k != 'content_hash'}),
+                         'sigma.source_operation_hash')
+            self.require(payload.get('operation') == request.get('operation') and payload.get('target_write_authority') is False
+                         and payload.get('native_validation') == 'not_performed', 'sigma.source_operation_identity')
+            if payload['operation'] != 'capture':
+                principal = self.obj(payload.get('observed_principal'))
+                self.require(principal.get('organizationId') == request.get('expected_organization_id')
+                             and principal.get('userId') == request.get('expected_user_id'), 'sigma.source_operation_principal')
+            else:
+                self.gap(result, 'sigma.capture_identity_requires_original_child_envelope')
+            if payload['operation'] == 'snapshot':
+                self.sigma_snapshot(result, source)
+                # Locators refer to retained envelope bytes, not an invented copy.
+                for asset in result['assets']:
+                    asset['source_path'] = '/result' + asset['source_path']
+                    asset['asset_key'] = 'asset:' + hashed([result['source']['platform'], asset['kind'], asset['source_path']])[:24]
+                for index, supplement in enumerate(source.get('_sigma_contents_beta', [])):
+                    self.asset(result, 'definition', supplement, '/result/_sigma_contents_beta/' + str(index),
+                               supplement.get('workbook_id'), 'beta_contents', source_object_type='workbook_contents_beta')
+                    self.gap(result, 'sigma.beta_contents_not_tagged_or_compiled')
+            else:
+                self.asset(result, 'definition', source, '/result', request.get('request_id'), 'source_operation',
+                           source_object_type=payload['operation'])
+                self.gap(result, 'sigma.discovery_or_capture_reference_is_not_full_inventory')
+            result['migration_context']['source_operation'] = {k: copy.deepcopy(payload.get(k)) for k in
+                ('operation', 'request_sha256', 'observed_principal', 'observed_at', 'gaps')}
+            self.gap(result, 'sigma.source_operation_requires_scope_and_result_qualification')
+        elif schema == 'sigma-source-evidence-bundle.v1':
+            visual.validate_capture(payload)
+            fingerprint = visual.definition_fingerprint(payload)
+            index_by_key = {i['key']: i for i in payload['inventory']['items']}
+            def inherited(item):
+                rows, current = [], item
+                while current is not None:
+                    rows.append(current)
+                    current = index_by_key.get(current['parent_key'])
+                if item['kind'] == 'placement':
+                    cfg = item['configuration']
+                    target = index_by_key.get(cfg.get('visual_key', cfg.get('content_key')))
+                    if target is not None:
+                        rows += inherited(target)
+                return rows
+            for index, item in enumerate(payload['inventory']['items']):
+                ancestry = inherited(item)
+                restricted = any(row['configuration'].get('restricted') or row['configuration'].get('private') for row in ancestry)
+                review = restricted or any(row['disposition'] != 'include' for row in ancestry)
+                self.asset(result, item['kind'] if item['kind'] in ('workbook', 'page', 'visual', 'filter', 'layout', 'control', 'action', 'content', 'placement', 'definition', 'unknown') else 'unknown',
+                    item, '/inventory/items/' + str(index), item['native_id'], item['key'],
+                    {'query': {'status': 'declared', 'value': item['configuration']},
+                     'layout': {'status': 'declared', 'value': {'parent_key': item['parent_key'], 'page_id': item['page_id']}},
+                     'interactions': {'status': 'needs_review', 'value': None},
+                     'security': {'status': 'needs_review', 'value': None}},
+                    source_platform='sigma', object_key=item['key'], definition_fingerprint=fingerprint,
+                    workbook_id=payload['identity']['workbook_id'], page_id=item['page_id'],
+                    declared_disposition=item['disposition'], requires_source_review=review,
+                    restricted_private_scope=bool(restricted))
+            result['migration_context'].update(source_selection=copy.deepcopy(payload['selection']),
+                state=copy.deepcopy(payload['state']), inventory_completeness=copy.deepcopy(payload['inventory']['completeness']))
+            self.gap(result, 'sigma.bundle_files_effective_state_and_acceptance_require_verification')
+        else:
+            visual.validate_capture(payload)
+            source = payload.get('source')
+            if source:
+                self.sigma_workbook(result, source['tagged_snapshot'], '/source/tagged_snapshot')
+            result['migration_context']['visual_capture'] = copy.deepcopy(payload)
+            self.gap(result, 'sigma.visual_attachment_bytes_and_journal_history_not_read')
+            self.gap(result, 'sigma.visual_capture_completeness_privacy_and_native_parity_not_verified')
+
     def parse(self, payload, raw, source_format, revision):
         platform = source_format.split("-")[0]
-        self.require(revision == PINS[platform], "migration.unsupported_or_missing_producer_revision")
+        self.require(revision in SIGMA_PROFILES if platform == 'sigma' else revision == PINS[platform],
+                     "migration.unsupported_or_missing_producer_revision")
         self.no_credentials(payload)
         result = self.base(payload, raw, platform, "supplied_" + platform + "_migration_agent")
         result["source"]["producer"] = {"name": "DomoMigrationAgent" if platform == "domo" else "SigmaMigrationAgent",
-            "revision": revision, "revision_evidence": "operator_declared_not_authenticated"}
+            "revision": revision, "revision_evidence": "operator_declared_not_authenticated" if revision == PINS[platform]
+            else "versioned_contract_profile_not_a_release_commit"}
         self.context(result, payload)
         contract = payload.get("contract_version")
         if platform == "domo":
@@ -728,8 +817,14 @@ class Bridge:
             else: raise ValueError("domo.unsupported_contract")
         else:
             schema = payload.get("schema_version")
+            if schema == 'sigma-source-operation.v1' or (schema == 'sigma-visual-capture.v1' and payload.get('request', {}).get('schema_version') == 'sigma-visual-capture-request.v2'):
+                self.require(revision == 'sigma-source-operations@0.1.0', 'sigma.connected_producer_profile_required')
+            if schema == 'sigma-source-evidence-bundle.v1':
+                self.require(revision == 'oaa-sigma-evidence@1', 'sigma.passive_evidence_profile_required')
             if "snapshotContract" in payload or "_omnikit_acquisition" in payload: self.sigma_snapshot(result, payload)
             elif schema == "sigma-capability-spike-bundle.v1": self.sigma_capability_bundle(result, payload)
+            elif schema in ('sigma-source-operation.v1', 'sigma-source-evidence-bundle.v1') or (schema == 'sigma-visual-capture.v1' and payload.get('request', {}).get('schema_version') == 'sigma-visual-capture-request.v2'):
+                self.sigma_extended(result, payload)
             elif schema == "sigma-visual-capture.v1": self.sigma_visual_capture(result, payload)
             elif schema == "sigma-semantic-routing-decision-request.v1": self.sigma_route(result, payload)
             elif schema == "sigma-prepush-package.v1": self.sigma_package(result, payload)

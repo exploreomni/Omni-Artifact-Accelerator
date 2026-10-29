@@ -168,3 +168,10 @@ inside this engagement. Follow the [run guide](businessobjects-visual-run.md).
 Preserve separate WebI, Universe and Crystal profiles, source/provider context,
 independent inventory and traceable calculation obligations. Local source scope
 cannot bypass A–F, select a target cache policy or authorize source/native writes.
+
+Sigma migrations use [omni-sigma-migrator](../../omni-sigma-migrator/SKILL.md)
+inside the current engagement. Register the Sigma intake for discovery routing,
+then register original evidence and its checked inventory. Use the
+[connected workflow](sigma-visual-run.md) for runtime recognition, source operations,
+complete attachment verification, explicit routes, reviewed converter reuse and
+native candidate handoff. Source operations do not waive A–F or terminal review.

@@ -194,6 +194,20 @@ LOCAL_TOOLS = [
          {"source": STRING}, read=True),
     tool("sigma_translate", "Project a supplied Sigma capture into original-ID analyst evidence without changing the source.",
          {"source": STRING, "producer_revision": STRING, "output": STRING}),
+    tool('sigma_plan_source', 'Recover a Sigma engagement, ask missing source questions and prepare bounded source-operation requests; no network or runtime loading.',
+         {'spec': STRING, 'output': STRING}),
+    tool('sigma_materialize_requests', 'Verify an intake-derived plan and write fixed source request files once; no connection or approval.',
+         {'plan': STRING, 'directory': STRING}),
+    tool('sigma_check_capabilities', 'Recognize a supplied versioned Sigma runtime manifest without loading its runtime or granting authority.',
+         {'source': STRING}, read=True),
+    tool('sigma_check_capture', 'Verify Sigma capture identity, original files and state; no live access or parity claim.',
+         {'source': STRING}, read=True),
+    tool('sigma_check_package', 'Verify every file and source/target binding in a supplied Sigma converter package; OS review is not authenticated here.',
+         {'source': STRING}, read=True),
+    tool('sigma_normalize_results', 'Normalize retained Sigma CSV/JSON with explicit columns, precision and capture binding; never guess types or completeness.',
+         {'source': STRING, 'profile': STRING, 'binding': STRING, 'output': STRING}),
+    tool('sigma_package_handoff', 'After A–F design selection, verify and hand off original Sigma converter outputs for owned Omni candidate preparation; no publication.',
+         {'spec': STRING, 'output': STRING}),
     tool("tableau_import_capture", "Verify a local Tableau capture and attachment bytes, then project original identities and placements; no tenant access.",
          {"source": STRING, "output": STRING}),
     tool("tableau_check_capture", "Verify a local Tableau capture and its retained attachment bytes; imported claims do not establish native parity.",
@@ -315,6 +329,7 @@ class SigmaCommand:
         self.runner = runner or subprocess.run
 
     def capture(self, resume):
+        workflow.need(self.runner is not subprocess.run, 'host.legacy_sigma_transport_disabled_use_source_operations')
         request = workflow.check_pin(self.root, self.request)
         args = [self.executable, "capture-visual", "--request", str(request), "--directory", str(self.directory),
                 "--allow-source-read", "--allow-source-query"]
@@ -1194,13 +1209,14 @@ class Bridge:
     def __init__(self, project, native=None, allowed_candidate=None, authorization_reference=None, sigma=None, tableau=None,
                  export_candidate=None, export_request=None, export_state=None, export_authorization_reference=None, powerbi=None,
                  looker=None, app=None, allowed_app_candidate=None, app_authorization_reference=None, hex_source=None,
-                 allowed_app_initial_candidate=None, app_initial_authorization_reference=None, periscope=None, metabase=None, webfocus=None, thoughtspot=None, qlik=None, microstrategy=None, businessobjects=None):
+                 allowed_app_initial_candidate=None, app_initial_authorization_reference=None, periscope=None, metabase=None, webfocus=None, thoughtspot=None, qlik=None, microstrategy=None, businessobjects=None, sigma_operations=None):
         self.root, _ = workflow.ap.load_project(project)
         self.native = native
         self.businessobjects = businessobjects
         self.allowed_candidate = allowed_candidate
         self.authorization_reference = authorization_reference
         self.sigma = sigma
+        self.sigma_operations = sigma_operations
         self.tableau = tableau
         self.powerbi = powerbi
         self.looker = looker
@@ -1238,6 +1254,10 @@ class Bridge:
 
     def definitions(self):
         values = list(LOCAL_TOOLS)
+        if self.sigma_operations is not None:
+            values.append(tool('sigma_source_operation', 'Run or resume one startup-selected Sigma source operation under pinned runtime and durable budgets; no target writes.',
+                {'operation_id': {**STRING, 'enum': list(self.sigma_operations.entries)}, 'resume': {'type': 'boolean'}}, external=True))
+            values.append(tool('sigma_source_doctor', 'Check configured source runtime pins and scope without executing the source runtime.', {}, read=True))
         if self.businessobjects is not None:
             values.append(tool("businessobjects_capture", "Capture only externally qualified, startup-pinned BusinessObjects metadata; no refresh, rendering, save or cleanup.",
                                {"resume": {"type": "boolean"}}, ("resume",), external=True))
@@ -1319,6 +1339,27 @@ class Bridge:
         definition = next((t for t in self.definitions() if t["name"] == name), None)
         workflow.need(definition is not None, "host.unknown_or_disabled_tool")
         validate_args(definition, args)
+        if name in ('sigma_source_operation', 'sigma_source_doctor'):
+            return self.sigma_operations.describe() if name == 'sigma_source_doctor' else self.sigma_operations.run(args['operation_id'], args['resume'])
+        if name in ('sigma_plan_source', 'sigma_materialize_requests', 'sigma_check_capabilities', 'sigma_package_handoff'):
+            spec = importlib.util.spec_from_file_location('host_sigma_workflow', Path(__file__).with_name('sigma_workflow.py'))
+            sigma_workflow = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(sigma_workflow)
+            if name == 'sigma_check_capabilities':
+                return sigma_workflow.compatibility(workflow.load(self.root, args['source']))
+            if name == 'sigma_materialize_requests':
+                return sigma_workflow.materialize(self.root, args['plan'], args['directory'])
+            fn = sigma_workflow.plan if name == 'sigma_plan_source' else sigma_workflow.package_handoff
+            return fn(self.root, args['spec'], args['output'])
+        if name in ('sigma_check_capture', 'sigma_check_package', 'sigma_normalize_results'):
+            sigma_visual = workflow.sigma_module()
+            source = workflow.ap.relative_file(self.root, args['source'])
+            if name == 'sigma_normalize_results':
+                value = sigma_visual.normalize_results(source.read_bytes(), workflow.load(self.root, args['profile']),
+                                                       workflow.load(self.root, args['binding']))
+                return workflow.output(self.root, args['output'], value)
+            value, _ = workflow.ap.read_json(source)
+            return (sigma_visual.verify_package_files if name == 'sigma_check_package' else sigma_visual.verify_capture_files)(value, source.parent)
         if name in ("report_prepare", "report_qualify", "report_observe", "report_check", "report_coverage", "report_verify_delivery"):
             native = report_host_module("report_native")
             if name == "report_check":
@@ -1782,7 +1823,15 @@ class Bridge:
             spec = importlib.util.spec_from_file_location("host_translator", source)
             translator = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(translator)
-            raw = translator.read_input(workflow.ap.relative_file(self.root, args["source"]))
+            input_path = workflow.ap.relative_file(self.root, args['source'])
+            raw = translator.read_input(input_path)
+            original = translator.decode(raw)
+            if original.get('schema_version') in ('sigma-visual-capture.v1', 'sigma-source-evidence-bundle.v1'):
+                workflow.sigma_module().verify_capture_files(original, input_path.parent)
+            elif original.get('schema_version') == 'sigma-prepush-package.v1':
+                workflow.sigma_module().verify_package_files(original, input_path.parent)
+            elif original.get('schema_version') == 'sigma-source-operation.v1':
+                workflow.verify_sigma_operation_files(original, input_path.parent)
             value = translator.translate(raw, "sigma-agent", args["producer_revision"])
             return workflow.output(self.root, args["output"], value)
         if name == "visual_read":
@@ -1932,6 +1981,9 @@ def main(argv=None):
     parser.add_argument("--sigma-directory", help="Private capture directory relative to the project")
     parser.add_argument("--sigma-batch", help="Finite capture batch JSON relative to the project")
     parser.add_argument("--enable-sigma-capture", action="store_true")
+    parser.add_argument('--sigma-operations', help='Startup-selected pinned source runtime and operation manifest relative to project')
+    parser.add_argument('--enable-sigma-source-operations', action='store_true')
+    parser.add_argument('--enable-sigma-source-query', action='store_true')
     parser.add_argument("--tableau-python", help="Trusted absolute Python executable for the shipped source capture script")
     parser.add_argument("--tableau-request", help="Pinned request path relative to the project")
     parser.add_argument("--tableau-directory", help="Private capture directory relative to the project")
@@ -2013,6 +2065,16 @@ def main(argv=None):
         config, _ = workflow.ap.read_json(args.app_target)
         app = module.AppNativeAdapter(args.project, module.TargetConfig(**config))
     sigma = None
+    workflow.need(not args.enable_sigma_capture, 'host.legacy_sigma_transport_disabled_use_sigma_operations')
+    workflow.need(not args.enable_sigma_source_query or args.enable_sigma_source_operations, 'host.sigma_source_grant_required')
+    workflow.need(bool(args.sigma_operations) == args.enable_sigma_source_operations, 'host.sigma_operations_startup_required')
+    sigma_operations = None
+    if args.enable_sigma_source_operations:
+        spec = importlib.util.spec_from_file_location('host_sigma_operations', Path(__file__).with_name('sigma_host.py'))
+        host = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(host)
+        sigma_operations = host.SigmaOperations(args.project, args.sigma_operations, allow_read=True,
+                                               allow_query=args.enable_sigma_source_query)
     configured = (args.sigma_executable, args.sigma_request, args.sigma_directory)
     if args.sigma_batch:
         workflow.need(args.sigma_executable and args.enable_sigma_capture and not args.sigma_request
@@ -2121,7 +2183,7 @@ def main(argv=None):
                     args.export_authorization_reference, powerbi=powerbi, looker=looker, app=app,
                     allowed_app_candidate=args.allow_app_candidate, app_authorization_reference=args.app_authorization_reference,
                     hex_source=hex_source, allowed_app_initial_candidate=args.allow_app_initial_candidate,
-                    app_initial_authorization_reference=args.app_initial_authorization_reference, periscope=periscope, metabase=metabase, webfocus=webfocus, thoughtspot=thoughtspot, qlik=qlik, microstrategy=microstrategy)
+                    app_initial_authorization_reference=args.app_initial_authorization_reference, periscope=periscope, metabase=metabase, webfocus=webfocus, thoughtspot=thoughtspot, qlik=qlik, microstrategy=microstrategy, sigma_operations=sigma_operations)
     serve(bridge, sys.stdin.buffer, sys.stdout)
 
 

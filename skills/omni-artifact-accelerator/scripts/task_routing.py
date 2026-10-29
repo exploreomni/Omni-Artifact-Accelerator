@@ -15,13 +15,13 @@ SHA = re.compile(r'[a-f0-9]{64}')
 ALIASES = {'omni_modeler': 'semantic_modeler', 'semantic_architect': 'semantic_modeler',
            'independent_qa': 'independent_reviewer'}
 STAGE_ROLES = {
-    'discovery': {'source_specialist', 'catalogue_specialist', 'artifact-translator', 'periscope-migrator', 'metabase-migrator', 'webfocus-migrator', 'thoughtspot-migrator', 'qlik-migrator', 'microstrategy-migrator', 'cognos-migrator', 'businessobjects-migrator', 'ssrs-migrator', 'powerbi-paginated-migrator', 'crystal-reports-migrator', 'data-analyst', 'product-owner'},
+    'discovery': {'source_specialist', 'catalogue_specialist', 'artifact-translator', 'sigma-migrator', 'periscope-migrator', 'metabase-migrator', 'webfocus-migrator', 'thoughtspot-migrator', 'qlik-migrator', 'microstrategy-migrator', 'cognos-migrator', 'businessobjects-migrator', 'ssrs-migrator', 'powerbi-paginated-migrator', 'crystal-reports-migrator', 'data-analyst', 'product-owner'},
     'design': {'warehouse_architect', 'independent_reviewer', 'validation_analyst', 'data-analyst'},
     'implementation': {'analytics_engineer', 'app-engineer', 'report-builder', 'bi-engineer'},
     'semantic': {'semantic_modeler', 'bi-engineer'},
-    'validation': {'validation_analyst', 'independent_reviewer', 'qa-analyst', 'periscope-migrator', 'metabase-migrator', 'webfocus-migrator', 'thoughtspot-migrator', 'qlik-migrator', 'microstrategy-migrator', 'cognos-migrator', 'businessobjects-migrator', 'ssrs-migrator', 'powerbi-paginated-migrator', 'crystal-reports-migrator'},
+    'validation': {'validation_analyst', 'independent_reviewer', 'qa-analyst', 'sigma-migrator', 'periscope-migrator', 'metabase-migrator', 'webfocus-migrator', 'thoughtspot-migrator', 'qlik-migrator', 'microstrategy-migrator', 'cognos-migrator', 'businessobjects-migrator', 'ssrs-migrator', 'powerbi-paginated-migrator', 'crystal-reports-migrator'},
     'packaging': {'documentation_specialist', 'data-storyteller'},
-    'migration_plan': {'migration_project_manager', 'backend-handoff', 'periscope-migrator', 'metabase-migrator', 'webfocus-migrator', 'thoughtspot-migrator', 'qlik-migrator', 'microstrategy-migrator', 'cognos-migrator', 'businessobjects-migrator', 'ssrs-migrator', 'powerbi-paginated-migrator', 'crystal-reports-migrator'},
+    'migration_plan': {'migration_project_manager', 'backend-handoff', 'sigma-migrator', 'periscope-migrator', 'metabase-migrator', 'webfocus-migrator', 'thoughtspot-migrator', 'qlik-migrator', 'microstrategy-migrator', 'cognos-migrator', 'businessobjects-migrator', 'ssrs-migrator', 'powerbi-paginated-migrator', 'crystal-reports-migrator'},
     'dashboard': {'product-owner', 'dashboard-designer', 'bi-engineer', 'data-analyst', 'artifact-translator',
                   'branding', 'design-systems', 'data-storyteller', 'qa-analyst'},
     'app': {'product-owner', 'app-designer', 'app-engineer', '3d-modeler', 'bi-engineer', 'motion-designer', 'branding',
@@ -154,7 +154,7 @@ def route_reviews(assignment, changes=None, dependency_state='known'):
         'security': 'Effective access, tenant boundaries, sensitive fields and changed downstream exposure',
         'experience': 'Readable complete artifacts, navigation, rendering and interactions',
     }
-    frontend = assignment['role'] in set().union(STAGE_ROLES['dashboard'], STAGE_ROLES['app'], STAGE_ROLES['report'], {'periscope-migrator', 'metabase-migrator', 'webfocus-migrator', 'thoughtspot-migrator', 'qlik-migrator', 'microstrategy-migrator', 'cognos-migrator', 'businessobjects-migrator', 'ssrs-migrator', 'powerbi-paginated-migrator', 'crystal-reports-migrator'})
+    frontend = assignment['role'] in set().union(STAGE_ROLES['dashboard'], STAGE_ROLES['app'], STAGE_ROLES['report'], {'sigma-migrator', 'periscope-migrator', 'metabase-migrator', 'webfocus-migrator', 'thoughtspot-migrator', 'qlik-migrator', 'microstrategy-migrator', 'cognos-migrator', 'businessobjects-migrator', 'ssrs-migrator', 'powerbi-paginated-migrator', 'crystal-reports-migrator'})
     reviewers = []
     for name in sorted(disciplines):
         role = 'qa-analyst' if frontend else ('validation_analyst' if name in {'logic', 'semantic'} else 'independent_reviewer')

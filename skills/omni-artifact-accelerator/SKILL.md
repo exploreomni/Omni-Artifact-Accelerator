@@ -62,6 +62,12 @@ Use the [current-context and resume check](references/design-intent.md#current-c
 
 For control-level quality feedback or substantial interactive work, route the affected families through [control craft](../omni-design-systems/references/control-craft.md). Design systems owns shared anatomy/tokens, the designer chooses controls for the task, engineering binds existing state/query mechanisms, and QA reviews the affected journey. Reuse current brand/interaction decisions and ask only material missing questions; neither a universal shell nor another permanent specialist is required.
 
+For Sigma migrations, assign the [Sigma specialist](../omni-sigma-migrator/SKILL.md)
+and use the [connected source workflow](references/sigma-visual-run.md). Reuse the
+reviewed Sigma runtime and converter outputs; capture original definitions, page
+and element visuals and results before preserving behavior through A–F. Runtime
+activation, Sigma terminal review and Omni writes remain separately qualified.
+
 For BusinessObjects migrations, assign the [source specialist](../omni-businessobjects-migrator/SKILL.md)
 and use the [WebI and Universe workflow](references/businessobjects-visual-run.md).
 Preserve report/provider contexts and version-specific Crystal obligations.

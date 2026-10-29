@@ -1,0 +1,4 @@
+interface:
+  display_name: "Omni Sigma Migrator"
+  short_description: "Guide connected Sigma evidence and Omni migration"
+  default_prompt: "Use $omni-sigma-migrator to discover and migrate the selected Sigma workbooks through the Omni Artifact Accelerator, preserving original source behavior, explicit architecture decisions and independent acceptance evidence."

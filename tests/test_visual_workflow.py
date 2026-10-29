@@ -126,7 +126,9 @@ class VisualWorkflow(unittest.TestCase):
     def test_keyed_compare_reorders_and_preserves_null(self):
         self.spec()
         report = self.run_compare()
-        self.assertEqual(report["status"], "pass")
+        self.assertEqual(report['arithmetic_status'], 'pass')
+        self.assertEqual(report['status'], 'inconclusive')
+        self.assertIn('source.sigma_case_capture_required', report['gaps'])
         self.assertEqual(report["native_validation"], "not_established")
         self.assertEqual((self.root / "evidence/comparison.json").stat().st_mode & 0o777, 0o600)
 
@@ -135,7 +137,8 @@ class VisualWorkflow(unittest.TestCase):
         self.put("evidence/target-rows.json", [{"group": "A", "amount": 90}])
         spec["target"]["file"] = v.pin(self.root, "evidence/target-rows.json")
         report = self.run_compare(spec)
-        self.assertEqual(report["status"], "fail")
+        self.assertEqual(report['arithmetic_status'], 'fail')
+        self.assertEqual(report['status'], 'inconclusive')
         self.assertEqual(report["missing_keys"], 1)
         self.assertEqual(report["mismatch_count"], 1)
         (self.root / "evidence/comparison.json").unlink()
@@ -168,7 +171,9 @@ class VisualWorkflow(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.run_compare(spec)
         spec["columns"][1]["empty_is_null"] = True
-        self.assertEqual(self.run_compare(spec)["status"], "pass")
+        report = self.run_compare(spec)
+        self.assertEqual(report['arithmetic_status'], 'pass')
+        self.assertEqual(report['status'], 'inconclusive')
 
     def test_coverage_recomputes_comparison_and_preserves_partial(self):
         self.spec()

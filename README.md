@@ -250,7 +250,7 @@ For migrations, choose the documented source path before exporting or running an
 | Looker | Supplied API/dashboard definitions, bounded capture and typed DMA producer evidence | [Looker workflow](skills/omni-artifact-accelerator/references/looker-visual-run.md) |
 | Power BI | Supplied PBIR/Fabric definitions, bounded source capture and DMA evidence | [Power BI workflow](skills/omni-artifact-accelerator/references/powerbi-visual-run.md) |
 | Tableau | Supplied definitions, bounded REST or official-MCP evidence and DMA enrichment | [Tableau workflow](skills/omni-artifact-accelerator/references/tableau-visual-run.md) |
-| Sigma | Outputs from a separately obtained, compatible migration engine and its visual capture | [Sigma workflow](skills/omni-artifact-accelerator/references/sigma-visual-run.md) |
+| Sigma | Dedicated specialist, guided API discovery/capture, verified evidence and reviewed Sigma converter reuse; qualified runtime required | [Sigma workflow](skills/omni-artifact-accelerator/references/sigma-visual-run.md) |
 | Domo | Selected companion-migrator evidence plus original configuration and visual references | [Domo pilot](skills/omni-artifact-translator/references/domo-visual-pilot.md) |
 | Periscope / Sisense CDT | Dedicated source specialist, pinned DMA evidence and bounded capture/result handoff; Linux/Fusion is a separate product | [CDT migration workflow](skills/omni-artifact-accelerator/references/periscope-visual-run.md) |
 | Metabase | Dedicated source specialist, typed API snapshots and bounded capture; preserved dashboard/tab/question identity, controls and query gaps | [Metabase migration workflow](skills/omni-artifact-accelerator/references/metabase-visual-run.md) |
