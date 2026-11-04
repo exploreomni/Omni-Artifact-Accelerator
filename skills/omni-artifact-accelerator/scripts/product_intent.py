@@ -239,7 +239,10 @@ def check(root):
     return result
 
 
-def packet_context(root, role):
+def packet_context(root, role, *, bounded=None, scope_ids=None):
+    root, project = P.load_project(root)
+    if bounded is None:
+        bounded = project.get('context_policy') == 'bounded-context-v1'
     result = check(root)
     # Legacy projects stay usable. PO can receive current intent to repair a missing projection.
     P.need(result['status'] != 'inconsistent' or role == 'product-owner',
@@ -247,14 +250,30 @@ def packet_context(root, role):
     if role != 'product-owner':
         result['paths'] = [result['brief']['path']] if result['brief'] else []
     selected = []
-    for req in result.pop('requirements'):
+    requirements = result.pop('requirements')
+    if bounded:
+        original_count = len(requirements)
+        shared = P.intent_helper().shared_requirement_ids(requirements)
+        requirements = P.intent_helper().project_requirements(requirements, role, scope_ids)
+        result['paths'] = []
+        result['shared_constraint_ids'] = shared
+        result['coverage'] = {'selected_requirement_ids': [r['id'] for r in requirements],
+                              'total_requirement_count': original_count,
+                              'complete_requirement_coverage_owner': 'orchestrator'}
+        # Discovery/quality details remain in the coordinator's complete check;
+        # specialists receive their requirement records and selected excerpts.
+        for key in ('visual_context', 'quality_context'):
+            result.pop(key, None)
+    for req in requirements:
         product = req.get('product', {})
-        if role == 'product-owner' or role in product.get('suggested_roles', []) or req.get('delivery', {}).get('owner') == role:
+        if bounded or role == 'product-owner' or role in product.get('suggested_roles', []) or req.get('delivery', {}).get('owner') == role:
             selected.append({'id': req['id'], 'priority': product.get('priority'), 'basis': product.get('basis', req['origin']),
                              'disposition': req['disposition'], 'source_refs': product.get('source_refs', []),
                              'acceptance': product.get('acceptance', []),
                              'alternative': product.get('alternative'), 'suggested_roles': product.get('suggested_roles', [])})
     result['role_slice'] = selected
     result['note'] = 'Suggested scope only; the orchestrator owns dispatch. Return coverage, conflicts and alternatives. '
-    result['note'] += 'Read the complete current intent; unassigned requirements remain obligations.'
+    result['note'] += ('Use selected bounded evidence and request specific missing context. '
+                       'The orchestrator retains complete requirement coverage and unresolved obligations.'
+                       if bounded else 'Read the complete current intent; unassigned requirements remain obligations.')
     return result

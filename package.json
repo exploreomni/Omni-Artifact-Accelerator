@@ -1,6 +1,6 @@
 {
   "name": "omni-artifact-accelerator",
-  "version": "0.34.0",
+  "version": "0.37.0",
   "private": true,
   "description": "Portable analyst skills for native Omni Apps, dashboards and Reports Beta preparation",
   "skills": [
@@ -19,6 +19,7 @@
     "omni-branding",
     "omni-design-systems",
     "omni-artifact-translator",
+    "omni-domo-migrator",
     "omni-sigma-migrator",
     "omni-periscope-migrator",
     "omni-metabase-migrator",

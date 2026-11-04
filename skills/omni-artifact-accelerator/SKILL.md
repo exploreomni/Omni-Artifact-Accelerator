@@ -54,6 +54,29 @@ change modes or use raw writes to bypass a closed gate. Native writes and
 dependency activation retain their separate authorization requirements.
 Existing selected products and focused repairs reuse current decisions/evidence.
 
+For host integration, use the [host-neutral execution surface](references/host-execution.md).
+Expose only the active tool scope, inspect the next valid action, and bind actual
+worker invocations to bounded packets. Reconcile uncertain launches instead of
+starting replacements. Qualify the actual host and native observations separately;
+neither local receipts nor synthetic tests establish isolation or publication rights.
+Use explicit [analytical evidence](references/analytical-evidence.md) for result
+identity and independent migration comparisons.
+
+Use [incremental work](references/incremental-work.md) for bounded specialist
+handoffs and corrections. New CLI projects require a pinned context receipt before
+managed dispatch; preserve existing engagements' policy until explicit adoption.
+Check existing reservations and completed outputs first. Load only the assigned
+role guidance and relevant evidence, retain all shared constraints, and request
+specific missing dependencies. Never resend the whole engagement to every worker.
+A role is a responsibility, not a mandatory agent. Keep the configured model and
+smallest useful team, with independent creative/QA duties preserved.
+
+With the optional incremental review policy, all four perspectives retain current
+candidate coverage; only proven unchanged source evidence can carry forward.
+Unknown impact and rendered/native gaps stay open. Use consolidated preflight and
+one targeted correction before repeating a blocked task; record actual host usage
+when available instead of estimating savings from packet size.
+
 For substantial new design, material redesign, explicit craft feedback or deliberate practice, apply the [curriculum role route](../omni-design-systems/references/experience-curriculum.md#role-routes). Retain the design thesis, task/surface choice and selected alternatives in the existing brief, assign the relevant lessons, and carry the artifact through [critique and revision](../omni-design-systems/references/experience-review.md); this does not require every lesson or an additional team for a focused task.
 
 For material experience work, use the [shared experience brief](../omni-design-systems/references/experience-brief.md) to translate stated quality expectations into named choices in the existing design intent. Preserve first/returning-use decisions, art direction and tool constraints across workers and resumes; reconcile packet selection pins before dispatch. This is the same engagement workflow, not another interview or approval stage.
@@ -61,6 +84,15 @@ For material experience work, use the [shared experience brief](../omni-design-s
 Use the [current-context and resume check](references/design-intent.md#current-context-and-resume) when work resumes or feedback changes a decision. Keep one current selection and explicitly historical proposals. For query-backed Apps, route the exact [native data-input contract](../omni-app-engineer/references/native-data-input.md) to BI/App engineering. Capture usable content width and height in the existing design contexts. Branded demos also resolve [presentation naming](../omni-branding/references/demo-presentation.md) separately from logo permission; retain source identity and numbers.
 
 For control-level quality feedback or substantial interactive work, route the affected families through [control craft](../omni-design-systems/references/control-craft.md). Design systems owns shared anatomy/tokens, the designer chooses controls for the task, engineering binds existing state/query mechanisms, and QA reviews the affected journey. Reuse current brand/interaction decisions and ask only material missing questions; neither a universal shell nor another permanent specialist is required.
+
+For Domo migrations, assign the [Domo specialist](../omni-domo-migrator/SKILL.md)
+and follow the [Domo workflow](../omni-artifact-translator/references/domo-visual-run.md).
+Reuse the originating manager/run and retain Card, Page, App/component and repeated
+placement identities. Select reuse, semantic reconstruction or warehouse refactoring
+explicitly. Opt-in source reads require the reviewed runtime and selected host
+scope; images, results and detailed App definitions remain supplied evidence.
+Source capture, A–F design choice, native writes and source-manager acceptance are
+separate boundaries. A read-only App does not require a fictional side effect.
 
 For Sigma migrations, assign the [Sigma specialist](../omni-sigma-migrator/SKILL.md)
 and use the [connected source workflow](references/sigma-visual-run.md). Reuse the
@@ -133,7 +165,7 @@ For a Data Model Accelerator handoff, read [DMA integration](references/dma-hand
 
 For Domo or Sigma migrations, invoke the [artifact translator](../omni-artifact-translator/SKILL.md) on the scoped migrator export, preserving its producer revision, original IDs, coverage and missing behavior. Apply the shared [migration behavior contract](../omni-qa-analyst/references/migration-behavior.md). Source acquisition and the migrator's own runtime gates remain there. Domo's assignment-only redesign handoff is not permission to execute side effects. Sigma requires its explicit semantic route and separately allowed change scope; never turn dashboard-only reuse into model changes or combine retained Phase 0 design with the current pre-push runtime.
 
-For connected visual migrations, use [the connected visual workflow](references/connected-visual-migration.md). Discover each source/target operation separately, then capture configuration, visual reference, results and interaction state before rebuilding and comparing native Omni content. Domo is the first package implementation priority; use its [visual pilot](../omni-artifact-translator/references/domo-visual-pilot.md). Ask for the customer's company website URL when brand context is missing. Preserve the familiar analytical experience and record improvements explicitly. A connected MCP server or local CLI installation alone does not establish an end-to-end migration path.
+For connected visual migrations, use [the connected visual workflow](references/connected-visual-migration.md). Discover each source/target operation separately, then capture configuration, visual reference, results and interaction state before rebuilding and comparing native Omni content. Follow the selected source's current run guide and qualification limits; Domo's [visual pilot](../omni-artifact-translator/references/domo-visual-pilot.md) starts with one Card in its Page/App context. Ask for the customer's company website URL when brand context is missing. Preserve the familiar analytical experience and record improvements explicitly. A connected MCP server or local CLI installation alone does not establish an end-to-end migration path.
 
 For Sigma, follow the [implemented local visual workflow](references/sigma-visual-run.md): actual producer import, complete source-pinned requirements, existing DMA cowork, named Omni draft execution, keyed numerical checks and per-case coverage. `scripts/visual_mcp.py` exposes bounded local host tools. Source and target operations are configured explicitly at startup; tool arguments cannot expand them. Existing production use of a migrator does not establish new adapter or host qualification.
 

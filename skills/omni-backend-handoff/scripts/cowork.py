@@ -102,6 +102,26 @@ def current_catalog(root, obj):
     return pin, value
 
 
+def verify_domo_inventory(root, obj, path, inputs=()):
+    """Reproject Domo originals and check capture attachments on every round trip."""
+    value, _ = ap.read_json(ap.relative_file(root, path))
+    if value.get('source', {}).get('platform') != 'domo':
+        return None
+    expected = value['source'].get('input_sha256')
+    candidates = list(dict.fromkeys([*inputs, *[r['path'] for r in obj['sources']]]))
+    matches = []
+    for candidate in candidates:
+        if candidate.endswith('.json') and candidate != path:
+            record = file_pin(root, candidate, obj)
+            if record['sha256'] == expected:
+                matches.append(record)
+    ap.need(bool(matches), 'Domo inventory requires its pinned original source in the engagement')
+    original = matches[0]
+    workflow = ap.routing_helper('visual_workflow')
+    workflow.source_inventory(root, original['path'], path)
+    return original
+
+
 def verify_periscope_inventory(root, obj, path, inputs=()):
     """Reproject CDT originals and check capture attachments on every round trip."""
     value, _ = ap.read_json(ap.relative_file(root, path))
@@ -315,7 +335,8 @@ def migration_sources(root, obj, spec, inputs):
         # create a model; neither silently switches a known direct/warehouse route.
         ap.need(route is None or spec["route"] in (route, "unselected", "reuse_existing"),
                 "request route conflicts with selected source inventory")
-        original = (verify_periscope_inventory(root, obj, path, inputs) if platform == 'periscope' else
+        original = (verify_domo_inventory(root, obj, path, inputs) if platform == 'domo' else
+                    verify_periscope_inventory(root, obj, path, inputs) if platform == 'periscope' else
                     verify_metabase_inventory(root, obj, path, inputs) if platform == 'metabase' else
                     verify_webfocus_inventory(root, obj, path, inputs) if platform == 'webfocus' else
                     verify_thoughtspot_inventory(root, obj, path, inputs) if platform == 'thoughtspot' else
@@ -324,7 +345,7 @@ def migration_sources(root, obj, spec, inputs):
                     verify_cognos_inventory(root, obj, path, inputs) if platform == 'cognos' else
                     verify_businessobjects_inventory(root, obj, path, inputs) if platform == 'businessobjects' else
                     verify_report_source_inventory(root, obj, path, inputs) if platform in ('ssrs', 'powerbi_paginated', 'crystal') else None)
-        if platform in ('webfocus', 'thoughtspot', 'qlik', 'microstrategy', 'cognos', 'businessobjects', 'ssrs', 'powerbi_paginated', 'crystal'):
+        if platform in ('domo', 'webfocus', 'thoughtspot', 'qlik', 'microstrategy', 'cognos', 'businessobjects', 'ssrs', 'powerbi_paginated', 'crystal'):
             restricted = {a['asset_key'] for a in value['assets'] if
                           a.get('source_identity', {}).get('restricted_private_scope') is True}
             requested = {key for r in spec['requirements'] for key in r['frontend_asset_ids']}

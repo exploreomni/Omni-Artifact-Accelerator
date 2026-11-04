@@ -42,7 +42,7 @@ def surface_deliveries(root, obj, scope, spec):
     selected = {surface for unit in scope["units"] if unit["disposition"] == "migrate" for surface in unit["surfaces"]}
     supplied = spec.get("surface_deliveries", {})
     ap.need(type(supplied) is dict and set(supplied) <= selected, "surface delivery lies outside selected migration scope")
-    required = bool(supplied) or any(inv["platform"] in ("looker", "hex", "periscope", "metabase", "webfocus", "thoughtspot", "qlik", "microstrategy", "cognos", "businessobjects", "ssrs", "powerbi_paginated", "crystal") for inv in scope["inventories"])
+    required = bool(supplied) or any(inv["platform"] in ("domo", "looker", "hex", "periscope", "metabase", "webfocus", "thoughtspot", "qlik", "microstrategy", "cognos", "businessobjects", "ssrs", "powerbi_paginated", "crystal") for inv in scope["inventories"])
     verified, files, gaps, targets = {}, {}, [], set()
     for surface, delivery in supplied.items():
         ap.need(type(delivery) is dict and set(delivery) == {"candidate_path", "execution_receipt_path", "coverage_path"},
@@ -96,6 +96,7 @@ def build_scope(root, obj, spec_path):
     for path in spec["inventory_paths"]:
         value, _ = ap.read_json(ap.relative_file(root, path))
         envelope(value, "omni_analyst_source_inventory")
+        cw.verify_domo_inventory(root, obj, path)
         cw.verify_periscope_inventory(root, obj, path)
         cw.verify_metabase_inventory(root, obj, path)
         cw.verify_webfocus_inventory(root, obj, path)

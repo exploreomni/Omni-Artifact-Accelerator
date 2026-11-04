@@ -73,6 +73,15 @@ def sigma_module():
     return module
 
 
+def domo_module():
+    path = Path(__file__).resolve().parents[2] / 'omni-artifact-translator/scripts/domo_visual.py'
+    need(not any(p.is_symlink() for p in (path, *path.parents)), 'domo.module_symlink')
+    spec = importlib.util.spec_from_file_location('visual_domo_validation', path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
 def verify_sigma_operation_files(value, folder):
     """A source-operation capture is a receipt for a retained visual journal."""
     if value.get('schema_version') != 'sigma-source-operation.v1' or value.get('operation') != 'capture':
@@ -257,7 +266,9 @@ def source_inventory(root, original, inventory):
         need(data["source"]["input_filename"] == Path(original).name, "source.filename_mismatch")
         rebuilt["source"]["input_filename"] = Path(original).name
     need(data == rebuilt, "source.projection_changed")
-    if source_format == 'sigma-agent' and original_value.get('schema_version') in ('sigma-visual-capture.v1', 'sigma-source-evidence-bundle.v1'):
+    if source_format == 'domo-agent' and original_value.get('schema_version') == 'oaa-domo-visual-capture.v1':
+        domo_module().verify_capture_files(original_value, ap.relative_file(root, original).parent)
+    elif source_format == 'sigma-agent' and original_value.get('schema_version') in ('sigma-visual-capture.v1', 'sigma-source-evidence-bundle.v1'):
         sigma_module().verify_capture_files(original_value, ap.relative_file(root, original).parent)
     elif source_format == 'sigma-agent' and original_value.get('schema_version') == 'sigma-source-operation.v1':
         verify_sigma_operation_files(original_value, ap.relative_file(root, original).parent)
@@ -295,6 +306,9 @@ def source_inventory(root, original, inventory):
 def capture_value(root, record):
     path = check_pin(root, record)
     value, raw = ap.read_json(path)
+    if value.get('schema_version') == 'oaa-domo-visual-capture.v1':
+        domo_module().verify_capture_files(value, path.parent)
+        return value
     if value.get("schema_version") == "report-source-capture.v1":
         report_source_module().verify_capture_files(value, path.parent)
         return value
@@ -515,6 +529,8 @@ def cases(asset):
         numeric = True
     if asset["source_identity"].get("source_platform") in {"hex", "periscope", "metabase", "webfocus", "thoughtspot", "qlik", "microstrategy", "cognos", "businessobjects", "ssrs", "powerbi_paginated", "crystal"}:
         numeric = asset["source_identity"].get("query_visual") is True
+    if asset['source_identity'].get('source_platform') == 'domo' and 'query_visual' in asset['source_identity']:
+        numeric = asset['source_identity']['query_visual'] is True
     if numeric:
         scenarios.extend([("numeric", "default"), ("numeric", "changed_filter"),
                           ("interaction", "drill_navigation"), ("performance", "representative_volume")])
@@ -528,6 +544,19 @@ def cases(asset):
     if asset["source_identity"].get("source_platform") == "looker":
         scenarios.extend([("interaction", "filter_listener_exclusions"), ("interaction", "tab_navigation"),
                           ("visual", "content_and_custom_behavior")])
+    if asset['source_identity'].get('source_platform') == 'domo':
+        scenarios.extend([('interaction', 'filter_precedence_variable_reset'),
+                          ('interaction', 'placement_drill_navigation'), ('interaction', 'refresh_export_and_stale_recovery'),
+                          ('access', 'pdp_and_effective_principal')])
+        if numeric:
+            scenarios.append(('numeric', 'card_aggregation_totals_complete_population'))
+        inventory_kind = asset['source_identity'].get('inventory_kind')
+        if inventory_kind in {'app', 'app_page', 'component'} or asset['kind'] == 'app':
+            scenarios.extend([('interaction', 'complete_app_journey_and_persistent_state'),
+                              ('interaction', 'component_actions_and_failure_recovery'),
+                              ('visual', 'responsive_component_and_brand_fidelity')])
+        if inventory_kind in {'asset', 'operation', 'dataset', 'query'}:
+            scenarios = [('interaction', 'dependency_disposition'), ('access', 'source_security_review')]
     if asset["source_identity"].get("source_platform") == "businessobjects":
         scenarios.extend([("interaction", "prompt_input_control_and_filter_scope"),
                           ("interaction", "provider_merge_and_calculation_context"),
@@ -667,13 +696,16 @@ def prepare(root, original, inventory, destination, website=None):
               "items": [], "source_gaps": copy.deepcopy(source.get("gaps", [])),
               "native_validation": "not_run", "business_acceptance": "not_recorded"}
     for asset in source["assets"]:
-        restricted = (asset['source_identity'].get('source_platform') in ('sigma', 'webfocus', 'thoughtspot', 'qlik', 'microstrategy', 'cognos', 'businessobjects', 'ssrs', 'powerbi_paginated', 'crystal') and
+        restricted = (asset['source_identity'].get('source_platform') in ('domo', 'sigma', 'webfocus', 'thoughtspot', 'qlik', 'microstrategy', 'cognos', 'businessobjects', 'ssrs', 'powerbi_paginated', 'crystal') and
                       asset['source_identity'].get('restricted_private_scope') is True)
         source_review = (asset['source_identity'].get('source_platform') in ('sigma', 'cognos', 'businessobjects', 'ssrs', 'powerbi_paginated', 'crystal') and
                          (asset['source_identity'].get('declared_disposition') != 'include' or
                           asset['source_identity'].get('requires_source_review') is True))
         source_review = source_review or (asset['source_identity'].get('source_platform') == 'webfocus' and
                                          asset['source_identity'].get('requires_source_review') is True)
+        source_review = source_review or (asset['source_identity'].get('source_platform') == 'domo' and
+                                         (asset['source_identity'].get('declared_disposition') not in (None, 'include') or
+                                          asset['source_identity'].get('requires_source_review') is True))
         scope_decision = None
         if restricted:
             scope_decision = {"reason": "Source scope is unavailable or not selected; retain obligation pending explicit source review",
@@ -724,7 +756,7 @@ def requirements(root, path):
             need(item.get(field) == asset[field], "requirements.source_identity_changed")
         need(item.get("source_facets") == asset["facets"], "requirements.source_facets_changed")
         need(item.get("disposition") in ("migrate", "defer", "exclude"), "requirements.invalid_disposition")
-        if asset['source_identity'].get('source_platform') in ('sigma', 'webfocus', 'thoughtspot', 'qlik', 'microstrategy', 'cognos', 'businessobjects', 'ssrs', 'powerbi_paginated', 'crystal'):
+        if asset['source_identity'].get('source_platform') in ('domo', 'sigma', 'webfocus', 'thoughtspot', 'qlik', 'microstrategy', 'cognos', 'businessobjects', 'ssrs', 'powerbi_paginated', 'crystal'):
             need(item['disposition'] != 'migrate' or asset['source_identity'].get('restricted_private_scope') is not True,
                  'requirements.private_scope_not_selected')
         source_review = (asset['source_identity'].get('source_platform') in ('sigma', 'cognos', 'businessobjects', 'ssrs', 'powerbi_paginated', 'crystal') and
@@ -732,6 +764,9 @@ def requirements(root, path):
                           asset['source_identity'].get('requires_source_review') is True))
         source_review = source_review or (asset['source_identity'].get('source_platform') == 'webfocus' and
                                          asset['source_identity'].get('requires_source_review') is True)
+        source_review = source_review or (asset['source_identity'].get('source_platform') == 'domo' and
+                                         (asset['source_identity'].get('declared_disposition') not in (None, 'include') or
+                                          asset['source_identity'].get('requires_source_review') is True))
         if source_review and item['disposition'] == 'migrate':
             review = item.get('scope_decision')
             need(type(review) is dict and type(review.get('reference')) is str and review['reference'].strip()
@@ -751,7 +786,7 @@ def requirements(root, path):
             if case.get("source_capture") is not None:
                 capture = capture_value(root, case["source_capture"])
                 expected_provider = {"powerbi": "powerbi-visual-capture.v1", "tableau": "tableau-visual-capture.v1",
-                                     "sigma": "sigma-visual-capture.v1", "looker": "looker-visual-capture.v1",
+                                     "sigma": "sigma-visual-capture.v1", "domo": "oaa-domo-visual-capture.v1", "looker": "looker-visual-capture.v1",
                                      "hex": "hex-visual-capture.v1",
                                      "periscope": "periscope-visual-capture.v1",
                                      "metabase": "metabase-visual-capture.v1",
@@ -765,7 +800,9 @@ def requirements(root, path):
                 need(expected_provider is not None and (capture['schema_version'] == expected_provider or
                      expected_provider == 'sigma-visual-capture.v1' and capture['schema_version'] == 'sigma-source-evidence-bundle.v1'),
                      "requirements.capture_provider_mismatch")
-                if capture['schema_version'] == 'sigma-source-evidence-bundle.v1' or (expected_provider == 'sigma-visual-capture.v1' and case.get('source_binding')):
+                if capture['schema_version'] == 'oaa-domo-visual-capture.v1':
+                    domo_module().case_binding(asset, case, capture)
+                elif capture['schema_version'] == 'sigma-source-evidence-bundle.v1' or (expected_provider == 'sigma-visual-capture.v1' and case.get('source_binding')):
                     sigma_module().case_binding(asset, case, capture)
                 elif capture["schema_version"] == "report-source-capture.v1":
                     report_source_module().case_binding(asset, case, capture)
@@ -811,14 +848,25 @@ def requirements(root, path):
 def rows(root, record):
     file = check_pin(root, record["file"])
     if record.get("format") == "json":
-        value, _ = ap.read_json(file)
+        value, raw = ap.read_json(file)
+        need(ap.digest(raw) == record['file']['sha256'], 'results.pinned_bytes_changed')
+        value = json.loads(raw, object_pairs_hook=ap.reject_duplicate, parse_float=Decimal)
         need(type(value) is list and all(type(r) is dict for r in value), "results.json_rows_required")
     elif record.get("format") == "csv":
-        reader = csv.DictReader(io.StringIO(file.read_text(encoding="utf-8-sig"), newline=""))
+        raw = file.read_bytes()
+        need(ap.digest(raw) == record['file']['sha256'], 'results.pinned_bytes_changed')
+        reader = csv.DictReader(io.StringIO(raw.decode('utf-8-sig'), newline=""))
         names = reader.fieldnames
         need(names and all(names) and len(names) == len(set(names)), "results.invalid_csv_header")
         value = list(reader)
         need(all(None not in r and None not in r.values() for r in value), "results.ragged_csv")
+    elif record.get('format') == 'domo-normalized':
+        value = load(root, record['file']['path'])
+        need(type(value) is dict and value.get('kind') == 'domo_normalized_results', 'results.domo_normalization_required')
+        raw = check_pin(root, record.get('raw_file')).read_bytes()
+        rebuilt = domo_module().normalize_results(raw, value.get('parser_profile'), value.get('binding'))
+        need(value == rebuilt, 'results.domo_normalization_changed')
+        value = value['rows']
     elif record.get('format') == 'sigma-normalized':
         value, _ = ap.read_json(file)
         need(type(value) is dict and value.get('kind') == 'sigma_normalized_results', 'results.sigma_normalization_required')
@@ -1115,7 +1163,7 @@ def cell(value, field):
         return None
     kind = field.get("type")
     if kind == "number":
-        need(type(value) in (str, int, float) and not isinstance(value, bool), "results.number_required")
+        need(type(value) in (str, int, float, Decimal) and not isinstance(value, bool), "results.number_required")
         try:
             number = Decimal(str(value))
             need(number.is_finite(), "results.nonfinite_number")
@@ -1131,11 +1179,17 @@ def cell(value, field):
     return value
 
 
-def compare(root, spec_path, destination):
+def compare(root, spec_path, destination, *, expected_spec_sha256=None):
     root, _ = ap.load_project(root)
-    spec = load(root, spec_path)
+    spec, spec_bytes = ap.read_json(ap.relative_file(root, spec_path))
+    spec_sha256 = ap.digest(spec_bytes)
+    need(expected_spec_sha256 is None or expected_spec_sha256 == spec_sha256, 'comparison.specification_changed')
     need(spec.get("kind") == "analyst_numeric_comparison_spec" and spec.get("schema_version") == 1,
          "comparison.invalid_contract")
+    independence = None
+    if 'independence_provenance' in spec:
+        independence = ap.routing_helper('analytical_evidence').validate_comparison_provenance(
+            root, spec, spec['independence_provenance'])
     check_pin(root, spec["requirements"])
     _, req = requirements(root, spec["requirements"]["path"])
     check_pin(root, spec["candidate"])
@@ -1170,7 +1224,7 @@ def compare(root, spec_path, destination):
         gaps.append("source.hex_frozen_workspace_identity_unknown")
     if source_platform == "hex" and not spec.get("persona_equivalence_reference"):
         gaps.append("source.hex_persona_equivalence_required")
-    if source_platform in ("sigma", "looker", "hex", "periscope", "metabase", "webfocus", "thoughtspot", "qlik", "microstrategy", "businessobjects", "ssrs", "powerbi_paginated", "crystal") and selected_case.get("source_capture") is None:
+    if source_platform in ("domo", "sigma", "looker", "hex", "periscope", "metabase", "webfocus", "thoughtspot", "qlik", "microstrategy", "businessobjects", "ssrs", "powerbi_paginated", "crystal") and selected_case.get("source_capture") is None:
         gaps.append("source." + source_platform + "_case_capture_required")
     if selected_case.get("source_capture") is not None:
         selected_capture = capture_value(root, selected_case["source_capture"])
@@ -1230,6 +1284,19 @@ def compare(root, spec_path, destination):
         normalized = load(root, source["file"]["path"]) if source.get("format") == "metabase-normalized" else None
         gaps.extend(metabase_module().comparison_gaps(original, selected, selected_case, source, target,
                                                       normalized=normalized, columns=spec.get("columns")))
+    if source_platform == 'domo' and original.get('schema_version') == 'oaa-domo-visual-capture.v1':
+        selected = next(i for i in req['items'] if any(c['case_id'] == spec['case_id'] for c in i['required_cases']))
+        if selected_case.get('source_binding') is None:
+            gaps.append('source.domo_result_binding_required')
+        else:
+            normalized = load(root, source['file']['path']) if source.get('format') == 'domo-normalized' else None
+            bound_source = copy.deepcopy(source)
+            file_key = 'raw_file' if source.get('format') == 'domo-normalized' else 'file'
+            bound_source[file_key]['bytes'] = len(check_pin(root, source[file_key]).read_bytes())
+            gaps.extend(domo_module().comparison_gaps(original, selected, selected_case, bound_source, target,
+                        normalized=normalized, columns=spec.get('columns')))
+    elif source_platform == 'domo':
+        gaps.append('source.domo_execution_evidence_unqualified')
     if source_platform == 'sigma' and original.get('schema_version') in ('sigma-source-evidence-bundle.v1', 'sigma-visual-capture.v1'):
         selected = next(i for i in req["items"] if any(c["case_id"] == spec["case_id"] for c in i["required_cases"]))
         normalized = load(root, source['file']['path']) if source.get('format') == 'sigma-normalized' else None
@@ -1290,11 +1357,14 @@ def compare(root, spec_path, destination):
               "extra_keys": len(extra), "mismatch_count": len(mismatches),
               "mismatches": mismatches[:100], "gaps": gaps,
               "evidence_scope": "supplied_results_and_declared_context_only", "native_validation": "not_established"}
-    if source_platform == 'sigma':
-        result['sigma_execution_parity'] = 'inconclusive' if gaps else 'supplied_bound_evidence_only'
+    if source_platform in {'domo', 'sigma'}:
+        result[source_platform + '_execution_parity'] = 'inconclusive' if gaps else 'supplied_bound_evidence_only'
         result['arithmetic_status'] = 'fail' if missing or extra or mismatches or order_mismatch else 'pass'
     if order_mode == "exact":
         result["order_mismatch"] = order_mismatch
+    if independence is not None:
+        result['independence'] = independence
+    need(result['spec']['sha256'] == spec_sha256, 'comparison.specification_changed')
     return output(root, destination, result)
 
 

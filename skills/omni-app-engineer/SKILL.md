@@ -5,6 +5,8 @@ description: Implement and repair native Omni App HTML, CSS and JavaScript from 
 
 # App software engineer
 
+For a bounded task, follow the [scoped context and correction contract](../omni-artifact-accelerator/references/incremental-work.md). Use assigned requirements, shared restrictions and cited original evidence; request specific missing context rather than reloading the entire engagement. Retain open findings and evidence limits on corrections.
+
 For a selected [dimensional visual](../omni-design-systems/references/dimensional-visualization-craft.md),
 implement the resolved encoding, exact-value route, controls/views, resizing and
 recovery through a qualified rendering path. Static illustrative images cannot

@@ -15,6 +15,7 @@ Candidate and review files must be preserved snapshots, not overwritten in place
 """
 from contextlib import contextmanager
 from datetime import datetime, timezone
+from functools import lru_cache
 import fcntl
 import importlib.util
 import json
@@ -37,6 +38,7 @@ MAX_EVENTS = 256
 MAX_JOURNAL_BYTES = 2 * 1024 * 1024
 SOURCE_ROOT = Path(__file__).resolve().parents[3]
 EVIDENCE = {
+    'incremental_policy': {'policy_decision'},
     'selection_policy': {'policy_decision'},
     'access': {'data', 'user_access'},
     'analysis': {'profile', 'queries', 'insights', 'expectations'},
@@ -45,6 +47,9 @@ EVIDENCE = {
     'review': {'review'},
 }
 EXTRA = {
+    'incremental_policy': {'policy', 'mode', 'expected_tail_sha256'},
+    'review_carry_forward': {'scope', 'source_review_sha256', 'iteration_sha256', 'candidate_sha256',
+                             'expected_tail_sha256', 'assessed_by'},
     'workflow_requalification': {'expected_tail_sha256', 'previous_start'},
     'selection_policy': {'selection_policy', 'expected_tail_sha256'},
     'access': {'source_scope', 'user_identity'},
@@ -70,6 +75,14 @@ def _helpers(P):
         P = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(P)
     return P
+
+
+@lru_cache(maxsize=1)
+def _incremental():
+    spec = importlib.util.spec_from_file_location('oaa_incremental_review', Path(__file__).with_name('incremental_review.py'))
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 
 def _need(ok, code):
@@ -183,6 +196,9 @@ def _pins(payload):
     result.extend(payload.get('startup_dependencies', []))
     result.extend(option['evidence'] for option in payload.get('options', []))
     result.extend(payload.get('artifacts', []))
+    if 'review_manifest' in payload:
+        result.append(payload['review_manifest'])
+        result.extend({k: d[k] for k in ('path', 'sha256', 'bytes')} for d in payload['review_dependencies'])
     if payload.get('selected_intent') is not None:
         result.append(payload['selected_intent'])
     return result
@@ -195,15 +211,18 @@ def _fresh(fd, event, P):
         return False
 
 
-def _workflow_fresh(root, event, P, *, contexts=None, workflow=None, snapshot=None):
+def _workflow_fresh(root, event, P, *, contexts=None, workflow=None, snapshot=None, incremental=False):
     """Compare phase-relevant startup/ownership bytes, not self-attested authority."""
     if 'workflow_quality_policy' not in event['payload']:
         return True  # historical events remain readable without invented startup
     try:
         workflow = workflow or P.routing_helper('delivery_workflow')
-        check = workflow.phase_check(root, event['stage'], _snapshot=snapshot)
+        action = 'review' if event['stage'] == 'review_carry_forward' else event['stage']
+        check = workflow.phase_check(root, action, _snapshot=snapshot)
         expected = (contexts or {}).get(event['sha256'], event['payload']['workflow_context'])
-        return check['status'] == 'ready' and check['context'] == expected
+        return check['status'] == 'ready' and (check['context'] == expected or
+            incremental and action in STAGES and workflow.semantic_phase_context(check['context']) ==
+            workflow.semantic_phase_context(expected))
     except (ValueError, OSError, KeyError, TypeError):
         return False
 
@@ -220,6 +239,7 @@ def _context(root, fd, P):
           'stage_gate_unknown_quality_policy')
     required = project['mode'] == 'net-new' or policy == POLICY
     selected = project.get('design_intent')
+    selected_dependencies = []
     if selected is not None:
         _pin_shape(selected)
         raw = _read(fd, selected['path'], P.MAX_BYTES)
@@ -236,9 +256,7 @@ def _context(root, fd, P):
               'stage_gate_invalid_selected_dependency_manifest')
         for expected in [*pins, record['spec_file']]:
             _pin_shape(expected, allow_empty=True)
-            data = _read(fd, expected['path'], P.MAX_BYTES)
-            _need(len(data) == expected['bytes'] and P.digest(data) == expected['sha256'],
-                  'stage_gate_selected_dependency_changed')
+            selected_dependencies.append(expected)
         _need([pin['path'] for pin in pins] == P.intent_helper().references(record['spec']),
               'stage_gate_selected_dependency_manifest_mismatch')
         spec = record['spec']
@@ -257,6 +275,14 @@ def _context(root, fd, P):
     except FileNotFoundError:
         journal = {'schema_version': 1, 'kind': KIND, 'project_id': project['id'],
                    'engagement': str(root), 'events': []}
+    if required:
+        for expected in selected_dependencies:
+            data = _read(fd, expected['path'], P.MAX_BYTES)
+            _need(len(data) == expected['bytes'] and P.digest(data) == expected['sha256'],
+                  'stage_gate_selected_dependency_changed')
+    # Genuine pre-policy work keeps role-scoped intent checks. A stale visual
+    # contract cannot turn unrelated legacy source investigation into a new
+    # product lifecycle. Net-new scope or any retained journal always stays gated.
     return project, required, journal
 
 
@@ -418,6 +444,24 @@ def _requalification(root, fd, project, request, state, P, provider):
 
 
 def _payload_shape(stage, payload, saved=True):
+    if stage == 'review_carry_forward':
+        expected = set(EXTRA[stage])
+        if saved:
+            expected.update({'reviewer', 'outcome', 'basis', 'evidence', 'origin_review_sha256', 'proof_sha256',
+                             'request_sha256'})
+            if 'workflow_quality_policy' in payload:
+                expected.update({'workflow_quality_policy', 'workflow_context'})
+            original = {k: payload[k] for k in EXTRA['review'] | {'evidence'}}
+            if 'workflow_quality_policy' in payload:
+                original.update({k: payload[k] for k in ('workflow_quality_policy', 'workflow_context')})
+            _payload_shape('review', original)
+            _need(all(_hash(payload[k]) for k in ('origin_review_sha256', 'proof_sha256', 'request_sha256')),
+                  'stage_gate_invalid_carry_provenance')
+        _need(set(payload) == expected and payload['scope'] in REVIEW_SCOPES and
+              all(_hash(payload[k]) for k in ('source_review_sha256', 'iteration_sha256', 'candidate_sha256',
+                                              'expected_tail_sha256')) and _text(payload['assessed_by'], 256),
+              'stage_gate_invalid_carry_fields')
+        return
     if stage == 'workflow_requalification':
         expected = set(EXTRA[stage])
         if saved:
@@ -443,6 +487,13 @@ def _payload_shape(stage, payload, saved=True):
                   'stage_gate_duplicate_startup_dependency')
         return
     expected = set(EXTRA[stage]) | ({'evidence'} if stage in EVIDENCE else set())
+    if stage == 'incremental_policy':
+        if saved:
+            expected.add('request_sha256')
+        _need(payload.get('policy') == 'incremental-review-v1' and payload.get('mode') in {'observe', 'enforce'} and
+              _hash(payload.get('expected_tail_sha256')), 'stage_gate_invalid_incremental_policy')
+        if saved:
+            _need(_hash(payload.get('request_sha256')), 'stage_gate_invalid_request_digest')
     discovery = stage == 'brief' and 'discovery_version' in payload
     if discovery:
         expected.add('discovery_version')
@@ -461,9 +512,19 @@ def _payload_shape(stage, payload, saved=True):
         expected.add('selected_intent')
     if saved and stage == 'candidate':
         expected.update({'prior_iteration_sha256', 'prior_reviews_sha256', 'candidate_sha256'})
+    if stage == 'candidate' and 'review_manifest' in payload:
+        expected.add('review_manifest')
+        if saved:
+            expected.update({'review_dependencies', 'review_context'})
+            _pin_shape(payload['review_manifest'])
+            _need(type(payload['review_context']) is dict, 'stage_gate_invalid_review_context')
+            _incremental().validate_dependencies(payload['review_dependencies'],
+                type('Shape', (), {'_ident': staticmethod(_ident), '_pin_shape': staticmethod(_pin_shape)}))
+        else:
+            _relative(payload['review_manifest'])
     if saved and 'workflow_quality_policy' in payload:
         expected.update({'workflow_quality_policy', 'workflow_context'})
-        _need(stage != 'selection_policy' and payload['workflow_quality_policy'] == QUALITY_POLICY and
+        _need(stage not in {'selection_policy', 'incremental_policy'} and payload['workflow_quality_policy'] == QUALITY_POLICY and
               type(payload.get('workflow_context')) is dict and bool(payload['workflow_context']),
               'stage_gate_invalid_workflow_context')
     if saved and 'experience_dependencies' in payload:
@@ -570,7 +631,8 @@ def _replay(root, project, journal, P):
     _need(type(events) is list and len(events) <= MAX_EVENTS, 'stage_gate_history_limit')
     current, reviews, last_reviews, iterations = {}, {}, {}, set()
     iteration_dependencies, requalifications, requalified_contexts = [], [], {}
-    candidate = last_candidate = selection_policy = None
+    candidate = last_candidate = selection_policy = previous_candidate = None
+    previous_reviews, incremental_policies = {}, []
     choice_seen = quality_seen = False
     previous = P.digest(P.canonical({'project_id': project['id'], 'engagement': str(root), 'policy': POLICY}))
     for sequence, event in enumerate(events, 1):
@@ -593,9 +655,16 @@ def _replay(root, project, journal, P):
             _need(project.get('workflow_quality_policy') == QUALITY_POLICY,
                   'stage_gate_quality_policy_removed')
             quality_seen = True
-        elif quality_seen and stage != 'selection_policy':
+        elif quality_seen and stage not in {'selection_policy', 'incremental_policy'}:
             _need(False, 'stage_gate_quality_adoption_removed')
-        if stage == 'selection_policy':
+        if stage == 'incremental_policy':
+            _need(payload['expected_tail_sha256'] == previous and
+                  (last_candidate is None or _complete(last_reviews)), 'stage_gate_incremental_adoption_predecessors')
+            _need(not incremental_policies or incremental_policies[-1]['payload']['mode'] == 'observe' and
+                  payload['mode'] == 'enforce', 'stage_gate_incremental_policy_already_adopted')
+            predecessor = previous
+            incremental_policies.append(event)
+        elif stage == 'selection_policy':
             _need(selection_policy is None and not choice_seen and last_candidate is None,
                   'stage_gate_selection_policy_already_fixed')
             _need(payload['expected_tail_sha256'] == previous, 'stage_gate_selection_policy_tail_mismatch')
@@ -643,6 +712,12 @@ def _replay(root, project, journal, P):
             iterations.add(payload['iteration_id'])
             if last_candidate:
                 iteration_dependencies.extend([last_candidate, *last_reviews.values()])
+            previous_candidate, previous_reviews = last_candidate, dict(last_reviews)
+            if 'review_manifest' in payload:
+                _need(bool(incremental_policies), 'stage_gate_incremental_policy_required')
+                expected_context = {s: current[s]['sha256'] for s in STAGES}
+                _need(payload['review_context']['stages'] == expected_context,
+                      'stage_gate_review_stage_context_mismatch')
             predecessor = current['design']['sha256']
             candidate = last_candidate = event
             reviews = last_reviews = {}
@@ -654,12 +729,21 @@ def _replay(root, project, journal, P):
                   'stage_gate_review_candidate_mismatch')
             _need(payload['scope'] not in {'ui_ux', 'qa'} or
                   payload['reviewer'] not in candidate['payload']['builders'], 'stage_gate_independent_reviewer_required')
+            if stage == 'review_carry_forward':
+                _need(payload['expected_tail_sha256'] == previous, 'stage_gate_carry_tail_mismatch')
+                _need(payload['scope'] not in reviews, 'stage_gate_review_already_recorded')
+                P.routing_helper('incremental_review').validate_carry(
+                    {'candidate': candidate, 'previous_candidate': previous_candidate,
+                     'previous_reviews': previous_reviews, 'incremental_policies': incremental_policies},
+                    payload, datetime.fromisoformat(event['recorded_at']))
             reviews[payload['scope']] = event
             last_reviews = reviews
         _need(event['predecessor_sha256'] == predecessor, 'stage_gate_predecessor_mismatch')
         previous = event['sha256']
     return {'current': current, 'candidate': candidate, 'reviews': reviews,
             'last_candidate': last_candidate, 'last_reviews': last_reviews,
+            'previous_candidate': previous_candidate, 'previous_reviews': previous_reviews,
+            'incremental_policies': incremental_policies,
             'iteration_dependencies': iteration_dependencies, 'tail': previous,
             'selection_policy': selection_policy, 'choice_seen': choice_seen,
             'requalifications': requalifications, 'requalified_contexts': requalified_contexts}
@@ -725,7 +809,14 @@ def _report(root, fd, project, required, state, P, provider):
               'workflow_requalification': {'event_sha256': None, 'stage_bindings': {}},
               'review_assurance': {'status': 'not_assessed', 'resolved_scopes_by_basis': {},
                                    'native_acceptance': False, 'human_acceptance': False}}
+    report['incremental_review'] = P.routing_helper('incremental_review').impact_state(state)
+    report['incremental_review']['policy_event_sha256'] = (
+        state['incremental_policies'][-1]['sha256'] if state['incremental_policies'] else None)
     if not required:
+        return report
+    if any(not _fresh(fd, event, P) for event in state['incremental_policies']):
+        report.update(status='blocked', next_stage='repair_state')
+        report['findings'].append('stale_incremental_policy_evidence')
         return report
     if state['selection_policy'] is not None and not _fresh(fd, state['selection_policy'], P):
         report.update(status='blocked', next_stage='repair_selection_policy')
@@ -760,7 +851,8 @@ def _report(root, fd, project, required, state, P, provider):
             report['next_stage'] = stage
             break
         if not _workflow_fresh(root, event, P, contexts=state['requalified_contexts'],
-                               workflow=workflow, snapshot=snapshot):
+                               workflow=workflow, snapshot=snapshot,
+                               incremental=report['incremental_review']['mode'] == 'enforce'):
             report['findings'].append('stale_workflow_context:' + stage)
             report['next_stage'] = stage
             break
@@ -848,6 +940,7 @@ def _report(root, fd, project, required, state, P, provider):
             report['next_stage'] = 'candidate'
         else:
             report['candidate'] = dict(candidate['payload'], event_sha256=candidate['sha256'])
+            report['findings'].extend(P.routing_helper('incremental_review').freshness_findings(candidate))
             report['candidate_sha256'] = candidate['payload']['candidate_sha256']
             report['reviews'] = {scope: dict(e['payload'], event_sha256=e['sha256'])
                                  for scope, e in state['reviews'].items()}
@@ -907,11 +1000,16 @@ def candidate_commit_status(root, iteration_id, *, P=None):
 
 
 def _require(report, action, provider):
-    _need(action in {*STAGES, 'selection_policy', 'workflow_requalification', 'choose', 'build', 'candidate', 'review', 'release'}, 'stage_gate_unknown_action')
+    _need(action in {*STAGES, 'incremental_policy', 'review_carry_forward', 'selection_policy', 'workflow_requalification',
+                    'choose', 'build', 'candidate', 'review', 'release'}, 'stage_gate_unknown_action')
     if not report['required']:
         return
     _need(report['status'] != 'invalid', 'stage_gate_invalid_state')
     _need('stale_evidence:selection_policy' not in report['findings'], 'stage_gate_stale_selection_policy')
+    _need('stale_incremental_policy_evidence' not in report['findings'], 'stage_gate_stale_incremental_policy')
+    if action == 'incremental_policy':
+        _need(report.get('prior_reviews_complete', True), 'stage_gate_iteration_reviews_required')
+        return
     if action == 'selection_policy':
         _need(report['selection_policy'] == HOST_SELECTION, 'stage_gate_selection_policy_already_fixed')
         return
@@ -921,7 +1019,7 @@ def _require(report, action, provider):
         _need(not {'stale_iteration_evidence', 'stale_requalification_evidence'} & set(report['findings']),
               'stage_gate_requalification_evidence_changed')
         return
-    stage = {'choose': 'choice', 'build': 'candidate'}.get(action, action)
+    stage = {'choose': 'choice', 'build': 'candidate', 'review_carry_forward': 'review'}.get(action, action)
     if stage in {'brief', 'options'}:
         _need(report.get('workflow_quality_policy') == QUALITY_POLICY or
               report.get('historical_selected_continuation') is True,
@@ -943,7 +1041,12 @@ def _require(report, action, provider):
         _need(report.get('prior_reviews_complete', True), 'stage_gate_iteration_reviews_required')
     _need('stale_iteration_evidence' not in report['findings'], 'stage_gate_stale_iteration_evidence')
     if stage in {'candidate', 'review', 'release'}:
-        _need('stale_candidate_workflow_context' not in report['findings'],
+        # An opt-in correction may replace a fully consulted candidate after
+        # staffing changes. The new candidate records current full assignments;
+        # old review/release routes remain blocked and impact becomes broad.
+        correction = (stage == 'candidate' and report.get('incremental_review', {}).get('mode') == 'enforce'
+                      and report.get('prior_reviews_complete') is True)
+        _need('stale_candidate_workflow_context' not in report['findings'] or correction,
               'stage_gate_stale_candidate_workflow_context')
     if stage in {'review', 'release'}:
         _need(report['candidate'] is not None, 'stage_gate_candidate_required')
@@ -954,8 +1057,8 @@ def _require(report, action, provider):
 def require_action(root, action, *, P=None, provider=None):
     """Cooperating host guard. It does not execute or authorize the action."""
     P = _helpers(P)
-    if action not in {'selection_policy', 'workflow_requalification'}:
-        P.routing_helper('delivery_workflow').require_phase(root, action)
+    if action not in {'selection_policy', 'workflow_requalification', 'incremental_policy'}:
+        P.routing_helper('delivery_workflow').require_phase(root, 'review' if action == 'review_carry_forward' else action)
     report = inspect(root, P=P, provider=provider)
     _require(report, action, provider)
     return report
@@ -1022,13 +1125,34 @@ def record(root, request, *, P=None, provider=None):
         _need(required, 'stage_gate_not_new_product')
         state = _replay(root, project, journal, P)
         before = _report(root, fd, project, required, state, P, provider)
-        if stage not in {'selection_policy', 'workflow_requalification'}:
-            phase = P.routing_helper('delivery_workflow').require_phase(root, stage)
+        request_sha = P.digest(P.canonical(request))
+        if stage in {'incremental_policy', 'review_carry_forward'}:
+            existing = next((e for e in journal['events'] if e['stage'] == stage and
+                             e['payload'].get('request_sha256') == request_sha), None)
+            if existing is not None:
+                if stage == 'review_carry_forward':
+                    _require(before, stage, provider)
+                    _need(state['candidate']['sha256'] == payload['iteration_sha256'] and
+                          state['reviews'].get(payload['scope'], {}).get('sha256') == existing['sha256'],
+                          'stage_gate_review_candidate_mismatch')
+                before['recorded'] = {'stage': stage, 'sequence': existing['sequence'],
+                                      'sha256': existing['sha256'], 'reused': True}
+                return before
+        if stage not in {'selection_policy', 'workflow_requalification', 'incremental_policy'}:
+            phase = P.routing_helper('delivery_workflow').require_phase(root, 'review' if stage == 'review_carry_forward' else stage)
             if project.get('workflow_quality_policy') == QUALITY_POLICY:
                 _need(phase['status'] == 'ready', 'stage_gate_phase_readiness_required')
                 payload['workflow_quality_policy'] = QUALITY_POLICY
                 payload['workflow_context'] = phase['context']
         _require(before, stage, provider)
+        if stage in {'incremental_policy', 'review_carry_forward'}:
+            _need(payload['expected_tail_sha256'] == before['tail_sha256'], 'stage_gate_incremental_tail_mismatch')
+            if stage == 'review_carry_forward':
+                _need(payload['iteration_sha256'] == state['candidate']['sha256'] and
+                      payload['candidate_sha256'] == state['candidate']['payload']['candidate_sha256'],
+                      'stage_gate_review_candidate_mismatch')
+                payload = _incremental().carry_payload(state, payload)
+            payload['request_sha256'] = request_sha
         if stage == 'workflow_requalification':
             payload = _requalification(root, fd, project, payload, state, P, provider)
         if stage == 'brief':
@@ -1090,13 +1214,19 @@ def record(root, request, *, P=None, provider=None):
             last = state['last_candidate']
             payload['prior_iteration_sha256'] = last['sha256'] if last else None
             payload['prior_reviews_sha256'] = _reviews_hash(state['last_reviews'], P) if last else None
+            if 'review_manifest' in payload:
+                _need(bool(state['incremental_policies']), 'stage_gate_incremental_policy_required')
+                payload['review_manifest'], payload['review_dependencies'] = _incremental().manifest(
+                    fd, payload['review_manifest'], payload['artifacts'], P.routing_helper('stage_gates'), P)
+                payload['review_context'] = {'stages': {s: state['current'][s]['sha256'] for s in STAGES},
+                                             'workflow': payload.get('workflow_context')}
         _payload_shape(stage, payload)
         _need(len(journal['events']) < MAX_EVENTS, 'stage_gate_history_limit')
-        predecessor = (state['tail'] if stage in {'selection_policy', 'workflow_requalification'} else
+        predecessor = (state['tail'] if stage in {'selection_policy', 'workflow_requalification', 'incremental_policy'} else
                        state['current'][STAGES[STAGES.index(stage) - 1]]['sha256']
                        if stage in STAGES and stage != 'access' else
                        state['current']['design']['sha256'] if stage == 'candidate' else
-                       state['candidate']['sha256'] if stage == 'review' else None)
+                       state['candidate']['sha256'] if stage in {'review', 'review_carry_forward'} else None)
         event = {'sequence': len(journal['events']) + 1, 'stage': stage,
                  'previous_sha256': state['tail'], 'predecessor_sha256': predecessor,
                  'recorded_at': datetime.now(timezone.utc).isoformat(), 'payload': payload}
@@ -1107,11 +1237,15 @@ def record(root, request, *, P=None, provider=None):
         _need((report['workflow_requalification']['event_sha256'] == event['sha256'] and
                report['completed_stages'] == list(STAGES) and report['candidate'] is None)
               if stage == 'workflow_requalification' else
+              report['incremental_review']['policy_event_sha256'] == event['sha256'] if stage == 'incremental_policy' else
               report['selection_policy_event_sha256'] == event['sha256'] if stage == 'selection_policy' else
               stage in report['completed_stages'] if stage in STAGES else
               report['candidate'] is not None, 'stage_gate_evidence_changed_during_record')
         _need('stale_iteration_evidence' not in report['findings'], 'stage_gate_evidence_changed_during_record')
         _need('stale_evidence:selection_policy' not in report['findings'], 'stage_gate_evidence_changed_during_record')
+        _need('stale_incremental_policy_evidence' not in report['findings'], 'stage_gate_evidence_changed_during_record')
+        if stage == 'review_carry_forward':
+            _need(not _incremental().freshness_findings(updated['candidate']), 'stage_gate_evidence_changed_during_record')
         _atomic(fd, journal, P)
         report['recorded'] = {'stage': stage, 'sequence': event['sequence'], 'sha256': event['sha256']}
         return report

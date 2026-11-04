@@ -614,6 +614,17 @@ def require_phase(root, action):
     return result
 
 
+def semantic_phase_context(context):
+    """Selection continuity only; callers must first revalidate live assignments.
+
+    This projection deliberately excludes staffing. Full phase context remains on
+    packets, candidates and reviews, and unknown context fields remain binding.
+    No source, selected requirement, package or guidance evidence is omitted.
+    """
+    need(type(context) is dict, 'invalid_semantic_phase_context')
+    return {key: value for key, value in context.items() if key not in {'responsibilities', 'specialists'}}
+
+
 def requalify_context(root, previous_context, action):
     """Re-derive an A–E context after an explicit startup; never carry F passes.
 
@@ -807,7 +818,8 @@ def history_check(root, project_id, pointer):
 def freeze(root, request):
     root, project = P.load_project(root)
     need(type(request) is dict and {'id', 'artifacts', 'context'} <= set(request)
-         and set(request) <= {'id', 'artifacts', 'context', 'builders', 'supporting_artifacts'}, 'invalid candidate request')
+         and set(request) <= {'id', 'artifacts', 'context', 'builders', 'supporting_artifacts', 'review_manifest'},
+         'invalid candidate request')
     gates = P.stage_require(root, 'build')
     if gates['required']:
         builders = request.get('builders')
@@ -850,6 +862,16 @@ def freeze(root, request):
         history_check(root, project['id'], previous)
     need(sum(P.relative_file(root, p).stat().st_size for p in artifacts) <= 64 * 1024 * 1024,
          'candidate snapshot exceeds 64 MiB')
+    review_dependencies = None
+    if request.get('review_manifest') is not None:
+        need(gates['required'] and gates.get('incremental_review', {}).get('policy') == 'incremental-review-v1',
+             'incremental_policy_required')
+        helper = P.routing_helper('incremental_review')
+        S = P.routing_helper('stage_gates')
+        with S._root_fd(root, P) as (_, fd):
+            _, review_dependencies = helper.manifest(fd, request['review_manifest'],
+                                                     [S._pin(fd, p, P) for p in artifacts], S, P)
+        need(not any(d['id'] == 'freeze-envelope' for d in review_dependencies), 'incremental_reserved_dependency_id')
     path = P.no_links(directory / ident)
     need(not path.exists(), 'candidate ID already recorded; create a revision')
     path.mkdir(mode=0o700)
@@ -868,18 +890,36 @@ def freeze(root, request):
         record['workflow_context'] = readiness['context']
     saved = path / 'candidate.json'
     P.write_json(saved, record)
+    review_manifest = None
+    if review_dependencies is not None:
+        deps = review_dependencies
+        for dep in deps:
+            if dep['kind'] == 'artifact':
+                dep['path'] = retained[dep['path']]
+        # The current freeze envelope carries context and selected bindings.
+        # Conservatively map all of it to every scope; do not pretend that a
+        # monolithic envelope admits verified semantic section-level reuse.
+        deps.append({'id': 'freeze-envelope', 'kind': 'artifact', 'scopes': sorted(helper.SCOPES),
+                     'path': saved.relative_to(root).as_posix(), 'sha256': P.digest(saved.read_bytes()),
+                     'bytes': saved.stat().st_size, 'freshness': {'mode': 'immutable',
+                     'checked_at': datetime.now(timezone.utc).isoformat(), 'expires_at': None}})
+        review_manifest = path / 'review-manifest.json'
+        P.write_json(review_manifest, {'schema_version': 1, 'kind': 'oaa_review_manifest', 'dependencies': deps})
     pointer = {'path': saved.relative_to(root).as_posix(), 'sha256': P.digest(saved.read_bytes())}
     if gates['required']:
         try:
-            P.stage_record(root, {'stage': 'candidate', 'iteration_id': ident,
+            stage_request = {'stage': 'candidate', 'iteration_id': ident,
                 'builders': request['builders'],
-                'artifacts': [saved.relative_to(root).as_posix(), *retained.values()]})
+                'artifacts': [saved.relative_to(root).as_posix(), *retained.values()]}
+            if review_manifest is not None:
+                stage_request['review_manifest'] = review_manifest.relative_to(root).as_posix()
+            P.stage_record(root, stage_request)
         except Exception as exc:
             # A failure after atomic replacement can still mean committed. Choice
             # provider availability must not determine whether bytes are retained.
             committed = P.routing_helper('stage_gates').candidate_commit_status(root, ident)
             if committed is False:
-                for created in [saved, *(root / p for p in retained.values())]:
+                for created in [saved, *(root / p for p in retained.values()), *([review_manifest] if review_manifest else [])]:
                     created.unlink()
                 path.rmdir()
                 raise

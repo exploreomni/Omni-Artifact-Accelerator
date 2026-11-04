@@ -2,14 +2,24 @@
 
 Inspect/reuse the Domo migration package's evidence before asking a customer to recapture it. Its architecture manager retains the run, selected scope, store-backed gates, write authority and release decisions; this analyst skill returns a bounded experience/design candidate.
 
+Coordinate with the [Domo specialist](../../omni-domo-migrator/SKILL.md) and
+[current run guide](domo-visual-run.md). The four emitted inputs below remain
+compatible; the separate [visual/App evidence capture](domo-evidence-contract.md)
+adds original-file verification and source-bound comparisons without replacing
+the source engine's contracts or authority.
+
 ```sh
-python3 scripts/translate_artifact.py /absolute/private/domo-handoff.json \
+python3 -I -S -B skills/omni-artifact-translator/scripts/translate_artifact.py /absolute/private/domo-handoff.json \
   --format domo-agent \
   --producer-revision 55eba0ca0690fbf14f39eddbc8a04c94a720c155 \
   --output /absolute/private/new/source-inventory.json
 ```
 
-The producer revision is a declaration constrained to the inspected contract pin. The CLI never imports, executes or fetches DomoMigrationAgent. A successful import does not authenticate the declaration.
+Run from the package root. The producer revision is a declaration constrained to
+the inspected contract pin. The offline CLI never imports, executes or fetches
+DomoMigrationAgent. A successful import does not authenticate the declaration.
+The opt-in source wrapper is a separate, startup-authorized execution path; it is
+not activated by this command.
 
 ## Accepted emitted contracts
 
@@ -35,6 +45,20 @@ Unknown attributes remain raw evidence. New imports do not infer SQL from a char
 
 Return an analyst proposal with the exact Page-plan and source hashes to the Domo manager. Its existing independent `StoreBackedDashboardEvidenceResolver` and `DashboardPlanValidationRegistration` establish its readiness gate. This import cannot create that registration. One selected Page must be covered by exactly one current plan in that originating workflow; this single-file bridge cannot prove cross-plan uniqueness or selected-portfolio completeness.
 
-## Reviewed unpublished changes
+## Keep compatibility pins and runtime qualification separate
 
-On 2026-10-21, the Domo checkout had local changes to `extractors/domo/api.py` and `broker.py` adding documented Card `cardUrn`/`cardTitle` handling, `totalCardCount` reconciliation and stricter pagination, plus Product Developer Token header handling. These were read as unpublished implementation evidence, not executed or certified. The bridge already preserves arbitrary native URN strings and checkpoint warnings. It introduces no new API acquisition, tenant readiness or release claim from those changes.
+The original producer revision above remains immutable. The separately reviewed
+source extension uses `domo-source-operations@0.1.0` with its actual file closure;
+the extension label is not a source commit or a released-runtime assertion.
+Preserve whichever producer the supplied evidence actually declares. Never relabel
+a new capture with the old commit to make an import pass, and never infer runtime
+approval from a recognized label.
+
+The [run guide](domo-visual-run.md) describes local source planning, opt-in exact-host
+reads, supplied capture verification, normalization and frontend return. Images,
+executed visual results and detailed App definitions still need supplied evidence.
+`oaa-domo-visual-capture.v1` uses its own evidence profile and retains the original
+producer file unchanged. `oaa-domo-app-handoff.v1` can describe a read-only App
+without side effects; it is distinct from the legacy external-redesign contract.
+All assignment, build, native write, publication and source-store acceptance
+boundaries remain separate.

@@ -430,8 +430,47 @@ def check(root):
     return base
 
 
-def packet_context(root, role):
+def shared_requirement_ids(requirements):
+    """Explicit cross-role restrictions survive every specialist projection."""
+    categories = {'constraint', 'restriction', 'security', 'privacy', 'governance', 'policy',
+                  'authorization', 'dependency', 'dependencies', 'tooling', 'access'}
+    return [r['id'] for r in requirements if r.get('shared') is True or
+            r.get('category', '').casefold().replace('-', '_') in categories or
+            r.get('category', '').casefold().endswith(('_constraint', '_restriction', '_policy'))]
+
+
+def project_requirements(requirements, role, scope_ids=()):
+    """A task slice plus shared constraints; coordinator checks retain all requirements."""
+    shared = set(shared_requirement_ids(requirements))
+    scope = set(scope_ids or ())
+    return [copy.deepcopy(r) for r in requirements if r['id'] in shared | scope or
+            role in r.get('product', {}).get('suggested_roles', []) or
+            r.get('delivery', {}).get('owner') == role or any(
+                role in P.experience_helper().CAPABILITIES.get(tag, ())
+                for tag in r.get('delivery', {}).get('capabilities', []))]
+
+
+def packet_context(root, role, *, bounded=None, scope_ids=None):
+    root, project = P.load_project(root)
+    if bounded is None:
+        bounded = project.get('context_policy') == 'bounded-context-v1'
     state = check(root)
+    if bounded:
+        need(state['status'] != 'inconsistent', 'stale_or_invalid_packet_selection')
+        requirements = project_requirements(state['requirements'], role, scope_ids)
+        # Selection metadata is pinned, but does not mandate disclosing the whole
+        # intent, historical versions, North Star or every source file.
+        selected_ids = {r['id'] for r in requirements}
+        return {'selected_intent': copy.deepcopy(state['selected']), 'paths': [],
+                'requirements': requirements, 'findings': copy.deepcopy(state['findings']),
+                'open_questions': ['Resolve: ' + r['purpose'] for r in requirements
+                                   if r['required'] and r['disposition'] in {'unresolved', 'deferred'}],
+                'shared_constraint_ids': shared_requirement_ids(state['requirements']),
+                'coverage': {'selected_requirement_ids': sorted(selected_ids),
+                             'total_requirement_count': len(state['requirements']),
+                             'complete_requirement_coverage_owner': 'orchestrator'},
+                'note': 'Use the bounded task evidence. Request exact missing context; the orchestrator '
+                        'retains complete requirement coverage and unresolved obligations.'}
     relevant = role in ROLES or any(
         req.get('delivery', {}).get('owner') == role or role in req.get('product', {}).get('suggested_roles', []) or any(
             role in P.experience_helper().CAPABILITIES.get(tag, ())

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Omni Domo Migrator"
+  short_description: "Map Domo dashboards and Apps with source evidence"
+  default_prompt: "Use $omni-domo-migrator to migrate the selected Domo dashboards or Apps through the Omni Artifact Accelerator, preserving analytical behavior, application dependencies and independent acceptance evidence."

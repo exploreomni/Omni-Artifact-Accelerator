@@ -19,6 +19,22 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 CASES = {
+    "execution-bridge": "tests/test_execution_bridge.py",
+    "execution-runtime": "tests/test_execution_runtime.py",
+    "execution-qualification": "tests/test_execution_qualification.py",
+    "assembly-provenance": "tests/test_assembly_provenance.py",
+    "analytical-evidence": "tests/test_analytical_evidence.py",
+    "native-demo": "tests/test_native_demo.py",
+    "visual-mcp": "tests/test_visual_mcp.py",
+    "visual-workflow": "tests/test_visual_workflow.py",
+    "context-packets": "tests/test_context_packets.py",
+    "design-intent": "tests/test_design_intent.py",
+    "execution-efficiency": "tests/test_execution_efficiency.py",
+    "incremental-gates": "tests/test_incremental_gates.py",
+    "task-operations": "tests/test_task_operations.py",
+    "domo-evidence": "tests/test_domo_evidence.py",
+    "domo-connected": "tests/test_domo_connected.py",
+    "domo-workflow": "tests/test_domo_visual_workflow.py",
     "sigma-evidence": "tests/test_sigma_evidence.py",
     "sigma-connected": "tests/test_sigma_connected.py",
     "report-native": "tests/test_report_native.py",
@@ -92,9 +108,12 @@ CASE_TIMEOUTS = {name: 120 for name in ('workflow', 'product-intent', 'stage-gat
 # The three-route native authorization suite repeats complete source-bound
 # lifecycles. Keep a bounded allowance separate from runtime transport deadlines.
 CASE_TIMEOUTS['native-stage-gates'] = 300
+CASE_TIMEOUTS.update({'execution-runtime': 120, 'execution-bridge': 120, 'native-demo': 180})
 IGNORED = {".git", ".venv", "venv", "node_modules", "__pycache__", ".pytest_cache", ".ruff_cache"}
 STDLIB_ROOTS = {Path(sysconfig.get_path(name)).resolve() for name in ("stdlib", "platstdlib")}
 FIRST_PARTY_IMPORTS = {
+    "visual_mcp": ROOT / "skills/omni-artifact-accelerator/scripts/visual_mcp.py",
+    "visual_workflow": ROOT / "skills/omni-artifact-accelerator/scripts/visual_workflow.py",
     "cowork": ROOT / "skills/omni-backend-handoff/scripts/cowork.py",
     "analyst_project": ROOT / "skills/omni-artifact-accelerator/scripts/analyst_project.py",
     "test_experience_quality": ROOT / "tests/test_experience_quality.py",
@@ -107,6 +126,8 @@ class StandardLibraryOnly:
     def find_spec(self, fullname, path=None, target=None):
         if fullname in sys.builtin_module_names or importlib.machinery.FrozenImporter.find_spec(fullname):
             return None
+        if fullname in FIRST_PARTY_IMPORTS:
+            return importlib.util.spec_from_file_location(fullname, FIRST_PARTY_IMPORTS[fullname])
         spec = importlib.machinery.PathFinder.find_spec(fullname, path)
         if spec is not None and spec.origin:
             origin = Path(spec.origin).resolve()

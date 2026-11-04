@@ -14,6 +14,7 @@ PINS = {"domo": "55eba0ca0690fbf14f39eddbc8a04c94a720c155",
         "sigma": "f4eda45b0f49dc7335496d028665f7339ed82e8f"}
 MODES = {"omni_semantic_reconstruction", "warehouse_first_refactor"}
 SIGMA_PROFILES = {PINS['sigma'], 'sigma-source-operations@0.1.0', 'oaa-sigma-evidence@1'}
+DOMO_PROFILES = {PINS['domo'], 'domo-source-operations@0.1.0', 'oaa-domo-evidence@1'}
 SHA = re.compile(r"[a-f0-9]{64}\Z")
 BEHAVIOR_FIELDS = ("field_ids", "measure_ids", "grouping_ids", "sort_ids", "filter_ids",
     "filter_context_ids", "control_ids", "interaction_ids", "drill_ids", "visualization_ids",
@@ -790,7 +791,7 @@ class Bridge:
 
     def parse(self, payload, raw, source_format, revision):
         platform = source_format.split("-")[0]
-        self.require(revision in SIGMA_PROFILES if platform == 'sigma' else revision == PINS[platform],
+        self.require(revision in SIGMA_PROFILES if platform == 'sigma' else revision in DOMO_PROFILES,
                      "migration.unsupported_or_missing_producer_revision")
         self.no_credentials(payload)
         result = self.base(payload, raw, platform, "supplied_" + platform + "_migration_agent")
@@ -800,7 +801,23 @@ class Bridge:
         self.context(result, payload)
         contract = payload.get("contract_version")
         if platform == "domo":
-            if contract == "omnikit.domo.evidence.v1": self.domo_bundle(result, payload)
+            if payload.get('schema_version') == 'oaa-domo-visual-capture.v1':
+                self.require(revision == 'oaa-domo-evidence@1', 'domo.passive_evidence_profile_required')
+                spec = importlib.util.spec_from_file_location('migration_domo_visual', Path(__file__).with_name('domo_visual.py'))
+                visual = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(visual)
+                visual.validate_capture(payload)
+                for asset in visual.project_assets(payload):
+                    self.add_asset(result, asset['kind'], asset['source_payload'], asset['source_path'],
+                                   asset['source_id'], asset['scope'], asset['facets'],
+                                   source_identity=asset['source_identity'])
+                result['migration_context'].update({'source_identity': copy.deepcopy(payload['identity']),
+                    'selection': copy.deepcopy(payload['selection']), 'definition_fingerprint': visual.definition_fingerprint(payload),
+                    'evidence_profile': 'oaa-domo-evidence@1'})
+                for reason in visual.evidence_gaps(payload):
+                    self.gap(result, reason)
+                self.gap(result, 'domo.original_files_require_verification')
+            elif contract == "omnikit.domo.evidence.v1": self.domo_bundle(result, payload)
             elif contract == "omnikit.domo.source-evidence.v1":
                 self.require(type(payload.get("payload_json")) is str, "domo.payload_json_required")
                 bundle = self.decode(payload["payload_json"].encode()); self.no_credentials(bundle)
@@ -815,6 +832,10 @@ class Bridge:
             elif contract == "domo-to-omni.dashboard-rebuild-plan.v1": self.domo_plan(result, payload)
             elif contract == "domo-to-omni.external-redesign-handoff.v1": self.domo_handoff(result, payload)
             else: raise ValueError("domo.unsupported_contract")
+            for asset in result['assets']:
+                asset['source_identity']['source_platform'] = 'domo'
+                if asset['source_identity'].get('definition_state') not in (None, 'definition_complete'):
+                    asset['source_identity']['requires_source_review'] = True
         else:
             schema = payload.get("schema_version")
             if schema == 'sigma-source-operation.v1' or (schema == 'sigma-visual-capture.v1' and payload.get('request', {}).get('schema_version') == 'sigma-visual-capture-request.v2'):

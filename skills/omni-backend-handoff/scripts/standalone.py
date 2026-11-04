@@ -76,10 +76,37 @@ def control_source_keys(requirements, surface="dashboard"):
         for key in ("visual", "value", "visual", "visualType"):
             visual = visual.get(key) if isinstance(visual, dict) else None
         if item["disposition"] == "migrate" and (item["kind"] == "control" or visual == "slicer" or
+                (item.get('source_identity', {}).get('source_platform') == 'domo' and domo_control_required(item)) or
                 (item.get("source_identity", {}).get("source_platform") in {"periscope", "metabase", "webfocus", "thoughtspot", "qlik", "microstrategy", "cognos", "businessobjects", "ssrs", "powerbi_paginated", "crystal"} and
                  item["kind"] in {"filter", "parameter"})):
             result.add(item["asset_key"])
     return result
+
+
+def domo_control_required(item):
+    """Preserve explicit Domo control/variable obligations, including legacy imports.
+
+    Static Card filters alone are query context, not evidence of a user control.
+    Missing optional identity flags on old producer contracts do not erase their
+    retained control identifiers. Source facets remain supplied declarations.
+    """
+    identity = item.get('source_identity', {})
+    if identity.get('control_required') is True:
+        return True
+    stack = [item.get('source_facets', {})]
+    while stack:
+        row = stack.pop()
+        if type(row) is dict:
+            if row.get('disposition') == 'not_applicable':
+                continue
+            for key, val in row.items():
+                if key in {'controls', 'control_ids', 'variables', 'variable_ids'} and val:
+                    if type(val) is not dict or val.get('disposition') != 'not_applicable':
+                        return True
+                stack.append(val)
+        elif type(row) is list:
+            stack.extend(row)
+    return False
 
 
 def pointer(value, path):
@@ -144,7 +171,7 @@ def validate_control_bindings(root, spec, requirements, workflow):
         cw.strings(control["evidence_paths"], "standalone.control_evidence_required", nonempty=True)
         for path in control["evidence_paths"]:
             workflow.pin(root, path)
-    if inventory.get("source", {}).get("platform") in {"powerbi", "looker", "hex", "periscope", "metabase", "webfocus", "thoughtspot", "qlik", "microstrategy", "cognos", "businessobjects", "ssrs", "powerbi_paginated", "crystal"}:
+    if inventory.get("source", {}).get("platform") in {"domo", "powerbi", "looker", "hex", "periscope", "metabase", "webfocus", "thoughtspot", "qlik", "microstrategy", "cognos", "businessobjects", "ssrs", "powerbi_paginated", "crystal"}:
         ap.need(bound == required, "standalone.retained_source_control_unbound")
     return controls
 
@@ -468,7 +495,7 @@ def build_return(root, project, scope_relative, spec_path, migration):
     bound_assets = {key for binding in [*baseline["bindings"], *baseline.get("control_bindings", [])]
                     for key in binding["source_asset_keys"]}
     control_bound = {key for binding in baseline.get("control_bindings", []) for key in binding["source_asset_keys"]}
-    if workflow.load(root, inventory["path"]).get("source", {}).get("platform") in {"powerbi", "looker", "hex", "periscope", "metabase", "webfocus", "thoughtspot", "qlik", "microstrategy", "cognos", "businessobjects", "ssrs", "powerbi_paginated", "crystal"} or baseline.get("control_bindings"):
+    if workflow.load(root, inventory["path"]).get("source", {}).get("platform") in {"domo", "powerbi", "looker", "hex", "periscope", "metabase", "webfocus", "thoughtspot", "qlik", "microstrategy", "cognos", "businessobjects", "ssrs", "powerbi_paginated", "crystal"} or baseline.get("control_bindings"):
         gaps += [{"code": "source_control_not_bound", "asset_key": key}
                  for key in sorted(control_source_keys(requirements) - control_bound)]
     gaps += [{"code": "source_query_not_bound", "asset_key": key}

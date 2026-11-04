@@ -352,6 +352,12 @@ def create_spec_check(spec):
     return spec
 
 
+def create_body(spec, html):
+    return {'name': spec['name'], 'description': spec['description'], 'identifier': spec['slug'],
+            'modelId': spec['model_id'], 'queryPresentations': copy.deepcopy(spec['queryPresentations']),
+            'app': {'html': html, 'settings': copy.deepcopy(CREATE_SETTINGS)}}
+
+
 def prepare_create(*, project, artifact, spec_artifact):
     """Prepare only; A-F readiness is not authorization for the actual POST."""
     P = project_helper()
@@ -370,9 +376,7 @@ def prepare_create(*, project, artifact, spec_artifact):
     need({html_sha, spec_sha} <= pins, 'Freeze and review the exact HTML and create specification')
     html = html_raw.decode('utf-8')
     spec = create_spec_check(decode(spec_raw, 'object'))
-    body = {'name': spec['name'], 'description': spec['description'], 'identifier': spec['slug'],
-            'modelId': spec['model_id'], 'queryPresentations': copy.deepcopy(spec['queryPresentations']),
-            'app': {'html': html, 'settings': copy.deepcopy(CREATE_SETTINGS)}}
+    body = create_body(spec, html)
     need(P.stage_require(root, 'release')['tail_sha256'] == gate['tail_sha256'],
          'Engagement changed during preparation')
     return {'kind': 'native_app_create_request', 'schema_version': 1,
@@ -390,6 +394,135 @@ def prepare_create(*, project, artifact, spec_artifact):
                     'personal documents. Creation immediately publishes the initial version. Slug availability '
                     'is not established here; never overwrite, auto-retry, or reinterpret a conflict as an edit. '
                     'The official API labels App creation as currently in development.'}
+
+
+def demo_pin(root, record, P):
+    need(type(record) is dict and set(record) == {'path', 'sha256'} and
+         type(record['sha256']) is str and re.fullmatch(r'[a-f0-9]{64}', record['sha256']),
+         'Exact demo evidence pin required')
+    raw = read_bytes(P.relative_file(root, record['path']), MAX_JSON)
+    need(hashlib.sha256(raw).hexdigest() == record['sha256'], 'Demo evidence changed')
+    return raw
+
+
+def demo_candidate_bindings(root, project_id, gate, expected, P):
+    """Resolve direct stage pins or the guarded freeze's original-to-snapshot map."""
+    candidate = gate['candidate']
+    reviewed = {(p['path'], p['sha256']) for p in candidate['artifacts']}
+    if set(expected.items()) <= reviewed:
+        return {path: {'path': path, 'sha256': sha} for path, sha in expected.items()}
+    envelope = 'evidence/candidate-history/' + candidate['iteration_id'] + '/candidate.json'
+    binding = next((p for p in candidate['artifacts'] if p['path'] == envelope), None)
+    need(binding is not None, 'Freeze exact HTML, create specification and demo scope before preparation')
+    retained, raw = P.read_json(P.relative_file(root, envelope))
+    need(P.digest(raw) == binding['sha256'] and retained.get('schema_version') == 1
+         and retained.get('kind') == 'analyst_candidate' and retained.get('project_id') == project_id
+         and retained.get('id') == candidate['iteration_id'], 'Demo freeze envelope differs from current candidate')
+    artifacts, mapping = retained.get('artifacts'), retained.get('retained')
+    need(type(artifacts) is dict and type(mapping) is dict and set(artifacts) == set(mapping),
+         'Demo retained artifact inventory differs')
+    result = {}
+    for original, sha in expected.items():
+        need(artifacts.get(original) == sha and type(mapping.get(original)) is str,
+             'Demo original bytes differ from the reviewed freeze mapping')
+        saved = mapping[original]
+        need((saved, sha) in reviewed and P.digest(P.relative_file(root, saved).read_bytes()) == sha,
+             'Demo retained snapshot is not pinned to the current candidate')
+        result[original] = {'path': saved, 'sha256': sha}
+    return result
+
+
+def prepare_demo(*, project, artifact, spec_artifact, demo_artifact):
+    """Prepare an observation-limited demonstration, never an authorized write.
+
+All source consultations and recorded minima are mandatory. Supplied resolved
+records remain unauthenticated claims; the host must independently enforce the
+exact principal, audience and operation before a POST that publishes immediately.
+"""
+    P = project_helper()
+    root, metadata = P.load_project(project)
+    gate = P.stage_require(root, 'review')
+    need(gate.get('required') is True and gate.get('candidate') is not None and
+         not gate.get('findings') and 'app' in metadata['surfaces'],
+         'Demo requires current A-E and a frozen candidate without gate findings')
+    selected = P.intent_helper().check(root)
+    app_candidates = {s.get('candidate_path') for s in selected.get('selections', []) if s.get('surface') == 'app'}
+    need(selected.get('status') == 'consistent' and artifact in app_candidates,
+         'Demo requires the selected App artifact')
+    raw = {key: read_bytes(P.relative_file(root, path), MAX_HTML if key == 'html' else MAX_JSON)
+           for key, path in (('html', artifact), ('spec', spec_artifact), ('demo', demo_artifact))}
+    hashes = {key: hashlib.sha256(value).hexdigest() for key, value in raw.items()}
+    reviewed_artifacts = demo_candidate_bindings(root, metadata['id'], gate,
+        {artifact: hashes['html'], spec_artifact: hashes['spec'], demo_artifact: hashes['demo']}, P)
+    spec = create_spec_check(decode(raw['spec'], 'object'))
+    demo = decode(raw['demo'], 'object')
+    need(set(demo) == {'schema_version', 'kind', 'html', 'create_spec', 'destination', 'minimums', 'pending_observations'}
+         and type(demo['schema_version']) is int and demo['schema_version'] == 1
+         and demo['kind'] == 'native_demo_scope', 'Exact demo scope required')
+    need(demo['html'] == {'path': artifact, 'sha256': hashes['html']} and
+         demo['create_spec'] == {'path': spec_artifact, 'sha256': hashes['spec']}, 'Demo source bindings differ')
+    destination = demo['destination']
+    need(type(destination) is dict and set(destination) == {'origin', 'model_id', 'document_id', 'operation', 'principal', 'audience'}
+         and destination['origin'] == spec['base_url'] and destination['model_id'] == spec['model_id']
+         and destination['document_id'] == spec['slug'] and destination['operation'] == 'initial_create',
+         'Demo destination contradicts the exact create specification')
+    principal = destination['principal']
+    need(type(principal) is dict and set(principal) == {'key_scope', 'user_id', 'membership_id'}
+         and principal['key_scope'] == 'user' and
+         all(type(principal[k]) is str and ID.fullmatch(principal[k]) for k in ('user_id', 'membership_id')),
+         'Demo requires one explicit user-scoped test principal')
+    need(destination['audience'] == {'kind': 'named_test_principal', 'membership_id': principal['membership_id']},
+         'Demo audience must be the same named test principal')
+    minimums = demo['minimums']
+    need(type(minimums) is dict and set(minimums) == {'security', 'numerical', 'permission', 'design'},
+         'Every demo minimum must be explicitly accounted for')
+    for item in minimums.values():
+        need(type(item) is dict and set(item) == {'status', 'scope', 'evidence'} and item['status'] == 'resolved'
+             and type(item['scope']) is str and 0 < len(item['scope'].strip()) <= 2048
+             and type(item['evidence']) is list and 0 < len(item['evidence']) <= 32,
+             'Unresolved numerical, permission, security or design minimum blocks demo preparation')
+        for evidence in item['evidence']:
+            demo_pin(root, evidence, P)
+    reviews = gate['reviews']
+    need(set(reviews) == {'security', 'ui_ux', 'product_owner', 'qa'}, 'All four current consultations required for demo')
+    need(all(reviews[k]['outcome'] == 'resolved' for k in ('security', 'product_owner')),
+         'Security and product-owner consultations must be resolved')
+    need(all(reviews[k]['outcome'] in {'resolved', 'unobserved'} for k in ('ui_ux', 'qa')),
+         'Known review defects block demonstration')
+    pending = demo['pending_observations']
+    need(type(pending) is list and 0 < len(pending) <= 2, 'Explicit observation-only demo gaps required')
+    scopes = set()
+    for item in pending:
+        need(type(item) is dict and set(item) == {'scope', 'basis', 'reason', 'required_observation'}
+             and item['scope'] in {'ui_ux', 'qa'} and item['scope'] not in scopes
+             and item['basis'] in {'rendered', 'native', 'human'}
+             and all(type(item[k]) is str and 0 < len(item[k].strip()) <= 2048 for k in ('reason', 'required_observation')),
+             'Only explicit UI/QA observation gaps may remain pending')
+        review = reviews[item['scope']]
+        need(review['outcome'] == 'unobserved' and review['basis'] == item['basis'],
+             'Demo pending scope contradicts the current consultation')
+        scopes.add(item['scope'])
+    need(scopes == {key for key, review in reviews.items() if review['outcome'] == 'unobserved'},
+         'Account for every unobserved consultation')
+    body = create_body(spec, raw['html'].decode('utf-8'))
+    need(P.stage_require(root, 'review')['tail_sha256'] == gate['tail_sha256'], 'Engagement changed during demo preparation')
+    return {'schema_version': 1, 'kind': 'native_demo_create_request', 'base_url': spec['base_url'],
+            'destination': destination, 'engagement': {'project_id': metadata['id'], 'artifact': artifact,
+                'spec_artifact': spec_artifact, 'demo_artifact': demo_artifact, 'html_sha256': hashes['html'],
+                'spec_sha256': hashes['spec'], 'demo_sha256': hashes['demo'], 'candidate_sha256': gate['candidate_sha256'],
+                'stage_bindings': gate['stage_bindings'], 'tail_sha256': gate['tail_sha256']},
+            'query_sha256': digest(spec['queryPresentations']), 'request_sha256': digest(body),
+            'reviewed_artifacts': reviewed_artifacts,
+            'request': {'method': 'POST', 'path': '/api/v2/documents', 'body': body},
+            'consultations': {key: review['event_sha256'] for key, review in reviews.items()},
+            'minimums': minimums, 'pending_observations': pending, 'creation_scope': 'new_demo_document',
+            'publishes_immediately': True, 'execution_authorized': False, 'publication_authorized': False,
+            'release_validated': False, 'native_verified': False, 'audience_verified': False,
+            'claims_authenticated': False,
+            'note': 'Offline demo preparation only. Recorded minima are supplied claims, not verified access. '
+                    'A trusted operator must independently authorize and enforce this exact destination, user '
+                    'and audience before immediate publication. Personal-folder defaults do not prove privacy. '
+                    'Do not retry an uncertain create, overwrite a conflict or call this a validated release.'}
 
 
 def create_capture(capture, origin, method, path, status):
@@ -410,6 +543,11 @@ def verify_create(prepared, created, document, app, *, project, artifact, spec_a
     runtime callbacks, render quality or independent publication authorization.
     """
     expected = prepare_create(project=project, artifact=artifact, spec_artifact=spec_artifact)
+    return verify_create_captures(expected, prepared, created, document, app)
+
+
+def verify_create_captures(expected, prepared, created, document, app):
+    """Shared exact-capture comparison; caller supplies its separately gated route."""
     need(type(prepared) is dict and encoded(prepared) == encoded(expected), 'Prepared create request drift')
     origin, body = expected['base_url'], expected['request']['body']
     response = create_capture(created, origin, 'POST', '/api/v2/documents', 201)
@@ -452,10 +590,29 @@ def verify_create(prepared, created, document, app, *, project, artifact, spec_a
                     'execution, initial publication and App runtime/rendering need separate evidence.'}
 
 
+def verify_demo(prepared, created, document, app, identity, *, project, artifact, spec_artifact, demo_artifact):
+    expected = prepare_demo(project=project, artifact=artifact, spec_artifact=spec_artifact, demo_artifact=demo_artifact)
+    result = verify_create_captures(expected, prepared, created, document, app)
+    principal = expected['destination']['principal']
+    who = create_capture(identity, expected['base_url'], 'GET',
+                         '/api/v1/whoami?modelId=' + expected['destination']['model_id'], 200)
+    need(who.get('keyScope') == principal['key_scope'] and type(who.get('user')) is dict
+         and who['user'].get('id') == principal['user_id']
+         and who['user'].get('membershipId') == principal['membership_id'], 'Demo principal readback mismatch')
+    result['capture_sha256']['identity'] = digest(identity)
+    result.update(status='exact_demo_readback' if not result['findings'] else 'readback_mismatch',
+                  destination=expected['destination'], pending_observations=expected['pending_observations'],
+                  execution_authorized=False, release_validated=False, audience_verified=False,
+                  claims_authenticated=False,
+                  note='Supplied demo capture consistency only. Identity and audience are not authenticated; '
+                       'pending native/rendered/human observations and separate release evidence remain outstanding.')
+    return result
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('operation', choices=['cli-json', 'route-check', 'query-body', 'plan-check',
-        'app-prepare', 'app-verify', 'app-create-prepare', 'app-create-verify'])
+        'app-prepare', 'app-verify', 'app-create-prepare', 'app-create-verify', 'app-demo-prepare', 'app-demo-verify'])
     parser.add_argument('--input', required=True, help='Response file or JSON request describing local input paths')
     parser.add_argument('--output', required=True, help='New private output file; never overwrite')
     parser.add_argument('--project', help='Required engagement root for App preparation and create verification')
@@ -492,7 +649,17 @@ def main():
             result = verify_app(read(local(record['prepared'])), read(local(record['baseline'])), read(local(record['after'])))
         else:
             need(args.project is not None, 'Engagement required for App creation preparation/readback')
-            if args.operation == 'app-create-prepare':
+            if args.operation == 'app-demo-prepare':
+                need(set(record) == {'html', 'spec', 'demo'}, 'Exact demo input paths required')
+                result = prepare_demo(project=args.project, artifact=record['html'], spec_artifact=record['spec'],
+                                      demo_artifact=record['demo'])
+            elif args.operation == 'app-demo-verify':
+                need(set(record) == {'html', 'spec', 'demo', 'prepared', 'created', 'document', 'app', 'identity'},
+                     'Exact demo readback input paths required')
+                result = verify_demo(read(local(record['prepared'])), read(local(record['created'])),
+                    read(local(record['document'])), read(local(record['app'])), read(local(record['identity'])),
+                    project=args.project, artifact=record['html'], spec_artifact=record['spec'], demo_artifact=record['demo'])
+            elif args.operation == 'app-create-prepare':
                 need(set(record) == {'html', 'spec'}, 'Exact create input paths required')
                 result = prepare_create(project=args.project, artifact=record['html'], spec_artifact=record['spec'])
             else:

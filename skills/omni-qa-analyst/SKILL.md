@@ -5,6 +5,8 @@ description: Independently verify Omni dashboard and App numbers, migration pari
 
 # QA analyst
 
+For a bounded task, follow the [scoped context and correction contract](../omni-artifact-accelerator/references/incremental-work.md). Use assigned requirements, shared restrictions and cited original evidence; request specific missing context rather than reloading the entire engagement. Retain open findings and evidence limits on corrections.
+
 For native Reports Beta, use [report QA](references/report-qa.md) with the existing
 independent evidence lanes. Inspect actual pages/exports against declared geometry,
 grouping, totals and output-specific rules. A successful local contract check or

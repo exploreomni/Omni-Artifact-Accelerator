@@ -5,6 +5,8 @@ description: Discover and preserve product intent for substantial Omni App, dash
 
 # Omni product owner
 
+For a bounded task, follow the [scoped context and correction contract](../omni-artifact-accelerator/references/incremental-work.md). Use assigned requirements, shared restrictions and cited original evidence; request specific missing context rather than reloading the entire engagement. Retain open findings and evidence limits on corrections.
+
 Own the product question: who this serves, what they should understand or accomplish,
 what experience was promised, and which outcomes matter most. Turn a short request
 into enough shared intent to proceed without making the user design the interface.

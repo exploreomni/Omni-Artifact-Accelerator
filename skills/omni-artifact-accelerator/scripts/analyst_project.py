@@ -18,6 +18,7 @@ STARTER_QUESTIONS = ["Who uses this and what decision or task must it support?",
                      "Which metrics and source behaviors are accepted or unresolved?",
                      "What branding, device, access and completion scope is required?"]
 ROLES = {
+    "domo-migrator": "Preserve Domo visual and App semantics through bounded source evidence and reviewed handoffs",
     "sigma-migrator": "Guide connected Sigma evidence, source behavior and reviewed converter reuse",
     "ssrs-migrator": "Preserve scoped SSRS RDL source requirements and evidence",
     "powerbi-paginated-migrator": "Preserve Power BI paginated RDL, parameters and export evidence",
@@ -153,12 +154,13 @@ def load_project(root):
     return root, obj
 
 
-def init(output, name, mode, surface, branding=None, website=None, selection_policy='host-verified-v1'):
+def init(output, name, mode, surface, branding=None, website=None, selection_policy='host-verified-v1', context_policy=None):
     root = no_links(output)
     need(mode in ("net-new", "migration", "enhancement"), "invalid mode")
     need(surface in ("dashboard", "app", "report", "both"), "invalid surface")
     need(isinstance(name, str) and name.strip(), "name required")
     need(selection_policy in {'host-verified-v1', 'conversation-evidence-v1'}, 'unknown selection policy')
+    need(context_policy in {None, 'legacy-index-v1', 'bounded-context-v1'}, 'unknown context policy')
     selected_surfaces = ["dashboard", "app"] if surface == "both" else [surface]
     intent = intent_helper().starter(selected_surfaces,
         branding if branding is not None else ("requested" if website else "unknown"), website)
@@ -177,6 +179,8 @@ def init(output, name, mode, surface, branding=None, website=None, selection_pol
     # Every new engagement is gated. A caller-controlled mode is not an exemption.
     project['stage_gate_policy'] = 'data-first-v1'
     project['workflow_quality_policy'] = 'experience-evidence-v1'
+    if context_policy is not None:
+        project['context_policy'] = context_policy
     write_json(root / "project.json", project)
     write_json(root / project["design_intent_draft"], intent)
     for contract in ("metrics", "queries", "design", "brand", "qa"):
@@ -468,6 +472,24 @@ def sigma_scope(root, obj):
     return False
 
 
+def domo_scope(root, obj):
+    for record in obj['sources']:
+        if not record.get('path', '').endswith('.json'):
+            continue
+        value, raw = read_json(relative_file(root, record['path']))
+        need(digest(raw) == record.get('sha256'), 'registered source changed; review before Domo routing')
+        if type(value) is not dict:
+            continue
+        if value.get('schema_version') == 'oaa-domo-intake.v1':
+            return True
+        if value.get('kind') == 'omni_analyst_source_inventory' and value.get('source', {}).get('platform') == 'domo':
+            matches = [r for r in obj['sources'] if r.get('sha256') == value['source'].get('input_sha256')]
+            need(bool(matches), 'Domo routing requires its registered original source')
+            routing_helper('visual_workflow').source_inventory(root, matches[0]['path'], record['path'])
+            return True
+    return False
+
+
 def plan(root, scope_ids=None):
     root, obj = load_project(root)
     product = routing_helper('product_intent').check(root)
@@ -479,6 +501,9 @@ def plan(root, scope_ids=None):
     roles = ["product-owner", "data-analyst", "branding", "bi-engineer"]
     if obj["mode"] == "migration":
         roles.insert(0, "artifact-translator")
+    domo = domo_scope(root, obj)
+    if domo:
+        roles.insert(0, "domo-migrator")
     sigma = sigma_scope(root, obj)
     if sigma:
         roles.insert(0, "sigma-migrator")
@@ -533,6 +558,8 @@ def plan(root, scope_ids=None):
     if gates['required']:
         stage = gates.get('next_stage')
         eligible = set(stage_roles(stage))
+        if domo and stage in {'access', 'analysis', 'narrative', 'brief', 'options', 'design', 'candidate', 'review'}:
+            eligible.add('domo-migrator')
         if sigma and stage in {'access', 'analysis', 'narrative', 'brief', 'options', 'design', 'candidate', 'review'}:
             eligible.add('sigma-migrator')
         if stage in {'access', 'analysis', 'narrative', 'brief', 'options', 'design', 'candidate', 'review'}:
@@ -792,7 +819,9 @@ def import_dma(root, review):
 
 def routing_helper(name='task_routing'):
     import importlib.util
-    need(name in {'task_routing', 'task_operations', 'delivery_workflow', 'product_intent', 'stage_gates', 'experience_contract', 'report_contract', 'visual_workflow'}, 'unknown routing helper')
+    need(name in {'task_routing', 'task_operations', 'delivery_workflow', 'product_intent', 'stage_gates', 'experience_contract', 'report_contract', 'visual_workflow',
+                  'context_packets', 'execution_efficiency', 'incremental_review', 'execution_bridge',
+                  'execution_runtime', 'execution_qualification', 'assembly_provenance', 'analytical_evidence'}, 'unknown routing helper')
     # Fixed first-party module only. The host verifier never comes from a request,
     # file path or environment variable. Share its scope across helper imports.
     cache_key = '_oaa_stage_gates_' + digest(str(Path(__file__).resolve().parent).encode())
@@ -866,6 +895,9 @@ def stage_packet_gate(root, role, assignment=None):
         root, obj = load_project(root)
         need(role in {REPORT_SOURCE_ROLES[p] for p in report_source_scope(root, obj)},
              'Report source specialist requires pinned source evidence')
+    if role == 'domo-migrator':
+        root, obj = load_project(root)
+        need(domo_scope(root, obj), 'Domo specialist requires pinned source intake or evidence')
     if role == 'sigma-migrator':
         root, obj = load_project(root)
         need(sigma_scope(root, obj), 'Sigma specialist requires pinned source intake or evidence')
@@ -921,7 +953,7 @@ def stage_packet_gate(root, role, assignment=None):
         return stage_require(root, 'brief')
     if role == 'data-analyst':
         return stage_require(root, 'analysis')
-    if role in {'bi-engineer', 'qa-analyst', 'backend-handoff', 'artifact-translator', 'sigma-migrator', 'periscope-migrator', 'metabase-migrator', 'webfocus-migrator', 'thoughtspot-migrator', 'qlik-migrator', 'microstrategy-migrator', 'cognos-migrator', 'businessobjects-migrator', 'ssrs-migrator', 'powerbi-paginated-migrator', 'crystal-reports-migrator'}:
+    if role in {'bi-engineer', 'qa-analyst', 'backend-handoff', 'artifact-translator', 'domo-migrator', 'sigma-migrator', 'periscope-migrator', 'metabase-migrator', 'webfocus-migrator', 'thoughtspot-migrator', 'qlik-migrator', 'microstrategy-migrator', 'cognos-migrator', 'businessobjects-migrator', 'ssrs-migrator', 'powerbi-paginated-migrator', 'crystal-reports-migrator'}:
         # Read-only investigation still uses the actual startup source. It does
         # not need a finished product or a build grant.
         action = 'analysis' if stage in {'semantic', 'design'} else 'access'
@@ -937,8 +969,9 @@ def packet_data(root, role, inputs, assignment=None):
     gate = stage_packet_gate(root, role, assignment)
     need(bool(inputs), "select at least one bounded input")
     need(len(inputs) == len(set(inputs)), "duplicate packet input")
-    design_context = intent_helper().packet_context(root, role)
-    product_context = routing_helper('product_intent').packet_context(root, role)
+    scope_ids = assignment.get('scope_ids') if isinstance(assignment, dict) else None
+    design_context = intent_helper().packet_context(root, role, scope_ids=scope_ids)
+    product_context = routing_helper('product_intent').packet_context(root, role, scope_ids=scope_ids)
     inputs = list(dict.fromkeys([*inputs, *design_context["paths"], *product_context['paths']]))
     records, size = [], 0
     for path in inputs:
@@ -976,7 +1009,7 @@ def packet_data(root, role, inputs, assignment=None):
         result['allowed_actions'] = ['read selected evidence',
             'author only the role work permitted by the current A-F stage; no implicit build or release grant']
         result['stop_conditions'].append('A-F prerequisites or trusted user selection are missing, changed or revoked')
-    if design_context["paths"] or design_context["findings"]:
+    if design_context["paths"] or design_context["findings"] or design_context.get('requirements'):
         result["design_context"] = design_context
     if product_context['enabled'] or role == 'product-owner':
         result['product_context'] = product_context
@@ -1074,18 +1107,32 @@ def main():
     cmd.add_argument("--website", help="official company HTTPS website; does not select a logo")
     cmd.add_argument('--selection-policy', choices=('host-verified-v1', 'conversation-evidence-v1'),
                      default='host-verified-v1', help='explicit chat workflow evidence or strict host verification; never execution permission')
+    cmd.add_argument('--context-policy', choices=('bounded-context-v1', 'legacy-index-v1'), default='bounded-context-v1',
+                     help='new CLI projects require bounded context receipts for managed dispatch; existing projects keep their policy')
+    cmd = commands.add_parser('execution-tool', help='Host-neutral fixed execution operations; no worker adapter is loaded from CLI arguments')
+    cmd.add_argument('--project', required=True)
+    cmd.add_argument('--tool', required=True)
+    cmd.add_argument('--request', required=True, help='JSON tool arguments; all referenced paths remain engagement-relative')
     for command in ("plan", "verify", "import-dma", "register", "packet", "packet-bindings", "design-freeze", "design-check", "design-pin",
                     "intent-select", "intent-check", "intent-cases", "claim-work", "prepare-dispatch", "record-dispatch",
                     "checkpoint-work", "work-status", "review-work", "packet-check", "experience-check",
                     "run-start", "run-check", "run-guidance", "source-check", "phase-check", "candidate-freeze", "delivery-check", "source-inventory",
                     "delivery-project", "delivery-evidence-template", "product-brief", "product-check",
-                    "stage-status", "stage-record", "stage-check"):
+                    "stage-status", "stage-record", "stage-check", "context-build", "context-check",
+                    "efficiency-configure", "efficiency-report", "work-prepare", "work-preflight", "work-usage", "work-blocker",
+                    "review-policy", "review-impact", "review-carry", "review-manifest"):
         cmd = commands.add_parser(command)
         cmd.add_argument("--project", required=True)
         if command in ("claim-work", "prepare-dispatch", "record-dispatch", "checkpoint-work", "review-work",
                        "run-start", "run-check", "run-guidance", "source-check", "phase-check", "candidate-freeze", "delivery-check", "source-inventory",
-                       "delivery-project", "delivery-evidence-template", "stage-record"):
+                       "delivery-project", "delivery-evidence-template", "stage-record", "context-build",
+                       "efficiency-configure", "work-prepare", "work-preflight", "work-usage", "work-blocker",
+                       "review-policy", "review-carry", "review-manifest"):
             cmd.add_argument('--request', required=True)
+            if command == 'context-build':
+                cmd.add_argument('--output', required=True, help='new engagement-relative tasks/context-version directory')
+        elif command == 'context-check':
+            cmd.add_argument('--receipt', required=True, help='engagement-relative receipt path or context directory')
         elif command == 'stage-check':
             cmd.add_argument('--action', required=True, choices=('access', 'analysis', 'narrative', 'brief',
                 'options', 'choose', 'design', 'build', 'review', 'release'))
@@ -1121,7 +1168,29 @@ def main():
     args = parser.parse_args()
     try:
         if args.command == "init":
-            result = init(args.output, args.name, args.mode, args.surface, args.branding, args.website, args.selection_policy)
+            result = init(args.output, args.name, args.mode, args.surface, args.branding, args.website, args.selection_policy, args.context_policy)
+        elif args.command == 'execution-tool':
+            result = routing_helper('execution_bridge').call(args.project, args.tool, read_json(args.request)[0])
+        elif args.command in ('context-build', 'context-check'):
+            context = routing_helper('context_packets')
+            result = context.build(args.project, read_json(args.request)[0], args.output) if args.command == 'context-build' else context.check(args.project, args.receipt)
+        elif args.command in ('review-policy', 'review-impact', 'review-carry', 'review-manifest'):
+            incremental = routing_helper('incremental_review')
+            if args.command == 'review-impact':
+                result = incremental.impact(args.project)
+            else:
+                action = {'review-policy': incremental.adopt, 'review-carry': incremental.carry_forward,
+                          'review-manifest': incremental.manifest_template}[args.command]
+                result = action(args.project, read_json(args.request)[0])
+        elif args.command in ('efficiency-configure', 'efficiency-report', 'work-prepare', 'work-preflight', 'work-usage', 'work-blocker'):
+            efficiency = routing_helper('execution_efficiency')
+            if args.command == 'efficiency-report':
+                result = efficiency.report(args.project)
+            else:
+                action = {'efficiency-configure': efficiency.configure, 'work-prepare': efficiency.prepare,
+                          'work-preflight': efficiency.preflight, 'work-usage': efficiency.record_usage,
+                          'work-blocker': efficiency.record_blocker}[args.command]
+                result = action(args.project, read_json(args.request)[0])
         elif args.command == 'stage-status':
             result = stage_status(args.project)
         elif args.command == 'stage-record':

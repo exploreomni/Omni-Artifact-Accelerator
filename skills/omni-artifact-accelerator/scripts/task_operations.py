@@ -48,6 +48,11 @@ def locked(root):
                     stream.flush()
                     os.fsync(stream.fileno())
                 os.replace(temp, path)
+                directory_fd = os.open(root, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+                try:
+                    os.fsync(directory_fd)
+                finally:
+                    os.close(directory_fd)
             finally:
                 if os.path.exists(temp):
                     os.unlink(temp)
@@ -107,8 +112,25 @@ def current(root, record):
         return False
 
 
+def context_receipt(root, project, packet, receipt=None):
+    if receipt is None:
+        ap.need(project.get('context_policy') != 'bounded-context-v1',
+                'Bounded context receipt required before managed dispatch')
+        return None
+    report = ap.routing_helper('context_packets').check(root, receipt, packet)
+    ap.need(report['status'] == 'consistent', 'Context receipt or pinned inputs changed; rebuild the bounded context')
+    return dict(report, receipt_sha256=ap.digest(ap.relative_file(root, report['receipt_path']).read_bytes()))
+
+
+def check_context(root, project, record):
+    saved = record.get('context')
+    current_context = context_receipt(root, project, record['packet'], saved['receipt_path'] if saved else None)
+    ap.need(saved == current_context, 'Reserved bounded context changed; retain the old attempt and prepare a new one')
+    return current_context
+
+
 def claim(root, request):
-    ap.need(set(request) <= {'attempt_id', 'packet', 'execution_mode'} and {'attempt_id', 'packet'} <= set(request), 'Invalid claim fields')
+    ap.need(set(request) <= {'attempt_id', 'packet', 'execution_mode', 'context_receipt'} and {'attempt_id', 'packet'} <= set(request), 'Invalid claim fields')
     rules.text(request['attempt_id'])
     mode = request.get('execution_mode', 'specialist')
     ap.need(mode in {'inline', 'specialist'}, 'Invalid execution mode')
@@ -118,23 +140,42 @@ def claim(root, request):
         active = [a for a in state['attempts'] if a['status'] == 'active']
         for record in active:
             if record['task_id'] == assignment['task_id']:
-                ap.need(record['revision'] == revision, 'Checkpoint the active attempt before revising scope')
+                ap.need(record['revision'] == revision and record['packet_sha256'] == packet_sha,
+                        'Checkpoint the active attempt before revising scope or context')
+                saved_context = check_context(root, project, record)
+                if request.get('context_receipt'):
+                    proposed = context_receipt(root, project, request['packet'], request['context_receipt'])
+                    ap.need(saved_context and saved_context['task_sha256'] == proposed['task_sha256'],
+                            'Checkpoint the active attempt before revising context')
                 return {'action': 'already_active', 'attempt_id': record['attempt_id'],
                         'qualification': 'Reuse the known host worker; unknown liveness is not permission to replace it'}
             ap.need(not rules.outputs_overlap(assignment['outputs'], record['assignment']['outputs']), 'Output already owned by active work')
         for record in reversed(state['attempts']):
             if record['task_id'] == assignment['task_id'] and record['revision'] == revision and record['status'] == 'outputs_recorded' and current(root, record):
+                try:
+                    saved_assignment, saved_pin = read_packet(root, project, record['packet'])
+                    ap.need(saved_assignment == assignment and saved_pin == packet_sha == record['packet_sha256'], 'Previous packet context differs')
+                    saved_context = check_context(root, project, record)
+                    if request.get('context_receipt'):
+                        proposed = context_receipt(root, project, request['packet'], request['context_receipt'])
+                        ap.need(saved_context and saved_context['task_sha256'] == proposed['task_sha256'], 'Previous task context differs')
+                except (ValueError, OSError, KeyError):
+                    continue
                 state['reuse_count'] += 1
                 return {'action': 'reuse', 'attempt_id': record['attempt_id'], 'outputs': record['outputs'],
                         'qualification': 'Current files reused; prior validation status is unchanged'}
         ap.need(mode == 'inline' or sum(a['execution_mode'] == 'specialist' for a in active) < state['max_workers'], 'Specialist concurrency limit reached')
         ap.need(all(a['attempt_id'] != request['attempt_id'] for a in state['attempts']), 'Attempt ID already used')
         ap.need(len(state['attempts']) < 20000, 'Task history limit reached')
+        context = context_receipt(root, project, request['packet'], request.get('context_receipt'))
         previous = next((a['attempt_id'] for a in reversed(state['attempts']) if a['task_id'] == assignment['task_id'] and a['revision'] == revision and a['status'] == 'interrupted'), None)
         record = {'attempt_id': request['attempt_id'], 'task_id': assignment['task_id'], 'revision': revision,
                   'assignment': assignment, 'packet': request['packet'], 'packet_sha256': packet_sha,
                   'status': 'active', 'execution_mode': mode, 'started_at': now(), 'outputs': {},
                   'resumes_attempt_id': previous, 'dispatch': None}
+        if context:
+            record['context'] = context
+        ap.routing_helper('execution_efficiency').require_no_loop(root, state, record)
         state['attempts'].append(record)
         return {'action': 'dispatch', 'attempt_id': record['attempt_id'], 'revision': revision,
                 'resumes_attempt_id': previous, 'qualification': 'Reservation only; the host must invoke a bounded worker'}
@@ -147,7 +188,10 @@ def prepare_dispatch(root, request):
         ap.need(record['status'] == 'active', 'Dispatch needs an active reservation')
         assignment, pin = read_packet(root, project, record['packet'])
         ap.need(assignment == record['assignment'] and pin == record['packet_sha256'], 'Reserved packet changed')
-        return {'status': 'ready', 'attempt_id': record['attempt_id'], 'agents_dispatched': False}
+        context = check_context(root, project, record)
+        ap.routing_helper('execution_efficiency').require_no_loop(root, state, record)
+        return {'status': 'ready', 'attempt_id': record['attempt_id'], 'agents_dispatched': False,
+                'context': context, 'context_mode_requested': 'fresh' if context else 'unknown'}
 
 
 def record_dispatch(root, request):
@@ -156,8 +200,11 @@ def record_dispatch(root, request):
     with locked(root) as (root, project, state):
         record = attempt(state, request['attempt_id'])
         ap.need(record['status'] == 'active', 'Dispatch needs an active reservation')
+        ap.need(not record.get('host_launch'), 'Managed launch observations must use host reconciliation')
         assignment, packet_sha = read_packet(root, project, record['packet'])
         ap.need(assignment == record['assignment'] and packet_sha == record['packet_sha256'], 'Reserved packet changed')
+        check_context(root, project, record)
+        ap.routing_helper('execution_efficiency').require_no_loop(root, state, record)
         ap.need(request['execution_mode'] == record['execution_mode'], 'Execution mode differs')
         rules.text(request['host_run_reference'])
         for key in ('observed_model', 'observed_effort', 'requested_model', 'requested_effort', 'fallback_reason'):
@@ -178,11 +225,18 @@ def checkpoint(root, request):
     with locked(root) as (root, project, state):
         record = attempt(state, request['attempt_id'])
         ap.need(record['status'] == 'active', 'Checkpoint requires active work')
+        launch = record.get('host_launch')
+        if launch:
+            ap.need(launch['status'] in {'completed', 'failed', 'cancelled', 'absent'},
+                    'Reconcile host termination before releasing output ownership')
+            if request['status'] == 'outputs_recorded':
+                ap.need(launch['status'] == 'completed', 'Completed outputs require observed host completion')
         ap.need(set(request['outputs']) <= set(record['assignment']['outputs']), 'Unassigned checkpoint output')
         outputs = capture(root, request['outputs']) if request['outputs'] else {}
         if request['status'] == 'outputs_recorded':
             assignment, pin = read_packet(root, project, record['packet'])
             ap.need(assignment == record['assignment'] and pin == record['packet_sha256'], 'Assignment changed during work')
+            check_context(root, project, record)
             ap.need(set(outputs) == set(assignment['outputs']), 'Completed work requires every assigned output')
         record.update(status=request['status'], reason=request['reason'], outputs=outputs, checkpoint_at=now())
         return {'status': record['status'], 'outputs': outputs, 'native_verified': False}
@@ -228,6 +282,10 @@ def review_work(root, request):
                              corrects_attempt_id=record['attempt_id'])
             for key in ('checkpoint_at', 'reason', 'review_decision', 'corrected_by_attempt_id'):
                 successor.pop(key, None)
+            successor.pop('usage_observation', None)
+            successor.pop('host_launch', None)
+            ap.need(not record.get('host_launch') or record['host_launch']['status'] in {'completed', 'failed', 'cancelled', 'absent'},
+                    'Reconcile host termination before reserving a correction')
             if record['status'] == 'active':
                 record.update(status='interrupted', reason='Correction moved to a separately reserved attempt', checkpoint_at=now())
             record['corrected_by_attempt_id'] = identity

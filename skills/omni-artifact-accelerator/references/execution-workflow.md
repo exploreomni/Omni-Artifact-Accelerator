@@ -1,5 +1,15 @@
 # Enter, build and assess an artifact engagement
 
+For bounded context and opt-in review continuity, use [incremental work](incremental-work.md).
+For a host-neutral MCP/CLI lifecycle surface and observed worker recovery, use
+[host execution](host-execution.md). Qualify the actual tool/permission boundary;
+the local helpers cannot govern unrestricted alternate host routes.
+Legacy review rules below remain the default for existing engagements. The explicit
+`incremental-review-v1` policy adds current-candidate coverage with preserved original
+source-review evidence; it never converts unobserved or source-only results into
+rendered/native acceptance. A role assignment is not a mandatory agent launch.
+
+
 Use for substantial new design, redesign and migration. This procedure connects
 the existing project, selected intent, specialist assignments and design review.
 

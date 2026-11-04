@@ -1,5 +1,12 @@
 # Scoped specialist work
 
+For bounded context and opt-in review continuity, use [incremental work](incremental-work.md).
+Legacy review rules below remain the default for existing engagements. The explicit
+`incremental-review-v1` policy adds current-candidate coverage with preserved original
+source-review evidence; it never converts unobserved or source-only results into
+rendered/native acceptance. A role assignment is not a mandatory agent launch.
+
+
 Use this route for new tracked work while retaining the existing project,
 design-intent, DMA handoff and native release contracts. It reserves local work;
 the host still invokes the worker. No model selection, billing estimates, native

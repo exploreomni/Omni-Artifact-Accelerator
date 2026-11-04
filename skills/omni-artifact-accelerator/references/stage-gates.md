@@ -1,5 +1,12 @@
 # Executable A–F stage gates
 
+For bounded context and opt-in review continuity, use [incremental work](incremental-work.md).
+Legacy review rules below remain the default for existing engagements. The explicit
+`incremental-review-v1` policy adds current-candidate coverage with preserved original
+source-review evidence; it never converts unobserved or source-only results into
+rendered/native acceptance. A role assignment is not a mandatory agent launch.
+
+
 The supported package entrypoints enforce ordered evidence checkpoints for every
 new engagement. `init` sets `stage_gate_policy: data-first-v1` for **all modes**;
 calling a new product an enhancement or migration is not an exemption. Existing

@@ -1,5 +1,12 @@
 # Data-first product workflow
 
+For bounded context and opt-in review continuity, use [incremental work](incremental-work.md).
+Legacy review rules below remain the default for existing engagements. The explicit
+`incremental-review-v1` policy adds current-candidate coverage with preserved original
+source-review evidence; it never converts unobserved or source-only results into
+rendered/native acceptance. A role assignment is not a mandatory agent launch.
+
+
 Use this sequence for a net-new analytical product or an explicitly commissioned
 product reconception. It governs the order of work across the orchestrator and
 direct specialist entrypoints. It supersedes generic advice to choose a design

@@ -4,6 +4,39 @@ An analyst's sidekick for designing, building and reviewing **native Omni dashbo
 
 Start with an existing Omni model, bring an exported BI experience, or continue from the companion [Data Model Accelerator](https://github.com/exploreomni/Data-Model-Accelerator). Use only the specialists the task needs.
 
+## Reduce repeated context and review work
+
+New CLI engagements use bounded specialist briefings by default. The orchestrator
+retains the complete requirements; workers receive their scoped evidence and shared
+constraints. Saved results and active tasks are reused when their bindings remain
+current. Corrections carry a usable baseline and changed evidence without nesting
+the entire conversation again.
+
+The optional incremental review policy preserves unchanged product choices across
+staffing changes and allows proven unchanged source-review coverage to carry forward.
+It starts in observation mode; existing engagements keep their recorded rules.
+All four review perspectives remain accountable. Unknown impact, changed data/access,
+and unobserved rendered/native behavior still require the appropriate checks.
+
+Follow the [incremental work guide](skills/omni-artifact-accelerator/references/incremental-work.md)
+for adoption, packet preparation, preflight, correction limits and usage reporting.
+Byte counts are not token bills; actual host savings require attributable usage.
+
+The [host-neutral execution interface](skills/omni-artifact-accelerator/references/host-execution.md)
+provides a small MCP/CLI surface for the existing lifecycle. Select only the tools
+needed for the engagement. An operator-supplied adapter can launch and reconcile
+bounded workers with durable attempt tracking; the package does not automatically
+install an adapter or connect accounts. Local tests do not establish host isolation.
+
+Use the [qualification catalog](skills/omni-artifact-accelerator/references/execution-qualification.md)
+to keep actual host, native, visual, access and human evidence separate.
+[Explicit result bindings](skills/omni-artifact-accelerator/references/analytical-evidence.md)
+prevent positional field guesses and require independent source provenance for
+migration comparison. [Assembly provenance](skills/omni-artifact-accelerator/references/assembly-provenance.md)
+retains reproducible component inputs and exact final bytes for scoped corrections.
+The [demo preparation route](skills/omni-artifact-accelerator/references/native-demo-qualification.md)
+retains pending observation gaps without granting publication or weakening release checks.
+
 ## What you can do
 
 - **Design a new dashboard:** define the decision, metrics, charts, filters and brand, then prepare a native candidate and review evidence.
@@ -25,7 +58,7 @@ sets the order, while leaving the product's visual design open:
 3. **Create the analytical story.** Link claims to evidence and define how they update or disappear when data, filters or freshness change.
 4. **Discover the artifact requirements.** Use those findings for product/brand needs, a tailored visual-experience question and a conditional comparison-style follow-up; reuse answers already supplied.
 5. **Choose among three products.** Review three distinct, feasible visual concepts with the same analytical scope and accepted quality ambition, then select one; specialists resolve its detailed design.
-6. **Build and refine.** Implement a cohesive candidate and obtain security, UI/UX, product-owner and independent QA feedback after every iteration.
+6. **Build and refine.** Implement a cohesive candidate and obtain security, UI/UX, product-owner and independent QA coverage after every iteration, with scoped reuse under the optional incremental policy.
 
 Existing selected products and focused fixes reuse prior evidence and decisions.
 Publication follows its own authorization and verification. The [executable stage gates](skills/omni-artifact-accelerator/references/stage-gates.md)
@@ -52,7 +85,7 @@ ask the host to retrieve the orchestrator and relevant sibling guidance:
 > Follow the data-first A–F workflow: verify my data/access, analyze governed queries
 > and create a reusable narrative before artifact discovery. Present three viable
 > product options and wait for my selection before detailed design and coding.
-> Build cohesively, obtain all four consultant reviews each iteration, and report
+> Build cohesively, retain all four review perspectives each iteration, and report
 > actual evidence separately from unobserved behavior.
 
 A repository URL alone does not activate skills. Missing repository/tool access is
@@ -176,7 +209,7 @@ OAA_SKILLS_DIR="$HOME/.codex/skills"
 python3 -I -S scripts/install_skills.py --destination "$OAA_SKILLS_DIR"
 ```
 
-Preview and `--verify` are read-only. **`--apply` is disabled** until a qualified host approval gate is supplied. Do not bypass it by copying into an active skills directory. Installation/update approval must cover the exact source and target; an agent-written approval flag is insufficient. All 15 sibling folders belong together once activation is authorized. See [installation and updates](docs/HOW_TO.md#installation-and-updates).
+Preview and `--verify` are read-only. **`--apply` is disabled** until a qualified host approval gate is supplied. Do not bypass it by copying into an active skills directory. Installation/update approval must cover the exact source and target; an agent-written approval flag is insufficient. The registered sibling skill folders belong together once activation is authorized. See [installation and updates](docs/HOW_TO.md#installation-and-updates).
 
 For source review, ask your agent to read [the orchestrator skill](skills/omni-artifact-accelerator/SKILL.md) in this checkout. This does not configure tools, install dependencies or grant native write access.
 
@@ -201,7 +234,7 @@ Use a new output directory; initialization does not overwrite an existing engage
 
 The initial files and role plan are a starting point, not a built dashboard or App. Add `--branding requested --website https://example.com` for a branded engagement, `--branding none` when branding is out of scope, or leave it unknown. The editable design-intent record retains missing required choices; a website alone does not choose a logo. See [saving intent and reviewing named requirements](skills/omni-artifact-accelerator/references/design-intent.md) for current design/brand/asset selection and per-surface completion. Continue with [the step-by-step how-to](docs/HOW_TO.md).
 
-All new engagements, including migrations, include the A–C analytical handoff, artifact discovery, three viable options, actual user selection, a resolved design and all four consultant reviews on each implementation iteration. Focused continuation reuses existing valid decisions under its recorded policy. The optional [design evidence checker](skills/omni-qa-analyst/references/design-evidence.md) tracks which observations still match the current candidate; it does not enforce A–F, certify visual quality or authenticate customer acceptance.
+All new engagements, including migrations, include the A–C analytical handoff, artifact discovery, three viable options, actual user selection, a resolved design and all four review perspectives on each implementation iteration. Focused continuation reuses existing valid decisions under its recorded policy. The optional [design evidence checker](skills/omni-qa-analyst/references/design-evidence.md) tracks which observations still match the current candidate; it does not enforce A–F, certify visual quality or authenticate customer acceptance.
 
 For an App, describe the intended experience as well as the metrics. For example: “Create an immersive branded entry that leads into a focused product investigation workspace, with persistent scope and a separate comparison view.” The [experience-mode guide](skills/omni-app-designer/references/app-patterns.md#choose-the-experience-mode) helps distinguish this from a direct workspace or a guided data story. If rendering is unavailable, the agent should retain that visual-review gap explicitly.
 
@@ -251,7 +284,7 @@ For migrations, choose the documented source path before exporting or running an
 | Power BI | Supplied PBIR/Fabric definitions, bounded source capture and DMA evidence | [Power BI workflow](skills/omni-artifact-accelerator/references/powerbi-visual-run.md) |
 | Tableau | Supplied definitions, bounded REST or official-MCP evidence and DMA enrichment | [Tableau workflow](skills/omni-artifact-accelerator/references/tableau-visual-run.md) |
 | Sigma | Dedicated specialist, guided API discovery/capture, verified evidence and reviewed Sigma converter reuse; qualified runtime required | [Sigma workflow](skills/omni-artifact-accelerator/references/sigma-visual-run.md) |
-| Domo | Selected companion-migrator evidence plus original configuration and visual references | [Domo pilot](skills/omni-artifact-translator/references/domo-visual-pilot.md) |
+| Domo | Dedicated specialist, supplied source/visual/App evidence and opt-in pinned source reads; images, results and detailed App definitions remain supplied evidence | [Domo workflow](skills/omni-artifact-translator/references/domo-visual-run.md) |
 | Periscope / Sisense CDT | Dedicated source specialist, pinned DMA evidence and bounded capture/result handoff; Linux/Fusion is a separate product | [CDT migration workflow](skills/omni-artifact-accelerator/references/periscope-visual-run.md) |
 | Metabase | Dedicated source specialist, typed API snapshots and bounded capture; preserved dashboard/tab/question identity, controls and query gaps | [Metabase migration workflow](skills/omni-artifact-accelerator/references/metabase-visual-run.md) |
 | WebFOCUS | Dedicated specialist, pinned DMA declarations, independent visual/page inventory and bounded repository reads; source procedures remain inert | [WebFOCUS migration workflow](skills/omni-artifact-accelerator/references/webfocus-visual-run.md) |
@@ -265,6 +298,17 @@ For migrations, choose the documented source path before exporting or running an
 | Other sources | Explicitly reviewed manual evidence inventory | [Inventory contract](skills/omni-artifact-translator/references/inventory-contract.md#normalized-inventory) |
 
 Read [parser coverage](docs/parser-coverage.md) for exact formats and limitations. A supported reader is not a universal chart or formula converter. Missing source objects, custom visualizations, interactions and security dependencies remain visible work.
+
+For Domo, start with the [source specialist](skills/omni-domo-migrator/SKILL.md)
+and [first visual pilot](skills/omni-artifact-translator/references/domo-visual-pilot.md).
+For example: “Migrate this Domo Page and its App Studio context. Preserve Card
+summary metrics, repeated placements, filters and operational dependencies; reuse
+my existing migration evidence and propose three scoped Omni experiences before
+coding.” Choose `reuse_existing`, `omni_semantic_reconstruction` or
+`warehouse_first_refactor` explicitly. Local helpers prepare and verify evidence;
+the optional source wrapper needs an approved exact runtime and selected read
+scope. It is a local stdio host, not a hosted ChatGPT connector. No live migration,
+automatic App conversion or new source-image/query client is claimed.
 
 ## Specialist roles
 
@@ -286,6 +330,8 @@ Read [parser coverage](docs/parser-coverage.md) for exact formats and limitation
 | `omni-branding` | Customer identity, approved assets, fonts and theme mappings |
 | `omni-design-systems` | Reusable design rules, tokens and accessibility expectations |
 | `omni-artifact-translator` | Original source inventory, behavior mapping and migration gaps |
+| `omni-domo-migrator` | Domo Card/Page/App identity, analytical and operational behavior, original evidence and coordinated migration |
+| `omni-sigma-migrator` | Sigma workbook identity, source capture, converter reuse and explicit architecture decisions |
 | `omni-periscope-migrator` | CDT source identity, capture/state, custom-logic obligations and coordinated migration evidence |
 | `omni-metabase-migrator` | Metabase source identity, query/placement/control evidence and coordinated migration obligations |
 | `omni-webfocus-migrator` | Procedure semantics, ordered visual styles, page composition and runtime migration obligations |
