@@ -4,6 +4,23 @@ An analyst's sidekick for designing, building and reviewing **native Omni dashbo
 
 Start with an existing Omni model, bring an exported BI experience, or continue from the companion [Data Model Accelerator](https://github.com/exploreomni/Data-Model-Accelerator). Use only the specialists the task needs.
 
+**New to the tool? [Take the self-guided introduction](docs/training/README.md)** — six short lessons covering setup, the agent workflow, design choices, delivery review and migrations. Each lesson ends with an observable checkpoint; you can start learning without installing anything.
+
+| Your goal | Start here |
+| --- | --- |
+| Understand what the agents do | [Meet the responsibilities](docs/training/01-understand.md#meet-the-responsibilities) |
+| Start your first engagement | [Prepare your source, access and brief](docs/training/02-prepare.md) |
+| Choose a design or review a result | [Choose the experience](docs/training/04-choose.md) · [Review and deliver](docs/training/05-review.md) |
+| Resume, migrate or use a backend handoff | [Continue the work](docs/training/06-continue.md) |
+
+## See the agent flow
+
+![Agent flow: your approved AI host runs the orchestrator through A access, B analysis, C narrative, D discovery, E three visual concepts and your selection, then F implementation with security, UI/UX, product-owner and independent QA review. Migration and backend handoffs are conditional; publication requires separate authorization and verification.](docs/training/assets/agent-flow.svg)
+
+[Open the full-size diagram](docs/training/assets/agent-flow.svg) · [Read the text walkthrough](docs/training/03-data-and-story.md#the-a-f-sequence)
+
+The boxes represent responsibilities, not a mandatory agent swarm. The orchestrator keeps the current engagement and gives specialists only the context their tasks need. Your actual concept selection and resolved design precede product coding; dependency activation and native publication retain separate controls.
+
 ## Reduce repeated context and review work
 
 New CLI engagements use bounded specialist briefings by default. The orchestrator

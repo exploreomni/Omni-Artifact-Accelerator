@@ -1,0 +1,127 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="1544" viewBox="0 0 1120 1544" role="img" aria-labelledby="title description">
+  <title id="title">From a business question to a reviewed Omni experience</title>
+  <desc id="description">Your approved AI host runs the orchestrator and relevant specialists. A verifies data and user access. B qualifies analysis and queries. C creates a traceable narrative. D captures product and brand requirements. E compares three concrete concepts, records your choice and resolves detailed design. F implements the selected product and receives security, UI/UX, product-owner and independent QA feedback each iteration. Migration specialists supply source evidence when needed. Backend gaps go to Data Model Accelerator or the model owner and return for revalidation. Native preview or publication requires separate authorization and verification. Roles are responsibilities, not automatic agent launches.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 1 1 L 9 5 L 1 9 Z" fill="#4D122C"/>
+    </marker>
+    <style>
+      text { font-family: Arial, Helvetica, sans-serif; fill: #220411; }
+      .title { font-size: 34px; font-weight: 400; }
+      .heading { font-size: 26px; font-weight: 400; }
+      .body { font-size: 22px; }
+      .small { font-size: 20px; }
+      .label { font-size: 18px; font-family: monospace; }
+      .light { fill: #FCFCF7; }
+      .deep { fill: #4D122C; }
+      .pink { fill: #FF5FA2; }
+      .line { fill: none; stroke: #4D122C; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; marker-end: url(#arrow); }
+      .card { fill: #FCFCF7; stroke: #4D122C; stroke-width: 1.5; }
+    </style>
+  </defs>
+  <rect width="1120" height="1544" rx="25" fill="#FCFCF7"/>
+  <text x="40" y="58" class="title deep">From question to experience</text>
+  <text x="40" y="94" class="body">A guided workflow. A product shaped by your data and decisions.</text>
+
+  <rect x="40" y="120" width="1040" height="96" rx="25" fill="#FF5FA2"/>
+  <text x="64" y="158" class="heading">You bring the goal, accessible data and constraints</text>
+  <text x="64" y="192" class="body">Your approved AI host reads the selected package and uses its available tools.</text>
+  <path d="M 560 216 V 244" class="line"/>
+
+  <rect x="40" y="248" width="1040" height="104" rx="25" fill="#220411"/>
+  <text x="64" y="288" class="heading light">Orchestrator</text>
+  <text x="64" y="322" class="body light">Keeps one engagement · routes bounded tasks · checks the next allowed action</text>
+  <path d="M 380 352 V 384" class="line"/>
+
+  <rect x="40" y="388" width="680" height="100" rx="25" class="card"/>
+  <circle cx="84" cy="438" r="24" fill="#4D122C"/>
+  <text x="84" y="446" text-anchor="middle" class="body light">A</text>
+  <text x="128" y="429" class="heading">Verify data and user access</text>
+  <text x="128" y="465" class="small">Orchestrator · analyst · BI engineer</text>
+  <path d="M 380 488 V 512" class="line"/>
+
+  <rect x="40" y="516" width="680" height="100" rx="25" class="card"/>
+  <circle cx="84" cy="566" r="24" fill="#4D122C"/>
+  <text x="84" y="574" text-anchor="middle" class="body light">B</text>
+  <text x="128" y="557" class="heading">Analyze and qualify queries</text>
+  <text x="128" y="593" class="small">Data analyst · BI engineer</text>
+  <path d="M 380 616 V 640" class="line"/>
+
+  <rect x="40" y="644" width="680" height="100" rx="25" class="card"/>
+  <circle cx="84" cy="694" r="24" fill="#4D122C"/>
+  <text x="84" y="702" text-anchor="middle" class="body light">C</text>
+  <text x="128" y="685" class="heading">Create a traceable story</text>
+  <text x="128" y="721" class="small">Data storyteller · analyst</text>
+  <path d="M 380 744 V 768" class="line"/>
+
+  <rect x="40" y="772" width="680" height="116" rx="25" class="card"/>
+  <circle cx="84" cy="822" r="24" fill="#4D122C"/>
+  <text x="84" y="830" text-anchor="middle" class="body light">D</text>
+  <text x="128" y="813" class="heading">Discover the experience</text>
+  <text x="128" y="849" class="small">Product owner · designers · branding</text>
+  <text x="128" y="875" class="small">Capture the task, quality bar and missing choices.</text>
+  <path d="M 380 888 V 912" class="line"/>
+
+  <rect x="40" y="916" width="680" height="120" rx="25" fill="#FF5FA2"/>
+  <circle cx="84" cy="966" r="24" fill="#4D122C"/>
+  <text x="84" y="974" text-anchor="middle" class="body light">E</text>
+  <text x="128" y="957" class="heading">Compare three visual concepts</text>
+  <text x="128" y="993" class="small">Designers · design systems · branding</text>
+  <text x="128" y="1020" class="small">Same analytical scope and accepted quality ambition.</text>
+  <path d="M 380 1036 V 1060" class="line"/>
+
+  <rect x="40" y="1064" width="680" height="64" rx="25" fill="#4D122C"/>
+  <text x="380" y="1090" text-anchor="middle" class="body light">Your actual choice → resolved detailed design</text>
+  <text x="380" y="1115" text-anchor="middle" class="small light">Both are required before product coding.</text>
+  <path d="M 380 1128 V 1152" class="line"/>
+
+  <rect x="40" y="1156" width="680" height="124" rx="25" class="card"/>
+  <circle cx="84" cy="1206" r="24" fill="#4D122C"/>
+  <text x="84" y="1214" text-anchor="middle" class="body light">F</text>
+  <text x="128" y="1197" class="heading">Build and refine the selected product</text>
+  <text x="128" y="1233" class="small">App engineer · BI engineer · report builder</text>
+  <text x="128" y="1260" class="small">Route by surface; review the complete promised journey.</text>
+
+  <!-- Conditional source and backend routes. -->
+  <rect x="776" y="388" width="304" height="168" rx="25" fill="#4D122C"/>
+  <text x="800" y="422" class="label light">MIGRATING?</text>
+  <text x="800" y="459" class="body light">Translator + source</text>
+  <text x="800" y="488" class="body light">specialist supply</text>
+  <text x="800" y="517" class="body light">original behavior evidence.</text>
+  <path d="M 776 438 H 724" class="line"/>
+
+  <rect x="776" y="592" width="304" height="216" rx="25" fill="#4D122C"/>
+  <text x="800" y="627" class="label light">BACKEND GAP?</text>
+  <text x="800" y="664" class="body light">Backend handoff →</text>
+  <text x="800" y="693" class="body light">Data Model Accelerator</text>
+  <text x="800" y="722" class="body light">or your model owner</text>
+  <text x="800" y="763" class="small light">Reconcile the response;</text>
+  <text x="800" y="789" class="small light">recheck affected A/B evidence.</text>
+  <path d="M 720 566 H 748 V 700 H 772" class="line" marker-start="url(#arrow)"/>
+
+  <rect x="776" y="844" width="304" height="212" rx="25" class="card"/>
+  <text x="800" y="879" class="label deep">WHEN THE TASK BENEFITS</text>
+  <text x="800" y="916" class="body">Motion + 3D specialists</text>
+  <text x="800" y="954" class="small">Useful interaction, exact</text>
+  <text x="800" y="980" class="small">values and accessibility</text>
+  <text x="800" y="1006" class="small">remain central.</text>
+  <text x="800" y="1032" class="small">No automatic library loading.</text>
+
+  <!-- Candidate feedback returns to F; it is not another user-selection gate. -->
+  <rect x="776" y="1092" width="304" height="224" rx="25" fill="#FF5FA2"/>
+  <text x="800" y="1127" class="label deep">REVIEW EACH ITERATION</text>
+  <text x="800" y="1164" class="body">Security · UI/UX</text>
+  <text x="800" y="1193" class="body">Product owner</text>
+  <text x="800" y="1222" class="body">Independent QA</text>
+  <text x="800" y="1264" class="small">Candidate → critique</text>
+  <text x="800" y="1291" class="small">Scoped fixes return to F.</text>
+  <path d="M 720 1184 H 772" class="line"/>
+  <path d="M 776 1252 H 724" class="line"/>
+
+  <path d="M 380 1280 V 1352" class="line"/>
+  <text x="416" y="1340" class="small">Keep unobserved behavior visible in the handoff.</text>
+  <rect x="40" y="1356" width="1040" height="104" rx="25" fill="#220411"/>
+  <text x="64" y="1396" class="heading light">Omni: the selected native dashboard, App or Reports Beta</text>
+  <text x="64" y="1430" class="body light">Native preview/publication needs separate authorization and verification.</text>
+  <text x="40" y="1504" class="small">Roles are responsibilities, not automatic agent launches. No fixed layout or permanent team.</text>
+</svg>
