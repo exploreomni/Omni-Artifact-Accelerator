@@ -11,6 +11,9 @@ spec = importlib.util.spec_from_file_location("cowork", SCRIPT)
 cowork = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(cowork)
 ap = cowork.ap
+fixture_spec = importlib.util.spec_from_file_location('cowork_gate_fixture', Path(__file__).with_name('stage_gate_fixture.py'))
+fixture = importlib.util.module_from_spec(fixture_spec)
+fixture_spec.loader.exec_module(fixture)
 
 
 class CoworkTests(unittest.TestCase):
@@ -77,6 +80,7 @@ class CoworkTests(unittest.TestCase):
         return cowork.receive(self.root, str(request.relative_to(self.root)), response)
 
     def test_roundtrip_retains_old_evidence_without_acceptance(self):
+        fixture.bootstrap(self.root, ap)
         request = self.request()
         before = (self.root / "project.json").read_bytes()
         value = copy.deepcopy(self.review)
@@ -104,6 +108,20 @@ class CoworkTests(unittest.TestCase):
         revised["request_id"] = "revenue-r2"
         next_request = self.request(revised)
         self.assertEqual(json.loads(next_request.read_text())["baseline_catalog"]["path"], selected["catalog_path"])
+
+    def test_topic_binding_rechecks_the_selected_exchange_without_selecting_a_response(self):
+        request = self.request()
+        self.receive(request, self.response(request))
+        with self.assertRaisesRegex(ValueError, "must already be selected"):
+            cowork.select(self.root, "revenue-r1", verify_only=True)
+        selected = cowork.select(self.root, "revenue-r1")
+        project = ap.load_project(self.root)[1]
+        policy = ap.routing_helper("dma_topics")
+        _, pin, _ = policy.current(self.root, project, ap)
+        self.assertEqual(pin["path"], selected["catalog_path"])
+        (self.root / "exchanges/revenue-r1/impact.json").write_text("{}")
+        with self.assertRaisesRegex(ValueError, "exchange artifact changed"):
+            policy.current(self.root, project, ap)
 
     def test_unchanged_baseline_does_not_invalidate_known_independent_consumers(self):
         request = self.request()
@@ -220,6 +238,7 @@ class CoworkTests(unittest.TestCase):
             cowork.create_request(self.root, "contracts/request.json", ["inputs/large.txt"])
 
     def test_path_alias_cannot_bypass_registered_source_pin(self):
+        fixture.bootstrap(self.root, ap)
         path = self.root / "inputs/source.json"
         path.write_text('{"revision":1}')
         ap.register(self.root, "sources", "inputs/source.json", "frozen-source")

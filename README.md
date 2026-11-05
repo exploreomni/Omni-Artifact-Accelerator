@@ -4,6 +4,8 @@ An analyst's sidekick for designing, building and reviewing **native Omni dashbo
 
 Start with an existing Omni model, bring an exported BI experience, or continue from the companion [Data Model Accelerator](https://github.com/exploreomni/Data-Model-Accelerator). Use only the specialists the task needs.
 
+When DMA has already built the Topic, [start the artifact from that Topic](skills/omni-backend-handoff/references/topic-first.md). The accelerator verifies the user and destination, maps supported panels to saved workbook queries and returns missing measures to the model owner.
+
 **New to the tool? [Take the self-guided introduction](docs/training/README.md)** — six short lessons covering setup, the agent workflow, design choices, delivery review and migrations. Each lesson ends with an observable checkpoint; you can start learning without installing anything.
 
 | Your goal | Start here |

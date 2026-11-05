@@ -4,6 +4,8 @@
 
 **Outcome:** your agent can identify the selected package, available tools and private working folder before starting artifact work.
 
+If DMA supplied the Topic, start with its [Topic handoff](../../skills/omni-backend-handoff/references/topic-first.md). At Stage A, verify access in the intended model. At Stage B, map each panel to a saved query on that Topic and return missing measures to the model owner.
+
 ## Bring a small, useful brief
 
 You do not need all the design answers yet. Start with:

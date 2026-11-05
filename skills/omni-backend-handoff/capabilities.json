@@ -1,7 +1,9 @@
 {
   "schema_version": 1,
   "kind": "omni_frontend_capabilities",
-  "continuation_protocol_versions": [1],
+  "continuation_protocol_versions": [1, 2],
+  "target_surfaces": ["dashboard", "app"],
+  "task_modes": ["net-new", "migration", "enhancement"],
   "semantic_handoff_versions": ["omni-handoff-v1"],
   "entrypoint": "scripts/continuation.py",
   "commands": ["initiate"],

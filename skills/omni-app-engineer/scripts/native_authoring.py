@@ -33,7 +33,7 @@ CREATE_SETTINGS = {
 }
 CREATE_TILE_KEYS = {'aiConfig', 'automaticVis', 'description', 'filterOrder', 'isSql', 'name',
                     'prefersChart', 'query', 'resultConfig', 'sourceQueryPresentationKey',
-                    'subTitle', 'topicName', 'type', 'visConfig'}
+                    'subTitle', 'topicName', 'type', 'visConfig', 'queryType'}
 CREATE_QUERY_KEYS = {'calculations', 'column_totals', 'controls', 'custom_summary_types',
                      'default_group_by', 'fields', 'fill_fields', 'filters', 'join_via_map',
                      'join_paths_from_topic_name', 'limit', 'period_over_period_computations', 'pivots', 'row_totals',
@@ -237,7 +237,35 @@ def project_helper():
     return P
 
 
-def prepare_app(target, baseline, current, html, *, project=None, artifact=None):
+def app_topics(P, root, document_id, context, document, *, html, snapshot=None, readback=False):
+    evidence = P.routing_helper('dma_topics').guard(root, P, surface='app', document_id=document_id,
+        context=context, presentations=document.get('queryPresentations'), controls=document.get('controls'),
+        snapshot=snapshot, readback=readback, app_html=html)
+    need(evidence is None or isinstance(html, str) and bool(html.strip()),
+         'DMA-bound native App checks require exact candidate or returned HTML')
+    return {'dma_topics': evidence} if evidence is not None else {}
+
+
+def draft_topics(P, root, snapshot, *, html, semantic_snapshot=None, readback=False):
+    target, document = snapshot['target'], snapshot['document']
+    context = {'base_url': target['base_url'], 'model_id': document['modelId'],
+               'workbook_model_id': document['workbookModelId'],
+               'principal_id': snapshot['identity']['user']['membershipId']}
+    if 'branch' in snapshot['draft']:
+        branch = snapshot['draft']['branch']
+        if branch is None or isinstance(branch, dict) and isinstance(branch.get('id'), str):
+            context['branch_id'] = branch['id'] if branch else None
+    topics = app_topics(P, root, target['document_id'], context, document, html=html,
+                       snapshot=semantic_snapshot, readback=readback)
+    if topics:
+        roles = snapshot['identity'].get('rolesByModel')
+        need('branch_id' in context and snapshot['identity'].get('keyScope') == 'user' and
+             isinstance(roles, dict) and context['model_id'] in roles,
+             'DMA-bound enhancement requires observed branch and a user identity scoped to this model')
+    return topics
+
+
+def prepare_app(target, baseline, current, html, *, project=None, artifact=None, semantic_snapshot=None):
     need(project is not None and type(artifact) is str, 'Engagement and local candidate artifact required')
     P = project_helper()
     root, metadata = P.load_project(project)
@@ -255,7 +283,8 @@ def prepare_app(target, baseline, current, html, *, project=None, artifact=None)
     need(digest(baseline) == digest(current), 'Target drift: reconcile before preparing a write')
     need(type(html) is str and 0 < len(html.encode()) <= MAX_HTML and html != baseline['app']['html'],
          'Bounded changed candidate HTML required')
-    return {'kind': 'native_app_enhancement_request', 'schema_version': 1,
+    topics = draft_topics(P, root, current, html=html, semantic_snapshot=semantic_snapshot)
+    return {'kind': 'native_app_enhancement_request', 'schema_version': 1, **topics,
             'target': target, 'baseline_sha256': digest(baseline),
             'html_sha256': hashlib.sha256(html.encode()).hexdigest(),
             'engagement': {'project_id': metadata['id'], 'artifact': artifact,
@@ -267,7 +296,7 @@ def prepare_app(target, baseline, current, html, *, project=None, artifact=None)
                     'fresh target immediately before execution. No create/publish or automatic retry.'}
 
 
-def verify_app(prepared, baseline, after):
+def verify_app(prepared, baseline, after, *, project=None, baseline_snapshot=None, readback_snapshot=None):
     need(type(prepared) is dict and prepared.get('kind') == 'native_app_enhancement_request'
          and prepared.get('schema_version') == 1, 'Prepared enhancement required')
     target = prepared['target']
@@ -281,6 +310,17 @@ def verify_app(prepared, baseline, after):
          and 0 < len(request['body']['html'].encode()) <= MAX_HTML, 'Unscoped request')
     need(prepared['baseline_sha256'] == digest(baseline)
          and prepared['html_sha256'] == hashlib.sha256(request['body']['html'].encode()).hexdigest(), 'Request pin drift')
+    topics = {}
+    if project is not None:
+        P = project_helper()
+        root, _ = P.load_project(project)
+        expected = prepare_app(target, baseline, baseline, request['body']['html'], project=root,
+                               artifact=prepared['engagement']['artifact'], semantic_snapshot=baseline_snapshot)
+        need(expected == prepared, 'Prepared enhancement changed; prepare again')
+        topics = draft_topics(P, root, after, html=after['app']['html'], semantic_snapshot=readback_snapshot, readback=True)
+        need(topics.get('dma_topics') == prepared.get('dma_topics'), 'DMA Topic contract changed since preparation')
+    else:
+        need('dma_topics' not in prepared, 'DMA-bound readback requires the original engagement')
     findings = []
     if after['app']['html'] != request['body']['html']:
         findings.append('html_readback_mismatch')
@@ -295,7 +335,7 @@ def verify_app(prepared, baseline, after):
         findings.append('draft_branch_changed')
     return {'status': 'readback_mismatch' if findings else 'exact_draft_readback',
             'findings': findings, 'html_sha256': prepared['html_sha256'],
-            'after_sha256': digest(after), 'native_verified': False, 'published': False}
+            'after_sha256': digest(after), **topics, 'native_verified': False, 'published': False}
 
 
 def create_spec_check(spec):
@@ -334,6 +374,7 @@ def create_spec_check(spec):
         need(type(tile) is dict and set(tile) <= CREATE_TILE_KEYS
              and {'name', 'query', 'topicName', 'type', 'isSql'} <= set(tile)
              and tile['type'] == 'query' and tile['isSql'] is False
+             and ('queryType' not in tile or type(tile['queryType']) is str and tile['queryType'].upper() == 'TOPIC')
              and tile.get('sourceQueryPresentationKey') is None
              and all(type(tile[k]) is str and tile[k].strip() for k in ('name', 'topicName')),
              'Unsupported query presentation or linked/SQL tile')
@@ -376,10 +417,12 @@ def prepare_create(*, project, artifact, spec_artifact):
     need({html_sha, spec_sha} <= pins, 'Freeze and review the exact HTML and create specification')
     html = html_raw.decode('utf-8')
     spec = create_spec_check(decode(spec_raw, 'object'))
+    topics = app_topics(P, root, spec['slug'], {'base_url': spec['base_url'],
+        'model_id': spec['model_id'], 'branch_id': None}, spec, html=html)
     body = create_body(spec, html)
     need(P.stage_require(root, 'release')['tail_sha256'] == gate['tail_sha256'],
          'Engagement changed during preparation')
-    return {'kind': 'native_app_create_request', 'schema_version': 1,
+    return {'kind': 'native_app_create_request', 'schema_version': 1, **topics,
             'base_url': spec['base_url'],
             'engagement': {'project_id': metadata['id'], 'artifact': artifact,
                            'spec_artifact': spec_artifact, 'html_sha256': html_sha,
@@ -473,6 +516,9 @@ exact principal, audience and operation before a POST that publishes immediately
          'Demo requires one explicit user-scoped test principal')
     need(destination['audience'] == {'kind': 'named_test_principal', 'membership_id': principal['membership_id']},
          'Demo audience must be the same named test principal')
+    html = raw['html'].decode('utf-8')
+    topics = app_topics(P, root, spec['slug'], {'base_url': spec['base_url'], 'model_id': spec['model_id'],
+        'branch_id': None, 'principal_id': principal['membership_id']}, spec, html=html)
     minimums = demo['minimums']
     need(type(minimums) is dict and set(minimums) == {'security', 'numerical', 'permission', 'design'},
          'Every demo minimum must be explicitly accounted for')
@@ -504,9 +550,9 @@ exact principal, audience and operation before a POST that publishes immediately
         scopes.add(item['scope'])
     need(scopes == {key for key, review in reviews.items() if review['outcome'] == 'unobserved'},
          'Account for every unobserved consultation')
-    body = create_body(spec, raw['html'].decode('utf-8'))
+    body = create_body(spec, html)
     need(P.stage_require(root, 'review')['tail_sha256'] == gate['tail_sha256'], 'Engagement changed during demo preparation')
-    return {'schema_version': 1, 'kind': 'native_demo_create_request', 'base_url': spec['base_url'],
+    return {'schema_version': 1, 'kind': 'native_demo_create_request', 'base_url': spec['base_url'], **topics,
             'destination': destination, 'engagement': {'project_id': metadata['id'], 'artifact': artifact,
                 'spec_artifact': spec_artifact, 'demo_artifact': demo_artifact, 'html_sha256': hashes['html'],
                 'spec_sha256': hashes['spec'], 'demo_sha256': hashes['demo'], 'candidate_sha256': gate['candidate_sha256'],
@@ -535,7 +581,7 @@ def create_capture(capture, origin, method, path, status):
     return capture['body']
 
 
-def verify_create(prepared, created, document, app, *, project, artifact, spec_artifact):
+def verify_create(prepared, created, document, app, *, project, artifact, spec_artifact, identity=None, snapshot=None):
     """Compare supplied create + per-create GET captures with current reviewed bytes.
 
     Nothing is transported. No unknown/default/generated fields are silently
@@ -543,10 +589,11 @@ def verify_create(prepared, created, document, app, *, project, artifact, spec_a
     runtime callbacks, render quality or independent publication authorization.
     """
     expected = prepare_create(project=project, artifact=artifact, spec_artifact=spec_artifact)
-    return verify_create_captures(expected, prepared, created, document, app)
+    return verify_create_captures(expected, prepared, created, document, app, project=project, identity=identity,
+                                 snapshot=snapshot)
 
 
-def verify_create_captures(expected, prepared, created, document, app):
+def verify_create_captures(expected, prepared, created, document, app, *, project, identity=None, snapshot=None):
     """Shared exact-capture comparison; caller supplies its separately gated route."""
     need(type(prepared) is dict and encoded(prepared) == encoded(expected), 'Prepared create request drift')
     origin, body = expected['base_url'], expected['request']['body']
@@ -561,6 +608,22 @@ def verify_create_captures(expected, prepared, created, document, app):
     app_body = create_capture(app, origin, 'GET', route + '/app', 200)
     need(type(doc.get('workbookModelId')) is str and ID.fullmatch(doc['workbookModelId']),
          'Created workbook model identifier missing')
+    P = project_helper()
+    root, _ = P.load_project(project)
+    context = {'base_url': origin, 'model_id': doc.get('modelId'), 'branch_id': None,
+               'workbook_model_id': doc['workbookModelId']}
+    if identity is not None:
+        who = create_capture(identity, origin, 'GET', '/api/v1/whoami?modelId=' + body['modelId'], 200)
+        user = who.get('user')
+        need(isinstance(user, dict) and isinstance(user.get('membershipId'), str) and
+             ID.fullmatch(user['membershipId']), 'Expected a current principal membership capture')
+        context['principal_id'] = user['membershipId']
+    topics = app_topics(P, root, identifier, context, doc, html=app_body.get('html'), snapshot=snapshot, readback=True)
+    if topics:
+        roles = who.get('rolesByModel') if identity is not None else None
+        need(isinstance(roles, dict) and body['modelId'] in roles and who.get('keyScope') == 'user',
+             'DMA-bound creation readback requires a model-scoped user identity')
+    need(topics.get('dma_topics') == prepared.get('dma_topics'), 'DMA Topic contract changed since preparation')
     findings = []
     if response['name'] != body['name'] or response['description'] != body['description']:
         findings.append('create_metadata_mismatch')
@@ -580,9 +643,14 @@ def verify_create_captures(expected, prepared, created, document, app):
         findings.append('html_readback_mismatch')
     if encoded(app_body.get('settings')) != encoded(body['app']['settings']):
         findings.append('settings_readback_mismatch')
-    return {'status': 'readback_mismatch' if findings else 'exact_create_readback', 'findings': findings,
+    capture_hashes = {'created': digest(created), 'document': digest(document), 'app': digest(app)}
+    if identity is not None:
+        capture_hashes['identity'] = digest(identity)
+    if snapshot is not None:
+        capture_hashes['semantic_snapshot'] = digest(snapshot)
+    return {'status': 'readback_mismatch' if findings else 'exact_create_readback', 'findings': findings, **topics,
             'request_sha256': expected['request_sha256'],
-            'capture_sha256': {'created': digest(created), 'document': digest(document), 'app': digest(app)},
+            'capture_sha256': capture_hashes,
             'derived_identifiers': {'document': identifier, 'workbook_model': doc['workbookModelId'],
                                     'query_keys': list(body['queryPresentations']['order'])},
             'native_verified': False, 'publication_authorized': False,
@@ -590,16 +658,16 @@ def verify_create_captures(expected, prepared, created, document, app):
                     'execution, initial publication and App runtime/rendering need separate evidence.'}
 
 
-def verify_demo(prepared, created, document, app, identity, *, project, artifact, spec_artifact, demo_artifact):
+def verify_demo(prepared, created, document, app, identity, *, project, artifact, spec_artifact, demo_artifact, snapshot=None):
     expected = prepare_demo(project=project, artifact=artifact, spec_artifact=spec_artifact, demo_artifact=demo_artifact)
-    result = verify_create_captures(expected, prepared, created, document, app)
+    result = verify_create_captures(expected, prepared, created, document, app, project=project, identity=identity,
+                                    snapshot=snapshot)
     principal = expected['destination']['principal']
     who = create_capture(identity, expected['base_url'], 'GET',
                          '/api/v1/whoami?modelId=' + expected['destination']['model_id'], 200)
     need(who.get('keyScope') == principal['key_scope'] and type(who.get('user')) is dict
          and who['user'].get('id') == principal['user_id']
          and who['user'].get('membershipId') == principal['membership_id'], 'Demo principal readback mismatch')
-    result['capture_sha256']['identity'] = digest(identity)
     result.update(status='exact_demo_readback' if not result['findings'] else 'readback_mismatch',
                   destination=expected['destination'], pending_observations=expected['pending_observations'],
                   execution_authorized=False, release_validated=False, audience_verified=False,
@@ -644,9 +712,13 @@ def main():
             raw = read_bytes(P.relative_file(root, record['html']), MAX_HTML)
             result = prepare_app(record['target'], read(local(record['baseline'])),
                                  read(local(record['current'])), raw.decode('utf-8'),
-                                 project=args.project, artifact=record['html'])
+                                 project=args.project, artifact=record['html'],
+                                 semantic_snapshot=read(local(record['semantic_snapshot'])) if 'semantic_snapshot' in record else None)
         elif args.operation == 'app-verify':
-            result = verify_app(read(local(record['prepared'])), read(local(record['baseline'])), read(local(record['after'])))
+            result = verify_app(read(local(record['prepared'])), read(local(record['baseline'])), read(local(record['after'])),
+                                project=args.project,
+                                baseline_snapshot=read(local(record['baseline_snapshot'])) if 'baseline_snapshot' in record else None,
+                                readback_snapshot=read(local(record['readback_snapshot'])) if 'readback_snapshot' in record else None)
         else:
             need(args.project is not None, 'Engagement required for App creation preparation/readback')
             if args.operation == 'app-demo-prepare':
@@ -654,20 +726,23 @@ def main():
                 result = prepare_demo(project=args.project, artifact=record['html'], spec_artifact=record['spec'],
                                       demo_artifact=record['demo'])
             elif args.operation == 'app-demo-verify':
-                need(set(record) == {'html', 'spec', 'demo', 'prepared', 'created', 'document', 'app', 'identity'},
+                need(set(record) - {'semantic_snapshot'} == {'html', 'spec', 'demo', 'prepared', 'created', 'document', 'app', 'identity'},
                      'Exact demo readback input paths required')
                 result = verify_demo(read(local(record['prepared'])), read(local(record['created'])),
                     read(local(record['document'])), read(local(record['app'])), read(local(record['identity'])),
-                    project=args.project, artifact=record['html'], spec_artifact=record['spec'], demo_artifact=record['demo'])
+                    project=args.project, artifact=record['html'], spec_artifact=record['spec'], demo_artifact=record['demo'],
+                    snapshot=read(local(record['semantic_snapshot'])) if 'semantic_snapshot' in record else None)
             elif args.operation == 'app-create-prepare':
                 need(set(record) == {'html', 'spec'}, 'Exact create input paths required')
                 result = prepare_create(project=args.project, artifact=record['html'], spec_artifact=record['spec'])
             else:
-                need(set(record) == {'html', 'spec', 'prepared', 'created', 'document', 'app'},
+                need(set(record) - {'identity', 'semantic_snapshot'} == {'html', 'spec', 'prepared', 'created', 'document', 'app'},
                      'Exact create readback input paths required')
                 result = verify_create(read(local(record['prepared'])), read(local(record['created'])),
                     read(local(record['document'])), read(local(record['app'])), project=args.project,
-                    artifact=record['html'], spec_artifact=record['spec'])
+                    artifact=record['html'], spec_artifact=record['spec'],
+                    identity=read(local(record['identity'])) if 'identity' in record else None,
+                    snapshot=read(local(record['semantic_snapshot'])) if 'semantic_snapshot' in record else None)
     data = encoded(result) + b'\n'
     fd = os.open(output, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
     with os.fdopen(fd, 'wb') as stream:

@@ -9,6 +9,8 @@ Apply the [dependency policy](references/dependency-policy.md) before any packag
 
 Be the analyst's sidekick: turn a business decision into a useful, trustworthy data experience. Own the shared engagement, requirements, task boundaries, reconciliation, and final handoff. Use native Omni dashboards and native Omni Apps as distinct targets; an external embedded application is an explicit additional choice. Do not replace a requested native dashboard with an app or a mockup.
 
+For DMA-supplied Topics, follow the [Topic sourcing workflow](../omni-backend-handoff/references/topic-first.md) at A and B. Reuse an inspected saved query or create a semantic workbook query through the selected Topic. Route missing fields to the model owner. Carry the scoped query receipt through candidate preparation and readback.
+
 For repository-only intake, use [explicit engagement entry](references/engagement-entry.md)
 to bind the actual checkout, declared host and existing sibling engagement. Read
 the generated reference explicitly; retained blockers do not qualify host access,

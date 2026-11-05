@@ -557,8 +557,10 @@ def receive(project, request_path, response_dir):
             "working_baseline_changed": False}
 
 
-def select(project, exchange_id):
+def select(project, exchange_id, *, verify_only=False):
     root, obj = ap.load_project(project)
+    selected = obj.get("dma_import", {}).get("exchange_id") == exchange_id
+    ap.need(selected or not verify_only, "exchange must already be selected for verification")
     destination = ap.no_links(root / "exchanges" / safe_id(exchange_id))
     manifest, _ = ap.read_json(destination / "exchange.json")
     check_seal(manifest, "analyst_backend_exchange")
@@ -570,7 +572,11 @@ def select(project, exchange_id):
             "invalid exchange inventory")
     for record in records:
         ap.need(ap.digest(ap.relative_file(destination, record["path"]).read_bytes()) == record["sha256"], "exchange artifact changed")
-    if obj.get("dma_import", {}).get("exchange_id") == exchange_id:
+    if selected:
+        relative_catalog = str((destination / "catalog.json").relative_to(root))
+        ap.need(obj["dma_import"]["catalog_path"] == relative_catalog and
+                any(row.get("exchange_id") == exchange_id and row.get("exchange_sha256") == manifest["sha256"]
+                    for row in obj.get("cowork_history", [])), "selected exchange or catalog identity changed")
         current_catalog(root, obj)
         request = fresh_request(root, obj, manifest["request_path"])
         ap.need(request["sha256"] == manifest["request_sha256"], "request changed after receipt")

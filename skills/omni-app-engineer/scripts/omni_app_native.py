@@ -136,6 +136,20 @@ def apply_edits(html, patch, regions):
 
 
 class AppNativeAdapter(n.NativeAdapter):
+    surface = "app"
+
+    @staticmethod
+    def _topic_inputs(baseline, html):
+        # The App has no dashboard controls section. Retain each independently
+        # reviewed governed runtime binding under its stable source control key.
+        data = {}
+        for control in baseline["runtime_contract"].get("controls", []):
+            config = {k: control[k] for k in ("component_id", "query_keys", "topic", "field_ids")}
+            for source_key in control["source_asset_keys"]:
+                data[source_key] = config
+        return {"snapshot": baseline["semantic_snapshot"], "app_html": html,
+                "controls": {"data": data, "order": list(data)}}
+
     def __init__(self, workspace, target, runner=None, http=None):
         super().__init__(workspace, target, runner=runner, http=http)
         self.store = self.root / ".omni-app-native"
@@ -238,7 +252,8 @@ class AppNativeAdapter(n.NativeAdapter):
             need(type(actual.get(key)) is dict and actual[key].get("type") == "query" and
                  actual[key].get("topicName") == topic and actual[key].get("query") == binding["query"],
                  "app.existing_query_binding_changed")
-            need(sorted(binding["field_ids"]) == s.query_fields(binding["query"]), "app.field_mapping_incomplete")
+            n.check_semantic_presentation(actual[key])
+            need(sorted(binding["field_ids"]) == s.query_fields(binding["query"], topic=topic), "app.field_mapping_incomplete")
         need(query_assets(requirements) <= covered, "app.source_query_unbound")
 
     def _runtime(self, path, requirements, bindings, html):
@@ -457,6 +472,9 @@ class AppNativeAdapter(n.NativeAdapter):
             "semantic_sha256": baseline["semantic_sha256"], "capability_sha256": caps["capability_sha256"],
             "validation": "prepared_only", "native_verified": False, "business_accepted": False,
             "runtime_validation": "reviewed_construction_contract_independent_native_cases_required"}
+        topics = self._topics(before, before["state"], **self._topic_inputs(baseline, body["html"]))
+        if topics is not None:
+            candidate["dma_topics"] = topics
         if engagement is not None:
             candidate["engagement"] = engagement
         digest = n.digest(candidate)
@@ -483,6 +501,8 @@ class AppNativeAdapter(n.NativeAdapter):
                  value["initial_body"] == baseline["initial_body"] and value["semantic_sha256"] == baseline["semantic_sha256"],
                  "app.initial_candidate_contract_changed")
             self._validate_bindings(baseline["bindings"], self._requirements([value["requirements"]["path"]]), value["before"])
+            self._current_topics(value, value["before"], value["before"]["state"],
+                                 **self._topic_inputs(baseline, value["expected_app"]["html"]))
         return value
 
     def capture_baseline(self, spec_path, output_relative):
@@ -561,6 +581,9 @@ class AppNativeAdapter(n.NativeAdapter):
             "semantic_sha256": baseline["semantic_sha256"], "capability_sha256": caps["capability_sha256"],
             "validation": "prepared_only", "native_verified": False, "business_accepted": False,
             "runtime_validation": "retained_reviewed_fragments_only"}
+        topics = self._topics(before, before["state"], **self._topic_inputs(baseline, expected))
+        if topics is not None:
+            candidate["dma_topics"] = topics
         if engagement is not None:
             candidate["engagement"] = engagement
         digest = n.digest(candidate)
@@ -593,6 +616,8 @@ class AppNativeAdapter(n.NativeAdapter):
                  spec["baseline_path"] == value["baseline"]["path"] and spec["patch_path"] == value["patch_file"]["path"],
                  "app.candidate_contract_paths_changed")
             self._runtime(baseline["runtime"]["path"], req, baseline["bindings"], value["expected_app"]["html"])
+            self._current_topics(value, value["before"], value["before"]["state"],
+                                 **self._topic_inputs(baseline, value["expected_app"]["html"]))
         return value
 
     @staticmethod
@@ -645,6 +670,8 @@ class AppNativeAdapter(n.NativeAdapter):
             if initial:
                 receipt["operation"] = "initial_put"
             self._stage_gate("release", content, expected=candidate.get("engagement"), execution=True)
+            receipt.update(self._current_topics(candidate, before, before["state"],
+                           **self._topic_inputs(baseline, candidate["expected_app"]["html"])))
             self._write(intent, receipt, exclusive=True)
             try:
                 status, _, raw = self._rest("PUT" if initial else "PATCH", self._app_route(),
@@ -655,10 +682,12 @@ class AppNativeAdapter(n.NativeAdapter):
                      "app.write_response_mismatch")
                 receipt["response"] = response
                 after = self.inspect()
-                self.baseline(candidate["baseline"]["path"], after)
-                receipt["baseline_check"] = {"semantic_snapshot": baseline["semantic_snapshot"],
-                    "semantic_sha256": baseline["semantic_sha256"], "checked_at": n.now()}
                 receipt["readback"] = after
+                checked = self.baseline(candidate["baseline"]["path"], after)
+                receipt.update(self._current_topics(candidate, after, after["state"], readback=True,
+                               **self._topic_inputs(checked, after["app"]["html"])))
+                receipt["baseline_check"] = {"semantic_snapshot": checked["semantic_snapshot"],
+                    "semantic_sha256": checked["semantic_sha256"], "checked_at": n.now()}
                 receipt["status"] = "readback_matched" if self.matches(candidate, after) else "readback_mismatch"
             except (ValueError, OSError, TimeoutError, TypeError, KeyError, AttributeError) as exc:
                 receipt["status"], receipt["error_class"] = "outcome_unknown", type(exc).__name__
@@ -680,7 +709,10 @@ class AppNativeAdapter(n.NativeAdapter):
             current = self.inspect_initial() if initial else self.inspect()
             try:
                 self._candidate(candidate_sha256)
-                self.baseline(candidate["baseline"]["path"], current)
+                baseline = self.baseline(candidate["baseline"]["path"], current)
+                current_html = current["app"]["html"] if current["app"] is not None else None
+                intent.update(self._current_topics(candidate, current, current["state"], readback=True,
+                              **self._topic_inputs(baseline, current_html)))
                 fresh = True
             except (ValueError, OSError):
                 fresh = False
@@ -688,7 +720,6 @@ class AppNativeAdapter(n.NativeAdapter):
                 "automatic_retry_allowed": False,
                 "status": "readback_matched" if fresh and self.matches(candidate, current) else "conflict_or_stale_evidence"}
             if fresh:
-                baseline = self.baseline(candidate["baseline"]["path"])
                 receipt["baseline_check"] = {"semantic_snapshot": baseline["semantic_snapshot"],
                     "semantic_sha256": baseline["semantic_sha256"], "checked_at": n.now()}
             self._write(f".omni-app-native/executions/{candidate_sha256}/reconciliation.json", receipt)
@@ -727,6 +758,9 @@ def validate_delivery(root, candidate_path, execution_receipt_path, coverage_pat
     check = receipt.get("baseline_check", {})
     need(check.get("semantic_snapshot") == baseline["semantic_snapshot"] and
          check.get("semantic_sha256") == baseline["semantic_sha256"] and s.cw.text(check.get("checked_at")), "app.baseline_recheck_missing")
+    topics = adapter._current_topics(candidate, readback, readback["state"], readback=True,
+                                     **adapter._topic_inputs(baseline, readback["app"]["html"]))
+    need(receipt.get("dma_topics") == topics.get("dma_topics"), "app.receipt_topic_binding_changed")
     coverage = w.load(root, coverage_path)
     need(coverage["requirements"] == w.pin(root, candidate["requirements"]["path"]) and coverage["candidate"] == w.pin(root, candidate_path),
          "app.coverage_binding_mismatch")

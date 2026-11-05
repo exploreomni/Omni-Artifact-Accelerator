@@ -86,6 +86,110 @@ class ContinuationTests(unittest.TestCase):
         with patch.object(dma, "trusted_dma", return_value=self.gw):
             return c.initiate(self.packet_path, self.project, run_dir=self.root / "run", dma_scripts=self.runtime)
 
+    def v2(self, surfaces, task_mode='net-new', review=True):
+        self.packet = self.make_packet(review=review)
+        self.packet.update(schema_version=2, target_surfaces=surfaces, task_mode=task_mode, app_ids=['app-source'],
+                           native_validation=None, topic_readback=None,
+                           destination={'base_url':'https://example.invalid', 'model_id':'model-1', 'branch_id':'branch-1',
+                                        'model_version_id':'version-1'})
+        self.save()
+
+    def evidence(self, purpose, body):
+        name = 'source/' + purpose + '.json'
+        pin = {'path': name, 'sha256': self.write(name, body)}
+        self.packet[purpose] = pin
+        self.packet['files'].append(dict(pin, purpose=purpose))
+        self.save()
+
+    def test_app_selection_is_project_relative_and_resume_rechecks_all_inputs(self):
+        self.v2(['app'])
+        self.evidence('topic_readback', {'fixture': 'supplied readback'})
+        self.evidence('native_validation', {'schema_version':1,'kind':'omni_native_receipt',
+            'contract_version':'omni-native-v1-2026-10-05','operation':'validate', 'status':'simulated_passed',
+            'execution_mode':'simulation','native_verified':False,'target':{'instance_url':'https://example.invalid',
+                'model_id':'model-1','branch_id':'branch-1'},'candidate_sha256':'3' * 64,'context_sha256':'4' * 64})
+        receipt = self.initiate()
+        project = json.loads((self.project / 'project.json').read_bytes())
+        self.assertEqual(project['surfaces'], ['app'])
+        self.assertEqual(project['mode'], 'net-new')
+        self.assertEqual(project['dma_topic_policy'], 'selected-topic-v1')
+        selection = c.project_selection(self.project)
+        self.assertEqual(selection, project['dma_continuation_selection'])
+        self.assertEqual(selection['destination']['model_version_id'], 'version-1')
+        for key in ('packet','semantic_review','native_validation','topic_readback'):
+            pin = selection[key]
+            self.assertEqual(pin['sha256'], dma.digest((self.project / pin['path']).read_bytes()))
+        self.assertEqual(receipt['native_validation_assurance'], 'supplied_unverified')
+        self.assertFalse(receipt['native_verified'])
+        self.assertTrue(self.initiate()['reused'])
+        (self.project / selection['topic_readback']['path']).write_text('{}')
+        with self.assertRaisesRegex(ValueError, 'retained input changed'):
+            c.project_selection(self.project)
+
+    def test_both_surfaces_no_catalogue_still_marks_the_project(self):
+        self.v2(['dashboard','app'], 'enhancement', review=False)
+        self.packet['topic_names'] = []
+        self.save()
+        self.initiate()
+        project = json.loads((self.project / 'project.json').read_bytes())
+        self.assertEqual(project['surfaces'], ['dashboard','app'])
+        self.assertEqual(project['mode'], 'enhancement')
+        self.assertEqual(project['dma_topic_policy'], 'selected-topic-v1')
+        expected = c.project_selection(self.project)
+        self.assertIsNone(expected['semantic_review'])
+        self.assertEqual(expected['topic_names'], [])
+        project['dma_continuation_selection']['topic_names'] = ['substituted']
+        (self.project / 'project.json').write_text(json.dumps(project))
+        with self.assertRaisesRegex(ValueError, 'selection changed'):
+            c.project_selection(self.project)
+        with self.assertRaisesRegex(ValueError, 'selection changed'):
+            self.initiate()
+
+    def test_v1_historical_selection_derived_without_rewriting_project(self):
+        self.initiate()
+        project = json.loads((self.project / 'project.json').read_bytes())
+        self.assertEqual(project.pop('dma_topic_policy'), 'selected-topic-v1')
+        (self.project / 'project.json').write_text(json.dumps(project))
+        previous = (self.project / 'project.json').read_bytes()
+        self.assertTrue(self.initiate()['reused'])
+        selection = c.project_selection(self.project)
+        self.assertEqual((selection['protocol_version'], selection['target_surfaces'], selection['task_mode']),
+                         (1, ['dashboard'], 'migration'))
+        self.assertEqual(previous, (self.project / 'project.json').read_bytes())
+
+    def test_v2_candidate_or_destination_substitution_blocks_initial_import(self):
+        self.v2(['app'])
+        self.evidence('native_validation', {'schema_version':1,'kind':'omni_native_receipt',
+            'contract_version':'omni-native-v1-2026-10-05','operation':'validate','status':'simulated_passed',
+            'execution_mode':'simulation','native_verified':False,'target':{'instance_url':'https://example.invalid',
+                'model_id':'other','branch_id':'branch-1'},'candidate_sha256':'3' * 64,'context_sha256':'4' * 64})
+        with self.assertRaisesRegex(ValueError, 'destination mismatch'):
+            self.initiate()
+        self.assertFalse(self.project.exists())
+
+    def test_integrated_v2_rechecks_saved_surface_and_evidence_selection(self):
+        self.v2(['dashboard','app'], 'migration')
+        self.packet.update(mode='integrated', source_migration_scope='full_dashboard')
+        self.evidence('topic_readback', {'fixture':'pinned readback'})
+        request = {k: copy.deepcopy(self.packet[k]) for k in ('schema_version','domain_id','choice','request_reference',
+                   'target_surfaces','task_mode','dashboard_ids','app_ids','topic_names','destination')}
+        request['context_files'] = [{'path':'supplied.json','purpose':'topic_readback','sha256':self.packet['topic_readback']['sha256']}]
+        self.state['workflow']['frontend_continuations'] = {'items':[{'id':self.packet['continuation_id'],
+            'scope_sha256':self.packet['scope_sha256'],'mode':'integrated','request':request}]}
+        self.assertIsNotNone(self.initiate()['backend_context'])
+        self.assertTrue(self.initiate()['reused'])
+        request['target_surfaces'] = ['dashboard']
+        with self.assertRaisesRegex(ValueError, 'selection changed'):
+            self.initiate()
+        request['target_surfaces'] = ['dashboard','app']
+        request['context_files'][0]['sha256'] = 'f'*64
+        with self.assertRaisesRegex(ValueError, 'evidence selection changed'):
+            self.initiate()
+        self.packet['mode'] = 'independent'
+        self.save()
+        with self.assertRaisesRegex(ValueError, 'mode differs'):
+            self.initiate()
+
     def test_independent_exact_retry_keeps_one_project_import_and_no_authority(self):
         first = self.initiate()
         project_before = (self.project / "project.json").read_bytes()

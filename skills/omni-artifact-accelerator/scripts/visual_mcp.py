@@ -193,6 +193,8 @@ LOCAL_TOOLS = [
          {"source": STRING, "output": STRING}),
     tool("looker_check_capture", "Verify local Looker capture identity and attachments; does not establish native or business acceptance.",
          {"source": STRING}, read=True),
+    tool('dma_topic_prepare', 'Prepare private Topic access, query coverage or a scoped backend gap for a DMA-bound engagement.',
+         {'operation': {**STRING, 'enum': ['access','queries','gap','panels']}, 'request': STRING, 'output': STRING}, ['operation','request']),
     tool('domo_plan_source', 'Recover Domo scope and missing interview answers; prepare bounded source requests without loading a runtime.',
          {'spec': STRING, 'output': STRING}),
     tool('domo_materialize_requests', 'Recheck the pinned intake and write fixed Domo operation requests once.',
@@ -1387,6 +1389,15 @@ class Bridge:
                 {'tool_profile': self.tool_profile, 'tool_names': sorted(t['name'] for t in self.definitions())})
         if name in ('domo_source_operation', 'domo_source_doctor'):
             return self.domo_operations.describe() if name == 'domo_source_doctor' else self.domo_operations.run(args['operation_id'], args['resume'])
+        if name == 'dma_topic_prepare':
+            module = workflow.ap.routing_helper('dma_topics')
+            if args['operation'] == 'panels':
+                workflow.need('output' not in args, 'Panel receipt path is bound to the actual HTML and document.')
+                return module.prepare_panels(self.root, workflow.ap, args['request'])
+            workflow.need('output' in args, 'An engagement-relative output is required.')
+            if args['operation'] == 'gap':
+                return module.prepare_gap(self.root, workflow.ap, args['request'], args['output'])
+            return module.prepare(self.root, workflow.ap, args['request'], args['output'], analysis=args['operation'] == 'queries')
         if name in ('domo_plan_source', 'domo_materialize_requests', 'domo_check_capabilities', 'domo_build_handoff',
                     'domo_import_capture', 'domo_frontend_return', 'domo_check_frontend_return'):
             spec = importlib.util.spec_from_file_location('host_domo_workflow', Path(__file__).with_name('domo_workflow.py'))

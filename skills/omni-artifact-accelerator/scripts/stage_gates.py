@@ -880,6 +880,13 @@ def _report(root, fd, project, required, state, P, provider):
             report['findings'].append('stale_workflow_context:' + stage)
             report['next_stage'] = stage
             break
+        if stage in ('access','analysis') and project.get('dma_topic_policy') == 'selected-topic-v1':
+            try:
+                P.routing_helper('dma_topics').check_stage(root, project, stage, event['payload'], P, current.get('access'))
+            except (ValueError, KeyError, TypeError, OSError) as error:
+                report['findings'].append(str(error) if isinstance(error, ValueError) else 'dma_topics.invalid_stage_evidence')
+                report['next_stage'] = stage
+                break
         if stage == 'brief':
             if event['payload'].get('discovery_version') == 1:
                 try:
@@ -1217,6 +1224,8 @@ def record(root, request, *, P=None, provider=None):
                   'stage_gate_review_candidate_mismatch')
         if stage in EVIDENCE:
             payload['evidence'] = {k: _pin(fd, v, P) for k, v in payload['evidence'].items()}
+        if stage in ('access','analysis') and any(k in project for k in ('dma_import','dma_continuation','dma_topic_policy')):
+            P.routing_helper('dma_topics').check_stage(root, project, stage, payload, P, state['current'].get('access'))
         if stage == 'brief':
             _, paths = _discovery_snapshot(fd, project, payload, P)
             payload['discovery_dependencies'] = [_pin(fd, p, P) for p in paths]

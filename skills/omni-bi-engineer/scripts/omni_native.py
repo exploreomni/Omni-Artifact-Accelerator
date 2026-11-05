@@ -241,6 +241,19 @@ def validate_ownership(ownership):
             raise NativeError("Order ownership must be boolean")
 
 
+def check_semantic_presentation(tile):
+    """Explicit non-Topic or SQL indicators contradict a structured semantic tile."""
+    for obj in (tile, tile.get("query")):
+        if not isinstance(obj, dict):
+            continue
+        for key, value in obj.items():
+            indicator = key.replace("_", "").lower()
+            if ((indicator == "querytype" and (not isinstance(value, str) or value.upper() != "TOPIC"))
+                    or (indicator == "issql" and value is not False) or indicator in {"sql", "rawsql"}
+                    or (indicator == "usereditedsql" and value != "")):
+                raise NativeError("Raw SQL or non-Topic query presentation requires a separately qualified path")
+
+
 def expected_state(before, payload, ownership):
     """Interpret documented PATCH merge rules, without inventing chart grammars."""
     validate_ownership(ownership)
@@ -284,8 +297,7 @@ def expected_state(before, payload, ownership):
                 if set(value) & {"model_extension_id", "foreignModelId", "fileUploadId", "miniUuid", "editingModelObjectName", "editingModelObjectNameChange"}:
                     raise NativeError("Read-only/model/source mutation fields are excluded")
                 query = value.get("query")
-                if value.get("isSql") is True or (isinstance(query, dict) and set(query) & {"sql", "rawSql", "raw_sql"}):
-                    raise NativeError("Raw SQL presentations require a separately qualified path")
+                check_semantic_presentation(value)
                 if query is not None and (not isinstance(query, dict) or set(query) & {"modelId", "model_id", "branchId"}):
                     raise NativeError("Query model/branch must remain anchored to the selected draft")
                 # Existing foreign/source/model-editor tabs cannot be converted through this helper.
@@ -370,6 +382,8 @@ def readback_matches(candidate, actual):
 
 
 class NativeAdapter:
+    surface = "dashboard"
+
     def __init__(self, workdir, target: TargetConfig, runner=None, http=None):
         self.root = Path(workdir).resolve(strict=True)
         if not self.root.is_dir():
@@ -407,6 +421,39 @@ class NativeAdapter:
             raise NativeError("Evidence file exceeds bounded size")
         raw = path.read_bytes()
         return {"path": relative, "sha256": hashlib.sha256(raw).hexdigest(), "bytes": len(raw)}
+
+    def _topics(self, inspection, state, snapshot=None, *, readback=False, controls=None, app_html=None):
+        """Check the complete effective document against current imported evidence."""
+        context = {"base_url": self.target.base_url, "model_id": state.get("modelId"),
+                   "workbook_model_id": state.get("workbookModelId"),
+                   "principal_id": inspection["identity"]["user"]["membershipId"]}
+        draft = inspection["draft_context"]
+        branch = draft.get("branch")
+        if "branch" in draft and (branch is None or isinstance(branch, dict) and isinstance(branch.get("id"), str)):
+            context["branch_id"] = branch["id"] if branch else None
+        try:
+            topics = WORKFLOW.ap.routing_helper("dma_topics").guard(self.root, WORKFLOW.ap, surface=self.surface,
+                document_id=self.target.document_id, context=context, presentations=state.get("queryPresentations"),
+                controls=state.get("controls") if controls is None else controls, snapshot=snapshot, readback=readback,
+                app_html=app_html)
+        except (ValueError, OSError) as exc:
+            raise NativeError("DMA Topic evidence rejected: " + str(exc)) from exc
+        if topics is not None:
+            if snapshot is None:
+                raise NativeError("DMA-bound draft mutation requires a typed current workbook and Topic baseline")
+            if self.surface == "app" and (not isinstance(app_html, str) or not app_html.strip()):
+                raise NativeError("DMA-bound native App checks require exact candidate or returned HTML")
+            roles = inspection["identity"].get("rolesByModel")
+            if ("branch_id" not in context or inspection["identity"].get("keyScope") != "user" or
+                    not isinstance(roles, dict) or context["model_id"] not in roles):
+                raise NativeError("DMA Topic evidence requires observed branch and user identity scoped to this model")
+        return topics
+
+    def _current_topics(self, candidate, inspection, state, snapshot=None, *, readback=False, controls=None, app_html=None):
+        topics = self._topics(inspection, state, snapshot, readback=readback, controls=controls, app_html=app_html)
+        if topics != candidate.get("dma_topics"):
+            raise NativeError("DMA Topic evidence changed; prepare a new candidate")
+        return {"dma_topics": topics} if topics is not None else {}
 
     def _stage_gate(self, action, content=None, *, expected=None, execution=False):
         """Bind native authoring to the cooperating project's current iteration.
@@ -748,6 +795,10 @@ class NativeAdapter:
         if baseline is not None:
             candidate["standalone_baseline"] = {k: v for k, v in baseline.items() if k != "check"}
             candidate["standalone_baseline_check"] = baseline["check"]
+        topics = self._topics(before, candidate["expected_state"],
+                              baseline["check"]["semantic_snapshot"] if baseline else None)
+        if topics is not None:
+            candidate["dma_topics"] = topics
         candidate_hash = digest(candidate)
         candidate["candidate_sha256"] = candidate_hash
         self._stage_gate("build", payload_bytes, expected=engagement, execution=True)
@@ -773,12 +824,18 @@ class NativeAdapter:
                     raise NativeError("Source, semantic, payload, or ownership evidence changed; prepare again")
             if encoded(self._read(pins["payload_file"]["path"])) != encoded(candidate["payload"]):
                 raise NativeError("Candidate payload differs from its pinned evidence")
+            if (self._read(pins["ownership_file"]["path"]) != candidate["ownership"] or
+                    expected_state(candidate["before"]["state"], candidate["payload"], candidate["ownership"])
+                    != candidate["expected_state"]):
+                raise NativeError("Candidate effective document differs from its pinned payload/ownership")
             if self._requirements([p["path"] for p in pins["source_files"]]) != candidate["visual_requirements"]:
                 raise NativeError("Visual source route or requirements changed; prepare again")
             baseline = self._baseline_check(pins["semantic_file"]["path"], candidate["visual_requirements"],
                 pins["payload_file"], pins["ownership_file"], None, live=False)
             if baseline != candidate.get("standalone_baseline"):
                 raise NativeError("Existing-Omni baseline binding changed")
+            self._current_topics(candidate, candidate["before"], candidate["expected_state"],
+                                 candidate.get("standalone_baseline_check", {}).get("semantic_snapshot"))
         return candidate
 
     def _lock(self):
@@ -817,6 +874,8 @@ class NativeAdapter:
             if baseline is not None:
                 receipt["standalone_baseline_check"] = baseline["check"]
             self._stage_gate("release", payload_bytes, expected=candidate.get("engagement"), execution=True)
+            receipt.update(self._current_topics(candidate, current, candidate["expected_state"],
+                baseline["check"]["semantic_snapshot"] if baseline else None))
             self._write(intent_path, receipt, exclusive=True)
             try:
                 response = self._cli(["documents", "v2-patch-draft-by-identifier", self.target.document_id,
@@ -826,14 +885,17 @@ class NativeAdapter:
                     raise NativeError("PATCH response target mismatch")
                 after = self.inspect()
                 receipt["readback"] = after
+                snapshot = None
                 if baseline is not None:
                     # The local lock cannot prevent a remote model editor. A
                     # second semantic read records detected races as unknown.
                     checked = self._baseline_check(pins["semantic_file"]["path"], candidate["visual_requirements"],
                         pins["payload_file"], pins["ownership_file"], after)
                     receipt["standalone_baseline_check"] = checked["check"]
+                    snapshot = checked["check"]["semantic_snapshot"]
+                receipt.update(self._current_topics(candidate, after, after["state"], snapshot, readback=True))
                 receipt["status"] = "readback_matched" if readback_matches(candidate, after["state"]) else "readback_mismatch"
-            except (ValueError, OSError, TimeoutError, TypeError, AttributeError) as exc:
+            except (ValueError, OSError, TimeoutError, TypeError, KeyError, AttributeError) as exc:
                 receipt["status"] = "outcome_unknown"
                 receipt["error_class"] = type(exc).__name__
             receipt["finished_at"] = now()
@@ -855,14 +917,17 @@ class NativeAdapter:
             status = "readback_matched" if readback_matches(candidate, current["state"]) else "conflict_or_partial"
             if current["state"] == candidate["before"]["state"]:
                 status = "before_state_observed"
-            if candidate.get("standalone_baseline"):
-                pins = candidate["pins"]
-                try:
+            try:
+                snapshot = None
+                if candidate.get("standalone_baseline"):
+                    pins = candidate["pins"]
                     checked = self._baseline_check(pins["semantic_file"]["path"], candidate["visual_requirements"],
                         pins["payload_file"], pins["ownership_file"], current)
                     intent["standalone_baseline_check"] = checked["check"]
-                except (ValueError, OSError):
-                    status = "semantic_context_drift_or_unavailable"
+                    snapshot = checked["check"]["semantic_snapshot"]
+                intent.update(self._current_topics(candidate, current, current["state"], snapshot, readback=True))
+            except (ValueError, OSError):
+                status = "semantic_context_drift_or_unavailable"
             receipt = {**intent, "status": status, "reconciled_at": now(), "readback": current,
                        "automatic_retry_allowed": False, "source_evidence_current": evidence_current}
             self._write(f".omni-native/executions/{candidate_sha256}/reconciliation.json", receipt)
@@ -892,6 +957,8 @@ class NativeAdapter:
                          "readback_sha256": digest(current["state"]), "authorization_ref": authorization_ref}
             if baseline is not None:
                 operation["standalone_baseline_check"] = baseline["check"]
+            operation.update(self._current_topics(candidate, current, current["state"],
+                baseline["check"]["semantic_snapshot"] if baseline else None, readback=True))
             export_id = digest(export_identity(operation))
             relative = f".omni-native/exports/{export_id}"
             self._write(relative + "/intent.json", {**operation, "export_id": export_id, "created_at": now()}, exclusive=True)

@@ -19,6 +19,8 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 CASES = {
+    "dma-topic-policy": "tests/test_dma_topic_policy.py",
+    "dma-native-topics": "tests/test_dma_native_topics.py",
     "experience-intent": "tests/test_experience_intent.py",
     "experience-continuity": "tests/test_experience_continuity.py",
     "experience-packet-scope": "tests/test_experience_packet_scope.py",
@@ -115,6 +117,7 @@ CASE_TIMEOUTS = {name: 120 for name in ('workflow', 'product-intent', 'stage-gat
     'experience-enforcement', 'data-refresh', 'periscope-integration', 'metabase-integration', 'webfocus-integration', 'thoughtspot-integration', 'qlik-integration', 'microstrategy-integration', 'cognos-integration', 'businessobjects-integration', 'report-native', 'report-source-integration')}
 # The three-route native authorization suite repeats complete source-bound
 # lifecycles. Keep a bounded allowance separate from runtime transport deadlines.
+CASE_TIMEOUTS.update({'dma-native-topics':180,'dma-topic-policy':120})
 CASE_TIMEOUTS['native-stage-gates'] = 300
 CASE_TIMEOUTS.update({'execution-runtime': 120, 'execution-bridge': 120, 'native-demo': 180})
 CASE_TIMEOUTS.update({'execution-preparation': 120, 'validation-snapshot': 120, 'selective-reads': 120, 'context-layout': 120})

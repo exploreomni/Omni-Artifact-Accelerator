@@ -5,6 +5,8 @@ description: Bind reviewed analyst requirements to Omni topics, workbook queries
 
 # BI engineer
 
+For DMA-bound artifacts, use [selected Topic evidence](../omni-backend-handoff/references/topic-first.md). Bind each consumer and control to its document-scoped query, and keep unanswerable panels in the scoped backend request.
+
 For native Reports Beta, partner with the [report builder](../omni-report-builder/SKILL.md).
 Own exact dataset/query/field/parameter mappings, grain, sort, filter stage and
 independent total expectations. Page groups and totals are not automatically

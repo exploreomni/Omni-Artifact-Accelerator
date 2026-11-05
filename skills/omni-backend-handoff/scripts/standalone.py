@@ -38,8 +38,13 @@ def _app_module():
     return module
 
 
-def query_fields(query):
+def query_fields(query, *, topic=None):
     """Bounded documented semantic grammar; calculations/pivots need qualification."""
+    if topic is not None:
+        ap.need(isinstance(query, dict), "standalone.unsupported_query_grammar")
+        query = dict(query)
+        ap.need(query.pop("join_paths_from_topic_name", topic) == topic and
+                query.pop("userEditedSQL", "") == "", "standalone.query_topic_or_sql_conflict")
     ap.need(type(query) is dict and set(query) <= {"fields", "filters", "sorts", "limit", "table"},
             "standalone.unsupported_query_grammar")
     cw.strings(query.get("fields"), "standalone.query_fields", nonempty=True)
@@ -233,7 +238,7 @@ def validate_spec(root, spec, workflow):
         ap.need(queries[key].get("topicName") == topic and queries[key].get("query") == binding["query"],
                 "standalone.payload_query_changed")
         cw.strings(binding["field_ids"], "standalone.field_ids", nonempty=True)
-        ap.need(sorted(binding["field_ids"]) == query_fields(binding["query"]),
+        ap.need(sorted(binding["field_ids"]) == query_fields(binding["query"], topic=topic),
                 "standalone.field_mapping_incomplete")
     ap.need(seen == set(queries), "standalone.query_binding_incomplete")
     validate_control_bindings(root, spec, requirements, workflow)
@@ -244,12 +249,22 @@ def selected_backend(root, requirements, workflow):
     """A current model inspection cannot stand in for a selected DMA response."""
     root, project = ap.load_project(root)
     imported = project.get("dma_import", {})
-    if requirements["route"] == "reuse_existing" and not imported:
-        return None
+    if requirements["route"] == "reuse_existing" and "exchange_id" not in imported:
+        topics = ap.routing_helper("dma_topics")
+        if not topics.bound(project):
+            return None
+        # A direct handoff or continuation can supply an existing-model catalog.
+        # Recheck the producer and its registered bytes; no exchange is selected.
+        selection, catalog, _ = topics.current(root, project, ap)
+        ap.need(catalog is not None, "standalone.current_dma_catalog_required")
+        result = {"catalog": catalog, "source": "imported_semantic_handoff"}
+        if selection:
+            result["continuation_packet"] = selection["packet"]
+        return result
     ap.need(cw.text(imported.get("exchange_id")), "standalone.selected_backend_exchange_required")
     # Already-selected branch rechecks original source inputs and exchange pins;
     # it cannot select another candidate or synthesize an import.
-    result = cw.select(root, imported["exchange_id"])
+    result = cw.select(root, imported["exchange_id"], verify_only=True)
     ap.need(result["status"] == "candidate_already_selected", "standalone.existing_backend_selection_required")
     pin, _ = cw.current_catalog(root, project)
     return {"catalog": pin, "exchange_id": imported["exchange_id"]}
@@ -387,6 +402,8 @@ def verify_delivery(root, spec):
             check.get("semantic_sha256") == baseline["semantic_sha256"] and
             check.get("semantic_snapshot") == baseline["inspection"]["semantic_snapshot"] and cw.text(check.get("checked_at")),
             "standalone.native_baseline_recheck_missing")
+    topics = adapter._current_topics(candidate, readback, readback["state"], check["semantic_snapshot"], readback=True)
+    ap.need(receipt.get("dma_topics") == topics.get("dma_topics"), "standalone.receipt_topic_binding_changed")
     coverage = workflow.load(root, spec["coverage_path"])
     ap.need(coverage.get("requirements") == workflow.pin(root, spec["requirements_path"]) and
             coverage.get("candidate") == workflow.pin(root, spec["candidate_path"]), "standalone.coverage_binding_mismatch")

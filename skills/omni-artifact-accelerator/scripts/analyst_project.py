@@ -848,6 +848,7 @@ def import_dma(root, review):
     output = dma_catalog(review)
     destination = root / "inputs" / "dma-catalog.json"
     write_json(destination, output)
+    obj["dma_topic_policy"] = "selected-topic-v1"
     obj["dma_import"] = {**output["source"], "catalog_path": "inputs/dma-catalog.json"}
     obj["sources"].append({"id": "dma-catalog", "path": "inputs/dma-catalog.json",
                            "sha256": digest(destination.read_bytes())})
@@ -861,7 +862,7 @@ def routing_helper(name='task_routing'):
                   'context_packets', 'execution_efficiency', 'incremental_review', 'execution_bridge',
                   'execution_runtime', 'execution_qualification', 'assembly_provenance', 'analytical_evidence',
                   'execution_contracts', 'execution_observability', 'execution_preparation', 'selective_reads',
-                  'experience_intent', 'experience_review', 'engagement_bootstrap'}, 'unknown routing helper')
+                  'experience_intent', 'experience_review', 'engagement_bootstrap', 'dma_topics'}, 'unknown routing helper')
     # Fixed first-party module only. The host verifier never comes from a request,
     # file path or environment variable. Share its scope across helper imports.
     cache_key = '_oaa_stage_gates_' + digest(str(Path(__file__).resolve().parent).encode())
@@ -1063,6 +1064,10 @@ def packet_data(root, role, inputs, assignment=None):
         result["design_context"] = design_context
     if product_context['enabled'] or role == 'product-owner' or product_context.get('experience_summary'):
         result['product_context'] = product_context
+    if any(k in obj for k in ('dma_continuation','dma_continuation_selection','dma_import','dma_topic_policy')):
+        binding = routing_helper('dma_topics').packet_context(root, obj, role, gate, scope_ids, sys.modules.get(__name__) or routing_helper('visual_workflow').ap)
+        if binding is not None:
+            result['dma_topic_context'] = binding
     if obj.get("dma_import"):
         result["current_dma_catalog"] = obj["dma_import"].get("catalog_path", "inputs/dma-catalog.json")
         result["baseline_note"] = "Other DMA catalogs are historical comparison evidence, not the current working binding."
@@ -1112,7 +1117,7 @@ def packet_check(root, packet_relative):
         if saved.get("assignment") is not None:
             need(saved.get("task_id") == current.get("task_id"), "assigned task identity changed")
         for key in ("skill", "objective", "allowed_actions", "external_mutations_authorized",
-                    "host_must_supply", "stop_conditions", "trust_note", "current_dma_catalog", "baseline_note",
+                    "host_must_supply", "stop_conditions", "trust_note", "current_dma_catalog", "baseline_note", "dma_topic_context",
                     "assignment", "assignment_sha256", "product_context", "stage_context"):
             if saved.get(key) != current.get(key):
                 findings.append({"code": "packet_context_changed", "field": key})
@@ -1163,7 +1168,7 @@ def main():
     cmd.add_argument('--project', required=True)
     cmd.add_argument('--tool', required=True)
     cmd.add_argument('--request', required=True, help='JSON tool arguments; all referenced paths remain engagement-relative')
-    for command in ("plan", "verify", "import-dma", "register", "packet", "packet-bindings", "design-freeze", "design-check", "design-pin",
+    for command in ("plan", "verify", "dma-topic-access", "dma-topic-plan", "dma-topic-gap", "dma-topic-panels", "import-dma", "register", "packet", "packet-bindings", "design-freeze", "design-check", "design-pin",
                     "intent-select", "intent-check", "intent-cases", "claim-work", "prepare-dispatch", "record-dispatch",
                     "checkpoint-work", "work-status", "review-work", "packet-check", "experience-check",
                     "run-start", "run-check", "run-guidance", "source-check", "phase-check", "candidate-freeze", "delivery-check", "source-inventory",
@@ -1203,6 +1208,11 @@ def main():
             cmd.add_argument("--review-spec", help="engagement-relative review spec defining scope and required lanes")
         elif command == "design-check":
             cmd.add_argument("--record", help="engagement-relative historical review; default selected record")
+        elif command == "dma-topic-panels":
+            cmd.add_argument('--request', required=True)
+        elif command in ("dma-topic-access", "dma-topic-plan", "dma-topic-gap"):
+            cmd.add_argument('--request', required=True)
+            cmd.add_argument('--output', required=True)
         elif command == "import-dma":
             cmd.add_argument("--review", required=True)
         elif command == "register":
@@ -1288,6 +1298,13 @@ def main():
             result = intent_helper().check(args.project)
         elif args.command == "intent-cases":
             result = intent_helper().case_templates(args.project, args.review_spec)
+        elif args.command == "dma-topic-panels":
+            result = routing_helper('dma_topics').prepare_panels(args.project, sys.modules[__name__], args.request)
+        elif args.command == "dma-topic-gap":
+            result = routing_helper('dma_topics').prepare_gap(args.project, sys.modules[__name__], args.request, args.output)
+        elif args.command in ("dma-topic-access", "dma-topic-plan"):
+            result = routing_helper('dma_topics').prepare(args.project, sys.modules[__name__], args.request, args.output,
+                                                          analysis=args.command == 'dma-topic-plan')
         elif args.command == "import-dma":
             result = import_dma(args.project, args.review)
         elif args.command == "register":
