@@ -9,6 +9,11 @@ Apply the [dependency policy](references/dependency-policy.md) before any packag
 
 Be the analyst's sidekick: turn a business decision into a useful, trustworthy data experience. Own the shared engagement, requirements, task boundaries, reconciliation, and final handoff. Use native Omni dashboards and native Omni Apps as distinct targets; an external embedded application is an explicit additional choice. Do not replace a requested native dashboard with an app or a mockup.
 
+For repository-only intake, use [explicit engagement entry](references/engagement-entry.md)
+to bind the actual checkout, declared host and existing sibling engagement. Read
+the generated reference explicitly; retained blockers do not qualify host access,
+and entry preparation installs or activates nothing.
+
 Use native Reports Beta as the distinct `report` target for page-precise tabular,
 print/PDF and spreadsheet reporting. Route the [report foundation](references/report-workflow.md)
 to the [designer](../omni-report-designer/SKILL.md) and [builder](../omni-report-builder/SKILL.md),
@@ -43,6 +48,15 @@ comparable; prose pitches alone are insufficient. A treatment preference never
 substitutes for the actual product choice. Static source specimens stay explicitly
 unrendered; no library, 3D treatment or fixed concept trio is required.
 
+New non-report `init` engagements require the D promise from
+[experience continuity](references/experience-continuity.md). Recover sourced
+outcomes or actual scoped delegation; leave creative mode hypotheses for E instead
+of adding another interview. A dashboard or single-view experience is valid by
+task. Retain all promised outcomes and consequential destinations/journeys in
+PO/UI/UX fit coverage; an early representative slice does not close the remainder.
+Carry relevant promises and pins in bounded packets with the same model/effort,
+independence and dependency boundaries.
+
 Enforce the [executable stage gates](references/stage-gates.md) at dispatch,
 authoring and review. Inspect current status; use only the current permitted action.
 For ordinary chat, explicitly use the conversation-evidence selection policy:
@@ -55,6 +69,9 @@ dependency activation retain their separate authorization requirements.
 Existing selected products and focused repairs reuse current decisions/evidence.
 
 For host integration, use the [host-neutral execution surface](references/host-execution.md).
+For repeated setup or tool-output overhead, use [execution efficiency](references/execution-performance.md)
+to inspect actual configuration, prepare fixed work and read bounded evidence. Keep
+the current model/effort and review bar; the alternative prompt layout is opt-in.
 Expose only the active tool scope, inspect the next valid action, and bind actual
 worker invocations to bounded packets. Reconcile uncertain launches instead of
 starting replacements. Qualify the actual host and native observations separately;

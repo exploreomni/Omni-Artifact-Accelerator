@@ -48,6 +48,12 @@ For composition, navigation, adaptive behavior, or recovery changes, decide the 
 
 For substantial App design, preserve the user's intended first encounter and repeat-use experience using the [experience-mode decision](references/app-patterns.md#choose-the-experience-mode). An immersive brand request must remain visible in the entry composition, imagery/type roles and primary journey; do not quietly translate it into compact analytical density. Record actual destinations and preserved state when the chosen concept has separate screens.
 
+Use the adopted [experience-continuity contract](../omni-artifact-accelerator/references/experience-continuity.md)
+to bind the chosen concept to promised actions, useful evidence, state/return and
+recovery on canonical journeys. Mode hypotheses resolve at E; reuse D answers.
+Deliberate single-view work is valid, while a representative path alone cannot
+establish complete PO/UI/UX fit coverage.
+
 1. Define the primary workflow and entry/return points. Keep a compact decision path for viewers and an inspectable path for analysts; do not add authoring controls to a viewer-only experience.
 2. Map screens and interactions to the governed workbook/query contract. State filter scope, reset behavior, selection persistence, navigation, refresh, drill behavior, and URL/share state only where the target supports them.
 3. Draft a coherent composition with an obvious analytical focus, contextual controls, responsive layout, and readable data density. Record usable **width × height**, host chrome/zoom assumptions, first-view priorities and intentional scroll regions using [available-space rules](references/app-patterns.md#design-for-the-space-the-app-actually-gets). Resolve wrapping and long labels without hiding essential scope or reducing the entire interface. Apply the accepted brand contract and only the relevant [vendor recommendations](../omni-design-systems/references/vendor-guidance.md).

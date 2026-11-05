@@ -7,6 +7,10 @@ dispatch and context ingestion.
 
 ## Small tool surface
 
+For effective setup, fixed task preparation, selective reads and local measurement,
+use [execution efficiency](execution-performance.md). Existing defaults and individual
+operations remain compatible; prompt-layout changes are explicitly optional.
+
 With an already approved interpreter and the selected package checkout:
 
 ```sh

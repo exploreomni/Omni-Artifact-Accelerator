@@ -79,24 +79,55 @@ def reject_duplicate(pairs):
     return result
 
 
+def validation_helper():
+    """One fixed first-party ContextVar shared across dynamically loaded helpers."""
+    import importlib.util
+    import _imp
+    key = '_oaa_validation_snapshot_' + digest(str(Path(__file__).resolve().parent).encode())
+    _imp.acquire_lock()
+    try:
+        if key not in sys.modules:
+            spec = importlib.util.spec_from_file_location(key, Path(__file__).with_name('validation_snapshot.py'))
+            module = importlib.util.module_from_spec(spec)
+            sys.modules[key] = module
+            try:
+                spec.loader.exec_module(module)
+            except BaseException:
+                sys.modules.pop(key, None)
+                raise
+        return sys.modules[key]
+    finally:
+        _imp.release_lock()
+
+
+def validation_operation(root):
+    return validation_helper().operation(root)
+
+
+def read_bytes(path, maximum=MAX_BYTES):
+    return validation_helper().read(path, maximum)
+
+
 def read_json(path):
     p = no_links(path)
     need(p.is_file(), "missing regular JSON file: " + str(p))
-    need(p.stat().st_size <= MAX_BYTES, "JSON input exceeds 10 MiB")
-    raw = p.read_bytes()
-    need(len(raw) <= MAX_BYTES, "JSON input exceeds 10 MiB")
-    def invalid_constant(value):
-        raise ValueError("non-finite JSON value: " + value)
-    try:
-        obj = json.loads(raw, object_pairs_hook=reject_duplicate,
-                         parse_constant=invalid_constant)
-        canonical(obj)
-    except (RecursionError, UnicodeError, json.JSONDecodeError) as exc:
-        raise ValueError("invalid or excessively nested JSON") from exc
+    raw = read_bytes(p, MAX_BYTES)
+    def decode():
+        def invalid_constant(value):
+            raise ValueError("non-finite JSON value: " + value)
+        try:
+            obj = json.loads(raw, object_pairs_hook=reject_duplicate,
+                             parse_constant=invalid_constant)
+            canonical(obj)
+        except (RecursionError, UnicodeError, json.JSONDecodeError) as exc:
+            raise ValueError("invalid or excessively nested JSON") from exc
+        return obj
+    obj = validation_helper().derive(('json-v1', digest(raw)), decode)
     return obj, raw
 
 
 def private_write(path, data, replace=False):
+    validation_helper().before_mutation()
     p = no_links(path)
     need(p.parent.is_dir(), "output parent must exist")
     if not replace:
@@ -130,6 +161,11 @@ def relative_file(root, relative):
     need(p.is_file(), "missing engagement file: " + relative)
     need(p.resolve().is_relative_to(root.resolve()), "path escaped engagement")
     need(p.stat().st_size <= MAX_BYTES, "engagement file exceeds 10 MiB")
+    scope = validation_helper().active()
+    if scope is not None:
+        # Older fixed readers still consume the returned path directly. Retain
+        # its exact bytes as well so their inputs participate in final checking.
+        scope.read(p, MAX_BYTES)
     return p
 
 
@@ -179,6 +215,8 @@ def init(output, name, mode, surface, branding=None, website=None, selection_pol
     # Every new engagement is gated. A caller-controlled mode is not an exemption.
     project['stage_gate_policy'] = 'data-first-v1'
     project['workflow_quality_policy'] = 'experience-evidence-v1'
+    if surface != 'report':
+        project['experience_intent_policy'] = 'experience-continuity-v1'
     if context_policy is not None:
         project['context_policy'] = context_policy
     write_json(root / "project.json", project)
@@ -821,7 +859,9 @@ def routing_helper(name='task_routing'):
     import importlib.util
     need(name in {'task_routing', 'task_operations', 'delivery_workflow', 'product_intent', 'stage_gates', 'experience_contract', 'report_contract', 'visual_workflow',
                   'context_packets', 'execution_efficiency', 'incremental_review', 'execution_bridge',
-                  'execution_runtime', 'execution_qualification', 'assembly_provenance', 'analytical_evidence'}, 'unknown routing helper')
+                  'execution_runtime', 'execution_qualification', 'assembly_provenance', 'analytical_evidence',
+                  'execution_contracts', 'execution_observability', 'execution_preparation', 'selective_reads',
+                  'experience_intent', 'experience_review', 'engagement_bootstrap'}, 'unknown routing helper')
     # Fixed first-party module only. The host verifier never comes from a request,
     # file path or environment variable. Share its scope across helper imports.
     cache_key = '_oaa_stage_gates_' + digest(str(Path(__file__).resolve().parent).encode())
@@ -854,12 +894,22 @@ def trusted_stage_provider(provider):
 
 def stage_status(root):
     module = routing_helper('stage_gates')
-    return module.inspect(root, provider=module._host_provider_context.get())
+    result = module.inspect(root, provider=module._host_provider_context.get())
+    scope = validation_helper().active()
+    if scope is not None:
+        scope.observe(('stage_status_v1', str(no_links(root))), result,
+                      lambda: module.inspect(root, provider=module._host_provider_context.get()))
+    return result
 
 
 def stage_require(root, action):
     module = routing_helper('stage_gates')
-    return module.require_action(root, action, provider=module._host_provider_context.get())
+    result = module.require_action(root, action, provider=module._host_provider_context.get())
+    scope = validation_helper().active()
+    if scope is not None:
+        scope.observe(('stage_require_v1', str(no_links(root)), action), result,
+                      lambda: module.require_action(root, action, provider=module._host_provider_context.get()))
+    return result
 
 
 def stage_record(root, request):
@@ -976,7 +1026,7 @@ def packet_data(root, role, inputs, assignment=None):
     records, size = [], 0
     for path in inputs:
         p = relative_file(root, path)
-        raw = p.read_bytes()
+        raw = read_bytes(p)
         pin = digest(raw)
         registered = [record for kind in ("sources", "artifacts") for record in obj[kind]
                       if type(record) is dict and record.get("path") == path]
@@ -1009,9 +1059,9 @@ def packet_data(root, role, inputs, assignment=None):
         result['allowed_actions'] = ['read selected evidence',
             'author only the role work permitted by the current A-F stage; no implicit build or release grant']
         result['stop_conditions'].append('A-F prerequisites or trusted user selection are missing, changed or revoked')
-    if design_context["paths"] or design_context["findings"] or design_context.get('requirements'):
+    if design_context["paths"] or design_context["findings"] or design_context.get('requirements') or design_context.get('experience_summary'):
         result["design_context"] = design_context
-    if product_context['enabled'] or role == 'product-owner':
+    if product_context['enabled'] or role == 'product-owner' or product_context.get('experience_summary'):
         result['product_context'] = product_context
     if obj.get("dma_import"):
         result["current_dma_catalog"] = obj["dma_import"].get("catalog_path", "inputs/dma-catalog.json")

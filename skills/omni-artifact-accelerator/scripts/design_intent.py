@@ -240,6 +240,7 @@ def select(root, spec_path, output_relative):
             previous['spec'], spec, lambda ok, message: need(ok, 'visual_experience.' + message))
         P.routing_helper('product_intent').validate_quality_transition(previous['spec'], spec)
         P.routing_helper('product_intent').validate_refresh_transition(previous['spec'], spec)
+        P.routing_helper('product_intent').validate_experience_transition(previous['spec'], spec)
         current = {r['id']: r for r in spec['requirements']}
         for req in previous['spec']['requirements']:
             if req['required']:
@@ -330,6 +331,10 @@ def choice_report(spec):
     findings.extend(visual['findings'])
     refresh = P.routing_helper('product_intent').refresh_report(spec)
     findings.extend(refresh['findings'])
+    experience = P.routing_helper('product_intent').experience_report(spec)
+    findings.extend(experience['findings'])
+    if experience['status'] == 'unresolved':
+        questions.append('Resolve the intended user task and experience promise from existing answers or scoped delegation; keep concept choice at Stage E.')
     if refresh['status'] == 'unresolved':
         questions.append('How should this App cache, refresh and age its data, or should it use no custom policy?')
     if any(f['code'].startswith('visual_family_') for f in visual['findings']):
@@ -439,15 +444,123 @@ def shared_requirement_ids(requirements):
             r.get('category', '').casefold().endswith(('_constraint', '_restriction', '_policy'))]
 
 
-def project_requirements(requirements, role, scope_ids=()):
+def project_requirements(requirements, role, scope_ids=(), *, experience=None):
     """A task slice plus shared constraints; coordinator checks retain all requirements."""
     shared = set(shared_requirement_ids(requirements))
     scope = set(scope_ids or ())
+    if experience is not None:
+        index = experience['index']
+        promised = set(index['requirement_ids'])
+        modes = set(index['mode_requirement_ids'])
+        delegate = index.get('delegation_requirement_id')
+        indexed = promised | modes | ({delegate} if delegate else set())
+        selected = shared | scope
+        # Existing explicit role ownership still applies to non-experience work.
+        # An experience row's broad suggested-role list is not a task boundary.
+        selected.update(r['id'] for r in requirements if r['id'] not in indexed and (
+            role in r.get('product', {}).get('suggested_roles', []) or
+            r.get('delivery', {}).get('owner') == role or any(
+                role in P.experience_helper().CAPABILITIES.get(tag, ())
+                for tag in r.get('delivery', {}).get('capabilities', []))))
+        task_rows = [r for r in requirements if r['id'] in selected - shared]
+        links = {key: set(scope) if key != 'dependency_paths' else set()
+                 for key in ('destinations', 'journeys', 'dependency_paths')}
+        for row in task_rows:
+            for key in links:
+                links[key].update(row.get('delivery', {}).get(key, []))
+        for row in requirements:
+            if row['id'] in promised and any(links[key] & set(row.get('delivery', {}).get(key, [])) for key in links):
+                selected.add(row['id'])
+        if delegate and selected & promised:
+            selected.add(delegate)
+        return [copy.deepcopy(r) for r in requirements if r['id'] in selected]
     return [copy.deepcopy(r) for r in requirements if r['id'] in shared | scope or
             role in r.get('product', {}).get('suggested_roles', []) or
             r.get('delivery', {}).get('owner') == role or any(
                 role in P.experience_helper().CAPABILITIES.get(tag, ())
                 for tag in r.get('delivery', {}).get('capabilities', []))]
+
+
+def experience_packet_scope(root, state):
+    """Small shared meaning plus exact on-demand originals; never a second intent.
+
+Full scoped rows are selected separately. Unchosen creative alternatives stay in
+the pinned index instead of being recopied into every role's bounded TASK.
+"""
+    root, project = P.load_project(root)
+    need(state.get('selected') == project.get('design_intent'), 'packet_selection_changed')
+    if state.get('selected'):
+        record = read_record(root, state['selected'])
+        spec, source = record['spec'], copy.deepcopy(state['selected'])
+        prefix = '/spec/requirements/'
+        pins = {p['path']: p for p in record['pins']}
+    elif project.get('design_intent_draft'):
+        spec, raw = P.read_json(P.relative_file(root, project['design_intent_draft']))
+        source = {'path': project['design_intent_draft'], 'sha256': P.digest(raw), 'bytes': len(raw)}
+        prefix, pins = '/requirements/', {}
+    else:
+        return None
+    index = spec.get('product', {}).get('experience_intent')
+    if index is None:
+        return None
+    helper = P.routing_helper('product_intent')
+    helper.I.validate(spec)
+    need(state['requirements'] == spec['requirements'], 'packet_requirements_changed')
+    rows = {r['id']: r for r in spec['requirements']}
+    ids = set(index['requirement_ids']) | set(index['mode_requirement_ids'])
+    delegate = index.get('delegation_requirement_id')
+    if delegate:
+        ids.add(delegate)
+    chosen, design_pins = set(), {}
+    # A draft handoff is a proposal. Only a selected intent can supply the chosen
+    # design's modes; sourced constraints below remain available before E.
+    for selection in spec['selections'] if state.get('selected') else []:
+        path = selection.get('design_path')
+        if not path:
+            continue
+        design, raw = P.read_json(P.relative_file(root, path))
+        observed = {'path': path, 'sha256': P.digest(raw), 'bytes': len(raw)}
+        if state.get('selected'):
+            need(pins.get(path) == observed, 'experience_design_changed')
+        handoff = design.get('experience_intent_handoff')
+        if handoff is None:
+            continue
+        need(type(handoff) is dict and handoff.get('context') == helper.experience_context(spec),
+             'experience_handoff_context_changed')
+        values = handoff.get('selected_mode_ids')
+        need(type(values) is list and values and all(type(i) is str for i in values)
+             and len(values) == len(set(values)) and set(values) <= set(index['mode_requirement_ids']),
+             'experience_selected_modes_invalid')
+        chosen.update(values)
+        design_pins[path] = observed
+    chosen.update(i for i in index['mode_requirement_ids'] if rows[i]['disposition'] == 'selected'
+                  and rows[i]['product']['basis'] in {'user_statement', 'reused_decision'})
+    need(all(rows[i]['disposition'] not in {'deferred', 'explicitly_omitted'} and rows[i].get('value') is not None
+             for i in chosen), 'experience_selected_mode_unavailable')
+    originals = [{'id': row['id'], 'row_sha256': P.digest(P.canonical(row)),
+                  'pointer': prefix + str(position)}
+                 for position, row in enumerate(spec['requirements']) if row['id'] in ids]
+    promises = [{'id': i, 'surfaces': rows[i]['surfaces'], 'disposition': rows[i]['disposition'],
+                 'basis': rows[i]['product']['basis'],
+                 'promise': (rows[i].get('value') or {}).get('promise')}
+                for i in index['requirement_ids']]
+    modes = [{'id': i, 'surfaces': rows[i]['surfaces'], 'disposition': rows[i]['disposition'],
+              'origin': rows[i]['origin'], 'basis': rows[i]['product']['basis'], 'value': rows[i]['value']}
+             for i in sorted(chosen)]
+    delegation = None
+    if delegate:
+        row = rows[delegate]
+        delegation = {k: copy.deepcopy(row[k]) for k in ('id', 'surfaces', 'origin', 'disposition', 'value', 'decision_ref')}
+        delegation['basis'] = row['product']['basis']
+    summary = {'schema_version': 1, 'status': helper.experience_report(spec)['status'],
+               'source': source, 'promises': promises, 'selected_modes': modes, 'delegation': delegation,
+               'original_requirements': originals, 'design_pins': list(design_pins.values()),
+               'complete_requirement_coverage_owner': 'orchestrator', 'claims_authenticated': False,
+               'note': 'Exact shared promise text and chosen-mode meaning; full task-relevant requirements follow. '
+                       'Before changing another promised behavior, request its exact canonical row through source, '
+                       'pointer and row_sha256, plus relevant original evidence. Omitted detail is not waived; '
+                       'a recorded mode or delegation grants no execution authority.'}
+    return {'index': copy.deepcopy(index), 'selected_mode_ids': sorted(chosen), 'summary': copy.deepcopy(summary)}
 
 
 def packet_context(root, role, *, bounded=None, scope_ids=None):
@@ -457,11 +570,12 @@ def packet_context(root, role, *, bounded=None, scope_ids=None):
     state = check(root)
     if bounded:
         need(state['status'] != 'inconsistent', 'stale_or_invalid_packet_selection')
-        requirements = project_requirements(state['requirements'], role, scope_ids)
+        experience = experience_packet_scope(root, state)
+        requirements = project_requirements(state['requirements'], role, scope_ids, experience=experience)
         # Selection metadata is pinned, but does not mandate disclosing the whole
         # intent, historical versions, North Star or every source file.
         selected_ids = {r['id'] for r in requirements}
-        return {'selected_intent': copy.deepcopy(state['selected']), 'paths': [],
+        result = {'selected_intent': copy.deepcopy(state['selected']), 'paths': [],
                 'requirements': requirements, 'findings': copy.deepcopy(state['findings']),
                 'open_questions': ['Resolve: ' + r['purpose'] for r in requirements
                                    if r['required'] and r['disposition'] in {'unresolved', 'deferred'}],
@@ -471,6 +585,9 @@ def packet_context(root, role, *, bounded=None, scope_ids=None):
                              'complete_requirement_coverage_owner': 'orchestrator'},
                 'note': 'Use the bounded task evidence. Request exact missing context; the orchestrator '
                         'retains complete requirement coverage and unresolved obligations.'}
+        if experience is not None:
+            result['experience_summary'] = experience['summary']
+        return result
     relevant = role in ROLES or any(
         req.get('delivery', {}).get('owner') == role or role in req.get('product', {}).get('suggested_roles', []) or any(
             role in P.experience_helper().CAPABILITIES.get(tag, ())

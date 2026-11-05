@@ -28,6 +28,13 @@ needed for the engagement. An operator-supplied adapter can launch and reconcile
 bounded workers with durable attempt tracking; the package does not automatically
 install an adapter or connect accounts. Local tests do not establish host isolation.
 
+[Execution efficiency](skills/omni-artifact-accelerator/references/execution-performance.md)
+adds effective-configuration reporting, recoverable task preparation, bounded result
+reads and local measurements. Read-only checks reuse verified inputs within one
+operation and shorten status locking. Models, reasoning settings and quality gates
+remain unchanged; the alternative context layout is opt-in, and measured savings
+are separate from local correctness checks.
+
 Use the [qualification catalog](skills/omni-artifact-accelerator/references/execution-qualification.md)
 to keep actual host, native, visual, access and human evidence separate.
 [Explicit result bindings](skills/omni-artifact-accelerator/references/analytical-evidence.md)
@@ -93,6 +100,11 @@ a stated limitation, not permission to install anything. See the [execution proc
 for repository-only, installed and connected routes. No host-specific route has
 universal enforcement or implied qualification.
 
+For a local repository-only start, use [explicit engagement entry](skills/omni-artifact-accelerator/references/engagement-entry.md)
+to bind the exact checkout, declared host and existing sibling engagement. The host
+must read that entry explicitly. Missing access can remain a recorded blocker;
+preparation does not install code, configure tools or grant execution authority.
+
 The local `run-start`, `run-guidance`, `phase-check`, `candidate-freeze` and
 `delivery-check` commands preserve source provenance, stage-appropriate
 responsibilities, first candidate bytes and current evidence. Record startup before
@@ -114,6 +126,15 @@ intake. For new products, artifact questions follow verified access, analysis an
 the reusable narrative. It keeps attributable notes in the private engagement,
 coordinates the three-option decision and hands prioritized requirements back to
 the orchestrator. Focused repairs reuse current intent without another interview.
+
+New non-report `init` engagements require a sourced or explicitly delegated D
+experience promise through [experience continuity](skills/omni-artifact-accelerator/references/experience-continuity.md).
+Creative mode proposals can remain open until the existing E choice; no second
+interview is required. A dashboard or single-view workspace is valid when it fits
+the task. PO and UI/UX fit review cover all promised outcomes and consequential
+destinations/journeys; the representative slice is an early checkpoint, not complete
+coverage. Bounded packets retain relevant promises and dependencies without changing
+the configured model, team size or dependency authority.
 
 The readable **North Star** is generated from the existing selected design intent;
 it is not a second authoritative brief. `product-brief` creates its versioned view,

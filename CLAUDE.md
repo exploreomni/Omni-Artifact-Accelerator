@@ -5,6 +5,10 @@ For a request to create, redesign or migrate an Omni App or dashboard, first rea
 [execution entry procedure](skills/omni-artifact-accelerator/references/execution-workflow.md).
 Repository maintenance, a focused repair and review-only requests retain their own scope.
 
+For repository-only work, use [explicit engagement entry](skills/omni-artifact-accelerator/references/engagement-entry.md)
+and read the generated reference to the exact checkout and existing sibling
+engagement. An entry is not installation, host configuration or qualified authority.
+
 Record actual source identity and ownership before the first new artifact stage.
 Use the execution procedure's `run-start`, incremental `run-guidance` and
 stage-aware `phase-check` requests. Honor `current_checkout`, `pinned_revision` or
@@ -26,6 +30,13 @@ same analytical scope. Label source-only specimens as unrendered; do not substit
 three prose pitches. Preserve quality intent through the selected design and four
 candidate reviews. Responsibilities may share workers when independence permits;
 no library, dimensional treatment or extra team is mandatory.
+
+New non-report `init` engagements require a sourced or scoped-delegation D promise
+under [experience continuity](skills/omni-artifact-accelerator/references/experience-continuity.md).
+Creative mode proposals resolve through the existing concept choice, without a
+second interview. Dashboard/monitoring work remains valid by task. The first
+journey is an early checkpoint; final PO/UI/UX fit coverage retains all promised
+outcomes and consequential destinations, including gaps outside a bounded slice.
 
 Report authorized candidate preview, verified selected scope and publication
 separately. Preview may enable later native observation; a successful write or

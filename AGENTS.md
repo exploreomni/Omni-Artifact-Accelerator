@@ -5,6 +5,11 @@ For substantial Omni artifact creation/redesign/migration, enter through
 [execution procedure](skills/omni-artifact-accelerator/references/execution-workflow.md).
 Repository maintenance and focused repairs do not require a new artifact engagement.
 
+For repository-only work, use [explicit engagement entry](skills/omni-artifact-accelerator/references/engagement-entry.md)
+to bind the exact checkout and declared host to the existing sibling engagement.
+Explicitly read its reference; preparation neither installs code nor qualifies
+host enforcement. Preserve blocked access as a gap rather than inventing readiness.
+
 Before the first new artifact stage, record the actual package source, original
 request and execution-contract path with `run-start`. Respect the requested source:
 `current_checkout` records what is present; `pinned_revision` requires that clean
@@ -33,6 +38,13 @@ experience handoff before code, with design-system and independent creative duti
 assigned where required. These are responsibilities, not a requirement for more
 agents, libraries, 3D or a fixed layout. Do not treat a guided story or frequent-use
 audience as permission to lower craft expectations.
+
+New non-report `init` engagements require the D promise in
+[experience continuity](skills/omni-artifact-accelerator/references/experience-continuity.md).
+Recover sourced intent or actual scoped delegation; creative mode hypotheses wait
+for the existing concept choice. A task-appropriate dashboard remains valid.
+PO/UI/UX fit coverage must retain every promised outcome and consequential journey,
+even when an early representative slice or bounded correction is reviewed.
 
 Distinguish local preparation, an authorized candidate preview, verified selected
 scope and publication. A preview may be needed to obtain native observations;

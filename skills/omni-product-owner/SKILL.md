@@ -32,6 +32,12 @@ for the user's selection before detailed design/full coding. Preserve attributab
 selection in current intent; do not let an agent's working proposal substitute for
 it. Review product fit against each candidate iteration in F.
 
+New non-report `init` engagements require the D promise in
+[experience continuity](../omni-artifact-accelerator/references/experience-continuity.md).
+Recover the sourced task/outcome or actual scoped delegation; creative modes remain
+hypotheses for E, not another required interview. Keep surface, workflow promise and
+visual treatment separate, including legitimate dashboard or monitoring choices.
+
 ## Recover before interviewing
 
 Read the original request, current selected [design intent](../omni-artifact-accelerator/references/design-intent.md),
@@ -121,6 +127,10 @@ At the assembled candidate, compare the actual journey with the original request
 and current intent. Identify fulfilled outcomes, lost ambition, useful alternatives,
 unresolved musts and remaining evidence. Give a product-fit recommendation with exact
 candidate/requirement references and a concrete next action.
+
+Use continuity fit evidence for every promised outcome and consequential
+destination/journey. The first representative journey is an early checkpoint;
+bounded corrections retain the complete obligation inventory and outstanding gaps.
 
 This recommendation is separate from the designer's [creative critique](../omni-design-systems/references/experience-review.md),
 independent numerical/behavior/access QA, native qualification and customer acceptance.

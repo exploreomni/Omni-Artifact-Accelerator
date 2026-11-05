@@ -43,7 +43,7 @@ def identity(value):
 def pins(root, paths):
     need(type(paths) is list and bool(paths) and len(paths) <= 512 and
          all(type(p) is str for p in paths) and len(set(paths)) == len(paths), 'distinct input paths required')
-    return {p: P.digest(P.relative_file(root, p).read_bytes()) for p in paths}
+    return {p: P.digest(P.read_bytes(P.relative_file(root, p))) for p in paths}
 
 
 def current(root, bindings):
@@ -220,9 +220,8 @@ def source_root():
     return skill_parent.parent if skill_parent.name == 'skills' and (skill_parent.parent / 'package.json').is_file() else skill_parent
 
 
-def source_manifest(root):
-    """Only package-owned product trees, never adjacent projects or installed skills."""
-    root = P.no_links(root)
+def _source_paths(root):
+    """Complete fixed product-tree inventory; additions invalidate byte reuse."""
     repo = (root / 'package.json').is_file() and (root / 'skills').is_dir()
     names = ['omni-artifact-accelerator', *('omni-' + role for role in P.ROLES)]
     trees = ([root / n for n in ('skills', 'scripts', 'tests', 'docs', 'integrations', 'harness', '.github')]
@@ -232,19 +231,33 @@ def source_manifest(root):
         if tree.exists():
             P.no_links(tree)
             candidates.extend(p for p in tree.rglob('*') if not any(part in IGNORED for part in p.relative_to(root).parts))
-    result, total = {}, 0
+    paths = []
     for path in sorted(set(candidates)):
         need(not path.is_symlink(), 'package source contains a symlink')
-        if not path.is_file():
-            continue
-        P.no_links(path)
-        need(path.stat().st_size <= P.MAX_BYTES, 'package source file exceeds bound')
-        raw = path.read_bytes()
-        total += len(raw)
-        need(total <= 64 * 1024 * 1024 and len(result) < 4000, 'package snapshot exceeds bound')
-        result[path.relative_to(root).as_posix()] = P.digest(raw)
-    need(bool(result), 'package source unavailable')
-    return result
+        if path.is_file():
+            P.no_links(path)
+            paths.append(path.relative_to(root).as_posix())
+    need(len(paths) <= 4000, 'package snapshot exceeds bound')
+    return tuple(paths)
+
+
+def source_manifest(root):
+    """Reuse bytes only within a verified read operation, never across mutations."""
+    root = P.no_links(root)
+    helper = P.validation_helper()
+    def build():
+        scope = helper.active()
+        paths = (scope.inventory(('package_paths', str(root)), lambda: _source_paths(root))
+                 if scope is not None else _source_paths(root))
+        result, total = {}, 0
+        for relative in paths:
+            raw = P.read_bytes(root / relative)
+            total += len(raw)
+            need(total <= 64 * 1024 * 1024, 'package snapshot exceeds bound')
+            result[relative] = P.digest(raw)
+        need(bool(result), 'package source unavailable')
+        return result
+    return helper.derive(('source_manifest_v1', str(root)), build)
 
 
 def git_identity(package):
@@ -414,7 +427,7 @@ def active_run(root, project):
     need(run.get('startup_timing') != 'late', 'workflow_startup_recorded_late')
     need(str(source_root()) == run['package_root'] and source_manifest(source_root()) == run['package_files'],
          'package_changed_since_start')
-    need(current(root, run['brief_pins']) and P.digest(P.relative_file(root, run['brief_retained']).read_bytes()) ==
+    need(current(root, run['brief_pins']) and P.digest(P.read_bytes(P.relative_file(root, run['brief_retained']))) ==
          run['brief_pins'][run['brief']], 'original_request_changed')
     if run.get('source_verification_pins'):
         need(current(root, run['source_verification_pins']), 'source_verification_changed')
@@ -691,7 +704,7 @@ def inspect_run(root, request):
                 loaded_guidance, _ = guidance_state(root, project, run, project['execution_start'])
             except (ValueError, OSError, KeyError, TypeError) as exc:
                 findings.append(str(exc))
-    need(P.digest(P.relative_file(root, run['brief_retained']).read_bytes()) == run['brief_pins'][run['brief']],
+    need(P.digest(P.read_bytes(P.relative_file(root, run['brief_retained']))) == run['brief_pins'][run['brief']],
          'retained original request changed')
     if not current(root, run['brief_pins']):
         findings.append('original_request_changed')

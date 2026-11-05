@@ -343,12 +343,45 @@ def validate_concept(root, option_manifest_path, spec, P):
     return _concept(root, option_manifest_path, spec, P, component=False)
 
 
+def _experience_direction(obj, spec, P):
+    helper = P.routing_helper('product_intent')
+    context = helper.experience_context(spec)
+    if context is None:
+        _need('experience_direction' not in obj, 'experience_direction_without_intent')
+        return None
+    value = obj.get('experience_direction')
+    _fields(value, {'context', 'mode_requirement_ids', 'modes', 'authors'}, label='experience_direction')
+    _need(value['context'] == context, 'experience_direction_context_changed')
+    _ids(value['mode_requirement_ids'], 'experience_mode_ids')
+    _ids(value['authors'], 'experience_authors')
+    helper.I.validate_modes(spec, value['mode_requirement_ids'])
+    indexed = set(spec['product']['experience_intent']['mode_requirement_ids'])
+    _need(set(value['mode_requirement_ids']) <= indexed, 'experience_mode_unindexed')
+    modes = {r['id']: r for r in spec['requirements']}
+    for ident in value['mode_requirement_ids']:
+        row = modes[ident]
+        _need(row['disposition'] not in {'explicitly_omitted', 'deferred'} and
+              type(row.get('value')) is dict and row['value'].get('kind') == 'experience_mode',
+              'experience_concept_mode_unresolved')
+    # D excludes creative hypotheses so authors can propose modes after discovery.
+    # E must nevertheless bind their meaning and attribution, not just stable IDs.
+    _need(value['modes'] == [{k: v for k, v in modes[i].items() if k != 'delivery'}
+                             for i in value['mode_requirement_ids']],
+          'experience_concept_mode_changed_reopen_options')
+    surface = obj.get('surface')
+    surfaces = set(spec['surfaces'] if surface is None else [surface])
+    _need(surfaces <= {s for i in value['mode_requirement_ids'] for s in modes[i]['surfaces']},
+          'experience_concept_surface_coverage_required')
+    return copy.deepcopy(value)
+
+
 def _concept(root, option_manifest_path, spec, P, component):
     obj, _, manifest_pin = _read(root, option_manifest_path, P, True)
     if type(obj) is dict and obj.get('kind') == 'analyst_concept_set':
         _need(not component, 'nested_concept_sets_forbidden')
         _fields(obj, {'schema_version', 'kind', 'option_id', 'analytical_scope', 'structure',
-                      'primary_interaction', 'surface_manifests'}, label='concept_set_fields')
+                      'primary_interaction', 'surface_manifests'},
+                {'experience_direction'}, label='concept_set_fields')
         _need(type(obj['schema_version']) is int and obj['schema_version'] == 1, 'concept_set_version_invalid')
         _texts(obj, ('option_id', 'analytical_scope', 'structure', 'primary_interaction'), 'concept_set')
         _ids(obj['surface_manifests'], 'surface_manifests')
@@ -363,7 +396,11 @@ def _concept(root, option_manifest_path, spec, P, component):
         hashes = sorted(c['metadata']['representative_sha256'] for c in children)
         _need(len(set(hashes)) == len(hashes), 'concept_set_requires_surface_specific_visuals')
         pins = {p['path']: p for p in [manifest_pin, *(p for c in children for p in c['dependencies'])]}
+        direction = _experience_direction(obj, spec, P)
+        _need(not direction or all(c['metadata'].get('experience_direction') == direction for c in children),
+              'concept_set_experience_direction_mismatch')
         return {'schema_version': 1, 'kind': 'analyst_concept_validation', 'metadata': {
+            **({'experience_direction': direction, 'experience_authors': direction['authors']} if direction else {}),
             'option_id': obj['option_id'], 'surface': 'both' if len(children) > 1 else children[0]['metadata']['surface'],
             'surfaces': sorted(spec['surfaces']), 'analytical_scope': obj['analytical_scope'],
             'structure': obj['structure'], 'primary_interaction': obj['primary_interaction'],
@@ -377,7 +414,7 @@ def _concept(root, option_manifest_path, spec, P, component):
             'dependencies': [pins[path] for path in sorted(pins)]}
     _fields(obj, {'schema_version', 'kind', 'option_id', 'surface', 'analytical_scope', 'structure',
                   'primary_interaction', 'quality_coverage', 'treatment_coverage', 'representative', 'responsive', 'constraints'},
-            label='concept_fields')
+            {'experience_direction'}, label='concept_fields')
     _need(type(obj['schema_version']) is int and obj['schema_version'] == 1
           and obj['kind'] == 'analyst_concept_manifest', 'concept_version_invalid')
     _texts(obj, ('option_id', 'analytical_scope', 'structure', 'primary_interaction', 'responsive'), 'concept')
@@ -412,8 +449,10 @@ def _concept(root, option_manifest_path, spec, P, component):
         _, observation, pin = _read(root, path, P, path.endswith('.json'))
         _need(observation.strip() and len(observation) <= MAX_MANIFEST, 'render_observation_required')
         dependencies.append(pin)
+    direction = _experience_direction(obj, spec, P)
     return {'schema_version': 1, 'kind': 'analyst_concept_validation',
-            'metadata': {'option_id': obj['option_id'], 'surface': obj['surface'], 'surfaces': [obj['surface']],
+            'metadata': {**({'experience_direction': direction, 'experience_authors': direction['authors']} if direction else {}),
+                         'option_id': obj['option_id'], 'surface': obj['surface'], 'surfaces': [obj['surface']],
                          'analytical_scope': obj['analytical_scope'], 'structure': obj['structure'],
                          'primary_interaction': obj['primary_interaction'],
                          'quality_requirement_ids': sorted(active), 'evidence_kind': kind,
@@ -444,6 +483,11 @@ def validate_handoff(root, design_path, spec, P):
     _fields(handoff, {'schema_version', 'concept_manifest_path', 'quality_coverage'}, label='handoff_fields')
     _need(type(handoff['schema_version']) is int and handoff['schema_version'] == 1, 'handoff_version_invalid')
     concept = validate_concept(root, handoff['concept_manifest_path'], spec, P)
+    if P.routing_helper('product_intent').experience_context(spec) is not None:
+        P.routing_helper('product_intent').validate_experience_handoff(design, spec)
+        _need(set(design['experience_intent_handoff']['selected_mode_ids']) ==
+              set(concept['metadata']['experience_direction']['mode_requirement_ids']),
+              'experience_handoff_differs_from_chosen_concept')
     surface = concept['metadata']['surface']
     active = _active(spec, None)
     destinations = design.get('destinations')

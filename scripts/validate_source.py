@@ -19,6 +19,14 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 CASES = {
+    "experience-intent": "tests/test_experience_intent.py",
+    "experience-continuity": "tests/test_experience_continuity.py",
+    "experience-packet-scope": "tests/test_experience_packet_scope.py",
+    "engagement-bootstrap": "tests/test_engagement_bootstrap.py",
+    "execution-preparation": "tests/test_execution_preparation.py",
+    "validation-snapshot": "tests/test_validation_snapshot.py",
+    "selective-reads": "tests/test_selective_reads.py",
+    "context-layout": "tests/test_context_layout.py",
     "execution-bridge": "tests/test_execution_bridge.py",
     "execution-runtime": "tests/test_execution_runtime.py",
     "execution-qualification": "tests/test_execution_qualification.py",
@@ -109,6 +117,9 @@ CASE_TIMEOUTS = {name: 120 for name in ('workflow', 'product-intent', 'stage-gat
 # lifecycles. Keep a bounded allowance separate from runtime transport deadlines.
 CASE_TIMEOUTS['native-stage-gates'] = 300
 CASE_TIMEOUTS.update({'execution-runtime': 120, 'execution-bridge': 120, 'native-demo': 180})
+CASE_TIMEOUTS.update({'execution-preparation': 120, 'validation-snapshot': 120, 'selective-reads': 120, 'context-layout': 120})
+CASE_TIMEOUTS.update({'experience-continuity': 180, 'engagement-bootstrap': 120})
+CASE_TIMEOUTS['experience-enforcement'] = 240
 IGNORED = {".git", ".venv", "venv", "node_modules", "__pycache__", ".pytest_cache", ".ruff_cache"}
 STDLIB_ROOTS = {Path(sysconfig.get_path(name)).resolve() for name in ("stdlib", "platstdlib")}
 FIRST_PARTY_IMPORTS = {

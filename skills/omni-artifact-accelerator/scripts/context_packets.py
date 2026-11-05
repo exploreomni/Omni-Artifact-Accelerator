@@ -22,7 +22,11 @@ CLASSIFICATIONS = {'public': 0, 'internal': 1, 'confidential': 2}
 SHA = re.compile(r'[a-f0-9]{64}')
 FIELDS = {'schema_version', 'kind', 'packet', 'mode', 'summary', 'decisions', 'constraints',
           'stop_conditions', 'evidence', 'classification', 'disclosure', 'shared_constraint_ids'}
-OPTIONAL = {'max_packet_bytes', 'budget_reason', 'delta'}
+OPTIONAL = {'max_packet_bytes', 'budget_reason', 'delta', 'layout'}
+STABLE_LAYOUT = 'stable-prefix-v1'
+STABLE_FIELDS = ('external_mutations_authorized', 'coverage_owner', 'classification', 'disclosure',
+                 'constraints', 'stop_conditions', 'shared_constraint_ids', 'product_constraints',
+                 'selected_intent', 'requirements', 'role')
 INSTRUCTIONS = '''# Bounded specialist task
 
 Use this briefing and selected evidence only. The orchestrator retains complete
@@ -70,6 +74,22 @@ def encoded(value):
     return json.dumps(value, sort_keys=True, ensure_ascii=False, indent=2, allow_nan=False).encode('utf-8')
 
 
+def serialize_task(data, layout=None):
+    """Reorder only the opted-in layout; preserve every field and original byte text."""
+    if layout is None:
+        return INSTRUCTIONS.encode() + encoded(data) + b'\n', None
+    need(layout == STABLE_LAYOUT, 'unsupported_layout')
+    stable = [key for key in STABLE_FIELDS if key in data]
+    varying = sorted(set(data) - set(stable))
+    pieces = {key: encoded({key: data[key]})[2:-2] for key in data}
+    prefix = INSTRUCTIONS.encode() + b'{\n' + b',\n'.join(pieces[key] for key in stable)
+    if varying:
+        prefix += b',\n' if stable else b''
+    raw = prefix + b',\n'.join(pieces[key] for key in varying) + b'\n}\n'
+    return raw, {'version': STABLE_LAYOUT, 'prefix_bytes': len(prefix),
+                 'prefix_sha256': digest(prefix), 'provider_cache_configured': False}
+
+
 def text(value):
     return type(value) is str and bool(value.strip()) and len(value.encode('utf-8')) <= SUMMARY_BYTES
 
@@ -98,7 +118,7 @@ def path(root, value, exists=True):
 
 
 def read(root, value):
-    return path(root, value).read_bytes()
+    return P.read_bytes(path(root, value))
 
 
 def pin_valid(value):
@@ -126,6 +146,7 @@ def validate(request):
     for key in ('decisions', 'constraints', 'stop_conditions', 'shared_constraint_ids'):
         strings(request[key], key in {'constraints', 'stop_conditions'})
     need(request['mode'] in {'initial', 'delta'}, 'invalid_mode')
+    need('layout' not in request or request['layout'] == STABLE_LAYOUT, 'unsupported_layout')
     limit = request.get('max_packet_bytes', DEFAULT_BYTES)
     need(type(limit) is int and 1024 <= limit <= MAX_BYTES, 'invalid_byte_budget')
     need(limit <= DEFAULT_BYTES or text(request.get('budget_reason')), 'larger_budget_reason_required')
@@ -261,7 +282,8 @@ def prepare(root, request):
     need(set(shared) <= set(request['shared_constraint_ids']), 'missing_shared_restriction')
     known_ids = {r['id'] for r in requirements}
     need(set(request['shared_constraint_ids']) <= known_ids, 'unknown_shared_restriction')
-    selected = intent.project_requirements(requirements, packet['role'], assignment['scope_ids'])
+    experience = intent.experience_packet_scope(root, state)
+    selected = intent.project_requirements(requirements, packet['role'], assignment['scope_ids'], experience=experience)
     selected_ids = {r['id'] for r in selected}
     selected += [r for r in requirements if r['id'] in request['shared_constraint_ids'] and r['id'] not in selected_ids]
     excerpts, coverage = [], []
@@ -299,15 +321,17 @@ def prepare(root, request):
             # Keep global ambition and refresh decisions even when they live in
             # the product contract rather than an individually assigned row.
             'product_constraints': {k: packet['product_context'][k] for k in
-                ('scope', 'discovery', 'quality_bar', 'visual_experience', 'data_refresh')
+                ('scope', 'discovery', 'quality_bar', 'visual_experience', 'data_refresh', 'experience_intent')
                 if k in packet.get('product_context', {})},
             'coverage_owner': 'orchestrator', 'total_requirement_count': len(requirements),
             'disclosure': request['disclosure'], 'classification': request['classification'],
             'external_mutations_authorized': False}
+    if experience is not None:
+        data['product_constraints']['experience_summary'] = experience['summary']
     if request['mode'] == 'delta':
         data['delta'] = request['delta']
         data['baseline'] = baseline(root, request, packet)
-    raw = INSTRUCTIONS.encode() + encoded(data) + b'\n'
+    raw, layout = serialize_task(data, request.get('layout'))
     scan(raw)
     need(len(raw) <= limit, 'packet_exceeds_byte_budget_narrow_or_split_task')
     meta = {'schema_version': 1, 'kind': 'analyst_context_receipt', 'task_id': packet['task_id'],
@@ -318,6 +342,8 @@ def prepare(root, request):
             'summary_bytes': len(request['summary'].encode()), 'instruction_versions': instruction_versions(),
             'specialist_executed': False, 'dispatch_authorized': False, 'host_isolation_verified': False,
             'assurance': 'Local byte integrity and declared coverage only; no approval, completeness, cost or isolation claims.'}
+    if layout is not None:
+        meta['layout'] = layout
     return raw, meta
 
 

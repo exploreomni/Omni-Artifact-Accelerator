@@ -27,6 +27,7 @@ import stat
 
 POLICY = 'data-first-v1'
 QUALITY_POLICY = 'experience-evidence-v1'
+EXPERIENCE_POLICY = 'experience-continuity-v1'
 HOST_SELECTION = 'host-verified-v1'
 CHAT_SELECTION = 'conversation-evidence-v1'
 JOURNAL = 'stage-gates.json'
@@ -237,6 +238,8 @@ def _context(root, fd, P):
     _need('stage_gate_policy' not in project or policy == POLICY, 'stage_gate_unknown_policy')
     _need('workflow_quality_policy' not in project or project['workflow_quality_policy'] == QUALITY_POLICY,
           'stage_gate_unknown_quality_policy')
+    _need('experience_intent_policy' not in project or project['experience_intent_policy'] == EXPERIENCE_POLICY,
+          'stage_gate_unknown_experience_policy')
     required = project['mode'] == 'net-new' or policy == POLICY
     selected = project.get('design_intent')
     selected_dependencies = []
@@ -302,6 +305,9 @@ def _discovery_snapshot(fd, project, payload, P, *, current=True):
     context = helper.visual_context(spec)
     _need(context is not None, 'stage_gate_visual_discovery_required')
     refresh_required = payload.get('data_refresh_version') == 1
+    experience_required = payload.get('experience_intent_version') == 1
+    if experience_required:
+        _need(helper.experience_report(spec)['status'] == 'ready', 'stage_gate_experience_intent_required')
     if refresh_required:
         _need(helper.refresh_context(spec) is not None, 'stage_gate_data_refresh_interview_required')
     quality_required = project.get('workflow_quality_policy') == QUALITY_POLICY
@@ -327,6 +333,9 @@ def _discovery_snapshot(fd, project, payload, P, *, current=True):
         if refresh_required:
             _need(helper.refresh_context(live) == helper.refresh_context(spec),
                   'stage_gate_data_refresh_changed_reopen_brief')
+        if experience_required:
+            _need(helper.experience_context(live) == helper.experience_context(spec),
+                  'stage_gate_experience_intent_changed_reopen_brief')
     return helper.visual_report(spec), paths
 
 
@@ -355,6 +364,11 @@ def _experience_options(root, fd, project, payload, P):
           'stage_gate_comparable_concept_scope_required')
     _need(len({(normalize(r['structure']), normalize(r['primary_interaction'])) for r in results}) == 3,
           'stage_gate_distinct_product_structures_required')
+    for pin in P.routing_helper('experience_review').comparison(
+            root, payload['evidence']['comparison']['path'], payload['options'], results, spec, P,
+            expected_reviewer=payload.get('workflow_context', {}).get('responsibilities', {}).get('creative_review', {}).get('worker')):
+        _need(_pin(fd, pin['path'], P) == pin, 'stage_gate_comparison_changed')
+        dependencies[pin['path']] = pin
     return [dependencies[path] for path in sorted(dependencies)]
 
 
@@ -452,6 +466,9 @@ def _payload_shape(stage, payload, saved=True):
             if 'workflow_quality_policy' in payload:
                 expected.update({'workflow_quality_policy', 'workflow_context'})
             original = {k: payload[k] for k in EXTRA['review'] | {'evidence'}}
+            if 'experience_dependencies' in payload:
+                expected.add('experience_dependencies')
+                original['experience_dependencies'] = payload['experience_dependencies']
             if 'workflow_quality_policy' in payload:
                 original.update({k: payload[k] for k in ('workflow_quality_policy', 'workflow_context')})
             _payload_shape('review', original)
@@ -503,6 +520,10 @@ def _payload_shape(stage, payload, saved=True):
         expected.add('data_refresh_version')
         _need(discovery and type(payload['data_refresh_version']) is int
               and payload['data_refresh_version'] == 1, 'stage_gate_invalid_data_refresh_version')
+    if saved and 'experience_intent_version' in payload:
+        expected.add('experience_intent_version')
+        _need(discovery and type(payload['experience_intent_version']) is int
+              and payload['experience_intent_version'] == 1, 'stage_gate_invalid_experience_intent_version')
     conversation = stage == 'choice' and payload.get('basis') == 'conversation_evidence'
     if conversation:
         expected = {'basis', 'option_id', 'expected_binding', 'evidence'}
@@ -530,7 +551,7 @@ def _payload_shape(stage, payload, saved=True):
     if saved and 'experience_dependencies' in payload:
         expected.add('experience_dependencies')
         dependencies = payload['experience_dependencies']
-        _need(stage in {'options', 'design'} and payload.get('workflow_quality_policy') == QUALITY_POLICY and
+        _need(stage in {'options', 'design', 'review'} and payload.get('workflow_quality_policy') == QUALITY_POLICY and
               type(dependencies) is list and 0 < len(dependencies) <= 256,
               'stage_gate_invalid_experience_dependencies')
         for pin in dependencies:
@@ -727,7 +748,9 @@ def _replay(root, project, journal, P):
             _need(payload['iteration_sha256'] == candidate['sha256'] and
                   payload['candidate_sha256'] == candidate['payload']['candidate_sha256'],
                   'stage_gate_review_candidate_mismatch')
-            _need(payload['scope'] not in {'ui_ux', 'qa'} or
+            independent = payload['scope'] in {'ui_ux', 'qa'} or (payload['scope'] == 'product_owner' and
+                                                                 'experience_dependencies' in payload)
+            _need(not independent or
                   payload['reviewer'] not in candidate['payload']['builders'], 'stage_gate_independent_reviewer_required')
             if stage == 'review_carry_forward':
                 _need(payload['expected_tail_sha256'] == previous, 'stage_gate_carry_tail_mismatch')
@@ -806,6 +829,7 @@ def _report(root, fd, project, required, state, P, provider):
               'historical_selected_continuation': (project.get('workflow_quality_policy') is None and
                                                     project.get('design_intent') is not None),
               'experience_quality': {'status': 'not_assessed'},
+              'experience_intent': {'status': 'not_assessed'},
               'workflow_requalification': {'event_sha256': None, 'stage_bindings': {}},
               'review_assurance': {'status': 'not_assessed', 'resolved_scopes_by_basis': {},
                                    'native_acceptance': False, 'human_acceptance': False}}
@@ -867,6 +891,12 @@ def _report(root, fd, project, required, state, P, provider):
                 report['visual_discovery'] = dict(discovery, version=1)
                 helper = P.routing_helper('product_intent')
                 live = _current_spec(fd, project, P)
+                if event['payload'].get('experience_intent_version') == 1:
+                    report['experience_intent'] = helper.experience_report(live)
+                elif helper.experience_context(live) is not None:
+                    report['findings'].append('experience_intent_checkpoint_required')
+                    report['next_stage'] = 'brief'
+                    break
                 if event['payload'].get('data_refresh_version') == 1:
                     refresh = helper.refresh_report(live)
                     report['data_refresh'] = dict(refresh, version=1)
@@ -893,6 +923,18 @@ def _report(root, fd, project, required, state, P, provider):
                 report['findings'].append('visual_discovery_checkpoint_required')
                 report['next_stage'] = 'brief'
                 break
+        if stage == 'options':
+            helper = P.routing_helper('product_intent')
+            spec = _current_spec(fd, project, P)
+            if helper.experience_context(spec) is not None:
+                try:
+                    for option in event['payload']['options']:
+                        concept = _json(_read(fd, option['evidence']['path'], P.MAX_BYTES), P)
+                        helper.validate_experience_direction(concept, spec, P)
+                except (ValueError, OSError, KeyError, TypeError) as exc:
+                    report['findings'].append(str(exc) if isinstance(exc, ValueError) else 'stage_gate_invalid_concept_direction')
+                    report['next_stage'] = 'options'
+                    break
         if stage == 'design' and event['payload']['selected_intent'] != project.get('design_intent'):
             report['findings'].append('selected_intent_changed')
             report['next_stage'] = stage
@@ -1157,6 +1199,11 @@ def record(root, request, *, P=None, provider=None):
             payload = _requalification(root, fd, project, payload, state, P, provider)
         if stage == 'brief':
             _need(payload.get('discovery_version') == 1, 'stage_gate_visual_discovery_required')
+            if (project.get('experience_intent_policy') == EXPERIENCE_POLICY or
+                    P.routing_helper('product_intent').experience_context(_current_spec(fd, project, P)) is not None):
+                _need(project.get('workflow_quality_policy') == QUALITY_POLICY,
+                      'stage_gate_experience_requires_quality_adoption')
+                payload['experience_intent_version'] = 1
             if 'app' in project['surfaces']:
                 payload['data_refresh_version'] = 1
         if stage == 'selection_policy':
@@ -1184,9 +1231,14 @@ def record(root, request, *, P=None, provider=None):
                 new_spec = _json(_read(fd, payload['evidence']['intent']['path'], P.MAX_BYTES), P)
                 P.routing_helper('product_intent').validate_visual_transition(old_spec, new_spec)
                 P.routing_helper('product_intent').validate_refresh_transition(old_spec, new_spec)
+                P.routing_helper('product_intent').validate_experience_transition(old_spec, new_spec)
                 if project.get('workflow_quality_policy') == QUALITY_POLICY:
                     P.routing_helper('product_intent').validate_quality_transition(old_spec, new_spec)
         if stage == 'options':
+            if (project.get('experience_intent_policy') == EXPERIENCE_POLICY or
+                    P.routing_helper('product_intent').experience_context(_current_spec(fd, project, P)) is not None):
+                _need(state['current']['brief']['payload'].get('experience_intent_version') == 1,
+                      'stage_gate_experience_intent_checkpoint_required')
             payload['options'] = [dict(o, evidence=_pin(fd, o['evidence'], P)) for o in payload['options']]
             if project.get('workflow_quality_policy') == QUALITY_POLICY:
                 payload['experience_dependencies'] = _experience_options(root, fd, project, payload, P)
@@ -1220,6 +1272,11 @@ def record(root, request, *, P=None, provider=None):
                     fd, payload['review_manifest'], payload['artifacts'], P.routing_helper('stage_gates'), P)
                 payload['review_context'] = {'stages': {s: state['current'][s]['sha256'] for s in STAGES},
                                              'workflow': payload.get('workflow_context')}
+        if stage == 'review' and P.routing_helper('product_intent').experience_context(_current_spec(fd, project, P)) is not None:
+            dependencies = P.routing_helper('experience_review').fit(root, payload['evidence']['review']['path'],
+                _current_spec(fd, project, P), state['candidate']['payload'], payload, P)
+            if dependencies:
+                payload['experience_dependencies'] = dependencies
         _payload_shape(stage, payload)
         _need(len(journal['events']) < MAX_EVENTS, 'stage_gate_history_limit')
         predecessor = (state['tail'] if stage in {'selection_policy', 'workflow_requalification', 'incremental_policy'} else

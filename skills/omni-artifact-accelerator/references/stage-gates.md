@@ -96,6 +96,22 @@ retroactive claim that startup preceded it.
 
 ## Intentional source upgrades
 
+New non-report engagements carry `experience_intent_policy: experience-continuity-v1`.
+At D the helper requires the canonical experience index and records
+`experience_intent_version: 1`; do not supply that generated field. E requires
+concrete mode meaning in each concept and a typed independent comparison. The
+selected handoff preserves that meaning and links promises to governed journey
+behavior. F's product-owner and UI/UX reviews retain typed whole-product coverage.
+See [experience continuity](experience-continuity.md) for exact schemas and limits.
+
+Historical engagements remain readable with experience intent `not_assessed`.
+Adopt the index deliberately in the existing intent and record a new D checkpoint
+through the usual procedure; retain current A–C evidence, prior journal events and
+actual user decisions. Adoption does not certify historical quality or require a
+new engagement. A changed or newly adopted promise cannot reuse a stale D/E chain;
+resolve the affected checkpoints before coding. Report-only workflows retain their
+existing report contracts. Removing adopted context is never an opt-out.
+
 Ordinary resumes reuse the active startup. After an intentional package-source
 upgrade, record a truthful new startup and use `stage-record` with
 `stage: workflow_requalification`, the exact `expected_tail_sha256`, and

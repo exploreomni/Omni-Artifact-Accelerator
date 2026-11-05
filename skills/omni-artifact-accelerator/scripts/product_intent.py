@@ -17,6 +17,13 @@ _e.loader.exec_module(E)
 _r = importlib.util.spec_from_file_location('data_refresh', Path(__file__).with_name('data_refresh.py'))
 R = importlib.util.module_from_spec(_r)
 _r.loader.exec_module(R)
+_i = importlib.util.spec_from_file_location('experience_intent', Path(__file__).with_name('experience_intent.py'))
+I = importlib.util.module_from_spec(_i)
+_i.loader.exec_module(I)
+experience_context = I.context
+experience_report = I.report
+validate_experience_transition = I.validate_transition
+validate_experience_handoff = I.validate_handoff
 refresh_context = R.context
 refresh_report = R.report
 validate_refresh_transition = R.validate_transition
@@ -27,6 +34,7 @@ quality_context = E.quality_context
 quality_check = E.quality_check
 validate_quality_transition = E.validate_transition
 validate_concept = E.validate_concept
+validate_experience_direction = E._experience_direction
 validate_handoff = E.validate_handoff
 SCOPES = {'new_experience', 'material_redesign', 'migration', 'focused_repair'}
 BASES = {'user_statement': 'user', 'reused_decision': 'reused', 'inference': 'proposal',
@@ -46,7 +54,7 @@ def validate(spec, need, relative, roles):
         return
     need(type(product) is dict and {'schema_version', 'scope', 'discovery', 'note_paths'} <= set(product)
          and set(product) <= {'schema_version', 'scope', 'discovery', 'note_paths', 'source_inventory_path',
-                             'visual_experience', 'quality_bar', 'data_refresh'},
+                             'visual_experience', 'quality_bar', 'data_refresh', 'experience_intent'},
          'product_fields_invalid')
     need(type(product['schema_version']) is int and product['schema_version'] == 1, 'product_version_invalid')
     need(product['scope'] in SCOPES and product['discovery'] in
@@ -87,6 +95,7 @@ def validate(spec, need, relative, roles):
     V.validate(spec, lambda ok, message: need(ok, 'visual_experience.' + message))
     E.validate(spec)
     R.validate(spec)
+    I.validate(spec)
 
 
 def clean(value):
@@ -116,6 +125,16 @@ def render(project, state, generated_at):
         rows.extend(['', 'Source capability inventory: ' + clean(product['source_inventory_path']),
                      'Inventory dispositions describe usable depth and gaps; they do not approve scope or prove source completeness.'])
     rows.extend(['', '## Requirements, experience promise and success criteria', ''])
+    experience = experience_report(spec)
+    if experience['status'] != 'not_assessed':
+        rows.extend(['Experience promises: ' + experience['status'],
+                     'Indexed promise requirements: ' + clean(experience['requirement_ids']),
+                     'Sourced mode constraints: ' + clean(experience['mode_constraint_ids']),
+                     'Creative mode hypotheses for the existing concept choice: ' + clean(experience['creative_hypothesis_ids']),
+                     'Sourced task and experience promises are separate from visualization treatments. '
+                     'Structural readiness does not select a concept or certify product fit.', ''])
+        rows.extend('- Open experience obligation: ' + clean(finding) for finding in experience['findings'])
+        rows.append('')
     visual = visual_report(spec)
     if visual['status'] != 'not_assessed':
         rows.extend(['Visual discovery: ' + visual['status'],
@@ -213,6 +232,9 @@ def check(root):
         if quality_context(spec) is not None:
             result['quality_bar'] = quality_check(spec)
             result['quality_context'] = quality_context(spec)
+        if experience_context(spec) is not None:
+            result['experience_intent'] = experience_report(spec)
+            result['experience_context'] = experience_context(spec)
         receipt = project.get('product_brief')
         P.need(type(receipt) is dict and set(receipt) == {'schema_version', 'kind', 'source_intent', 'generated_at', 'brief'},
                'product_projection_missing_or_invalid')
@@ -253,8 +275,18 @@ def packet_context(root, role, *, bounded=None, scope_ids=None):
     requirements = result.pop('requirements')
     if bounded:
         original_count = len(requirements)
-        shared = P.intent_helper().shared_requirement_ids(requirements)
-        requirements = P.intent_helper().project_requirements(requirements, role, scope_ids)
+        intent = P.intent_helper()
+        current_state = intent.check(root)
+        experience = intent.experience_packet_scope(root, current_state)
+        if experience is not None:
+            # D may be a current adopted draft before the existing E selection.
+            # Its promises are available without claiming a selected North Star.
+            requirements = current_state['requirements']
+            original_count = len(requirements)
+        shared = intent.shared_requirement_ids(requirements)
+        requirements = intent.project_requirements(requirements, role, scope_ids, experience=experience)
+        if experience is not None:
+            result['experience_summary'] = experience['summary']
         result['paths'] = []
         result['shared_constraint_ids'] = shared
         result['coverage'] = {'selected_requirement_ids': [r['id'] for r in requirements],
@@ -262,7 +294,7 @@ def packet_context(root, role, *, bounded=None, scope_ids=None):
                               'complete_requirement_coverage_owner': 'orchestrator'}
         # Discovery/quality details remain in the coordinator's complete check;
         # specialists receive their requirement records and selected excerpts.
-        for key in ('visual_context', 'quality_context'):
+        for key in ('visual_context', 'quality_context', 'experience_context'):
             result.pop(key, None)
     for req in requirements:
         product = req.get('product', {})

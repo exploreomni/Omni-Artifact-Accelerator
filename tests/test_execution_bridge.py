@@ -39,6 +39,27 @@ class BridgeTests(unittest.TestCase):
         B.P.write_json(self.root / path, value)
         return path
 
+    def test_entry_operations_use_fixed_bootstrap_dispatch_without_host_loading(self):
+        routing = B.P.routing_helper
+        helper = routing('engagement_bootstrap')
+        def route(name):
+            return helper if name == 'engagement_bootstrap' else routing(name)
+        guard = patch.object(B.P, 'routing_helper', side_effect=route)
+        guard.start()
+        self.addCleanup(guard.stop)
+        operations = next(t for t in self.bridge.definitions() if t['name'] == 'execution_lifecycle')['inputSchema']['properties']['operation']['enum']
+        self.assertTrue({'entry_prepare', 'entry_check'} <= set(operations))
+        request = {'schema_version': 1, 'id': 'synthetic-entry', 'host': {}, 'startup': {}}
+        with patch.object(helper, 'prepare', return_value={'status': 'not_ready', 'execution_authorized': False}) as prepare:
+            result = B.call(self.root, 'execution_lifecycle', {'operation': 'entry_prepare',
+                'request': self.save('entry', request)})
+            prepare.assert_called_once_with(self.root, request)
+            self.assertFalse(result['execution_authorized'])
+        pin = {'record': {'path': 'evidence/entry-synthetic/ENTRY.json', 'sha256': 'a' * 64}}
+        with patch.object(helper, 'check', return_value={'status': 'not_ready'}) as check:
+            B.call(self.root, 'execution_lifecycle', {'operation': 'entry_check', 'request': self.save('entry-check', pin)})
+            check.assert_called_once_with(self.root, pin)
+
     def test_small_profile_excludes_unselected_sources_and_native_writes(self):
         names = {t['name'] for t in self.bridge.definitions()}
         self.assertEqual(len(names), 10)
@@ -93,8 +114,23 @@ class BridgeTests(unittest.TestCase):
         replies = [json.loads(line) for line in result.stdout.splitlines()]
         self.assertEqual(len(replies), 3)
         self.assertEqual(len(replies[1]['result']['tools']), 10)
+        self.assertFalse(replies[2]['result']['isError'])
         status = json.loads(replies[2]['result']['content'][0]['text'])
+        self.assertIn('stage', status)
         self.assertFalse(status['external_mutations_authorized'])
+
+    def test_optional_status_request_preserves_full_and_fresh_since_paths(self):
+        definition = next(t for t in self.bridge.definitions() if t['name'] == 'execution_status')
+        self.assertEqual(definition['inputSchema']['required'], [])
+        full = self.bridge.call('execution_status', {})
+        first = self.bridge.call('execution_status', {'request': self.save('status-page', {'limit': 1})})
+        self.assertEqual(first['kind'], 'bounded_status_view')
+        self.assertEqual(first['stage']['next_stage'], full['stage']['next_stage'])
+        self.assertTrue(first['fresh_full_status_evaluated'])
+        repeated = self.bridge.call('execution_status', {'request': self.save('status-since', {'since': first['since']})})
+        self.assertTrue(repeated['unchanged_since'])
+        self.assertTrue(repeated['fresh_full_status_evaluated'])
+        self.assertFalse(repeated['execution_authorized'])
 
     def test_catalog_keeps_native_and_human_evidence_separate(self):
         catalog = self.bridge.call('execution_qualification', {'operation': 'catalog'})
@@ -155,6 +191,14 @@ class BridgeTests(unittest.TestCase):
                 'disclosure': {'allowed_classifications': ['internal'], 'review_ref': 'synthetic-local-case'},
                 'shared_constraint_ids': packet.get('design_context', {}).get('shared_constraint_ids', [])}
             receipt = self.bridge.call('execution_prepare', {'operation': 'context', 'request': self.save('context', context), 'output': 'tasks/integrated-context'})
+            recipe_context = dict(context)
+            recipe_context.pop('packet')
+            recipe = self.bridge.call('execution_prepare', {'operation': 'recipe', 'request': self.save('recipe',
+                {'schema_version': 1, 'idempotency_key': 'integrated-preparation', 'work': request,
+                 'context': recipe_context, 'context_output': 'tasks/integrated-context',
+                 'action': 'build', 'attempt_id': 'integrated'})})
+            self.assertEqual(recipe['status'], 'ready')
+            self.assertFalse(recipe['agents_dispatched'])
             self.bridge.call('execution_prepare', {'operation': 'claim', 'request': self.save('claim',
                 {'attempt_id': 'integrated', 'packet': prepared['packet'], 'context_receipt': receipt['receipt_path']})})
             root = self.root

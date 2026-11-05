@@ -134,7 +134,9 @@ def impact_state(state, at=None):
                        if scope in newer[key]['scopes'] or scope in older[key]['scopes'])
         source = prior.get(scope)
         if source and now:
-            if scope in {'qa', 'ui_ux'} and source['payload']['reviewer'] in now['payload']['builders']:
+            independent = scope in {'qa', 'ui_ux'} or (scope == 'product_owner' and
+                                                      'experience_dependencies' in source['payload'])
+            if independent and source['payload']['reviewer'] in now['payload']['builders']:
                 reasons.append('reviewer_is_current_builder')
             if source['payload']['basis'] != 'source':
                 reasons.append('observed_acceptance_requires_fresh_review')
@@ -157,7 +159,7 @@ def carry_payload(state, request):
     source = state['previous_reviews'][scope]
     need(source['sha256'] == request['source_review_sha256'], 'source_review_mismatch')
     original = source['payload']
-    return {**request, **{k: copy.deepcopy(original[k]) for k in ('reviewer', 'outcome', 'basis', 'evidence')},
+    return {**request, **{k: copy.deepcopy(original[k]) for k in ('reviewer', 'outcome', 'basis', 'evidence', 'experience_dependencies') if k in original},
             'origin_review_sha256': original.get('origin_review_sha256', source['sha256']),
             'proof_sha256': row['proof_sha256']}
 
@@ -171,6 +173,7 @@ def validate_carry(state, payload, at):
     need(source['sha256'] == payload['source_review_sha256'], 'source_review_mismatch')
     original = source['payload']
     need(all(payload[k] == original[k] for k in ('reviewer', 'outcome', 'basis', 'evidence')) and
+         payload.get('experience_dependencies') == original.get('experience_dependencies') and
          payload['origin_review_sha256'] == original.get('origin_review_sha256', source['sha256']),
          'original_review_changed')
 

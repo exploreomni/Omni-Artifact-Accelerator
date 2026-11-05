@@ -28,6 +28,10 @@ Context migration does not automatically adopt review reuse.
 
 ## Prepare once, dispatch only necessary work
 
+The [fixed preparation recipe](execution-performance.md) composes the following
+steps with exact-input recovery and reservation last. Use it when the task inputs
+are already resolved; it does not infer missing analytical or design decisions.
+
 1. Inventory/extract each source version once and retain original evidence and
    parser/version pins. Reuse unchanged verified outputs with `claim-work`.
    A changed source, parser or relevant requirement needs affected extraction,

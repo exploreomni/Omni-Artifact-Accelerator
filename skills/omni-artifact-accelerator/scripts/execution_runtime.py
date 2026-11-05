@@ -56,7 +56,8 @@ class Runtime:
         self.ops = P.routing_helper('task_operations')
 
     def status(self, attempt_id):
-        with self.ops.locked(self.root) as (_, _, state):
+        with P.validation_operation(self.root):
+            _, _, state, _ = self.ops.read_state(self.root)
             record = self.ops.attempt(state, attempt_id)
             launch = copy.deepcopy(record.get('host_launch'))
         return {'attempt_id': attempt_id, 'launch': launch, 'execution_assurance': 'host_reported',

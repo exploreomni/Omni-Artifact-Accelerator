@@ -8,6 +8,8 @@ import copy
 import html
 import importlib.util
 import os
+import stat
+import time
 from pathlib import Path
 
 spec = importlib.util.spec_from_file_location('operations_project', Path(__file__).with_name('analyst_project.py'))
@@ -22,6 +24,7 @@ def now():
 
 @contextmanager
 def locked(root):
+    ap.validation_helper().before_mutation()
     import fcntl
     root, project = ap.load_project(root)
     lock = ap.no_links(root / '.task-operations.lock')
@@ -62,7 +65,7 @@ def locked(root):
 
 def capture(root, paths):
     rules.strings(paths, nonempty=True)
-    return {path: ap.digest(ap.relative_file(root, path).read_bytes()) for path in paths}
+    return {path: ap.digest(ap.read_bytes(ap.relative_file(root, path))) for path in paths}
 
 
 def read_packet(root, project, path):
@@ -75,9 +78,9 @@ def read_packet(root, project, path):
     size = 0
     for record in packet['inputs']:
         source = ap.relative_file(root, record['path'])
-        size += source.stat().st_size
+        raw_input = ap.read_bytes(source)
+        size += len(raw_input)
         ap.need(size <= ap.PACKET_BYTES, 'Packet input budget exceeded')
-        raw_input = source.read_bytes()
         ap.need(ap.digest(raw_input) == record['sha256'], 'Packet inputs changed; prepare a revised assignment')
         ap.need(type(record['bytes']) is int and record['bytes'] == len(raw_input), 'Packet input size differs')
     ap.need(packet.get('input_bytes') == size, 'Packet total input size differs')
@@ -119,7 +122,7 @@ def context_receipt(root, project, packet, receipt=None):
         return None
     report = ap.routing_helper('context_packets').check(root, receipt, packet)
     ap.need(report['status'] == 'consistent', 'Context receipt or pinned inputs changed; rebuild the bounded context')
-    return dict(report, receipt_sha256=ap.digest(ap.relative_file(root, report['receipt_path']).read_bytes()))
+    return dict(report, receipt_sha256=ap.digest(ap.read_bytes(ap.relative_file(root, report['receipt_path']))))
 
 
 def check_context(root, project, record):
@@ -183,15 +186,18 @@ def claim(root, request):
 
 def prepare_dispatch(root, request):
     ap.need(set(request) == {'attempt_id'}, 'Invalid dispatch preflight fields')
-    with locked(root) as (root, project, state):
+    # Observation only: reserve/launch still recheck under the unchanged writer lock.
+    with ap.validation_operation(root):
+        root, project, state, _ = read_state(root)
         record = attempt(state, request['attempt_id'])
         ap.need(record['status'] == 'active', 'Dispatch needs an active reservation')
         assignment, pin = read_packet(root, project, record['packet'])
         ap.need(assignment == record['assignment'] and pin == record['packet_sha256'], 'Reserved packet changed')
         context = check_context(root, project, record)
         ap.routing_helper('execution_efficiency').require_no_loop(root, state, record)
-        return {'status': 'ready', 'attempt_id': record['attempt_id'], 'agents_dispatched': False,
-                'context': context, 'context_mode_requested': 'fresh' if context else 'unknown'}
+        result = {'status': 'ready', 'attempt_id': record['attempt_id'], 'agents_dispatched': False,
+                  'context': context, 'context_mode_requested': 'fresh' if context else 'unknown'}
+    return result
 
 
 def record_dispatch(root, request):
@@ -298,56 +304,138 @@ def review_work(root, request):
         return {'review': record['review'], 'decision': decision}
 
 
-def status(root, output=None):
-    with locked(root) as (root, project, state):
-        latest = {a['task_id']: a for a in state['attempts']}
-        rows = []
-        for record in latest.values():
-            assignment = record['assignment']
-            stale = False
+@contextmanager
+def _read_lock(root):
+    """Only ledger/project capture uses this shared lock; no expensive validators."""
+    import fcntl
+    root = ap.no_links(root)
+    path = ap.no_links(root / '.task-operations.lock')
+    fd = os.open(path, os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW | os.O_NONBLOCK, 0o600)
+    try:
+        ap.need(stat.S_ISREG(os.fstat(fd).st_mode), 'Task lock must be a regular file')
+        started = time.perf_counter()
+        fcntl.flock(fd, fcntl.LOCK_SH)
+        ap.validation_helper().lock_wait(time.perf_counter() - started)
+        yield root
+    finally:
+        os.close(fd)
+
+
+def _generation(root):
+    helper = ap.validation_helper()
+    project = helper.fresh_read(root / 'project.json', ap.MAX_BYTES)
+    try:
+        ledger = helper.fresh_read(root / 'task-operations.json', ap.MAX_BYTES)
+    except FileNotFoundError:
+        ledger = None
+    return {'project_sha256': ap.digest(project),
+            'ledger_sha256': ap.digest(ledger) if ledger is not None else None}
+
+
+def read_state(root):
+    """Read-only ledger snapshot. Callers must not use it to reserve or launch."""
+    with _read_lock(root) as root:
+        root, project = ap.load_project(root)
+        path = root / 'task-operations.json'
+        scope = ap.validation_helper().active()
+        raw = scope.optional(path, ap.MAX_BYTES) if scope is not None else (
+            ap.read_bytes(path) if path.exists() else None)
+        state = ap.read_json(path)[0] if raw is not None else {
+            'schema_version': 1, 'project_id': project['id'], 'max_workers': 2, 'attempts': [], 'reuse_count': 0}
+        ap.need(state.get('schema_version') == 1 and state.get('project_id') == project['id'], 'Invalid task ledger')
+        generation = {'project_sha256': ap.digest(ap.read_bytes(root / 'project.json')),
+                      'ledger_sha256': ap.digest(raw) if raw is not None else None}
+    return root, project, state, generation
+
+
+def _status_rows(root, project, state):
+    latest = {a['task_id']: a for a in state['attempts']}
+    rows = []
+    for record in latest.values():
+        assignment = record['assignment']
+        stale = False
+        try:
+            value, pin = read_packet(root, project, record['packet'])
+            stale = value != assignment or pin != record['packet_sha256']
+        except (ValueError, OSError):
+            stale = True
+        observed_outputs = None
+        if record['status'] == 'outputs_recorded' or record.get('review'):
             try:
-                value, pin = read_packet(root, project, record['packet'])
-                stale = value != assignment or pin != record['packet_sha256']
+                observed_outputs = capture(root, assignment['outputs'])
             except (ValueError, OSError):
-                stale = True
-            if record['status'] == 'outputs_recorded' and not current(root, record):
-                stale = True
-            state_label = 'stale' if stale else ('reserved' if record['status'] == 'active' and not record['dispatch'] else record['status'])
-            review = {'action': 'unverified'}
-            if record.get('review') and not stale:
+                if record['status'] == 'outputs_recorded':
+                    stale = True
+        if record['status'] == 'outputs_recorded' and observed_outputs != record['outputs']:
+            stale = True
+        state_label = 'stale' if stale else ('reserved' if record['status'] == 'active' and not record['dispatch'] else record['status'])
+        review = {'action': 'unverified'}
+        if record.get('review') and not stale:
+            if observed_outputs is None:
+                review = {'action': 'stale'}
+            else:
                 try:
-                    review = rules.review_decision(record['review'], capture(root, assignment['outputs']))
+                    review = rules.review_decision(record['review'], observed_outputs)
                 except (ValueError, OSError):
                     review = {'action': 'stale'}
-            rows.append({'task_id': record['task_id'], 'domain_id': assignment['domain_id'], 'stage': assignment['stage'],
-                         'role': assignment['role'], 'status': state_label, 'authoring_mode': assignment['authoring_mode'],
-                         'outputs': list(record['outputs']), 'unknowns': assignment['unknowns'], 'review_status': review['action'],
-                         'next_action': 'Refresh changed evidence' if stale else review.get('reason') or
-                            ('Invoke or locate the reserved host worker' if state_label == 'reserved' else
-                             'Resume from checkpoint' if state_label == 'interrupted' else 'Review candidate outputs and outstanding decisions')})
-        result = {'snapshot_at': now(), 'tasks': rows, 'reuse_count': state['reuse_count'], 'execution_verified': False,
-                  'qualification': 'Offline snapshot. Reserved work is not execution; recorded outputs are not native validation or approval.'}
-        if output:
-            rules.output_path(output)
-            destination = ap.no_links(root / output)
-            ap.need(destination.parent.is_dir() and destination.suffix == '.html', 'Existing status directory and HTML path required')
-            if destination.exists():
-                ap.need(destination.read_text().startswith('<!doctype html><!-- oaa-task-status-v1 -->'), 'Do not overwrite unrelated HTML')
-            esc = lambda value: html.escape(str(value), quote=True)
-            from urllib.parse import quote
-            def extras(row):
-                links = []
-                for path in row['outputs']:
-                    href = quote(os.path.relpath(root / path, destination.parent), safe='/')
-                    links.append('<a href="' + esc(href) + '">' + esc(path) + '</a>')
-                return '<td>' + '<br>'.join(links) + '</td><td>' + '<br>'.join(esc(v) for v in row['unknowns']) + '</td>'
-            body = ''.join('<tr>' + ''.join('<td>' + esc(row[key]) + '</td>' for key in ('domain_id', 'task_id', 'stage', 'role', 'status', 'authoring_mode', 'review_status', 'next_action')) + extras(row) + '</tr>' for row in rows)
-            page = '<!doctype html><!-- oaa-task-status-v1 --><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><meta http-equiv="Content-Security-Policy" content="default-src \'none\'; style-src \'unsafe-inline\'; base-uri \'none\'"><title>Task progress</title><style>body{font:18px system-ui;margin:2rem;line-height:1.5}main{max-width:1200px;margin:auto}table{border-collapse:collapse;min-width:800px}th,td{padding:12px;border:1px solid #ccd;text-align:left;vertical-align:top}.scroll{overflow:auto}small{color:#555}</style><main><h1>Task progress</h1><p>' + esc(result['qualification']) + '</p><small>Snapshot ' + esc(result['snapshot_at']) + '</small><div class="scroll"><table><tr>' + ''.join('<th>' + title + '</th>' for title in ('Domain', 'Task', 'Stage', 'Specialist', 'Progress', 'Candidate', 'Review', 'Next action', 'Recorded outputs', 'Open questions')) + '</tr>' + body + '</table></div></main></html>'
-            ap.private_write(destination, page.encode(), replace=destination.exists())
-            entry = ap.relative_file(root, 'START_HERE.md')
-            link = '\n- [Task progress and recorded outputs](<' + quote(output, safe='/') + '>)\n'
-            content = entry.read_text()
-            if link not in content:
-                ap.private_write(entry, (content + link).encode(), replace=True)
-            result['html'] = output
-        return result
+        rows.append({'task_id': record['task_id'], 'domain_id': assignment['domain_id'], 'stage': assignment['stage'],
+                     'role': assignment['role'], 'status': state_label, 'authoring_mode': assignment['authoring_mode'],
+                     'outputs': list(record['outputs']), 'unknowns': assignment['unknowns'], 'review_status': review['action'],
+                     'next_action': 'Refresh changed evidence' if stale else review.get('reason') or
+                        ('Invoke or locate the reserved host worker' if state_label == 'reserved' else
+                         'Resume from checkpoint' if state_label == 'interrupted' else 'Review candidate outputs and outstanding decisions')})
+    result = {'snapshot_at': now(), 'tasks': rows, 'reuse_count': state['reuse_count'], 'execution_verified': False,
+              'qualification': 'Offline snapshot. Reserved work is not execution; recorded outputs are not native validation or approval.'}
+    return result
+
+
+def status(root, output=None):
+    helper = ap.validation_helper()
+    result = None
+    for retry in range(2):
+        try:
+            with ap.validation_operation(root):
+                root, project, state, generation = read_state(root)
+                # Gate/provider/freshness decisions themselves are never cached.
+                if project.get('stage_gate_policy'):
+                    ap.stage_status(root)
+                result = _status_rows(root, project, state)
+                with _read_lock(root):
+                    if _generation(root) != generation:
+                        raise helper.Changed('validation_task_generation_changed')
+                result.update(status='consistent', snapshot_generation=generation,
+                              retry_count=retry, incomplete=False)
+            break
+        except helper.Changed:
+            result = None
+    if result is None:
+        result = {'status': 'changed', 'snapshot_at': now(), 'tasks': [], 'reuse_count': None,
+                  'snapshot_generation': None, 'retry_count': 1, 'incomplete': True,
+                  'findings': ['state_changed_during_status'], 'execution_verified': False,
+                  'qualification': 'Inputs changed during both bounded reads; no current task status is asserted.',
+                  'next_action': 'Retry status after the ongoing change completes; do not infer completion or redispatch.'}
+    if output:
+        rows = result['tasks']
+        rules.output_path(output)
+        destination = ap.no_links(root / output)
+        ap.need(destination.parent.is_dir() and destination.suffix == '.html', 'Existing status directory and HTML path required')
+        if destination.exists():
+            ap.need(destination.read_text().startswith('<!doctype html><!-- oaa-task-status-v1 -->'), 'Do not overwrite unrelated HTML')
+        esc = lambda value: html.escape(str(value), quote=True)
+        from urllib.parse import quote
+        def extras(row):
+            links = []
+            for path in row['outputs']:
+                href = quote(os.path.relpath(root / path, destination.parent), safe='/')
+                links.append('<a href="' + esc(href) + '">' + esc(path) + '</a>')
+            return '<td>' + '<br>'.join(links) + '</td><td>' + '<br>'.join(esc(v) for v in row['unknowns']) + '</td>'
+        body = ''.join('<tr>' + ''.join('<td>' + esc(row[key]) + '</td>' for key in ('domain_id', 'task_id', 'stage', 'role', 'status', 'authoring_mode', 'review_status', 'next_action')) + extras(row) + '</tr>' for row in rows)
+        page = '<!doctype html><!-- oaa-task-status-v1 --><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><meta http-equiv="Content-Security-Policy" content="default-src \'none\'; style-src \'unsafe-inline\'; base-uri \'none\'"><title>Task progress</title><style>body{font:18px system-ui;margin:2rem;line-height:1.5}main{max-width:1200px;margin:auto}table{border-collapse:collapse;min-width:800px}th,td{padding:12px;border:1px solid #ccd;text-align:left;vertical-align:top}.scroll{overflow:auto}small{color:#555}</style><main><h1>Task progress</h1><p>' + esc(result['qualification']) + '</p><small>Snapshot ' + esc(result['snapshot_at']) + '</small><div class="scroll"><table><tr>' + ''.join('<th>' + title + '</th>' for title in ('Domain', 'Task', 'Stage', 'Specialist', 'Progress', 'Candidate', 'Review', 'Next action', 'Recorded outputs', 'Open questions')) + '</tr>' + body + '</table></div></main></html>'
+        ap.private_write(destination, page.encode(), replace=destination.exists())
+        entry = ap.relative_file(root, 'START_HERE.md')
+        link = '\n- [Task progress and recorded outputs](<' + quote(output, safe='/') + '>)\n'
+        content = entry.read_text()
+        if link not in content:
+            ap.private_write(entry, (content + link).encode(), replace=True)
+        result['html'] = output
+    return result

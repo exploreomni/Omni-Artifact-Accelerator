@@ -32,6 +32,13 @@ A creative reviewer must differ from the builder and originating designer; one
 qualified independent worker may cover both review disciplines with separate findings.
 Neither projection consistency nor an unobserved customer response establishes acceptance.
 
+For adopted [experience continuity](../omni-artifact-accelerator/references/experience-continuity.md),
+reconcile the sourced promise, selected mode and actual journey behavior. PO/UI/UX
+fit evidence covers all promised outcomes and consequential destinations/journeys;
+an early representative slice does not shrink that denominator. Bounded packets
+must preserve relevant promises and pins. Source-only findings leave rendered or
+native fit unobserved; no additional model, agent or dependency is implied.
+
 For selected native scenes, use [spatial QA](references/spatial-qa.md) and the [framework qualification boundaries](../omni-app-engineer/references/native-scene-framework.md). Freeze original dimensional/data/task expectations and source, scene, engine, query and candidate pins. Check late initialization cleanup, retry, interruption, hide/return, reduced motion, exact identities and stale/error clearing. Record source/local, native readback, rendered interaction, access and participant evidence separately. A fresh-context pilot without observation cannot establish visual polish or zero real-world corrective prompts.
 
 Before runtime or tool use, follow the shared [package-use policy](../omni-artifact-accelerator/references/dependency-policy.md): no unapproved package installation/import or skill activation, and no Blender code or execution. Source review is separate from execution authority.

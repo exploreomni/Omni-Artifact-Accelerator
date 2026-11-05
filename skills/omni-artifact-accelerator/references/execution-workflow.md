@@ -13,6 +13,13 @@ rendered/native acceptance. A role assignment is not a mandatory agent launch.
 Use for substantial new design, redesign and migration. This procedure connects
 the existing project, selected intent, specialist assignments and design review.
 
+For a repository checkout and sibling engagement, [prepare an explicit entry](engagement-entry.md)
+so the host has an exact source reference and recoverable startup instructions.
+Generated instructions are not evidence of host loading. New non-report engagements
+also require [experience continuity](experience-continuity.md): recover the user's
+task and promise at D, compare viable modes at E, and assess the complete selected
+experience in F. Existing attributable answers avoid repeated questions.
+
 For net-new products and explicit product reconception, the
 [data-first A–F workflow](data-first-product-workflow.md) governs execution order.
 Record startup first, then verify source/user access, analyze governed queries and

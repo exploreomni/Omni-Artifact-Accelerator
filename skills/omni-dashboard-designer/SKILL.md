@@ -19,6 +19,12 @@ For substantial new design, material redesign, explicit craft feedback or delibe
 
 Use the relevant [experience brief](../omni-design-systems/references/experience-brief.md) to retain the intended reading path, density, brand character and exact-evidence access. Resolve those choices within supported native dashboard controls; an App introduction or separate-screen journey is not a dashboard requirement.
 
+Preserve the adopted D promise through [experience continuity](../omni-artifact-accelerator/references/experience-continuity.md).
+Monitoring and peer comparison remain valid task choices. Bind supported actions,
+evidence and recovery without inventing App navigation; a deliberate single view
+can retain the full promise. Resolve creative hypotheses through the existing E
+choice and keep complete PO/UI/UX coverage beyond the representative specimen.
+
 For filters, navigation or responsive comparison, apply the [control-craft surface boundary](../omni-design-systems/references/control-craft.md#surface-and-migration-boundary) and separate [page from data columns](../omni-design-systems/references/control-craft.md#page-columns-and-data-columns-are-different-decisions). Bind each native control's scope, defaults, reset and propagation with the BI engineer. App helpers do not qualify dashboard features; preserve migration control identities and accepted differences. Choose relevant [focused lessons](../omni-design-systems/references/experience-curriculum.md#focused-control-practice) without requiring App exercises.
 
 For Tableau migrations, apply [Tableau mapping](references/tableau-mapping.md): keep worksheet definitions distinct from placements; preserve filter order, table-calculation scope, parameter/action behavior and hidden/device obligations. Produce a faithful baseline and separately recorded improvements. Reuse the company website/brand answer, or ask for it when missing. A static visual match cannot close numerical or interaction cases.

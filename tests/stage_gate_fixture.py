@@ -4,11 +4,17 @@ from datetime import datetime, timezone
 import json
 
 
-def bootstrap(root, P):
+def bootstrap(root, P, *, experience=False):
     """Synthetic startup/role evidence for isolated tests, never production identity."""
     project = P.load_project(root)[1]
     if project.get('execution_start'):
         return
+    # Existing gate suites intentionally exercise the prior supported policy.
+    # Continuity suites pass experience=True to keep new-init defaults and cover
+    # the new contract end to end. This is test evidence, not a product opt-out.
+    if not experience:
+        project.pop('experience_intent_policy', None)
+        P.write_json(root / 'project.json', project, replace=True)
     brief = root / 'inputs/brief.txt'
     if not brief.exists() or not brief.read_text().strip():
         brief.write_text('Original synthetic request: compare fictional garden observations; no real user.')
@@ -211,7 +217,7 @@ def concept_options(root, P, ids, theses=None):
     return options
 
 
-def selected_handoff(root, P, option, version=None):
+def selected_handoff(root, P, option, version=None, transform=None):
     project = P.load_project(root)[1]
     spec = (P.intent_helper().load_selected(root)['spec'] if project.get('design_intent') else
             P.read_json(root / project['design_intent_draft'])[0])
@@ -250,6 +256,8 @@ def selected_handoff(root, P, option, version=None):
             design['journeys'].append(flow)
         for row in design['experience_handoff']['quality_coverage']:
             row['destination_ids'] = [d['id'] for d in design['destinations']]
+    if transform is not None:
+        transform(spec, design)
     (root / design_path).write_text(json.dumps(design))
     for selected in spec['selections']:
         selected['design_path'] = design_path
