@@ -46,7 +46,7 @@ def pin_shape(value):
 
 
 def validate(request):
-    fields(request, ('schema_version', 'id', 'host', 'startup'), ('runtime_observation',))
+    fields(request, ('schema_version', 'id', 'host', 'startup'), ('runtime_observation', 'host_entry'))
     need(type(request['schema_version']) is int and request['schema_version'] == 1, 'unsupported_request')
     need(type(request['id']) is str and W.ID.fullmatch(request['id']), 'invalid_id')
     host = request['host']
@@ -65,18 +65,24 @@ def validate(request):
     need(startup['execution'].endswith('.json'), 'execution_json_required')
     expectation = startup['source_expectation']
     need(type(expectation) is dict and expectation.get('kind') in
-         {'current_checkout', 'pinned_revision', 'latest_main'}, 'invalid_source_expectation')
+         {'current_checkout', 'offline_snapshot', 'pinned_revision', 'latest_main'}, 'invalid_source_expectation')
     required = ('kind',) if expectation['kind'] == 'current_checkout' else ('kind', 'revision')
     if expectation['kind'] == 'latest_main':
         required += ('verification_path',)
+    if expectation['kind'] == 'offline_snapshot':
+        required = ('kind', 'manifest_sha256')
     fields(expectation, required)
     if 'revision' in expectation:
         need(type(expectation['revision']) is str and re.fullmatch(r'[a-f0-9]{40}|[a-f0-9]{64}', expectation['revision']),
              'exact_revision_required')
     if 'verification_path' in expectation:
         relative(expectation['verification_path'], ('evidence/',))
+    if 'manifest_sha256' in expectation:
+        need(type(expectation['manifest_sha256']) is str and SHA.fullmatch(expectation['manifest_sha256']), 'exact_snapshot_required')
     if 'runtime_observation' in request:
         pin_shape(request['runtime_observation'])
+    if 'host_entry' in request:
+        pin_shape(request['host_entry'])
     # Declarations remain private, and are never executable instruction text.
     P.routing_helper('context_packets').scan(P.canonical(request))
 
@@ -105,6 +111,8 @@ def input_pins(root, request):
     paths = [startup['brief'], startup['execution']]
     if 'runtime_observation' in request:
         paths.append(request['runtime_observation']['path'])
+    if 'host_entry' in request:
+        paths.append(request['host_entry']['path'])
     bindings = {}
     for path in paths:
         raw = P.read_bytes(P.relative_file(root, path))
@@ -113,6 +121,9 @@ def input_pins(root, request):
     observation = request.get('runtime_observation')
     if observation:
         need(bindings[observation['path']] == observation['sha256'], 'runtime_observation_changed')
+    if request.get('host_entry'):
+        entry = request['host_entry']
+        need(bindings[entry['path']] == entry['sha256'], 'host_entry_changed')
     return bindings
 
 
@@ -128,6 +139,8 @@ def capture(root, request):
     except (ValueError, OSError, KeyError, TypeError):
         raise ValueError('entry.source_expectation_not_satisfied') from None
     bindings = input_pins(root, request)
+    if request.get('host_entry'):
+        W.host_entry_helper().verify_record(root, request['host_entry'], request['host'], expectation)
     return {'schema_version': 1, 'kind': 'analyst_engagement_entry', 'id': request['id'],
             'project_id': project['id'], 'request': copy.deepcopy(request), 'locations': places,
             'entrypoint': ENTRY, 'source': {'manifest': manifest, 'manifest_sha256': P.digest(P.canonical(manifest)),
@@ -140,7 +153,8 @@ def startup_request(record):
     request = record['request']
     return {'id': request['id'], 'source_mode': 'repository_only', 'host': request['host'],
             'entrypoint': 'Explicit repository entry: ' + str(Path(record['locations']['repository']) / ENTRY),
-            **request['startup'], 'loaded_guidance': []}
+            **request['startup'], 'loaded_guidance': [],
+            **({'host_entry': request['host_entry']} if 'host_entry' in request else {})}
 
 
 def fragment(record):
@@ -243,6 +257,14 @@ def _check(root, request):
         if not source_matches:
             findings.append('package_source_changed')
             next_actions.append({'code': 'refresh_entry', 'action': 'Prepare a new entry ID against the explicitly selected source; preserve this record. Refresh startup and requalify the existing journal when required.'})
+        host_entry = None
+        if record['request'].get('host_entry'):
+            try:
+                host_entry = W.host_entry_helper().verify_record(root, record['request']['host_entry'],
+                    record['request']['host'], source['expectation'], resume=True)
+            except (ValueError, OSError, KeyError, TypeError):
+                findings.append('host_entry_changed_or_unavailable')
+                next_actions.append({'code': 'host_entry_check', 'action': 'Run the current trusted host entry verifier and reconcile the reported loaded source and routes.'})
         try:
             need(input_pins(root, record['request']) == record['input_pins'], 'startup_inputs_changed')
             if source['verification_pins']:
@@ -260,6 +282,7 @@ def _check(root, request):
                      run.get('brief') == expected['startup']['brief'] and
                      run.get('execution_path') == expected['startup']['execution'] and
                      run.get('source_expectation') == expected['startup']['source_expectation'] and
+                     run.get('host_entry') == expected.get('host_entry') and
                      run.get('package_files') == source['manifest'], 'startup_declaration_mismatch')
                 workflow.update(startup_status='matching_local_record', run=pointer)
             except (ValueError, OSError, KeyError, TypeError):
@@ -291,6 +314,7 @@ def _check(root, request):
                 'package_check': {'status': 'matching' if source_matches else 'changed', 'scope': 'source_manifest_and_entry_files_only',
                                   'source_expectation': source['expectation']['kind'], 'tests_executed': False},
                 'initialized_engagement': {'status': 'existing', 'project_id': project['id'], 'relationship': 'sibling'},
+                'host_entry': host_entry,
                 'workflow_observed': workflow,
                 'host_authority': {'declaration': 'supplied', 'runtime_observation': 'supplied_evidence_only' if 'runtime_observation' in record['request'] else 'absent',
                                    'loading': 'not_observed', 'enforcement': 'not_qualified', 'raw_tool_bypass': 'not_constrained_by_entry'},

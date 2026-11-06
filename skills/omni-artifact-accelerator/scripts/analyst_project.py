@@ -187,6 +187,12 @@ def load_project(root):
              'report_requires_current_stage_and_quality_gates')
     for key in ("sources", "artifacts", "decisions", "open_questions"):
         need(type(obj.get(key)) is list, "project requires list: " + key)
+    if 'app_release_policy' in obj:
+        need(obj['app_release_policy'] == 'candidate-release-v1' and 'app' in surfaces,
+             'invalid_app_release_policy')
+    elif obj.get('execution_start'):
+        prior, _ = read_json(relative_file(root, obj['execution_start']['path']))
+        need(prior.get('app_release_policy') is None, 'recorded_app_release_policy_removed')
     return root, obj
 
 
@@ -217,6 +223,8 @@ def init(output, name, mode, surface, branding=None, website=None, selection_pol
     project['workflow_quality_policy'] = 'experience-evidence-v1'
     if surface != 'report':
         project['experience_intent_policy'] = 'experience-continuity-v1'
+    if 'app' in selected_surfaces:
+        project['app_release_policy'] = 'candidate-release-v1'
     if context_policy is not None:
         project['context_policy'] = context_policy
     write_json(root / "project.json", project)
@@ -862,7 +870,8 @@ def routing_helper(name='task_routing'):
                   'context_packets', 'execution_efficiency', 'incremental_review', 'execution_bridge',
                   'execution_runtime', 'execution_qualification', 'assembly_provenance', 'analytical_evidence',
                   'execution_contracts', 'execution_observability', 'execution_preparation', 'selective_reads',
-                  'experience_intent', 'experience_review', 'engagement_bootstrap', 'dma_topics'}, 'unknown routing helper')
+                  'experience_intent', 'experience_review', 'engagement_bootstrap', 'dma_topics',
+                  'host_entry', 'native_data_consumers'}, 'unknown routing helper')
     # Fixed first-party module only. The host verifier never comes from a request,
     # file path or environment variable. Share its scope across helper imports.
     cache_key = '_oaa_stage_gates_' + digest(str(Path(__file__).resolve().parent).encode())

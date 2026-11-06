@@ -9,6 +9,10 @@ def bootstrap(root, P, *, experience=False):
     project = P.load_project(root)[1]
     if project.get('execution_start'):
         return
+    # Existing suites exercise historical contracts. Release-policy suites opt
+    # back in explicitly and supply their own complete consumer/sequence evidence.
+    project.pop('app_release_policy', None)
+    P.write_json(root / 'project.json', project, replace=True)
     # Existing gate suites intentionally exercise the prior supported policy.
     # Continuity suites pass experience=True to keep new-init defaults and cover
     # the new contract end to end. This is test evidence, not a product opt-out.
@@ -389,7 +393,8 @@ def pre_policy_project(root, P):
     project = P.load_project(root)[1]
     project.pop('stage_gate_policy', None)
     project.pop('workflow_quality_policy', None)
-    # Historical engagements predate all three policy markers added by init.
+    project.pop('app_release_policy', None)
+    # Historical engagements predate the policy markers added by init.
     # Leaving continuity enabled makes this a mixed-era fixture, not history.
     project.pop('experience_intent_policy', None)
     P.write_json(root / 'project.json', project, replace=True)

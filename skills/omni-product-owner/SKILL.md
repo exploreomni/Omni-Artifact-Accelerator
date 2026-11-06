@@ -107,6 +107,12 @@ the user has not responded. Continue unaffected work within the existing scope.
 
 ## One current intent, one bounded handoff
 
+For new Apps, [candidate release](../omni-artifact-accelerator/references/app-release.md)
+requires each concept to show its first view and the result of the primary action.
+Retain an actual hybrid selection as attributable amendments to the chosen base
+option, with source options and affected journeys. Reuse the canonical promise
+and current bounded handoff. Host report examples do not decide App composition.
+
 Use [intent, notes and handoff](references/intent-handoff.md) when recording discovery
 or returning work. Original notes are evidence. The existing versioned design intent
 is the canonical decision record. A readable North Star is derived from that record,

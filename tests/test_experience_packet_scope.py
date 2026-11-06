@@ -99,6 +99,22 @@ class ExperiencePacketScopeTests(unittest.TestCase):
         self.assertEqual({r['id'] for r in scoped['requirements']}, {'metric-a', 'shared-stop'})
         self.assertFalse(summary['claims_authenticated'])
 
+    def test_hybrid_adjustments_reach_affected_worker_without_copying_other_designs(self):
+        amendment = {'option_id': 'option-2', 'source_locator': 'Evidence inspection state',
+                     'application': 'Keep this requested inspection flow.', 'journey_ids': ['inspect-record']}
+        self.design['experience_handoff'] = {'selection_adjustments': {
+            'response_path': 'inputs/request.md', 'elements': [amendment]}}
+        self.install()
+        _, task, raw, _ = self.prepare(scope=['record-investigation'], role='app-engineer')
+        actual = task['product_constraints']['experience_summary']['selection_adjustments'][0]
+        self.assertEqual(actual['selected_element'], amendment)
+        self.assertEqual(actual['row_sha256'], P.digest(P.canonical(amendment)))
+        other = D.packet_context(self.root, 'bi-engineer', bounded=True, scope_ids=['metric-a'])
+        pointer = other['experience_summary']['selection_adjustments'][0]
+        self.assertNotIn('selected_element', pointer)
+        self.assertTrue(pointer['read_before_changing_linked_journey'])
+        self.assertLess(len(raw), C.DEFAULT_BYTES)
+
     def test_full_scoped_promise_keeps_delegation_and_all_global_restrictions(self):
         state = self.install()
         experience = D.experience_packet_scope(self.root, state)

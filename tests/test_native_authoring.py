@@ -41,6 +41,7 @@ class Authoring(unittest.TestCase):
         legacy = P.load_project(self.root)[1]
         legacy.pop('stage_gate_policy')
         legacy.pop('workflow_quality_policy', None)
+        legacy.pop('app_release_policy', None)
         P.write_json(self.root / 'project.json', legacy, replace=True)
         (self.root / 'deliverables/app.html').write_text('<html>after</html>')
 

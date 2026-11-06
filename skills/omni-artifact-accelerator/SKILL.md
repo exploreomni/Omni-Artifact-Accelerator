@@ -132,6 +132,14 @@ routing retains the same A–F and DMA boundaries.
 
 ## Intake and resume
 
+Before a fresh run, use the trusted current package's [host-entry preflight](references/engagement-entry.md#inspect-the-host-entry-first)
+to check the actual loaded revision and real write routes. Reuse that receipt
+across specialists. For new Apps follow [candidate release](references/app-release.md):
+three first-view/action/result concepts, traceable choice and amendments, visible
+data consumers, and exact whole-draft publication. The selected task determines
+composition; a monitoring overview remains a valid choice. An unmediated host
+stays advisory, and source/readback success leaves rendered quality unverified.
+
 For new engagements, the [product owner](references/product-intent.md) recovers prior
 answers at intake but conducts artifact discovery only after the A–C handoff.
 For resumed substantial work, reuse current evidence, resolve material questions and retain prioritized

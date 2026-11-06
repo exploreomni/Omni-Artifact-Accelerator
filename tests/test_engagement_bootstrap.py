@@ -146,6 +146,33 @@ class EngagementBootstrapTests(unittest.TestCase):
         self.git['head'] = 'b' * 40
         self.assertIn('package_source_changed', B.check(self.root, {'record': result['record']})['findings'])
 
+    def test_offline_entry_retains_exact_manifest_expectation(self):
+        self.request['startup']['source_expectation'] = {'kind':'offline_snapshot',
+            'manifest_sha256':P.digest(P.canonical(W.source_manifest(self.package)))}
+        result = self.prepare()
+        self.start(result)
+        checked = B.check(self.root, {'record':result['record']})
+        self.assertEqual(checked['package_check']['source_expectation'], 'offline_snapshot')
+        self.assertEqual(checked['status'], 'entry_current')
+
+    def test_host_entry_receipt_is_bound_to_startup_and_rechecked(self):
+        helper = W.host_entry_helper()
+        request = {'schema_version':1,'id':'host-entry','host':self.request['host'],
+                   'loaded_package_path':str(self.package),
+                   'source_expectation':self.request['startup']['source_expectation'],
+                   'routes':[{'kind':kind,'name':kind,'availability':'unknown'} for kind in helper.ROUTES]}
+        with mock.patch.object(helper, 'W', W), mock.patch.object(helper, 'P', P), \
+                mock.patch.object(W, 'host_entry_helper', return_value=helper):
+            pointer = helper.prepare(self.root,request)['record']
+            self.request['host_entry'] = pointer
+            result = self.prepare()
+            self.start(result)
+            checked = B.check(self.root, {'record':result['record']})
+            self.assertEqual(checked['status'],'entry_current')
+            self.assertEqual(checked['host_entry']['host_boundary']['mode'],'advisory')
+            (self.root/pointer['path']).write_text('{}')
+            self.assertIn('host_entry_changed_or_unavailable', B.check(self.root,{'record':result['record']})['findings'])
+
     def test_latest_source_check_is_reused_without_network_or_renewed_age_on_inspection(self):
         verification = self.source_receipt()
         self.request['startup']['source_expectation'] = {'kind': 'latest_main', 'revision': self.git['head'], 'verification_path': verification}

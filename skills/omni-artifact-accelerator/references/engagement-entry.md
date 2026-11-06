@@ -10,6 +10,50 @@ directory is not evidence that the host discovered or loaded it. Read the exact
 repository orchestrator and follow [the execution procedure](execution-workflow.md).
 Keep the existing A–F sequence, actual selection and candidate review boundaries.
 
+## Inspect the host entry first
+
+Invoke `scripts/host_entry.py` from the current trusted checkout before dispatching
+through an installed copy. The request's `loaded_package_path` identifies the
+reported package root, either the checkout or the directory containing installed
+`omni-*` skills. This verifier reads that tree as inert bytes. A stale installed
+skill needs this external entry check because its own shipped code may predate it.
+
+The request has `schema_version: 1`, a lowercase `id`, the same `host` declaration
+and `source_expectation` used by startup, `loaded_package_path`, and `routes`.
+Each route row has `kind`, a concrete tool `name`, and `availability` set to
+`available`, `unavailable` or `unknown`. Include every actual route that can
+create, edit or publish content. Account for every kind in `package_helper`,
+`cli`, `api`, `mcp`, `shell`, `file_write` and `other`, using an explicit unknown
+row where the host inventory is incomplete. General shell access matters even
+when the preferred publication helper is guarded.
+
+```sh
+python3 -I -S -B /absolute/trusted-checkout/skills/omni-artifact-accelerator/scripts/host_entry.py check \
+  --project /absolute/private-engagement --request requests/host-entry.json
+```
+
+The report shows the verifier and reported loaded paths, observed revisions,
+clean/dirty/unknown state, exact source agreement, requested release policy and
+route inventory. Installed copies can match the verified checkout's skill bytes
+while their own revision remains unknown. `current_checkout` records available
+bytes. `offline_snapshot` requires `manifest_sha256` matching the full local
+package manifest and reports `offline_bytes_verified`. Pinned and latest-main
+expectations retain the existing clean-revision rules. A current-release test
+also needs independently corroborated host loading. Review any mismatch and use
+the existing approved update procedure before claiming that test.
+
+Use operation `prepare` to retain this report as an immutable private record.
+Pass its returned `{path, sha256}` as optional `host_entry` in the repository
+entry request and `run-start`. Startup rechecks its source and brief/host
+bindings before recording. Repeated preparation with the same ID preserves
+the record. Resume rechecks bytes against that recorded entry and retains its
+historical release observation. A fresh latest claim needs a new source check.
+Preserve older entries without inventing a missing route inventory.
+
+The default host boundary is `advisory`. Request JSON and saved receipts cannot
+establish enforcement or authorize a write. The operator-owned integration in
+[host execution](host-execution.md) can supply a current boundary observation.
+
 ## Prepare the entry
 
 1. Initialize the engagement once through the existing `analyst_project.py init`

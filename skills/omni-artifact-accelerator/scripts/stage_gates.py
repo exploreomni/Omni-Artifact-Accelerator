@@ -348,6 +348,10 @@ def _experience_options(root, fd, project, payload, P):
         path = option['evidence']['path']
         result = helper.validate_concept(root, path, spec, P)
         metadata = result['metadata']
+        if project.get('app_release_policy') == 'candidate-release-v1':
+            surfaces = metadata.get('surface_metadata', [metadata])
+            _need(all(m.get('action_sequence') for m in surfaces if m['surface'] == 'app'),
+                  'stage_gate_concept_first_view_and_result_required')
         _need(metadata['option_id'] == option['id'], 'stage_gate_concept_option_id_mismatch')
         results.append(metadata)
         visuals.append(set(metadata['representative_artifact_sha256s']))
@@ -397,6 +401,24 @@ def _experience_handoff(root, fd, project, payload, state, P):
     _need(result['metadata']['option_id'] == choice and
           result['metadata']['concept_manifest_path'] == option['evidence']['path'],
           'stage_gate_handoff_must_match_selected_concept')
+    design = _json(_read(fd, path, P.MAX_BYTES), P)
+    adjustments = design['experience_handoff'].get('selection_adjustments')
+    if adjustments is not None:
+        _need(type(adjustments) is dict and set(adjustments) == {'response_path', 'elements'},
+              'stage_gate_selection_adjustments_invalid')
+        response = state['current']['choice']['payload'].get('evidence', {}).get('user_response')
+        _need(response is not None and adjustments['response_path'] == response['path'],
+              'stage_gate_adjustments_need_actual_choice_response')
+        rows = adjustments['elements']
+        _need(type(rows) is list and 0 < len(rows) <= 16, 'stage_gate_adjustments_elements_required')
+        option_ids = {o['id'] for o in state['current']['options']['payload']['options']}
+        journey_ids = {j['id'] for j in design['journeys']}
+        for row in rows:
+            _need(type(row) is dict and set(row) == {'option_id', 'source_locator', 'application', 'journey_ids'}
+                  and row['option_id'] in option_ids and _text(row['source_locator']) and _text(row['application'])
+                  and type(row['journey_ids']) is list and bool(row['journey_ids'])
+                  and all(type(j) is str and j in journey_ids for j in row['journey_ids']),
+                  'stage_gate_adjustment_must_trace_option_to_journey')
     dependencies = {}
     for pin in result['dependencies']:
         _pin_shape(pin)
@@ -471,6 +493,9 @@ def _payload_shape(stage, payload, saved=True):
                 original['experience_dependencies'] = payload['experience_dependencies']
             if 'workflow_quality_policy' in payload:
                 original.update({k: payload[k] for k in ('workflow_quality_policy', 'workflow_context')})
+            if 'app_release_policy' in payload:
+                expected.add('app_release_policy')
+                original['app_release_policy'] = payload['app_release_policy']
             _payload_shape('review', original)
             _need(all(_hash(payload[k]) for k in ('origin_review_sha256', 'proof_sha256', 'request_sha256')),
                   'stage_gate_invalid_carry_provenance')
@@ -558,6 +583,11 @@ def _payload_shape(stage, payload, saved=True):
             _pin_shape(pin)
         _need([p['path'] for p in dependencies] == sorted({p['path'] for p in dependencies}),
               'stage_gate_duplicate_experience_dependencies')
+    if saved and 'app_release_policy' in payload:
+        expected.add('app_release_policy')
+        _need(payload['app_release_policy'] == 'candidate-release-v1' and
+              stage in set(STAGES) | {'candidate', 'review', 'review_carry_forward'},
+              'stage_gate_invalid_app_release_policy')
     _need(type(payload) is dict and set(payload) == expected, 'stage_gate_invalid_' + stage + '_fields')
     if discovery:
         _need(type(payload['discovery_version']) is int and payload['discovery_version'] == 1,
@@ -654,7 +684,7 @@ def _replay(root, project, journal, P):
     iteration_dependencies, requalifications, requalified_contexts = [], [], {}
     candidate = last_candidate = selection_policy = previous_candidate = None
     previous_reviews, incremental_policies = {}, []
-    choice_seen = quality_seen = False
+    choice_seen = quality_seen = app_release_seen = False
     previous = P.digest(P.canonical({'project_id': project['id'], 'engagement': str(root), 'policy': POLICY}))
     for sequence, event in enumerate(events, 1):
         _need(type(event) is dict and set(event) == {'sequence', 'stage', 'previous_sha256',
@@ -672,6 +702,11 @@ def _replay(root, project, journal, P):
             raise ValueError('stage_gate_invalid_timestamp') from exc
         stage, payload = event['stage'], event['payload']
         _payload_shape(stage, payload)
+        if 'app_release_policy' in payload:
+            _need(project.get('app_release_policy') == 'candidate-release-v1', 'stage_gate_app_release_policy_removed')
+            app_release_seen = True
+        elif app_release_seen and stage in set(STAGES) | {'candidate', 'review', 'review_carry_forward'}:
+            _need(False, 'stage_gate_app_release_adoption_removed')
         if 'workflow_quality_policy' in payload:
             _need(project.get('workflow_quality_policy') == QUALITY_POLICY,
                   'stage_gate_quality_policy_removed')
@@ -868,6 +903,11 @@ def _report(root, fd, project, required, state, P, provider):
         event = current.get(stage)
         if event is None:
             report['findings'].append('missing_stage:' + stage)
+            report['next_stage'] = stage
+            break
+        if stage in {'options', 'choice', 'design'} and project.get('app_release_policy') == 'candidate-release-v1' and \
+                event['payload'].get('app_release_policy') != 'candidate-release-v1':
+            report['findings'].append('app_release_checkpoint_required:' + stage)
             report['next_stage'] = stage
             break
         if not _fresh(fd, event, P):
@@ -1286,6 +1326,8 @@ def record(root, request, *, P=None, provider=None):
                 _current_spec(fd, project, P), state['candidate']['payload'], payload, P)
             if dependencies:
                 payload['experience_dependencies'] = dependencies
+        if project.get('app_release_policy') == 'candidate-release-v1' and stage in set(STAGES) | {'candidate', 'review', 'review_carry_forward'}:
+            payload['app_release_policy'] = 'candidate-release-v1'
         _payload_shape(stage, payload)
         _need(len(journal['events']) < MAX_EVENTS, 'stage_gate_history_limit')
         predecessor = (state['tail'] if stage in {'selection_policy', 'workflow_requalification', 'incremental_policy'} else

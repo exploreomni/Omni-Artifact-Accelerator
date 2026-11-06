@@ -34,7 +34,7 @@ class SyntheticTransport:
         target = native.TargetConfig('https://synthetic.invalid', 'test', 'doc', 'draft', 'model', 'member', 'branch')
         super().__init__(root, target, runner=self.unexpected, http=self.unexpected)
         self.kind, self.calls, self.http_calls, self.patch_count = kind, [], [], 0
-        self.state = {'name': 'Before', 'workbookModelId': 'workbook',
+        self.state = {'name': 'Before', 'modelId': 'model', 'workbookModelId': 'workbook',
                       'queryPresentations': {'data': {}, 'order': []}}
         self.app = None if kind == 'initial' else {'html': HTML, 'settings': {}}
         if kind == 'patch':
@@ -47,8 +47,7 @@ class SyntheticTransport:
     def inspect(self):
         self.calls.append('inspect')
         result = {'state': copy.deepcopy(self.state), 'app': copy.deepcopy(self.app),
-                  'identity': {'keyScope': 'user', 'user': {'id': 'synthetic-user',
-                      'membershipId': 'synthetic-member'}}, 'draft_context': {
+                  'identity': {'user': {'membershipId': 'member'}}, 'draft_context': {
                       'identifier': 'draft', 'publishedIdentifier': 'doc', 'workbookModelId': 'workbook',
                       'branch': {'id': 'branch'}, 'status': 'active', 'draftOutOfDate': False}}
         result['snapshot_sha256'] = native.digest(result)

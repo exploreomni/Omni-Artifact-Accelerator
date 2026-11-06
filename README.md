@@ -23,6 +23,18 @@ When DMA has already built the Topic, [start the artifact from that Topic](skill
 
 The boxes represent responsibilities, not a mandatory agent swarm. The orchestrator keeps the current engagement and gives specialists only the context their tasks need. Your actual concept selection and resolved design precede product coding; dependency activation and native publication retain separate controls.
 
+Before a fresh test, [verify the package the host actually loaded](skills/omni-artifact-accelerator/references/engagement-entry.md#inspect-the-host-entry-first).
+The current source can inspect an older installation without running or updating it.
+The startup receipt shows the requested revision and whether the host's write routes
+are advisory or independently qualified. A directory named after the accelerator
+does not establish its version.
+
+New Apps follow the [candidate release contract](skills/omni-artifact-accelerator/references/app-release.md).
+Each concept shows an opening and useful action outcome. The chosen direction,
+visible data bindings and complete publication payload stay tied to the reviewed
+candidate. Intentional monitoring Apps remain supported. Source checks, visual
+critique, exercised interactions and publication readback retain separate results.
+
 ## Reduce repeated context and review work
 
 New CLI engagements use bounded specialist briefings by default. The orchestrator

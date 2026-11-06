@@ -277,7 +277,7 @@ def packet_context(root, role, *, bounded=None, scope_ids=None):
         original_count = len(requirements)
         intent = P.intent_helper()
         current_state = intent.check(root)
-        experience = intent.experience_packet_scope(root, current_state)
+        experience = intent.experience_packet_scope(root, current_state, scope_ids)
         if experience is not None:
             # D may be a current adopted draft before the existing E selection.
             # Its promises are available without claiming a selected North Star.

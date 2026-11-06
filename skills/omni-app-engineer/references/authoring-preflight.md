@@ -85,6 +85,62 @@ Readback differences, new fields, warnings and server defaults remain visible mi
 
 ## Qualification limits and sources
 
+### Publish the complete reviewed main draft
+
+`app-publish-prepare --project "$OAA_RUN"` accepts
+`{"html":"deliverables/app.html","snapshot":"contracts/draft-snapshot.json","current":"current.json"}`.
+The snapshot is the complete five-part draft capture described above. Freeze both
+it and the selected HTML as candidate artifacts before completing the four reviews.
+For the new App release policy also freeze `contracts/native-data-consumers.json`.
+`current` is an independently refreshed capture. Every field must match, including
+queries, controls, settings, identity and the exact named draft. Branch-attached
+drafts are rejected by this main-draft route. Missing rendered observations remain
+unverified; local review readiness is not publication authorization.
+
+The helper prepares only `POST /api/v2/documents/DOCUMENT/draft/publish`, with no
+body. The host must re-read and independently authorize that exact main draft
+immediately before sending. This does not provide server-side compare-and-swap.
+Afterward, `app-publish-verify` takes `prepared`, `response`, `document` and `app`
+capture paths. Captures use the same fixed `{base_url,method,path,status,body}`
+envelope as creation. Read the published document ID and its published App route.
+Only the documented `draftOf` field and App URL change on promotion; every other
+supplied document field, saved query and App setting must match. New or unexplained
+fields remain mismatches. Reconcile unknown responses before another action.
+
+An optional `semantic_snapshot` capture supports the existing DMA Topic policy.
+This operation never changes source Topics or falls back to new query views.
+
+### Operator-integrated write boundary
+
+`scripts/native_write_gate.py` exposes `execute(project, prepared, host=driver)`
+only as a programmatic API. There is no default network transport or CLI mutation
+command. The operator supplies trusted code with `authorize(binding)` and
+`send(request)` methods. Authorization must return exactly
+`{authorized: true, binding_sha256: <canonical binding hash>, reference: <host reference>}`
+after independently checking the actual user's authority for that action. The
+request is reconstructed through the existing preparation helper, checked again
+after authorization, and durably recorded before transport. Agent-controlled
+JSON cannot select a driver, tool, executable or credential.
+
+Draft actions require `read_draft(target)` and, for DMA-bound work,
+`read_semantic(target)`. Creation requires `preflight_create(binding)` returning
+true only after the host checks the current principal, audience and unused target.
+`send` receives the reconstructed request plus its fixed `base_url`; the host
+rejects redirects before forwarding credentials and bounds responses/timeouts.
+The gate never returns raw transport exceptions. A recorded attempt prevents
+automatic replay even after a process crash. The host retains raw captures
+privately and invokes the matching verification helper afterward. Successful
+submission always returns `submitted_readback_required`, never published/accepted.
+
+The gate constrains only calls through this integration. Separately privileged
+CLI/API/MCP/shell routes require host mediation and actual denied-write probes
+before claiming enforcement. This package does not install or activate such an
+integration in an external host. Preview and demo exceptions retain their own
+scope and pending observations.
+
 Retain source, constructed-input, numerical, native callback, rendered, access, human and publication outcomes separately. A prepared request or successful readback cannot establish that the App rendered or ran. CLI/API-only work leaves prohibited observation lanes unrun; do not use a headless workaround.
+
+Publication contract reviewed 2026-11-06 against [Publish draft](https://docs.omni.co/api/documents-v2/publish-draft)
+and [Get document state](https://docs.omni.co/api/documents-v2/get-document-state).
 
 Contract reviewed 2026-10-24: [query envelope](https://docs.omni.co/api/queries/run-query), [identity](https://docs.omni.co/api/who-am-i/get-current-identity-and-permissions), [new document creation](https://docs.omni.co/api/documents-v2/create-document), [named App draft replacement](https://docs.omni.co/api/apps/replace-app-content-on-a-draft). App APIs are **currently in development and may change**. Recheck the schema when the host/version changes; package examples are not release guarantees.

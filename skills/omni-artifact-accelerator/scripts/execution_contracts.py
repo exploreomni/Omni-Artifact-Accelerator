@@ -4,7 +4,7 @@ import copy
 OPERATIONS = {
     'execution_prepare': ('work', 'context', 'preflight', 'claim', 'recipe'),
     'execution_record': ('dispatch', 'checkpoint', 'usage', 'blocker', 'review'),
-    'execution_lifecycle': ('entry_prepare', 'entry_check', 'start', 'guidance', 'phase', 'stage', 'freeze', 'product_brief', 'product_check', 'intent_select', 'intent_check'),
+    'execution_lifecycle': ('host_entry_check', 'host_entry_prepare', 'entry_prepare', 'entry_check', 'start', 'guidance', 'phase', 'stage', 'freeze', 'product_brief', 'product_check', 'intent_select', 'intent_check'),
     'execution_review': ('policy', 'impact', 'carry', 'manifest'),
     'execution_qualification': ('catalog', 'record', 'check'),
     'execution_assembly': ('build', 'verify', 'compare'),
@@ -16,7 +16,9 @@ OPERATIONS = {
 # These are envelope contracts. Existing operation validators remain authoritative
 # for nested fields, current evidence, selection, permissions and conditional rules.
 FIELDS = {
-    ('execution_lifecycle', 'entry_prepare'): (['schema_version', 'id', 'host', 'startup'], ['runtime_observation']),
+    ('execution_lifecycle', 'host_entry_check'): (['schema_version', 'id', 'host', 'loaded_package_path', 'source_expectation', 'routes'], []),
+    ('execution_lifecycle', 'host_entry_prepare'): (['schema_version', 'id', 'host', 'loaded_package_path', 'source_expectation', 'routes'], []),
+    ('execution_lifecycle', 'entry_prepare'): (['schema_version', 'id', 'host', 'startup'], ['runtime_observation', 'host_entry']),
     ('execution_lifecycle', 'entry_check'): (['record'], []),
     ('execution_prepare', 'work'): (['role', 'inputs', 'output', 'assignment'], []),
     ('execution_prepare', 'context'): (['schema_version', 'kind', 'packet', 'mode', 'summary', 'decisions', 'constraints',
@@ -46,8 +48,8 @@ NO_REQUEST = {('execution_review', 'impact'), ('execution_qualification', 'catal
     ('execution_efficiency', 'report'), ('execution_efficiency', 'configuration'), ('execution_efficiency', 'local_metrics'),
     ('execution_lifecycle', 'product_check'), ('execution_lifecycle', 'intent_check')}
 OUTPUT_REQUIRED = {('execution_prepare', 'context'), ('execution_qualification', 'record')}
-LIST_FIELDS = {'inputs', 'decisions', 'constraints', 'stop_conditions', 'shared_constraint_ids', 'outputs', 'source_fields', 'bindings', 'changes'}
-OBJECT_FIELDS = {'assignment', 'disclosure', 'work', 'context', 'usage', 'delta', 'comparison', 'provenance', 'host', 'startup', 'runtime_observation'}
+LIST_FIELDS = {'inputs', 'decisions', 'constraints', 'stop_conditions', 'shared_constraint_ids', 'outputs', 'source_fields', 'bindings', 'changes', 'routes'}
+OBJECT_FIELDS = {'assignment', 'disclosure', 'work', 'context', 'usage', 'delta', 'comparison', 'provenance', 'host', 'startup', 'runtime_observation', 'host_entry', 'source_expectation'}
 INTEGER_FIELDS = {'schema_version', 'max_packet_bytes', 'elapsed_ms', 'host_instruction_bytes'}
 NULLABLE = {'observed_model', 'observed_effort', 'requested_model', 'requested_effort', 'fallback_reason', 'usage', 'elapsed_ms', 'host_instruction_bytes', 'changes'}
 FLEXIBLE = {'packet', 'source', 'evidence', 'result', 'record'}

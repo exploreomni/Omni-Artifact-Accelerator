@@ -262,6 +262,13 @@ def source_manifest(root):
 
 def git_identity(package):
     result = {'head': None, 'status': None}
+    try:
+        top = subprocess.run(['git', '-c', 'core.fsmonitor=false', '-C', str(package), 'rev-parse', '--show-toplevel'],
+                             capture_output=True, text=True, timeout=10)
+        if top.returncode != 0 or Path(top.stdout.strip()).resolve() != Path(package).resolve():
+            return result
+    except (OSError, subprocess.TimeoutExpired):
+        return result
     for key, args in (('head', ['rev-parse', 'HEAD']), ('status', ['status', '--porcelain'])):
         try:
             r = subprocess.run(['git', '-c', 'core.fsmonitor=false', '-C', str(package), *args],
@@ -303,51 +310,82 @@ def verify_source(root, request):
               'package_root': str(package), 'remote': url, 'ref': 'refs/heads/main', 'revision': parts[0],
               'checked_at': datetime.now(timezone.utc).isoformat(), 'git': git_identity(package),
               'claims_authenticated': False, 'source_changed': False}
+    record['package_manifest_sha256'] = P.digest(P.canonical(source_manifest(package)))
     P.write_json(root / path, record)
-    return {'status': 'recorded', 'path': path, 'revision': parts[0],
+    return {'status': 'recorded', 'path': path, 'revision': parts[0], 'package_root': str(package),
+            'loaded_revision': record['git']['head'], 'package_manifest_sha256': record['package_manifest_sha256'],
             'checkout_matches': record['git']['head'] == parts[0] and record['git']['status'] == '',
             'source_changed': False, 'claims_authenticated': False}
 
 
-def source_expectation(root, request, git, package):
+def source_expectation(root, request, git, package, *, resume=False):
     expectation = request.get('source_expectation', {'kind': 'current_checkout'})
     need(type(expectation) is dict and expectation.get('kind') in
-         {'current_checkout', 'pinned_revision', 'latest_main'}, 'invalid source expectation')
+         {'current_checkout', 'offline_snapshot', 'pinned_revision', 'latest_main'}, 'invalid source expectation')
     kind = expectation['kind']
     expected = {'kind'} if kind == 'current_checkout' else {'kind', 'revision'}
     if kind == 'latest_main':
         expected.add('verification_path')
+    if kind == 'offline_snapshot':
+        expected = {'kind', 'manifest_sha256'}
     need(set(expectation) == expected, 'source expectation fields differ')
     bindings = {}
-    if kind != 'current_checkout':
+    if kind == 'offline_snapshot':
+        need(type(expectation['manifest_sha256']) is str and re.fullmatch(r'[a-f0-9]{64}', expectation['manifest_sha256'])
+             and P.digest(P.canonical(source_manifest(package))) == expectation['manifest_sha256'],
+             'offline package snapshot does not match requested bytes')
+    if kind in ('pinned_revision', 'latest_main'):
         revision = expectation['revision']
         need(type(revision) is str and re.fullmatch(r'[0-9a-f]{40}|[0-9a-f]{64}', revision), 'exact revision required')
         need(git['head'] == revision and git['status'] == '', 'requested source revision does not match clean working checkout')
     if kind == 'latest_main':
         path = expectation['verification_path']
         receipt, _ = P.read_json(P.relative_file(root, path))
-        need(receipt.get('kind') == 'analyst_source_check' and receipt.get('project_id') == P.load_project(root)[1]['id']
+        need(type(receipt) is dict and type(receipt.get('schema_version')) is int and receipt['schema_version'] == 1
+             and receipt.get('kind') == 'analyst_source_check' and receipt.get('project_id') == P.load_project(root)[1]['id']
              and receipt.get('revision') == revision and receipt.get('package_root') == str(package)
              and receipt.get('ref') == 'refs/heads/main', 'source verification does not match run')
         try:
             age = (datetime.now(timezone.utc) - datetime.fromisoformat(receipt['checked_at'])).total_seconds()
         except (ValueError, TypeError, KeyError):
             raise ValueError('source verification time invalid') from None
-        need(0 <= age <= 600, 'latest-main check must be refreshed within ten minutes before startup')
+        need(age >= 0 and (resume or age <= 600), 'latest-main check must be refreshed within ten minutes before startup')
         bindings = pins(root, [path])
     return expectation, bindings
+
+
+def host_entry_helper():
+    spec = importlib.util.spec_from_file_location('startup_host_entry', Path(__file__).with_name('host_entry.py'))
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def startup_summary(run):
+    return {'host': run['host']['name'], 'helper_package_path': run['package_root'],
+            'helper_revision': run['git'].get('head'),
+            'requested_release': run.get('source_expectation', {'kind':'current_checkout'}),
+            'host_entry_record': run.get('host_entry'),
+            'route_inventory': 'recorded_in_host_entry' if run.get('host_entry') else 'not_observed',
+            'host_enforcement': 'requires_current_host_verification', 'publication_authorized': False}
 
 
 def start(root, request):
     root, project = P.load_project(root)
     required = {'id', 'source_mode', 'host', 'entrypoint', 'brief', 'loaded_guidance'}
     need(type(request) is dict and required <= set(request) and
-         set(request) <= required | {'execution', 'source_expectation', 'adopt_quality_policy'},
+         set(request) <= required | {'execution', 'source_expectation', 'adopt_quality_policy', 'host_entry', 'adopt_app_release_policy'},
          'invalid run-start fields')
+    if 'adopt_app_release_policy' in request:
+        need(request['adopt_app_release_policy'] is True and 'app' in project['surfaces'],
+             'explicit App release adoption required')
     if 'adopt_quality_policy' in request:
         need(request['adopt_quality_policy'] is True, 'explicit quality policy adoption required')
         need('workflow_quality_policy' not in project, 'quality policy adoption applies only to historical engagements')
     quality = project.get('workflow_quality_policy') == QUALITY_POLICY or request.get('adopt_quality_policy') is True
+    if request.get('adopt_app_release_policy'):
+        need(quality, 'App release adoption requires current quality policy or explicit adopt_quality_policy')
+        project['app_release_policy'] = 'candidate-release-v1'
     if quality:
         need('execution' in request, 'quality startup requires an execution contract path')
         P.read_json(P.relative_file(root, request['execution']))
@@ -378,6 +416,8 @@ def start(root, request):
         need(prefix == '', 'installed mode must use the installed helper')
     git = git_identity(package) if prefix else {'head': None, 'status': None}
     expectation, source_pins = source_expectation(root, request, git, package)
+    entry = (host_entry_helper().verify_record(root, request['host_entry'], host, expectation)
+             if 'host_entry' in request else None)
     events = P.read_json(root / 'stage-gates.json')[0]['events'] if (root / 'stage-gates.json').exists() else []
     work_events = [e for e in events if e.get('stage') != 'selection_policy']
     previous = project.get('execution_start')
@@ -409,13 +449,22 @@ def start(root, request):
               'previous_start': previous,
               'claims_authenticated': False, 'agents_dispatched': False,
               'host_qualification': 'unobserved', 'publication_authorized': False}
+    if project.get('app_release_policy'):
+        record['app_release_policy'] = project['app_release_policy']
+    if entry is not None:
+        record['entry_source_status'] = entry['release_status']
+        record['entry_boundary_status'] = 'historical_observation_only'
     P.write_json(root / path, record)
     if quality:
         project['workflow_quality_policy'] = QUALITY_POLICY
         project['execution_start'] = {'path': path, 'sha256': P.digest((root / path).read_bytes())}
         project['execution_guidance'] = []
         P.write_json(root / 'project.json', project, replace=True)
-    return {'status': 'recorded', 'path': path, 'agents_dispatched': False, 'claims_authenticated': False}
+    result = {'status': 'recorded', 'path': path, 'agents_dispatched': False, 'claims_authenticated': False}
+    result['startup'] = startup_summary(record)
+    if entry is not None:
+        result['host_entry'] = entry
+    return result
 
 
 def active_run(root, project):
@@ -425,12 +474,16 @@ def active_run(root, project):
     need(P.digest(raw) == pointer['sha256'] and run.get('project_id') == project['id']
          and run.get('kind') == 'analyst_execution_start', 'workflow_startup_changed')
     need(run.get('startup_timing') != 'late', 'workflow_startup_recorded_late')
+    need(run.get('app_release_policy') is None or
+         run['app_release_policy'] == project.get('app_release_policy'), 'recorded_app_release_policy_removed')
     need(str(source_root()) == run['package_root'] and source_manifest(source_root()) == run['package_files'],
          'package_changed_since_start')
     need(current(root, run['brief_pins']) and P.digest(P.read_bytes(P.relative_file(root, run['brief_retained']))) ==
          run['brief_pins'][run['brief']], 'original_request_changed')
     if run.get('source_verification_pins'):
         need(current(root, run['source_verification_pins']), 'source_verification_changed')
+    if run.get('host_entry'):
+        host_entry_helper().verify_record(root, run['host_entry'], run['host'], run['source_expectation'], resume=True)
     return run, pointer
 
 
@@ -798,6 +851,7 @@ def inspect_run(root, request):
         except ValueError as exc:
             findings.append(str(exc))
     return {'status': 'incomplete' if findings else 'ready_for_review', 'findings': findings,
+            'startup': startup_summary(run),
             'stage_gates': gates,
             'coverage': coverage, 'selected_intent': state['selected'], 'responsibilities': responsibilities,
             'product_context': product, 'source_inventory': source_inventory, 'specialists': specialists,
