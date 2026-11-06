@@ -4,16 +4,26 @@ An analyst's sidekick for designing, building and reviewing **native Omni dashbo
 
 Start with an existing Omni model, bring an exported BI experience, or continue from the companion [Data Model Accelerator](https://github.com/exploreomni/Data-Model-Accelerator). Use only the specialists the task needs.
 
+**Current package: [0.40.0](package.json), with 30 registered skills.** Run it through
+your approved AI host using a repository checkout or an already approved skill
+installation. The host supplies model execution, connections and native-write
+authorization; this repository supplies the workflow, specialist guidance and
+local helpers.
+
 When DMA has already built the Topic, [start the artifact from that Topic](skills/omni-backend-handoff/references/topic-first.md). The accelerator verifies the user and destination, maps supported panels to saved workbook queries and returns missing measures to the model owner.
 
 **New to the tool? [Take the self-guided introduction](docs/training/README.md)** — six short lessons covering setup, the agent workflow, design choices, delivery review and migrations. Each lesson ends with an observable checkpoint; you can start learning without installing anything.
 
 | Your goal | Start here |
 | --- | --- |
+| Set up a local engagement | [Quick start](#quick-start) |
+| See what the current release adds | [Current App release workflow](#current-app-release-workflow) |
 | Understand what the agents do | [Meet the responsibilities](docs/training/01-understand.md#meet-the-responsibilities) |
 | Start your first engagement | [Prepare your source, access and brief](docs/training/02-prepare.md) |
 | Choose a design or review a result | [Choose the experience](docs/training/04-choose.md) · [Review and deliver](docs/training/05-review.md) |
 | Resume, migrate or use a backend handoff | [Continue the work](docs/training/06-continue.md) |
+| Find source migration coverage | [Choose a workflow](#choose-a-workflow) |
+| Prepare or publish native content | [Native delivery routes](#from-a-local-candidate-to-native-delivery) |
 
 ## See the agent flow
 
@@ -23,17 +33,28 @@ When DMA has already built the Topic, [start the artifact from that Topic](skill
 
 The boxes represent responsibilities, not a mandatory agent swarm. The orchestrator keeps the current engagement and gives specialists only the context their tasks need. Your actual concept selection and resolved design precede product coding; dependency activation and native publication retain separate controls.
 
-Before a fresh test, [verify the package the host actually loaded](skills/omni-artifact-accelerator/references/engagement-entry.md#inspect-the-host-entry-first).
-The current source can inspect an older installation without running or updating it.
-The startup receipt shows the requested revision and whether the host's write routes
-are advisory or independently qualified. A directory named after the accelerator
-does not establish its version.
+## Current App release workflow
 
-New Apps follow the [candidate release contract](skills/omni-artifact-accelerator/references/app-release.md).
-Each concept shows an opening and useful action outcome. The chosen direction,
-visible data bindings and complete publication payload stay tied to the reviewed
-candidate. Intentional monitoring Apps remain supported. Source checks, visual
-critique, exercised interactions and publication readback retain separate results.
+New engagements containing an App use the [candidate release contract](skills/omni-artifact-accelerator/references/app-release.md):
+
+| Area | Current behavior |
+| --- | --- |
+| Loaded package and host | [Entry preflight](skills/omni-artifact-accelerator/references/engagement-entry.md#inspect-the-host-entry-first) compares the reported loaded source with the requested release and inventories write routes. The default host status is advisory; real enforcement needs independent host verification. |
+| Experience selection | Three visual concepts show a first view, primary action and useful result. The actual choice, including requested elements from other options, follows the engineer into the selected design. A deliberate monitoring overview remains valid. |
+| Visible data | A reviewed manifest binds live values to queries and callbacks, labels snapshots and scenarios, and retains independent expectations. Refresh completion follows query outcomes and the user's selected freshness policy. |
+| Native release | The reviewed candidate includes the HTML and relevant query/settings evidence. Whole-draft publication checks the complete frozen draft; an optional operator-integrated write gate requires exact-action authorization and retains uncertain outcomes for reconciliation. |
+
+These checks preserve the chosen experience without prescribing a layout. Source
+checks, rendered critique, exercised interactions, effective access and publication
+readback have separate results. A passing source check does not establish visual
+quality or host-wide enforcement, and this package does not change Omni's own
+App/dashboard routing.
+
+Existing engagements retain their recorded policies. To adopt these App checks,
+follow the [explicit adoption procedure](skills/omni-artifact-accelerator/references/app-release.md):
+retain the analytical evidence and refresh affected design/review checkpoints.
+Updating the checkout alone does not upgrade an old engagement or reload a host's
+cached skills.
 
 ## Reduce repeated context and review work
 
@@ -94,8 +115,8 @@ sets the order, while leaving the product's visual design open:
 1. **Verify data and access.** Establish that the requested data exists and the user can access it.
 2. **Analyze.** Profile relevant sources, build governed queries and derive supported insights and questions.
 3. **Create the analytical story.** Link claims to evidence and define how they update or disappear when data, filters or freshness change.
-4. **Discover the artifact requirements.** Use those findings for product/brand needs, a tailored visual-experience question and a conditional comparison-style follow-up; reuse answers already supplied.
-5. **Choose among three products.** Review three distinct, feasible visual concepts with the same analytical scope and accepted quality ambition, then select one; specialists resolve its detailed design.
+4. **Discover the artifact requirements.** Use those findings for product/brand needs, the first useful action, returning-user needs, visual treatment, devices and data freshness. Reuse answers already supplied; ask the comparison-style follow-up only when relevant.
+5. **Choose among three products.** Review three distinct, feasible visual concepts with the same analytical scope and accepted quality ambition. App concepts show the first view and action outcome. Select a direction, including any requested combination; specialists preserve that choice and resolve its detailed design.
 6. **Build and refine.** Implement a cohesive candidate and obtain security, UI/UX, product-owner and independent QA coverage after every iteration, with scoped reuse under the optional incremental policy.
 
 Existing selected products and focused fixes reuse prior evidence and decisions.
@@ -140,7 +161,8 @@ The local `run-start`, `run-guidance`, `phase-check`, `candidate-freeze` and
 `delivery-check` commands preserve source provenance, stage-appropriate
 responsibilities, first candidate bytes and current evidence. Record startup before
 the first new stage. Choose the actual checkout, a pinned clean revision or verified
-latest main explicitly; `source-check` can read the configured HTTPS origin without
+latest main explicitly, or an explicit offline snapshot bound to its manifest;
+`source-check` can read the configured HTTPS origin without
 fetching or activating code. A source mismatch never triggers installation or an
 automatic update. See the [exact entry procedure](skills/omni-artifact-accelerator/references/execution-workflow.md#record-startup-and-ownership).
 These augment existing intent and QA records. They do not run
@@ -221,6 +243,24 @@ The [control-craft guide](skills/omni-design-systems/references/control-craft.md
 
 For example: “Build a branded operations App where I can search supplied records, narrow the scope, inspect evidence and return without losing my selection. Choose controls and layout for that task; preserve partial-data and access boundaries.” The same principles guide native dashboard filter placement and labels through supported settings; custom App CSS is not a dashboard extension.
 
+## Keep live data and freshness explicit
+
+New App candidates include a [visible-data manifest](skills/omni-app-engineer/references/native-data-input.md)
+with the reviewed HTML. It distinguishes three kinds of displayed evidence:
+
+| Displayed evidence | Required connection |
+| --- | --- |
+| Live value | Exact saved query, selected Topic/fields, query state and callback binding, plus an independent expectation |
+| Snapshot | Visible snapshot label, period and source; it cannot silently replace a failed live result |
+| Scenario or estimate | Visible label, declared base data and explicit assumptions |
+
+At discovery, record the user's cache and refresh preferences; keeping ordinary
+Omni caching with no custom policy is valid. The package adds no default polling,
+expiry timer or cache bypass. The query coordinator updates declared consumers,
+including later panels, and reports refresh success only when required results
+have completed. Real callbacks, numerical comparisons, access and visible updates
+still need observation in the target App; a source manifest alone cannot prove them.
+
 ## Model objects and environments
 
 The [3D specialist](skills/omni-3d-modeler/SKILL.md) and [eight-module curriculum](skills/omni-design-systems/references/3d-curriculum.md) support product inspection, fictional venues, buildings, vehicles and operational systems through task-driven geometry and interaction. They do not impose a stadium, brand, camera tour or page template.
@@ -237,7 +277,12 @@ Try: “Create an illustrative equipment inspection App using our existing brand
 
 ## Quick start
 
-Use an existing approved Python runtime for source-only work. The package's earlier broad suite used Python 3.12 and Node.js; that history is not approval to install or load a runtime today. **No package installation, import, update or skill activation occurs without your explicit scoped sign-off. No Blender code or execution is permitted.** Read the [package-use policy](skills/omni-artifact-accelerator/references/dependency-policy.md).
+Use an existing approved Python runtime for source-only work. **Package installation,
+third-party imports, updates and skill activation require explicit scoped sign-off.
+No Blender code or execution is permitted.** Read the
+[package-use policy](skills/omni-artifact-accelerator/references/dependency-policy.md).
+Setup in this release is guided through the steps below and your host's connection
+mechanism; an automatic first-launch wizard or credential-file generator is not included.
 
 ### 1. Review the source
 
@@ -245,46 +290,73 @@ Obtain an authorized checkout, then run the original standard-library package ch
 
 ```sh
 cd Omni-Artifact-Accelerator
-python3 -I -S scripts/check_package.py
+python3 -I -S -B scripts/check_package.py
 ```
 
 `-I -S` prevents user/site package startup in this source-only path. It is not an OS sandbox. The checker does not need PyYAML. `requirements.txt` still records PyYAML 6.0.3 for optional YAML readers; it is neither an installation instruction nor a grandfathered approval. Keep customer data, tokens and outputs outside this repository.
 
-For focused security validation, run `python3 -I -S -B scripts/validate_source.py`. It checks the reviewed local boundaries and records failures without installing packages or contacting a tenant. Read [security operations](docs/SECURITY.md) for exact CLI setup, parser limits, approval records and the separately blocked CI/3D activation gates.
+The package checker is enough for this source/setup step. Developers can run
+affected cases through `scripts/validate_source.py --case <case>` using the same
+isolated Python flags; see [testing](docs/TESTING.md). Those checks exercise local
+contracts, without installing packages or contacting a tenant. The current GitHub
+workflow is manual-only and records a revision; it does not run validation.
 
-### 2. Preview skill installation
+### 2. Choose a repository or installed-skill entry
 
-For an existing approved host directory:
+For repository-only use, have the host read [AGENTS.md](AGENTS.md) or
+[CLAUDE.md](CLAUDE.md), then [the orchestrator skill](skills/omni-artifact-accelerator/SKILL.md)
+in this checkout. This route requires no skill installation.
+
+If you use an existing approved skill directory, you can preview its differences:
 
 ```sh
 OAA_SKILLS_DIR="$HOME/.codex/skills"
-python3 -I -S scripts/install_skills.py --destination "$OAA_SKILLS_DIR"
+python3 -I -S -B scripts/install_skills.py --destination "$OAA_SKILLS_DIR"
 ```
 
 Preview and `--verify` are read-only. **`--apply` is disabled** until a qualified host approval gate is supplied. Do not bypass it by copying into an active skills directory. Installation/update approval must cover the exact source and target; an agent-written approval flag is insufficient. The registered sibling skill folders belong together once activation is authorized. See [installation and updates](docs/HOW_TO.md#installation-and-updates).
 
-For source review, ask your agent to read [the orchestrator skill](skills/omni-artifact-accelerator/SKILL.md) in this checkout. This does not configure tools, install dependencies or grant native write access.
+Configure the tools needed for your chosen route; native writes require separate authorization.
 
 ### 3. Create a local engagement
 
-From the repository root using the existing runtime. These local engagement commands use original source and the Python standard library:
+Run these commands from the repository root. The example creates a private sibling
+folder, as required by the [repository entry helper](skills/omni-artifact-accelerator/references/engagement-entry.md).
+These commands use original source and the Python standard library:
 
 ```sh
-python3 -I -S skills/omni-artifact-accelerator/scripts/analyst_project.py --help
-mkdir -p "$HOME/omni-artifact-runs"
-OAA_RUN="$HOME/omni-artifact-runs/operations-pilot"
-python3 -I -S skills/omni-artifact-accelerator/scripts/analyst_project.py init \
+python3 -I -S -B skills/omni-artifact-accelerator/scripts/analyst_project.py --help
+OAA_RUN="$(dirname "$PWD")/operations-pilot"
+python3 -I -S -B skills/omni-artifact-accelerator/scripts/analyst_project.py init \
   --output "$OAA_RUN" --name 'Operations pilot' --mode net-new --surface both \
   --selection-policy conversation-evidence-v1
-python3 -I -S skills/omni-artifact-accelerator/scripts/analyst_project.py plan \
+python3 -I -S -B skills/omni-artifact-accelerator/scripts/analyst_project.py plan \
   --project "$OAA_RUN"
 ```
 
-Use a new output directory; initialization does not overwrite an existing engagement. Choose `dashboard`, `app` or `both`. Open the generated `START_HERE.md`, then give the agent a concrete task:
+Use a new sibling directory name; initialization does not overwrite an existing
+engagement. Choose `dashboard`, `app`, `report` or `both`. Here `both` means a
+dashboard and an App; Reports Beta uses its [separate preparation workflow](skills/omni-artifact-accelerator/references/report-workflow.md).
+Open the generated `START_HERE.md`, then give the agent a concrete task:
 
 > Use $omni-artifact-accelerator for a service operations dashboard and App in this engagement. Reuse our existing Omni Topics. The dashboard should explain current performance; the App should help a viewer inspect an exception and its supporting data. Ask only for missing metric, audience, interaction and brand decisions. Start with a reviewable local design and QA plan. Do not write to the tenant yet.
 
 The initial files and role plan are a starting point, not a built dashboard or App. Add `--branding requested --website https://example.com` for a branded engagement, `--branding none` when branding is out of scope, or leave it unknown. The editable design-intent record retains missing required choices; a website alone does not choose a logo. See [saving intent and reviewing named requirements](skills/omni-artifact-accelerator/references/design-intent.md) for current design/brand/asset selection and per-surface completion. Continue with [the step-by-step how-to](docs/HOW_TO.md).
+
+### 4. Establish source and access before starting A–F
+
+Ask the host to prepare the [engagement entry](skills/omni-artifact-accelerator/references/engagement-entry.md)
+and record `run-start` before the first artifact stage. Supply your original brief,
+Omni instance, model/Topic references and whose access should be verified. The host
+records the actual package, available tools and task responsibilities; `plan` above
+only proposes role assignments.
+
+Local planning needs no Omni credentials. For source or native calls, configure
+credentials through your approved CLI/MCP/API or secret mechanism. Share identifiers
+in chat and keep secret values and generated evidence outside the repository.
+The package does not create accounts, issue API keys or configure remote connectors.
+See [access preparation](docs/training/02-prepare.md) and the
+[CLI configuration boundary](skills/omni-bi-engineer/references/omni-build-export.md#local-cli-trust-boundary).
 
 All new engagements, including migrations, include the A–C analytical handoff, artifact discovery, three viable options, actual user selection, a resolved design and all four review perspectives on each implementation iteration. Focused continuation reuses existing valid decisions under its recorded policy. The optional [design evidence checker](skills/omni-qa-analyst/references/design-evidence.md) tracks which observations still match the current candidate; it does not enforce A–F, certify visual quality or authenticate customer acceptance.
 
@@ -312,7 +384,7 @@ For an installed-skill evaluation, verify the installed files. For a repository-
 blind test, use its working-tree manifest and do not consult installed copies:
 
 ```sh
-python scripts/install_skills.py --destination "$OAA_SKILLS_DIR" --verify
+python3 -I -S -B scripts/install_skills.py --destination "$OAA_SKILLS_DIR" --verify
 ```
 
 A matching result identifies the compared source version and file manifest. Missing, changed and extra files stay visible; the command makes no changes and does not prove the host has reloaded cached skills.
@@ -324,6 +396,7 @@ A matching result identifies the compared source version and file manifest. Miss
 | Business question and existing Omni model | [New dashboard or App](docs/HOW_TO.md#new-dashboard-or-app) |
 | Existing report, dashboard or analytical App | [Migration workflow](docs/HOW_TO.md#migrate-an-existing-experience) |
 | Reviewed backend model or a missing metric | [Data Model Accelerator collaboration](docs/HOW_TO.md#work-with-data-model-accelerator) |
+| A page-precise newsletter or paginated report | [Native Reports Beta preparation](skills/omni-artifact-accelerator/references/report-workflow.md) |
 | Customer website, brand guide or existing theme | [Brand and reusable assets](docs/HOW_TO.md#brand-and-reusable-assets) |
 | Developer validation or contribution | [Testing](docs/TESTING.md) |
 
@@ -347,9 +420,16 @@ For migrations, choose the documented source path before exporting or running an
 | Crystal Reports | Supplied version-specific extraction, formula/subreport obligations and original evidence; no binary decoder or SDK execution | [Crystal specialist](skills/omni-crystal-reports-migrator/SKILL.md) |
 | SAP BusinessObjects | WebI evidence, Universe/DMA obligations, version-specific Crystal review, supplied results and externally qualified metadata capture | [BusinessObjects migration workflow](skills/omni-artifact-accelerator/references/businessobjects-visual-run.md) |
 | IBM Cognos Analytics | Dedicated specialist, bounded report XML import, independent inventory and behavior/DMA obligations; dashboards use reviewed manual evidence | [Cognos migration workflow](skills/omni-artifact-accelerator/references/cognos-visual-run.md) |
+| SQL Server / T-SQL | Coordinate database/model requirements through the backend handoff or reviewed manual evidence; no dedicated SQL Server reader or general T-SQL compiler in this package | [Backend collaboration](docs/HOW_TO.md#work-with-data-model-accelerator) |
 | Other sources | Explicitly reviewed manual evidence inventory | [Inventory contract](skills/omni-artifact-translator/references/inventory-contract.md#normalized-inventory) |
 
 Read [parser coverage](docs/parser-coverage.md) for exact formats and limitations. A supported reader is not a universal chart or formula converter. Missing source objects, custom visualizations, interactions and security dependencies remain visible work.
+
+Keep database migration separate from report migration: SQL Server model/ETL work
+belongs with the backend owner, while SSRS report definitions use the RDL route
+above. This does not imply SSIS or SSAS conversion. Reuse a validated Omni Topic
+when one is supplied; return genuine missing measures or model behavior through
+the [Topic-first handoff](skills/omni-backend-handoff/references/topic-first.md).
 
 For Domo, start with the [source specialist](skills/omni-domo-migrator/SKILL.md)
 and [first visual pilot](skills/omni-artifact-translator/references/domo-visual-pilot.md).
@@ -361,6 +441,14 @@ coding.” Choose `reuse_existing`, `omni_semantic_reconstruction` or
 the optional source wrapper needs an approved exact runtime and selected read
 scope. It is a local stdio host, not a hosted ChatGPT connector. No live migration,
 automatic App conversion or new source-image/query client is claimed.
+
+An existing companion migration run is optional when compatible Omni semantics
+can be reused. The Domo-specific build handoff still requires verified visual
+capture and backend references. Imports accept the [four companion contracts](docs/parser-coverage.md#what-this-package-implements-now)
+plus the [OAA visual-capture contract](skills/omni-artifact-translator/references/domo-visual-run.md),
+not arbitrary DMA adapter output. Preserve Beast Mode, filter and security
+requirements with the visual scope; route warehouse transformations and physical
+model gaps to the backend owner instead of rebuilding them in App code.
 
 ## Specialist roles
 
@@ -421,7 +509,7 @@ Read [design context and decisions](docs/design-context-and-decisions.md) for a 
 
 ## From a local candidate to native delivery
 
-For a substantial new experience, expect **direction → comparison when useful → a resolved screen design → native implementation → designer critique → revision**. The dashboard and App should serve distinct tasks even when they share metrics. Reuse the supplied website, brand authority and any explicit no-research decision. Ask for a website only when a material branding need remains unresolved; turn the selected brand characteristics into composition choices and retain image/font provenance and fallback behavior. A small correction uses focused checks; a faithful migration keeps its original behavior obligations.
+For a substantial new experience, expect **A–C evidence → D requirements → three E concepts and your selection → detailed design → F implementation and review → separately authorized native delivery**. A dashboard and App should serve their selected tasks even when they share metrics. Reuse the supplied website, brand authority and any explicit no-research decision. Ask for a website only when a material branding need remains unresolved; turn the selected brand characteristics into composition choices and retain image/font provenance and fallback behavior. A small correction uses focused checks; a faithful migration keeps its original behavior obligations.
 
 > Create a native service-performance dashboard and an exception-investigation App from our existing Omni model. Use our supplied website and brand guide. Compare compositions where the direction is unresolved, resolve desktop and narrow views, and keep the designer involved through the native render. Make detail interactions add useful evidence. Report numerical, craft, native interaction and human-testing results separately.
 
@@ -429,13 +517,32 @@ See [design and implementation](docs/HOW_TO.md#3-design-and-implement-the-select
 
 Local planning and source inspection need no Omni credentials. Native work needs separately configured, authorized source/target access, verified API or CLI capabilities and an appropriate development draft. The native helpers and local stdio host use POSIX facilities; macOS/Linux is the supported execution environment described here.
 
-The dashboard adapter works on an existing named development draft. The App path supports reviewed edits to an existing query-backed App, plus a separate initial-construction operation on an existing workbook-only named draft with inspected queries and a reviewed native runtime bridge. It does not automatically create documents, queries or a proprietary browser SDK. See [native dashboard construction](skills/omni-bi-engineer/references/omni-build-export.md) and [the App contract](skills/omni-app-engineer/references/native-app-contract.md).
+| Intended operation | Implemented route and boundary |
+| --- | --- |
+| Build or update a native dashboard | [Dashboard adapter](skills/omni-bi-engineer/references/omni-build-export.md) on an existing named development draft |
+| Add an App to an existing workbook | [Initial App adapter](skills/omni-app-engineer/references/native-app-contract.md), using inspected queries and a reviewed runtime bridge on a workbook-only named draft |
+| Update existing App HTML | [Authoring preflight](skills/omni-app-engineer/references/authoring-preflight.md) prepares and verifies an exact named-draft HTML-only change; queries and security settings stay outside that request |
+| Create a new App document | [Bounded native authoring](skills/omni-artifact-accelerator/references/native-authoring.md) prepares reviewed HTML, semantic queries, model, new identifier and locked resource settings after A–F review |
+| Publish the complete main App draft | `app-publish-prepare` checks the previously frozen and reviewed whole draft, including queries, controls, metadata, settings and HTML; `app-publish-verify` compares supplied publication/readback captures. Branch-attached drafts are outside this route. See [publication preflight](skills/omni-app-engineer/references/authoring-preflight.md#publish-the-complete-reviewed-main-draft). |
+| Prepare a native Report | [Reports Beta helpers](skills/omni-artifact-accelerator/references/report-workflow.md) prepare definitions and retain qualification/readback/export evidence; no report execution, publication or distribution tool is enabled |
 
-For new documents or a configured credential type outside those adapters, follow the [bounded native authoring guide](skills/omni-artifact-accelerator/references/native-authoring.md). After A–F reviews, the offline App create helper binds the exact HTML, governed queries, model and new document identifier into one reviewable request with locked resource settings. The authorized host performs the official call and retains its readback. **Creating a document publishes its initial version immediately**; choosing a design does not authorize that operation. The helper never connects, reads credentials or changes an existing document.
+The App preparation helpers do not read credentials or send requests. An authorized
+host performs the call, optionally through the operator-integrated
+`native_write_gate.execute` boundary, which rechecks the request and persists its
+attempt before sending. That integration is not automatically active in any host.
+Unknown write outcomes require reconciliation before another attempt. **Creating a
+new document publishes its initial version immediately**; a design choice does not
+authorize that write. See [the write boundary](skills/omni-app-engineer/references/authoring-preflight.md#operator-integrated-write-boundary)
+for the supported integration.
 
-Existing query-backed App enhancements can use [authoring preflight](skills/omni-app-engineer/references/authoring-preflight.md) with either a verified organization or user key. Its offline helper checks installed-command evidence, prepares the correct query envelope, screens generated SQL for explicit source drift, and prepares/verifies a named-draft HTML-only request. The host executes authorized official calls; the helper never acquires credentials or changes security settings. Keep source dates, partial populations and recorded-position coverage visible, and resolve a useful alternative when data cannot support the proposed visual.
-
-Close out with the selected requirements, what is visible/working on each surface, and any unresolved choice or difference. Publication does not erase an unmet design requirement, and a frontend design summary does not accept DMA semantics. Keep these outcomes distinct: **local consistency → native behavior and access checks → business acceptance → publication**. A screenshot cannot prove the numbers or permissions; an API readback cannot prove the App ran correctly. Selecting both surfaces requires distinct target documents and separate evidence. Publication and operational changes need their own authorization.
+Keep source dates, partial populations and recorded-position coverage visible.
+Close out with the selected requirements, what is working on each surface and
+unresolved differences. Track **local consistency, authorized preview, native
+behavior/access, business acceptance and publication** separately. Preview can
+enable later visual review; successful publication does not close an unobserved
+lane or accept DMA semantics. A screenshot cannot prove numbers or permissions,
+and API readback cannot prove the App ran correctly. Selecting both surfaces
+requires distinct target documents and separate evidence.
 
 Claude and ChatGPT tool support depends on the actual host/account configuration. The included [local host workflow](skills/omni-artifact-accelerator/references/connected-visual-migration.md) does not provision a remote connector or give a web chat access to a local process. A clearly recorded operator-assisted file workflow remains available where direct integration is unavailable.
 
