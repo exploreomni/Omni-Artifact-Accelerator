@@ -47,7 +47,8 @@ class SyntheticTransport:
     def inspect(self):
         self.calls.append('inspect')
         result = {'state': copy.deepcopy(self.state), 'app': copy.deepcopy(self.app),
-                  'identity': {'user': 'synthetic'}, 'draft_context': {
+                  'identity': {'keyScope': 'user', 'user': {'id': 'synthetic-user',
+                      'membershipId': 'synthetic-member'}}, 'draft_context': {
                       'identifier': 'draft', 'publishedIdentifier': 'doc', 'workbookModelId': 'workbook',
                       'branch': {'id': 'branch'}, 'status': 'active', 'draftOutOfDate': False}}
         result['snapshot_sha256'] = native.digest(result)
@@ -133,7 +134,8 @@ class NativeStageGateTests(unittest.TestCase):
             write('baseline.json', {'kind': app.INITIAL_BASELINE if kind == 'initial' else app.BASELINE,
                 'requirements': adapter._pin('requirements.json'), 'body': adapter._pin('body.json'),
                 'initial_body': body, 'semantic_sha256': 'a' * 64, 'semantic_snapshot': {}, 'bindings': [],
-                'runtime': adapter._pin('runtime.json'), 'inspection': adapter.inspect()})
+                'runtime': adapter._pin('runtime.json'), 'runtime_contract': {'controls': []},
+                'inspection': adapter.inspect()})
             write('spec.json', {'schema_version': 1,
                 'kind': 'analyst_native_app_initial_spec' if kind == 'initial' else 'analyst_native_app_spec',
                 'review_ref': 'synthetic-review', 'baseline_path': 'baseline.json',
