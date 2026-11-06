@@ -39,7 +39,7 @@ A future qualified CI configuration must:
 
 1. Use an approved disposable runner with exact runtime/toolchain identities and a reviewed source-acquisition mechanism. Pin any actions by immutable commit and review their dependencies/actions separately. Do not put untrusted pull-request code on a persistent privileged self-hosted runner.
 2. Check out the exact reviewed revision without persisting credentials. Use read-only repository permissions, no tenant/cloud secrets, no package cache restores or package setup commands, bounded execution and no publication steps.
-3. Run `python3 -I -S -B scripts/validate_source.py --report <private-new-path>` and retain revision/source hashes plus actual success/failure. The receipt is local evidence, not host authorization.
+3. Run the [complete source validation command](TESTING.md) with the explicitly reviewed existing Node path and SHA-256 and `--report <private-new-path>`, retaining revision/source hashes plus actual success/failure. Runtime selection does not replace the approval and qualification above. The receipt is local evidence, not host authorization.
 4. Configure trusted approval outside repository-editable files where required, then verify branch rules and the exact required check name. A workflow/environment name alone does not demonstrate protected approval or enforced merge checks.
 5. Exercise a failing fixture and a valid fixture on that exact approved runner before enabling release reliance. Changes to runtime, actions, permissions or dependency closure need renewed coverage.
 

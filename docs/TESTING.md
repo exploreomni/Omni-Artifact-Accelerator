@@ -8,13 +8,8 @@ For source-only package review with an existing Python runtime:
 python3 -I -S scripts/check_package.py
 ```
 
-For the maintained security lane, use the same existing interpreter with bytecode writes disabled:
-
-```sh
-python3 -I -S -B scripts/validate_source.py
-```
-
-The required `native-input-handoff` suite uses the separately documented
+For the maintained security lane, use the same existing interpreter with bytecode
+writes disabled. The required `native-input-handoff` suite uses the separately documented
 existing-Node source lane. For a complete passing run, explicitly select that
 already-installed native runtime and its SHA-256 (use actual reviewed values):
 

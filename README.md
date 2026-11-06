@@ -250,7 +250,7 @@ python3 -I -S scripts/check_package.py
 
 `-I -S` prevents user/site package startup in this source-only path. It is not an OS sandbox. The checker does not need PyYAML. `requirements.txt` still records PyYAML 6.0.3 for optional YAML readers; it is neither an installation instruction nor a grandfathered approval. Keep customer data, tokens and outputs outside this repository.
 
-For focused security validation, run `python3 -I -S -B scripts/validate_source.py`. It checks the reviewed local boundaries and records failures without installing packages or contacting a tenant. Read [security operations](docs/SECURITY.md) for exact CLI setup, parser limits, approval records and the separately blocked CI/3D activation gates.
+For source security validation, follow the [source validation command](docs/TESTING.md), including the explicit existing Node path and SHA-256 required for the complete lane. It checks the reviewed local boundaries and records failures without installing packages or contacting a tenant. Read [security operations](docs/SECURITY.md) for exact CLI setup, parser limits, approval records and the separately blocked CI/3D activation gates.
 
 ### 2. Preview skill installation
 
