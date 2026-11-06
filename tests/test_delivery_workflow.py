@@ -25,6 +25,8 @@ class WorkflowTests(unittest.TestCase):
         self.addCleanup(self.base.doCleanups)
         self.root = self.base.root
         project = W.P.load_project(self.root)[1]
+        self.assertNotIn('app_release_policy', project)
+        self.assertNotIn('experience_intent_policy', project)
         project['stage_gate_policy'] = 'data-first-v1'
         W.P.write_json(self.root / 'project.json', project, replace=True)
         self.base.base.select()

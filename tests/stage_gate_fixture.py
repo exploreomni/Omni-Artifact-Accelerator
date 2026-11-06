@@ -394,4 +394,7 @@ def pre_policy_project(root, P):
     project.pop('stage_gate_policy', None)
     project.pop('workflow_quality_policy', None)
     project.pop('app_release_policy', None)
+    # Historical engagements predate the policy markers added by init.
+    # Leaving continuity enabled makes this a mixed-era fixture, not history.
+    project.pop('experience_intent_policy', None)
     P.write_json(root / 'project.json', project, replace=True)

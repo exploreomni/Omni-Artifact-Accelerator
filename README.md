@@ -300,6 +300,8 @@ affected cases through `scripts/validate_source.py --case <case>` using the same
 isolated Python flags; see [testing](docs/TESTING.md). Those checks exercise local
 contracts, without installing packages or contacting a tenant. The current GitHub
 workflow is manual-only and records a revision; it does not run validation.
+For the complete source lane, follow the explicit existing Node path and SHA-256
+selection in [testing](docs/TESTING.md); omitting them leaves required coverage failed.
 
 ### 2. Choose a repository or installed-skill entry
 

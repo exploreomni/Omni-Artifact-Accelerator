@@ -297,6 +297,7 @@ class DataRefreshGates(unittest.TestCase):
         legacy = Path(self.temp.name).resolve() / 'historical-adoption'
         P.init(legacy, 'Historical App adopts a refresh answer', 'enhancement', 'app', 'none')
         G.pre_policy_project(legacy, P)
+        self.assertNotIn('experience_intent_policy', P.load_project(legacy)[1])
         P.intent_helper().select(legacy, legacy / 'contracts/design-intent.json', 'contracts/selected-old.json')
         flow = G.Lifecycle(legacy, P, historical=True)
         with P.trusted_stage_provider(flow.host):

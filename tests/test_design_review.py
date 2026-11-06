@@ -13,6 +13,10 @@ SCRIPT = Path(__file__).resolve().parents[1] / "skills/omni-artifact-accelerator
 spec = importlib.util.spec_from_file_location("project_design_tests", SCRIPT)
 P = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(P)
+fixture_spec = importlib.util.spec_from_file_location(
+    "historical_design_fixture", Path(__file__).with_name('stage_gate_fixture.py'))
+G = importlib.util.module_from_spec(fixture_spec)
+fixture_spec.loader.exec_module(G)
 PNG = base64.b64decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=")
 
 
@@ -25,9 +29,8 @@ class DesignReviewTests(unittest.TestCase):
         # Existing pre-policy candidate: these tests exercise review evidence, not new-product gates.
         project = P.load_project(self.root)[1]
         project.update(mode='enhancement')
-        project.pop('stage_gate_policy')
-        project.pop('workflow_quality_policy', None)
         P.write_json(self.root / 'project.json', project, replace=True)
+        G.pre_policy_project(self.root, P)
         for path, raw in {"deliverables/app.html": b"<h1>Synthetic</h1>",
                           "contracts/resolved.json": b'{"task":"inspect an item"}',
                           "contracts/query.json": b'{"field":"synthetic.revenue"}',
