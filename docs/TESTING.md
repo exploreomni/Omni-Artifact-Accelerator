@@ -14,6 +14,27 @@ For the maintained security lane, use the same existing interpreter with bytecod
 python3 -I -S -B scripts/validate_source.py
 ```
 
+The required `native-input-handoff` suite uses the separately documented
+existing-Node source lane. For a complete passing run, explicitly select that
+already-installed native runtime and its SHA-256 (use actual reviewed values):
+
+```sh
+python3 -I -S -B scripts/validate_source.py \
+  --node-runtime /absolute/canonical/path/to/node \
+  --node-sha256 REPLACE_WITH_64_HEX_DIGEST \
+  --report /absolute/private/output/source-check.json
+```
+
+This selects existing bytes for original-source/built-in checks only; it does not
+acquire a runtime, load third-party packages, grant approval or qualify a host.
+The Python child PATH stays `/usr/bin:/bin`. Only the Node-backed case receives
+the explicit path and pin, which are checked before and after that case and before
+each Node invocation. Ambient runtime-selection variables are ignored by the
+runner. Missing or invalid selection remains a failed required case in the full
+receipt; it is never silently omitted. Direct `--case native-input-handoff`
+requires the same two arguments. The standalone test command below remains a
+separate existing-runtime diagnostic, not a complete validation receipt.
+
 This runs a fixed set of package, CLI environment/output, App resource, file/CSV intake and public-denial checks in isolated Python startup mode. It refuses ordinary imports outside the standard library or the explicitly reviewed first-party harness. Explicit first-party file loading still trusts the checkout; this is not a sandbox for hostile source. Children receive a minimal environment and bounded output/deadlines. No YAML decoder, producer engine, vendor CLI, browser, live tenant or package manager is invoked. The original synthetic fixtures include early parser rejection and valid-input controls.
 
 Use `--report /absolute/private/output/source-check.json` for a new report outside the repository. It records exact source hashes, per-check results, interpreter identity and separate unqualified host/native/rendered outcomes. It does not overwrite an existing receipt. Failed checks or source drift produce a nonzero exit. Run affected cases first during repair; repeat the complete lane when integrating changes to these boundaries. See [security operations](SECURITY.md) for pending CI and host activation gates.
@@ -227,8 +248,9 @@ new-App cases check frozen HTML/specification binding, all four reviews, fixed
 new-document routes, locked settings, model/Topic distinction, tamper rejection
 and exact supplied-capture comparisons. They contain no live transport or approval
 provider; creation/publication and native behavior require separate evidence. The
-handoff cases run separately with the existing Node runtime on PATH (the bounded
-Python security lane intentionally strips that host PATH). They use original package sources to check
+standalone handoff cases use the existing Node runtime on PATH. The complete
+source runner instead passes its explicitly selected existing runtime only to that
+case; its restricted Python PATH is unchanged. They use original package sources to check
 qualified numeric strings, grain, refresh/run/subscription semantics, failure
 clearing, ordered return, focus fallbacks and per-context choices. These doubles
 do not qualify a native SDK or a rendered interaction. Source-inventory,

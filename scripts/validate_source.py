@@ -11,7 +11,9 @@ import importlib.machinery
 import json
 import os
 from pathlib import Path
+import re
 import runpy
+import stat
 import sys
 import sysconfig
 import tempfile
@@ -20,6 +22,7 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 CASES = {
+    "source-runner": "tests/test_source_runner.py",
     "host-entry": "tests/test_host_entry.py",
     "app-experience-release": "tests/test_app_experience_release.py",
     "native-consumers": "tests/test_native_data_consumers.py",
@@ -135,6 +138,17 @@ CASE_TIMEOUTS['experience-enforcement'] = 240
 # output limits, assertions, required coverage or activation/authorization gates.
 CASE_TIMEOUTS.update({'incremental-gates': 360, 'report-routing': 60,
                       'native-create': 360, 'stage-gates': 360})
+# These suites also exceeded their older bounds in a complete serial run.
+# Focused runs pass; keep headroom for repeated source/evidence revalidation.
+CASE_TIMEOUTS.update({'context-packets': 90, 'design-intent': 90,
+                      'execution-efficiency': 90, 'conversation-choice': 240,
+                      'experience-enforcement': 480})
+# The explicit existing-Node lane verifies its large native binary before use.
+CASE_TIMEOUTS['native-input-handoff'] = 60
+NODE_CASE = 'native-input-handoff'
+NODE_PATH_ENV = 'OAA_SOURCE_NODE_PATH'
+NODE_SHA_ENV = 'OAA_SOURCE_NODE_SHA256'
+MAX_SOURCE_RUNTIME = 256 * 1024 * 1024
 IGNORED = {".git", ".venv", "venv", "node_modules", "__pycache__", ".pytest_cache", ".ruff_cache"}
 STDLIB_ROOTS = {Path(sysconfig.get_path(name)).resolve() for name in ("stdlib", "platstdlib")}
 FIRST_PARTY_IMPORTS = {
@@ -183,17 +197,115 @@ def source_pins():
             and p.is_file() and not p.is_symlink()}
 
 
+class SourceRuntimeError(ValueError):
+    """An invalid existing-runtime selection; never an acquisition request."""
+
+
+def verify_node_runtime(selection):
+    """Check selected existing native bytes; not approval or hostile-host isolation."""
+    path, expected = selection.get('path'), selection.get('sha256')
+    if not isinstance(path, str) or not isinstance(expected, str) or not re.fullmatch('[0-9a-f]{64}', expected):
+        raise SourceRuntimeError('source_runtime_path_and_sha256_required')
+    p = Path(path)
+    if (not p.is_absolute() or str(p) != path or '..' in p.parts
+            or any(part.is_symlink() for part in (p, *p.parents))):
+        raise SourceRuntimeError('source_runtime_requires_canonical_path_without_links')
+    try:
+        fd = os.open(p, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+    except OSError:
+        raise SourceRuntimeError('source_runtime_file_unavailable') from None
+    try:
+        before = os.fstat(fd)
+        if (not stat.S_ISREG(before.st_mode) or not 0 < before.st_size <= MAX_SOURCE_RUNTIME
+                or before.st_mode & 0o022 or not os.access(p, os.X_OK)):
+            raise SourceRuntimeError('source_runtime_requires_bounded_regular_protected_executable')
+        digest, size, prefix = hashlib.sha256(), 0, b''
+        while True:
+            block = os.read(fd, min(1024 * 1024, MAX_SOURCE_RUNTIME + 1 - size))
+            if not block:
+                break
+            if not prefix:
+                prefix = block[:4]
+            size += len(block)
+            if size > MAX_SOURCE_RUNTIME:
+                raise SourceRuntimeError('source_runtime_byte_limit')
+            digest.update(block)
+        after, current = os.fstat(fd), os.stat(p, follow_symlinks=False)
+        identity = lambda value: (value.st_dev, value.st_ino, value.st_mode, value.st_size,
+                                  value.st_mtime_ns, value.st_ctime_ns)
+        if (identity(before) != identity(after) or identity(after) != identity(current)
+                or size != before.st_size or digest.hexdigest() != expected):
+            raise SourceRuntimeError('source_runtime_pin_mismatch_or_changed')
+        # ELF and Mach-O native executables, including universal Mach-O. No shebang.
+        if prefix not in (b'\x7fELF', b'\xfe\xed\xfa\xce', b'\xce\xfa\xed\xfe',
+                          b'\xfe\xed\xfa\xcf', b'\xcf\xfa\xed\xfe',
+                          b'\xca\xfe\xba\xbe', b'\xbe\xba\xfe\xca',
+                          b'\xca\xfe\xba\xbf', b'\xbf\xba\xfe\xca'):
+            raise SourceRuntimeError('source_runtime_native_executable_required')
+        return {'path': path, 'sha256': expected}
+    except OSError:
+        raise SourceRuntimeError('source_runtime_file_unavailable_or_changed') from None
+    finally:
+        os.close(fd)
+
+
+def run_case(name, transport, node=None):
+    timeout = CASE_TIMEOUTS.get(name, 30)
+    started = time.monotonic()
+    check = {'case': name, 'passed': False}
+    print(f"source check: {name} (limit {timeout}s)", file=sys.stderr, flush=True)
+    with tempfile.TemporaryDirectory(prefix="oaa-source-check-") as folder:
+        try:
+            argv = [sys.executable, '-I', '-S', '-B', str(Path(__file__).resolve()), '--case', name]
+            if name == NODE_CASE:
+                if node is None:
+                    raise SourceRuntimeError('existing_node_runtime_not_selected')
+                check['runtime'] = verify_node_runtime(node)
+                argv.extend(['--node-runtime', node['path'], '--node-sha256', node['sha256']])
+            result = transport.run(argv, env=transport.environment(folder), cwd=folder,
+                                   timeout=timeout, max_stdout=128 * 1024, max_stderr=128 * 1024)
+            if name == NODE_CASE:
+                verify_node_runtime(node)
+                check['runtime']['bytes_verified_before_and_after'] = True
+            check.update(passed=result.returncode == 0, exit_code=result.returncode,
+                         output=result.stdout.decode('utf-8', 'replace'))
+        except SourceRuntimeError as error:
+            check.update(reason='source_runtime_unavailable', detail=str(error))
+        except (OSError, transport.ProcessError):
+            check.update(reason='bounded_check_failed')
+    check.update(elapsed_seconds=round(time.monotonic() - started, 3), timeout_seconds=timeout)
+    print(f"source check: {name} {'passed' if check['passed'] else 'FAILED'} "
+          f"in {check['elapsed_seconds']}s", file=sys.stderr, flush=True)
+    return check
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--case", choices=CASES, help=argparse.SUPPRESS)
     parser.add_argument("--report", help="New output JSON outside repository; never overwrites")
+    parser.add_argument('--node-runtime', help='Explicit existing native Node path for its original-source lane only')
+    parser.add_argument('--node-sha256', help='SHA-256 of that existing runtime; integrity is not approval')
     args = parser.parse_args()
     if not sys.flags.isolated or not sys.flags.no_site or not sys.dont_write_bytecode:
         parser.error("use the existing interpreter with -I -S -B")
+    if bool(args.node_runtime) != bool(args.node_sha256):
+        parser.error('provide both --node-runtime and --node-sha256')
+    node = {'path': args.node_runtime, 'sha256': args.node_sha256} if args.node_runtime else None
+    # Ambient variables never select a runtime for this maintained runner.
+    os.environ.pop(NODE_PATH_ENV, None)
+    os.environ.pop(NODE_SHA_ENV, None)
     # Normal imports are restricted as defense against accidental optional use.
     # Explicit first-party file loading still trusts reviewed repository source.
     sys.meta_path.insert(0, StandardLibraryOnly())
     if args.case:
+        if args.case == NODE_CASE:
+            if node is None:
+                parser.error('this required case needs explicit --node-runtime and --node-sha256')
+            try:
+                verify_node_runtime(node)
+            except (OSError, SourceRuntimeError):
+                parser.error('selected existing Node runtime did not pass byte/path checks')
+            os.environ[NODE_PATH_ENV], os.environ[NODE_SHA_ENV] = node['path'], node['sha256']
         if args.case == "metadata":
             sys.argv = [str(ROOT / CASES[args.case])]
             runpy.run_path(sys.argv[0], run_name="__main__")
@@ -213,23 +325,7 @@ def main():
             parser.error("report must be a new file in an existing canonical directory outside repository")
     before = source_pins()
     transport = load("source_process", "skills/omni-bi-engineer/scripts/cli_process.py")
-    checks = []
-    for name in CASES:
-        timeout = CASE_TIMEOUTS.get(name, 30)
-        started = time.monotonic()
-        print(f"source check: {name} (limit {timeout}s)", file=sys.stderr, flush=True)
-        with tempfile.TemporaryDirectory(prefix="oaa-source-check-") as folder:
-            try:
-                result = transport.run([sys.executable, "-I", "-S", "-B", str(Path(__file__).resolve()),
-                                        "--case", name], env=transport.environment(folder), cwd=folder,
-                                       timeout=timeout, max_stdout=128 * 1024, max_stderr=128 * 1024)
-                checks.append({"case": name, "passed": result.returncode == 0,
-                               "exit_code": result.returncode, "output": result.stdout.decode("utf-8", "replace")})
-            except (OSError, transport.ProcessError):
-                checks.append({"case": name, "passed": False, "reason": "bounded_check_failed"})
-        checks[-1].update(elapsed_seconds=round(time.monotonic() - started, 3), timeout_seconds=timeout)
-        print(f"source check: {name} {'passed' if checks[-1]['passed'] else 'FAILED'} "
-              f"in {checks[-1]['elapsed_seconds']}s", file=sys.stderr, flush=True)
+    checks = [run_case(name, transport, node) for name in CASES]
     after = source_pins()
     report = {"kind": "oaa_source_security_validation", "passed": all(c["passed"] for c in checks) and before == after,
               "checks": checks, "source_unchanged_during_checks": before == after,

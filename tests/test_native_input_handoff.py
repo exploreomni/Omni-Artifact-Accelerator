@@ -1,5 +1,6 @@
 """Executable native handoff/continuity checks with original sources and no DOM."""
 import os
+import importlib.util
 import shutil
 import subprocess
 import unittest
@@ -7,11 +8,18 @@ from pathlib import Path
 
 
 SCRIPTS = Path(__file__).resolve().parents[1] / "skills/omni-app-engineer/scripts"
+runtime_spec = importlib.util.spec_from_file_location(
+    'handoff_source_runtime', Path(__file__).resolve().parents[1] / 'scripts/validate_source.py')
+RUNTIME = importlib.util.module_from_spec(runtime_spec)
+runtime_spec.loader.exec_module(RUNTIME)
 
 
 class NativeInputHandoffTests(unittest.TestCase):
     def run_js(self, body):
-        node = shutil.which("node")
+        selected = os.environ.get(RUNTIME.NODE_PATH_ENV)
+        digest = os.environ.get(RUNTIME.NODE_SHA_ENV)
+        node = (RUNTIME.verify_node_runtime({'path': selected, 'sha256': digest})['path']
+                if selected or digest else shutil.which('node'))
         self.assertTrue(node, "Existing Node is required for original-source checks")
         env = dict(os.environ)
         env.pop("NODE_OPTIONS", None)
