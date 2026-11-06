@@ -18,6 +18,13 @@ This runs a fixed set of package, CLI environment/output, App resource, file/CSV
 
 Use `--report /absolute/private/output/source-check.json` for a new report outside the repository. It records exact source hashes, per-check results, interpreter identity and separate unqualified host/native/rendered outcomes. It does not overwrite an existing receipt. Failed checks or source drift produce a nonzero exit. Run affected cases first during repair; repeat the complete lane when integrating changes to these boundaries. See [security operations](SECURITY.md) for pending CI and host activation gates.
 
+The complete lane prints each suite's start and result to stderr and records its
+elapsed time and finite deadline in the receipt. Longer lifecycle suites receive
+explicit whole-suite allowances; production transport deadlines, output limits,
+required assertions and activation gates remain separate and unchanged. A focused
+`--case` run does not apply the complete lane's parent deadline or produce its full
+receipt, so retain its result as focused evidence rather than full-lane clearance.
+
 The checker uses a narrow scalar metadata profile and the standard library, not a general YAML parser. It checks declared skills, metadata, local links and excluded files; it does not authenticate approvals or scan all secrets. The full historical suite loads optional PyYAML/source engines and must not be run without scoped approval. Do not interpret historical commands below as authorization to install or load dependencies.
 
 For the new original spatial implementation, run only the focused synthetic checks:

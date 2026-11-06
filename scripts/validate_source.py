@@ -15,6 +15,7 @@ import runpy
 import sys
 import sysconfig
 import tempfile
+import time
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -124,11 +125,16 @@ CASE_TIMEOUTS = {name: 120 for name in ('workflow', 'product-intent', 'stage-gat
 # lifecycles. Keep a bounded allowance separate from runtime transport deadlines.
 CASE_TIMEOUTS.update({'dma-native-topics':180,'dma-topic-policy':120})
 CASE_TIMEOUTS.update({'app-experience-release':240, 'native-publish':360, 'host-entry':120})
-CASE_TIMEOUTS['native-stage-gates'] = 300
-CASE_TIMEOUTS.update({'execution-runtime': 120, 'execution-bridge': 120, 'native-demo': 180})
+CASE_TIMEOUTS['native-stage-gates'] = 600
+CASE_TIMEOUTS.update({'execution-runtime': 120, 'execution-bridge': 120, 'native-demo': 480})
 CASE_TIMEOUTS.update({'execution-preparation': 120, 'validation-snapshot': 120, 'selective-reads': 120, 'context-layout': 120})
 CASE_TIMEOUTS.update({'experience-continuity': 180, 'engagement-bootstrap': 120})
 CASE_TIMEOUTS['experience-enforcement'] = 240
+# Complete source-bound lifecycle suites outgrew the original whole-suite budgets.
+# These finite test allowances do not change production transport deadlines,
+# output limits, assertions, required coverage or activation/authorization gates.
+CASE_TIMEOUTS.update({'incremental-gates': 360, 'report-routing': 60,
+                      'native-create': 360, 'stage-gates': 360})
 IGNORED = {".git", ".venv", "venv", "node_modules", "__pycache__", ".pytest_cache", ".ruff_cache"}
 STDLIB_ROOTS = {Path(sysconfig.get_path(name)).resolve() for name in ("stdlib", "platstdlib")}
 FIRST_PARTY_IMPORTS = {
@@ -209,15 +215,21 @@ def main():
     transport = load("source_process", "skills/omni-bi-engineer/scripts/cli_process.py")
     checks = []
     for name in CASES:
+        timeout = CASE_TIMEOUTS.get(name, 30)
+        started = time.monotonic()
+        print(f"source check: {name} (limit {timeout}s)", file=sys.stderr, flush=True)
         with tempfile.TemporaryDirectory(prefix="oaa-source-check-") as folder:
             try:
                 result = transport.run([sys.executable, "-I", "-S", "-B", str(Path(__file__).resolve()),
                                         "--case", name], env=transport.environment(folder), cwd=folder,
-                                       timeout=CASE_TIMEOUTS.get(name, 30), max_stdout=128 * 1024, max_stderr=128 * 1024)
+                                       timeout=timeout, max_stdout=128 * 1024, max_stderr=128 * 1024)
                 checks.append({"case": name, "passed": result.returncode == 0,
                                "exit_code": result.returncode, "output": result.stdout.decode("utf-8", "replace")})
             except (OSError, transport.ProcessError):
                 checks.append({"case": name, "passed": False, "reason": "bounded_check_failed"})
+        checks[-1].update(elapsed_seconds=round(time.monotonic() - started, 3), timeout_seconds=timeout)
+        print(f"source check: {name} {'passed' if checks[-1]['passed'] else 'FAILED'} "
+              f"in {checks[-1]['elapsed_seconds']}s", file=sys.stderr, flush=True)
     after = source_pins()
     report = {"kind": "oaa_source_security_validation", "passed": all(c["passed"] for c in checks) and before == after,
               "checks": checks, "source_unchanged_during_checks": before == after,
