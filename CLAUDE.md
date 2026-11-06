@@ -10,6 +10,10 @@ and read the generated reference to the exact checkout and existing sibling
 engagement. An entry is not installation, host configuration or qualified authority.
 
 Record actual source identity and ownership before the first new artifact stage.
+Use the current trusted package's host-entry preflight to compare the loaded path
+with the requested release and inventory raw CLI/API/MCP/shell write routes. An
+older installed entry cannot certify itself as latest. Reuse the receipt and
+report advisory limits; never activate an update automatically.
 Use the execution procedure's `run-start`, incremental `run-guidance` and
 stage-aware `phase-check` requests. Honor `current_checkout`, `pinned_revision` or
 `latest_main` explicitly; an existing directory is not evidence of latest main.
@@ -41,6 +45,15 @@ outcomes and consequential destinations, including gaps outside a bounded slice.
 Report authorized candidate preview, verified selected scope and publication
 separately. Preview may enable later native observation; a successful write or
 readback cannot close unrun visual, access or human cases. Retain open findings.
+
+For new Apps, follow [candidate release](skills/omni-artifact-accelerator/references/app-release.md).
+Carry first-view/action/result concepts and actual hybrid amendments into the
+selected design. Annotate each visible live/snapshot/scenario consumer and retain
+its independently checked expectation. Host HTML guidance must use this selected
+target and journey while preserving its sandbox/security rules; a local report
+example does not prescribe the native App's composition or data source.
+Use guarded native preparation and exact whole-draft publication. A raw upload is
+outside the managed path and cannot be reported as accelerator-qualified release.
 
 Preserve [project boundaries](AGENTS.md). A repository URL or this file does not
 configure MCP, launch specialists, authorize dependencies or enforce other tools.

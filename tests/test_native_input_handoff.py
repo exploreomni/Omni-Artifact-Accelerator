@@ -162,7 +162,161 @@ for(const name of ['experience_components.js','query_controller.js','experience_
 context.columns=columns;context.rows=result('-2').rows;
 assert.equal(vm.runInContext("OAAExperience.mapRows(rows,columns,20,{grain:['id','period']})[0].value",context),-2);
 assert.equal(vm.runInContext("typeof OAAQueryController.createQueryDelivery",context),'function');
+assert.equal(vm.runInContext("typeof OAAQueryController.createConsumerDelivery",context),'function');
 assert.equal(vm.runInContext("typeof OAAExperienceBehaviors.restoreFocus",context),'function');
+""")
+
+    def test_visible_consumers_update_later_tabs_and_wait_for_actual_refresh(self):
+        self.run_js("""
+const listeners={},settles={},seen=[],refreshes=[];
+const d=Q.createConsumerDelivery({queries:['first','later'].map(queryKey=>({queryKey,delivery:{...contract,
+ subscribe:fn=>{listeners[queryKey]=fn;return()=>{}},run:()=>new Promise(resolve=>settles[queryKey]=resolve)}})),
+ consumers:[{id:'primary',mode:'live',queryKeys:['first']},{id:'detail',mode:'live',queryKeys:['later']},
+ {id:'combined',mode:'live',queryKeys:['first','later']},{id:'estimate',mode:'scenario',label:'Scenario estimate',
+  assumptionsRef:'reviewed-assumptions',baseConsumerIds:['primary','detail'],derive:b=>
+   b.primary.rowsByQuery.first[0].value+b.detail.rowsByQuery.later[0].value}],
+ onConsumer:s=>seen.push(s),onRefresh:s=>refreshes.push(s)});
+const work=d.refresh();listeners.later(result(9));
+assert.equal(d.snapshot().consumers.detail.rowsByQuery.later[0].value,9);
+listeners.later(result(9));
+assert.equal(seen.filter(s=>s.id==='detail'&&s.generation===1&&s.phase==='ready'&&s.busy).length,1);
+assert.deepEqual(d.snapshot().consumers.combined.rowsByQuery,{});
+assert.equal(d.snapshot().consumers.estimate.value,null);
+listeners.first(result(3));assert.equal(d.snapshot().consumers.estimate.value,12);
+assert.equal(d.snapshot().consumers.combined.rowsByQuery.later[0].value,9);
+assert.equal(d.snapshot().refresh.success,false);
+assert.deepEqual(await d.refresh(),{started:false,reason:'busy'});
+settles.first(result(3));await Promise.resolve();assert.equal(d.snapshot().refresh.success,false);
+settles.later(result(9));assert.deepEqual(await work,{started:true,success:true});
+assert.equal(refreshes.filter(s=>s.phase==='complete').length,1);
+assert(seen.some(s=>s.id==='detail'&&s.rowsByQuery.later?.[0].value===9));
+const laterOld=listeners.later;const second=d.refresh();
+assert.deepEqual(d.snapshot().consumers.combined.rowsByQuery,{});
+listeners.first(result(5));laterOld(result(99));
+assert.deepEqual(d.snapshot().consumers.detail.rowsByQuery,{});
+listeners.later(result(2));listeners.later(result(2));
+assert.equal(seen.filter(s=>s.id==='detail'&&s.generation===2&&s.phase==='ready'&&s.busy).length,1);
+settles.later(result(2));settles.first(result(5));await second;
+assert.equal(d.snapshot().consumers.estimate.value,7);
+""")
+
+    def test_denied_error_and_invalidation_remove_live_scenario_and_snapshot_rows(self):
+        self.run_js("""
+let listener,settle;const observed=[];
+const d=Q.createConsumerDelivery({queries:[{queryKey:'1',delivery:{...contract,
+ subscribe:fn=>{listener=fn;return()=>{}},run:()=>new Promise(resolve=>settle=resolve)}}],
+ consumers:[{id:'observed',mode:'live',queryKeys:['1']},
+ {id:'archive',mode:'snapshot',label:'Snapshot',period:'Period A',sourceRef:'retained-export',value:[{value:40}]},
+ {id:'estimate',mode:'scenario',label:'Scenario estimate',assumptionsRef:'reviewed-assumptions',
+ baseConsumerIds:['observed'],derive:b=>b.observed.rowsByQuery['1'][0]?.value*2}],
+ onConsumer:s=>observed.push(s),onRefresh:()=>{}});
+assert.equal(d.snapshot().consumers.archive.phase,'snapshot');
+const work=d.refresh();listener(result(4));assert.equal(d.snapshot().consumers.estimate.value,8);
+listener({phase:'restricted'});assert.equal(d.snapshot().consumers.observed.phase,'restricted');
+assert.deepEqual(d.snapshot().consumers.observed.rowsByQuery,{});
+assert.equal(d.snapshot().consumers.estimate.value,null);assert.equal(d.snapshot().consumers.archive.value,null);
+assert.equal(d.snapshot().refresh.busy,true);listener(result(70));settle(result(70));await work;
+assert.equal(d.snapshot().refresh.success,false);assert.equal(d.snapshot().refresh.phase,'restricted');
+const retry=d.refresh();listener(result(6));d.invalidate('stale');listener(result(90));settle(result(90));await retry;
+assert.equal(d.snapshot().consumers.observed.phase,'stale');assert.equal(d.snapshot().consumers.estimate.value,null);
+const third=d.refresh();listener({phase:'error'});settle();await third;
+assert.deepEqual(d.snapshot().consumers.observed.rowsByQuery,{});
+assert.equal(d.snapshot().consumers.observed.phase,'error');assert.equal(d.snapshot().refresh.phase,'restricted');
+const fourth=d.refresh();listener(result(5));d.dispose();settle(result(5));await fourth;
+assert.equal(d.snapshot().refresh.phase,'disposed');assert.equal(d.snapshot().consumers.observed.phase,'disposed');
+assert.equal(d.snapshot().consumers.archive.value,null);
+""")
+
+    def test_empty_partial_conflicting_terminals_and_scenario_failures_never_false_success(self):
+        self.run_js("""
+async function trial(first,last,derive=()=>0){let listener;const d=Q.createConsumerDelivery({
+ queries:[{queryKey:'1',delivery:{...contract,subscribe:fn=>{listener=fn;return()=>{}},run:async()=>{listener(first);return last}}}],
+ consumers:[{id:'main',mode:'live',queryKeys:['1']},{id:'estimate',mode:'scenario',label:'Scenario',
+ assumptionsRef:'assumptions',baseConsumerIds:['main'],derive}],onConsumer:()=>{},onRefresh:()=>{}});
+ await d.refresh();return d.snapshot()}
+const empty={...result(0),rows:[]};let state=await trial(empty,empty);
+assert.equal(state.consumers.main.phase,'empty');assert.equal(state.refresh.success,true);
+state=await trial({...result(4),completeness:'partial'},undefined);
+assert.equal(state.refresh.phase,'partial');assert.equal(state.refresh.success,false);
+assert.deepEqual(state.consumers.main.rowsByQuery,{});assert.equal(state.consumers.estimate.value,null);
+state=await trial(result(3),result(7));assert.equal(state.refresh.phase,'error');
+assert.deepEqual(state.consumers.main.rowsByQuery,{});
+state=await trial(result(3),result(3),()=>{throw new Error('bad scenario')});
+assert.equal(state.consumers.estimate.phase,'error');assert.equal(state.refresh.success,false);
+state=await trial(result(3),result(3),async()=>{throw new Error('async scenario')});
+assert.equal(state.consumers.estimate.phase,'error');
+""")
+
+    def test_consumer_inventory_and_snapshot_only_contract(self):
+        self.run_js("""
+const args={queries:[{queryKey:'saved-query',delivery:{...contract,subscribe:()=>()=>{},run:async()=>result(1)}}],
+ consumers:[{id:'main',mode:'live',queryKeys:['saved-query']}],onConsumer:()=>{},onRefresh:()=>{}};
+assert.equal((await Q.createConsumerDelivery(args).refresh()).success,true);
+assert.throws(()=>Q.createConsumerDelivery({...args,queries:[...args.queries,...args.queries]}),/duplicate/);
+assert.throws(()=>Q.createConsumerDelivery({...args,consumers:[{id:'main',mode:'live',queryKeys:['unknown']}]}),/query missing/);
+assert.throws(()=>Q.createConsumerDelivery({...args,consumers:[{id:'estimate',mode:'scenario',label:'Scenario',
+ assumptionsRef:'reviewed-assumptions',baseConsumerIds:['estimate'],derive:()=>0}]}),/recursive/);
+const snapshot=Q.createConsumerDelivery({...args,queries:[],consumers:[{id:'archive',mode:'snapshot',
+ label:'Snapshot',period:'Period A',sourceRef:'export',value:[{value:1}]}]});
+assert.deepEqual(await snapshot.refresh(),{started:false,reason:'no_live_queries'});
+assert.equal(snapshot.snapshot().refresh.success,false);snapshot.invalidate('restricted');
+assert.equal(snapshot.snapshot().consumers.archive.value,null);
+""")
+
+    def test_failed_visible_rendering_cannot_report_refresh_success(self):
+        self.run_js("""
+const args={queries:[{queryKey:'1',delivery:{...contract,subscribe:()=>()=>{},run:async()=>result(1)}}],
+ consumers:[{id:'main',mode:'live',queryKeys:['1']}],onConsumer:()=>{},onRefresh:()=>{}};
+let d=Q.createConsumerDelivery({...args,onConsumer:s=>{if(s.phase==='ready')throw new Error('renderer failed')}});
+assert.equal((await d.refresh()).success,false);assert.equal(d.snapshot().refresh.busy,false);
+assert.equal(d.snapshot().consumers.main.reason,'render_callback_failed');
+assert.deepEqual(d.snapshot().consumers.main.rowsByQuery,{});
+d=Q.createConsumerDelivery({...args,onRefresh:()=>{throw new Error('refresh renderer failed')}});
+assert.equal((await d.refresh()).success,false);assert.equal(d.snapshot().refresh.busy,false);
+""")
+
+    def test_transient_snapshot_hold_recovers_only_after_all_explicit_refresh_runs_settle(self):
+        self.run_js("""
+const listeners={},settles={};
+const d=Q.createConsumerDelivery({queries:['first','later'].map(queryKey=>({queryKey,delivery:{...contract,
+ subscribe:fn=>{listeners[queryKey]=fn;return()=>{}},run:()=>new Promise(resolve=>settles[queryKey]=resolve)}})),
+ consumers:[{id:'current',mode:'live',queryKeys:['first','later']},
+ {id:'archive',mode:'snapshot',label:'Snapshot',period:'Period A',sourceRef:'retained-export',value:40},
+ {id:'estimate',mode:'scenario',label:'Scenario estimate',assumptionsRef:'reviewed-assumptions',
+ baseConsumerIds:['current','archive'],derive:b=>b.archive.value+b.current.rowsByQuery.later[0].value}],
+ onConsumer:()=>{},onRefresh:()=>{}});
+const first=d.refresh();listeners.first({phase:'error'});listeners.later(result(2));
+settles.first();settles.later(result(2));await first;
+assert.equal(d.snapshot().consumers.archive.value,null);assert.equal(d.snapshot().refresh.success,false);
+const second=d.refresh();assert.equal(d.snapshot().consumers.archive.value,null);
+listeners.later(result(5));listeners.first(result(3));
+assert.equal(d.snapshot().consumers.archive.value,null);assert.equal(d.snapshot().consumers.estimate.value,null);
+settles.later(result(5));await Promise.resolve();assert.equal(d.snapshot().consumers.archive.value,null);
+assert.equal(d.snapshot().refresh.success,false);
+settles.first(result(3));assert.deepEqual(await second,{started:true,success:true});
+assert.equal(d.snapshot().consumers.archive.phase,'snapshot');assert.equal(d.snapshot().consumers.archive.value,40);
+assert.equal(d.snapshot().consumers.estimate.value,45);
+""")
+
+    def test_snapshot_access_and_scope_holds_survive_later_errors_and_successes(self):
+        self.run_js("""
+for(const blocked of ['restricted','stale']) {
+ const listeners={},settles={};
+ const d=Q.createConsumerDelivery({queries:['first','later'].map(queryKey=>({queryKey,delivery:{...contract,
+  subscribe:fn=>{listeners[queryKey]=fn;return()=>{}},run:()=>new Promise(resolve=>settles[queryKey]=resolve)}})),
+  consumers:[{id:'current',mode:'live',queryKeys:['first','later']},
+  {id:'archive',mode:'snapshot',label:'Snapshot',period:'Period A',sourceRef:'retained-export',value:40},
+  {id:'estimate',mode:'scenario',label:'Scenario estimate',assumptionsRef:'reviewed-assumptions',
+   baseConsumerIds:['archive'],derive:b=>b.archive.value*2}],onConsumer:()=>{},onRefresh:()=>{}});
+ const first=d.refresh();listeners.first({phase:blocked});listeners.later({phase:'error'});
+ settles.first(result(1));settles.later(result(2));await first;
+ assert.equal(d.snapshot().consumers.archive.phase,blocked);
+ const second=d.refresh();listeners.first(result(3));listeners.later(result(4));
+ settles.first(result(3));settles.later(result(4));await second;
+ assert.equal(d.snapshot().consumers.current.phase,'ready');assert.equal(d.snapshot().consumers.archive.phase,blocked);
+ assert.equal(d.snapshot().consumers.archive.value,null);assert.equal(d.snapshot().consumers.estimate.value,null);
+ assert.equal(d.snapshot().refresh.success,false);
+}
 """)
 
 

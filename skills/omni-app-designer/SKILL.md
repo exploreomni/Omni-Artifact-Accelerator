@@ -5,6 +5,13 @@ description: Design task flows, screen layouts, interaction states, and responsi
 
 # Omni app designer
 
+For new Apps, use [candidate release](../omni-artifact-accelerator/references/app-release.md)
+to put the first view and useful action outcome into all three comparable concepts.
+Keep a deliberate monitoring view valid. Carry actual selected combinations into
+the canonical journeys and critique the first working journey before expanding.
+Review every promised destination at delivery; screenshots alone cannot establish
+working interactions.
+
 Carry current [visual-discovery preferences](../omni-product-owner/references/visual-experience-discovery.md)
 into all three E concepts, showing a representative comparison when relevant. Use
 [dimensional craft](../omni-design-systems/references/dimensional-visualization-craft.md)

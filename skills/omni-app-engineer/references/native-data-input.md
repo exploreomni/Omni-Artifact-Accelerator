@@ -99,6 +99,124 @@ lifecycle. Also clear affected selected identifiers in the selection owner.
 Independent query panels can use separate instances; combined claims require all
 their qualified dependencies. This adapter does not provide a cross-query join.
 
+## Bind every visible data consumer
+
+New App engagements with `app_release_policy: "candidate-release-v1"` require
+`contracts/native-data-consumers.json` before guarded native preparation. Historical
+engagements without the marker remain explicitly unassessed; adopt the policy
+deliberately through the existing engagement process. This contract supplements
+the selected design, Topic/access checks and candidate reviews. It grants no
+execution or publication permission.
+
+Annotate each visible data-bearing element with its unique `id` and
+`data-oaa-consumer="consumer-id"`. Include every KPI, chart, detail list, comparison
+and data-derived narrative, including those on later views. The source checker
+requires an exact match between declared markers and manifest rows. Reviewers
+must still inspect the full candidate for unmarked claims, dynamically created
+elements, hidden labels and the actual callback-to-display behavior; HTML markers
+and source fragments cannot prove rendered coverage or JavaScript execution.
+
+The manifest has exactly `schema_version: 1`, `kind: "native_data_consumers"`,
+`document_id`, `html_sha256`, `presentations_sha256`, `refresh_policy` and
+`consumers`. Hash the exact UTF-8 candidate and the canonical complete
+`{data, order}` query presentations, including later tabs. `refresh_policy` is the
+existing selected, normalized [refresh decision](../../omni-product-owner/references/data-refresh-policy.md),
+not a new default. A missing answer returns the existing freshness question;
+never add polling, cache bypass or expiry to make this contract pass.
+
+Every consumer has `id`, `element_id`, `mode`, `expectation` and
+`expectation_basis`. The expectation is an exact engagement-relative
+`{path, sha256}` original evidence pin under `inputs/` or `evidence/`; its basis is
+`independent_query` or `independent_calculation`. Pinning supplied evidence does
+not establish its independence or numerical correctness. Use the existing
+[native-query probe](native-query-qualification.md) and analytical evidence
+comparators for those checks, retaining their stated evidence lanes.
+
+| Mode | Additional exact fields | Required visible truth |
+| --- | --- | --- |
+| `live` | `sources`: one or more `{query_key, tile_sha256, fields, script_fragment}` rows | Each exact saved Topic query and selected fields has its own candidate source binding. Full tile hashes retain filters and query configuration. A single first-query handler cannot stand in for later queries. |
+| `snapshot` | `label`, `period`, `source_label`, `source` pin | The element contains its Snapshot label, source attribution and period. Original snapshot and independent expectation bytes must differ. This is never an automatic substitute for a denied or failed live query. |
+| `scenario` | `label`, `base_consumer_ids`, `assumptions` pin, `script_fragment` | The element visibly says Scenario or Estimate. Its bases are declared live or snapshot consumers, and its assumptions remain distinct from independent expectations. |
+
+Each `script_fragment` must occur in an inline executable script of the exact
+candidate and include the quoted consumer ID and each corresponding query key
+(or base consumer ID for a scenario). This preserves the reviewed source site;
+it does not infer that a vendor callback fired. Query keys retain their existing
+exact identity, including named keys. A manifest with source-only checks returns
+`runtime_verified`, `numerical_verified`, `visual_coverage_verified` and
+`access_verified` as false.
+
+Freeze the manifest as a supporting artifact with the HTML and native spec, then
+include it in candidate review. Native guards compare the current manifest with
+the retained frozen bytes, re-read original evidence pins, and reject changed
+HTML, queries, evidence or selected refresh meaning. A retained snapshot of the
+manifest is valid when its bytes are identical; its copied path need not equal
+the mutable contract path. The synthetic
+[contract tests](../../../tests/test_native_data_consumers.py) contain a complete
+two-query, snapshot and scenario example without a tenant or runtime claim.
+
+## Coordinate callback updates and refresh completion
+
+`OAAQueryController.createConsumerDelivery({queries, consumers, onConsumer,
+onRefresh})` composes the existing delivery boundary. `queries` contains unique
+`{queryKey, delivery}` entries; each `delivery` supplies the same inspected
+`run`, `subscribe`, `decode`, columns/grain, limit and correlation contract as
+`createQueryDelivery`, leaving `onState` to the coordinator. Declare every used
+query, not only the first saved tab. Its callbacks drive these consumer rows:
+
+```js
+const delivery = OAAQueryController.createConsumerDelivery({
+  queries: [
+    {queryKey: "summary", delivery: qualifiedSummaryBridge},
+    {queryKey: "detail", delivery: qualifiedDetailBridge}
+  ],
+  consumers: [
+    {id: "summary-panel", mode: "live", queryKeys: ["summary"]},
+    {id: "detail-panel", mode: "live", queryKeys: ["detail"]},
+    {id: "comparison", mode: "live", queryKeys: ["summary", "detail"]}
+  ],
+  onConsumer: renderExactConsumerState,
+  onRefresh: renderRefreshState
+});
+// Bind initial/manual actions through the already selected refresh policy.
+// Never use a timer to announce success.
+await delivery.refresh();
+```
+
+The bridge and renderers above are reviewed application functions, not vendor
+SDK names. Live renderers receive actual normalized `rowsByQuery` only when all
+that consumer's dependencies have complete results from the current refresh.
+They receive empty `rowsByQuery` on loading, partial, denied, error and invalidated
+states. Replace or clear the visible element on every callback; never use
+`rows || embeddedExampleRows`. Empty complete results remain an explicit empty
+state. Source tests exercise the second query arriving first and stale callbacks
+from an earlier subscription; native correlation still requires separate proof.
+
+Scenario rows use `baseConsumerIds`, a visible `label`, `assumptionsRef` and a
+synchronous `derive(bases)` function. They emit a separate scenario `value` only
+when all bases are available. Snapshot rows use `label`, `period`, `sourceRef` and
+an explicitly reviewed `value`; their phase is `snapshot`, never live. Any query
+restriction, error or stale invalidation withholds retained snapshots and their
+dependent estimates. An error-only hold clears only after an explicit refresh
+finishes successfully for every required query and consumer. Restricted or stale
+holds remain sticky through later errors and successful refreshes; reconstruct
+the instance only after separately requalifying those snapshot sources and access.
+Renderer exceptions make success false and leave the visual lane
+unverified, because a failed renderer cannot prove that old pixels cleared.
+
+`refresh()` runs once per relevant query, rejects overlap with a busy outcome,
+and reports `success:true` only after every actual run has settled with complete
+results and every consumer is usable. A snapshot-only view has no live refresh
+and returns `no_live_queries`. Combined consumers never mix an earlier result
+with the next generation. `invalidate()` clears values without claiming native
+cancellation; `dispose()` clears consumers and releases subscriptions. The
+coordinator adds no timers, polling, cache settings or source-time claims.
+
+The exact candidate still needs authorized native callback observations,
+independent numerical expectations, effective access tests and rendered review.
+Query export, source simulation, readback and a refresh-state string cannot close
+those separate lanes.
+
 This route requires `runSettlement:"after_terminal_delivery"`: the inspected
 `run` promise must settle after terminal subscription delivery or supply the
 terminal result itself. A provider that acknowledges a run before later callbacks

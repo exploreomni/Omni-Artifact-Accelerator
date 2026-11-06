@@ -159,7 +159,7 @@ def carry_payload(state, request):
     source = state['previous_reviews'][scope]
     need(source['sha256'] == request['source_review_sha256'], 'source_review_mismatch')
     original = source['payload']
-    return {**request, **{k: copy.deepcopy(original[k]) for k in ('reviewer', 'outcome', 'basis', 'evidence', 'experience_dependencies') if k in original},
+    return {**request, **{k: copy.deepcopy(original[k]) for k in ('reviewer', 'outcome', 'basis', 'evidence', 'experience_dependencies', 'app_release_policy') if k in original},
             'origin_review_sha256': original.get('origin_review_sha256', source['sha256']),
             'proof_sha256': row['proof_sha256']}
 
@@ -174,6 +174,7 @@ def validate_carry(state, payload, at):
     original = source['payload']
     need(all(payload[k] == original[k] for k in ('reviewer', 'outcome', 'basis', 'evidence')) and
          payload.get('experience_dependencies') == original.get('experience_dependencies') and
+         payload.get('app_release_policy') == original.get('app_release_policy') and
          payload['origin_review_sha256'] == original.get('origin_review_sha256', source['sha256']),
          'original_review_changed')
 

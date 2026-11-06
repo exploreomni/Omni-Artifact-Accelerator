@@ -200,7 +200,204 @@
     }
     return Object.freeze({refresh, invalidate, snapshot, dispose});
   }
-  const api = Object.freeze({createQueryController, createQueryDelivery});
+  // Coordinate all declared visible consumers. The injected deliveries still
+  // own native correlation, decoding and cache policy. No timers are added here.
+  function createConsumerDelivery({queries, consumers, onConsumer, onRefresh}) {
+    const need = (ok, message) => { if (!ok) throw new Error(message); };
+    const id = value => typeof value === "string" && /^[A-Za-z][A-Za-z0-9_-]{0,127}$/.test(value);
+    const text = value => typeof value === "string" && value.trim().length > 0;
+    const unique = values => Array.isArray(values) && values.length > 0 && new Set(values).size === values.length;
+    need(Array.isArray(queries) && queries.length <= 256 && Array.isArray(consumers) &&
+      consumers.length > 0 && consumers.length <= 256 && typeof onConsumer === "function" &&
+      typeof onRefresh === "function", "invalid consumer delivery contract");
+    const definitions = new Map(), deliveries = new Map(), queryStates = new Map(), states = new Map();
+    const renderFailures = new Set();
+    let refreshRenderFailed = false;
+    let busy = false, disposed = false, generation = 0, invalidated = null, snapshotsWithheld = null;
+    let snapshotRequalification = null;
+    let refreshState = {phase:"idle", busy:false, generation, success:false};
+    const clone = value => structuredClone(value);
+    for (const query of queries) {
+      need(query && typeof query.queryKey === "string" && /^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$/.test(query.queryKey) &&
+        !queryStates.has(query.queryKey) && query.delivery && !Object.hasOwn(query.delivery, "onState"),
+        "duplicate query or ambiguous state owner");
+      queryStates.set(query.queryKey, {phase:"idle", busy:false, rows:[], completeness:"unknown"});
+    }
+    for (const consumer of consumers) {
+      need(consumer && id(consumer.id) && !definitions.has(consumer.id) &&
+        ["live", "snapshot", "scenario"].includes(consumer.mode), "invalid consumer identity or mode");
+      const row = {...consumer};
+      if (row.mode === "live") {
+        need(unique(row.queryKeys) && row.queryKeys.every(key => queryStates.has(key)), "consumer query missing");
+        row.queryKeys = [...row.queryKeys];
+      } else if (row.mode === "snapshot") {
+        need(text(row.label) && /snapshot/i.test(row.label) && text(row.period) && text(row.sourceRef) &&
+          Object.hasOwn(row, "value"), "explicit snapshot provenance and label required");
+        row.value = clone(row.value);
+      } else {
+        need(text(row.label) && /scenario|estimate/i.test(row.label) && text(row.assumptionsRef) &&
+          unique(row.baseConsumerIds) && typeof row.derive === "function", "explicit scenario basis required");
+        row.baseConsumerIds = [...row.baseConsumerIds];
+      }
+      definitions.set(row.id, row);
+    }
+    for (const row of definitions.values()) if (row.mode === "scenario")
+      need(row.baseConsumerIds.every(key => definitions.has(key) && definitions.get(key).mode !== "scenario"),
+        "scenario base missing or recursive");
+    need([...queryStates.keys()].every(key => [...definitions.values()].some(row =>
+      row.mode === "live" && row.queryKeys.includes(key))), "query has no declared visible consumer");
+    const snapshot = () => clone({refresh:refreshState, consumers:Object.fromEntries(states), queries:Object.fromEntries(queryStates)});
+    function publish(row, state) {
+      let next = {id:row.id, mode:row.mode, generation, ...state};
+      if (renderFailures.has(row.id) && !disposed) next = {...next, phase:"error", rowsByQuery:{}, value:null, reason:"render_callback_failed"};
+      if (JSON.stringify(states.get(row.id)) !== JSON.stringify(next)) {
+        states.set(row.id, next);
+        // A broken renderer cannot certify that previously drawn values cleared.
+        // Keep this failure explicit until a repaired instance is constructed.
+        if (!renderFailures.has(row.id)) try {
+          const returned = onConsumer(clone(next));
+          if (returned && typeof returned.then === "function") {
+            Promise.resolve(returned).catch(() => {});
+            throw new Error("synchronous consumer renderer required");
+          }
+        } catch (_) {
+          renderFailures.add(row.id);
+          states.set(row.id, {...next, phase:"error", rowsByQuery:{}, value:null, reason:"render_callback_failed"});
+        }
+      }
+    }
+    const failure = values => ["restricted", "error", "stale", "disposed"].find(phase => values.some(value => value.phase === phase));
+    function withholdSnapshots(phase) {
+      // An ordinary query failure is recoverable. Denied or changed-scope data
+      // needs separate requalification; later errors must never downgrade that
+      // requirement into a recoverable transient failure.
+      if (["restricted", "stale"].includes(phase))
+        snapshotRequalification = snapshotRequalification === "restricted" ? "restricted" : phase;
+      snapshotsWithheld = snapshotRequalification || phase;
+    }
+    function updateConsumers() {
+      for (const row of definitions.values()) {
+        if (disposed) { publish(row, {phase:"disposed", rowsByQuery:{}, value:null}); continue; }
+        if (invalidated) { publish(row, {phase:invalidated, rowsByQuery:{}, value:null}); continue; }
+        if (row.mode === "scenario") continue;
+        if (row.mode === "snapshot") {
+          publish(row, {phase:snapshotsWithheld || "snapshot", label:row.label, period:row.period,
+            sourceRef:row.sourceRef, rowsByQuery:{}, value:snapshotsWithheld ? null : clone(row.value)});
+          continue;
+        }
+        const inputs = row.queryKeys.map(key => queryStates.get(key)), failed = failure(inputs);
+        const complete = inputs.every(value => ["ready", "empty"].includes(value.phase) && value.completeness === "complete");
+        const phase = failed || (complete ? (inputs.every(value => value.phase === "empty") ? "empty" : "ready") :
+          inputs.some(value => value.phase === "partial") ? "partial" : inputs.some(value => value.phase === "loading") ? "loading" : "idle");
+        publish(row, {phase, busy:inputs.some(value => value.busy), value:null,
+          rowsByQuery:complete && !failed ? Object.fromEntries(row.queryKeys.map(key => [key, clone(queryStates.get(key).rows)])) : {}});
+      }
+      if (disposed || invalidated) return;
+      for (const row of definitions.values()) if (row.mode === "scenario") {
+        const inputs = row.baseConsumerIds.map(key => states.get(key)), failed = failure(inputs);
+        const complete = inputs.every(value => ["ready", "empty", "snapshot"].includes(value.phase));
+        let phase = failed || (complete ? "scenario" : inputs.some(value => value.phase === "partial") ? "partial" : "loading"), value = null;
+        if (complete && !failed) {
+          try {
+            value = row.derive(clone(Object.fromEntries(row.baseConsumerIds.map(key => [key, states.get(key)]))));
+            if (value && typeof value.then === "function") {
+              Promise.resolve(value).catch(() => {});
+              throw new Error("scenario derivation must be synchronous");
+            }
+            value = clone(value);
+          } catch (_) { phase = "error"; value = null; }
+        }
+        publish(row, {phase, label:row.label, assumptionsRef:row.assumptionsRef,
+          busy:inputs.some(value => value.busy), rowsByQuery:{}, value});
+      }
+    }
+    function updateRefresh() {
+      const values = [...queryStates.values()], failed = invalidated ||
+        (refreshRenderFailed ? "error" : failure([...values, ...states.values()]));
+      const success = !busy && !disposed && !failed && values.length > 0 && values.every(value =>
+        !value.busy && ["ready", "empty"].includes(value.phase) && value.completeness === "complete") &&
+        [...states.values()].every(value => ["ready", "empty", "scenario", "snapshot"].includes(value.phase));
+      const phase = disposed ? "disposed" : busy ? "refreshing" : success ? "complete" : failed ||
+        (values.some(value => value.phase === "partial") ? "partial" : "idle");
+      const next = {phase, busy, generation, success};
+      if (JSON.stringify(next) !== JSON.stringify(refreshState)) {
+        refreshState = next;
+        if (!refreshRenderFailed) try {
+          const returned = onRefresh(clone(next));
+          if (returned && typeof returned.then === "function") {
+            Promise.resolve(returned).catch(() => {});
+            throw new Error("synchronous refresh renderer required");
+          }
+        } catch (_) {
+          refreshRenderFailed = true;
+          refreshState = {...next, phase:"error", success:false, reason:"refresh_callback_failed"};
+        }
+      }
+    }
+    for (const query of queries) {
+      const key = query.queryKey;
+      deliveries.set(key, createQueryDelivery({...query.delivery, onState:state => {
+        if (disposed) return;
+        queryStates.set(key, state);
+        if (["restricted", "error", "stale"].includes(state.phase)) withholdSnapshots(state.phase);
+        updateConsumers(); updateRefresh();
+      }}));
+    }
+    async function refresh() {
+      need(!disposed, "consumer delivery disposed");
+      if (busy) return {started:false, reason:"busy"};
+      if (!deliveries.size) return {started:false, reason:"no_live_queries"};
+      if ([...deliveries.values()].some(delivery => !delivery.snapshot().usable))
+        return {started:false, reason:"subscription_unusable"};
+      busy = true; generation++; invalidated = null;
+      // Clear the entire generation before starting any query, including a
+      // provider that synchronously calls its listener during subscription.
+      for (const key of queryStates.keys()) queryStates.set(key, {phase:"loading", busy:true, rows:[], completeness:"unknown"});
+      updateConsumers(); updateRefresh();
+      const work = [];
+      for (const [key, delivery] of deliveries) {
+        if (disposed || invalidated) break;
+        work.push(delivery.refresh().then(result => {
+          if (!disposed && !result.started) {
+            withholdSnapshots("error");
+            queryStates.set(key, {...queryStates.get(key), phase:"error", busy:false, rows:[]});
+          }
+        }).catch(() => {
+          if (!disposed) {
+            withholdSnapshots("error");
+            queryStates.set(key, {...queryStates.get(key), phase:"error", busy:false, rows:[]});
+          }
+        }));
+      }
+      await Promise.all(work);
+      busy = false;
+      // Do not restore snapshots at refresh start or on an early callback. Only
+      // a fully settled, complete generation can clear a transient error hold.
+      // This restores the explicitly labeled original snapshot, never fallback
+      // rows for a failed live query and never independently grants access.
+      if (snapshotsWithheld === "error" && !snapshotRequalification && !invalidated && !disposed &&
+          !renderFailures.size && !refreshRenderFailed && [...deliveries.values()].every(delivery => delivery.snapshot().usable) &&
+          [...queryStates.values()].every(state => !state.busy &&
+            ["ready", "empty"].includes(state.phase) && state.completeness === "complete")) snapshotsWithheld = null;
+      updateConsumers(); updateRefresh();
+      return {started:true, success:refreshState.success};
+    }
+    function invalidate(phase = "stale") {
+      need(!disposed && ["restricted", "error", "stale"].includes(phase), "invalid consumer invalidation");
+      invalidated = phase; withholdSnapshots(phase);
+      for (const delivery of deliveries.values()) delivery.invalidate(phase);
+      updateConsumers(); updateRefresh(); // Still busy until native promises actually settle.
+    }
+    function dispose() {
+      if (disposed) return;
+      disposed = true; busy = false;
+      for (const [key, delivery] of deliveries) { delivery.dispose(); queryStates.set(key, delivery.snapshot()); }
+      updateConsumers(); updateRefresh();
+    }
+    updateConsumers();
+    return Object.freeze({refresh, invalidate, snapshot, dispose});
+  }
+  const api = Object.freeze({createQueryController, createQueryDelivery, createConsumerDelivery});
   if (typeof module !== "undefined" && module.exports) module.exports=api;
   else scope.OAAQueryController=api;
 })(globalThis);

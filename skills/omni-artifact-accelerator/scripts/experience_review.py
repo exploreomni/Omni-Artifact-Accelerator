@@ -75,7 +75,8 @@ def fit(root, path, spec, candidate, review, P):
         return []
     value, pin = read(root, path, P)
     fields(value, {'schema_version', 'kind', 'reviewer', 'scope', 'basis', 'candidate_sha256',
-                   'context', 'requirements', 'destinations', 'journeys', 'observations', 'rendered_quality'})
+                   'context', 'requirements', 'destinations', 'journeys', 'observations', 'rendered_quality'},
+           {'journey_observations'})
     need(type(value['schema_version']) is int and value['schema_version'] == 1
          and value['kind'] == 'analyst_experience_fit', 'fit_version_invalid')
     need(value['context'] == context, 'experience_context_changed')
@@ -100,15 +101,28 @@ def fit(root, path, spec, candidate, review, P):
         dependencies[observation['path']] = observation
     required = {r['id'] for r in spec['requirements'] if r['id'] in
                 spec['product']['experience_intent']['requirement_ids'] and r['disposition'] != 'explicitly_omitted'}
-    destinations, journeys = set(), set()
+    destinations, journeys, behavior_kinds = set(), set(), {}
     for path in sorted({s['design_path'] for s in spec['selections']}):
         design, design_pin = read(root, path, P)
         helper.validate_experience_handoff(design, spec)
         destinations.update(d['id'] for d in design['destinations'])
         journeys.update(j['id'] for j in design['journeys'])
+        behavior_kinds.update({j['id']: j.get('experience_behavior', {}).get('kind') for j in design['journeys']})
         dependencies[path] = design_pin
     assessments = []
     observation_paths = {p['path'] for p in observations}
+    exercised = set()
+    supplied = value.get('journey_observations', [])
+    need(type(supplied) is list and len(supplied) <= 128, 'journey_observations_invalid')
+    for item in supplied:
+        fields(item, {'journey_id', 'method', 'context', 'steps', 'evidence_paths'})
+        need(item['journey_id'] in journeys and item['method'] in {'static_capture', 'interaction_exercised'}
+             and text(item['context']) and text(item['steps']), 'journey_observation_required')
+        paths = ids(item['evidence_paths'])
+        need(bool(paths) and paths <= observation_paths, 'journey_observation_not_bound')
+        if item['method'] == 'interaction_exercised' or behavior_kinds[item['journey_id']] == 'single_view':
+            exercised.add(item['journey_id'])
+    release_policy = P.load_project(root)[1].get('app_release_policy') == 'candidate-release-v1'
     for name, expected in (('requirements', required), ('destinations', destinations), ('journeys', journeys)):
         rows = value[name]
         need(type(rows) is list and len(rows) <= 128, 'coverage_invalid')
@@ -123,6 +137,8 @@ def fit(root, path, spec, candidate, review, P):
             need(paths <= observation_paths, 'observation_not_bound')
             if review['basis'] != 'source' and row['assessment'] == 'matched':
                 need(bool(paths), 'recorded_observation_required')
+                if release_policy and name == 'journeys':
+                    need(row['id'] in exercised, 'screenshot_does_not_establish_interaction')
             assessments.append(row['assessment'])
         need(seen == expected, 'complete_' + name + '_coverage_required')
     if review['outcome'] == 'resolved':

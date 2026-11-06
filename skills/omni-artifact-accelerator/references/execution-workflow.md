@@ -139,6 +139,7 @@ Select the source expectation that matches the actual request:
 | `source_expectation` | Required evidence |
 | --- | --- |
 | `{"kind":"current_checkout"}` | Records the actual working-tree manifest, including local changes. It makes no latest-release claim. |
+| `{"kind":"offline_snapshot","manifest_sha256":"<full manifest hash>"}` | Verifies the selected local source bytes against the recorded package manifest hash and retains an explicit offline status. |
 | `{"kind":"pinned_revision","revision":"<full revision>"}` | HEAD must equal the requested full revision and the working checkout must be clean. |
 | `{"kind":"latest_main","revision":"<full revision>","verification_path":"evidence/source-check-entry.json"}` | A matching source-check receipt from this project/package, captured within ten minutes before startup, plus the matching clean checkout. |
 

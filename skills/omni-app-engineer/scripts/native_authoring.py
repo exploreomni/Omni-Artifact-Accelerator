@@ -265,6 +265,18 @@ def draft_topics(P, root, snapshot, *, html, semantic_snapshot=None, readback=Fa
     return topics
 
 
+def consumer_guard(P, root, gate, document_id, html, presentations):
+    return P.routing_helper('native_data_consumers').guard(root, P,
+        document_id=document_id, app_html=html, presentations=presentations,
+        reviewed_artifacts=(gate.get('candidate') or {}).get('artifacts', []))
+
+
+def review_limits(gate):
+    return {'review_assurance': copy.deepcopy(gate.get('review_assurance', {})),
+            'rendered_quality_verified': False, 'runtime_verified': False,
+            'host_enforcement_verified': False}
+
+
 def prepare_app(target, baseline, current, html, *, project=None, artifact=None, semantic_snapshot=None):
     need(project is not None and type(artifact) is str, 'Engagement and local candidate artifact required')
     P = project_helper()
@@ -284,7 +296,9 @@ def prepare_app(target, baseline, current, html, *, project=None, artifact=None,
     need(type(html) is str and 0 < len(html.encode()) <= MAX_HTML and html != baseline['app']['html'],
          'Bounded changed candidate HTML required')
     topics = draft_topics(P, root, current, html=html, semantic_snapshot=semantic_snapshot)
+    consumers = consumer_guard(P, root, gate, target['document_id'], html, current['document']['queryPresentations'])
     return {'kind': 'native_app_enhancement_request', 'schema_version': 1, **topics,
+            'data_consumers': consumers, **review_limits(gate), 'completion_scope': 'draft_preview',
             'target': target, 'baseline_sha256': digest(baseline),
             'html_sha256': hashlib.sha256(html.encode()).hexdigest(),
             'engagement': {'project_id': metadata['id'], 'artifact': artifact,
@@ -419,10 +433,12 @@ def prepare_create(*, project, artifact, spec_artifact):
     spec = create_spec_check(decode(spec_raw, 'object'))
     topics = app_topics(P, root, spec['slug'], {'base_url': spec['base_url'],
         'model_id': spec['model_id'], 'branch_id': None}, spec, html=html)
+    consumers = consumer_guard(P, root, gate, spec['slug'], html, spec['queryPresentations'])
     body = create_body(spec, html)
     need(P.stage_require(root, 'release')['tail_sha256'] == gate['tail_sha256'],
          'Engagement changed during preparation')
     return {'kind': 'native_app_create_request', 'schema_version': 1, **topics,
+            'data_consumers': consumers, **review_limits(gate),
             'base_url': spec['base_url'],
             'engagement': {'project_id': metadata['id'], 'artifact': artifact,
                            'spec_artifact': spec_artifact, 'html_sha256': html_sha,
@@ -437,6 +453,81 @@ def prepare_create(*, project, artifact, spec_artifact):
                     'personal documents. Creation immediately publishes the initial version. Slug availability '
                     'is not established here; never overwrite, auto-retry, or reinterpret a conflict as an edit. '
                     'The official API labels App creation as currently in development.'}
+
+
+def prepare_publish(*, project, artifact, snapshot_artifact, current, semantic_snapshot=None):
+    """Whole main-draft preparation. No body/branch publication or transport."""
+    P = project_helper()
+    root, metadata = P.load_project(project)
+    gate = P.stage_require(root, 'release')
+    need(gate.get('required') is True and gate.get('release_ready') is True,
+         'Publication requires current A-F release reviews')
+    selected = P.intent_helper().check(root)
+    need(selected.get('status') == 'consistent' and artifact in
+         {s.get('candidate_path') for s in selected.get('selections', []) if s.get('surface') == 'app'},
+         'Publication requires the selected App artifact')
+    raw = read_bytes(P.relative_file(root, artifact), MAX_HTML)
+    snapshot_raw = read_bytes(P.relative_file(root, snapshot_artifact), MAX_JSON)
+    snapshot = decode(snapshot_raw, 'object')
+    target = snapshot['target']
+    snapshot_check(snapshot, target)
+    snapshot_check(current, target)
+    need(snapshot['draft'].get('branch', 'missing') is None, 'Only the main non-branch draft can publish here')
+    need(encoded(current) == encoded(snapshot), 'Whole draft drift: reconcile and review before publishing')
+    need(raw.decode('utf-8') == snapshot['app']['html'], 'Reviewed HTML differs from the whole draft')
+    pins = {(p['sha256'], p['bytes']) for p in gate['candidate']['artifacts']}
+    need(all((hashlib.sha256(b).hexdigest(), len(b)) in pins for b in (raw, snapshot_raw)),
+         'Freeze and review both the HTML and complete draft snapshot')
+    topics = draft_topics(P, root, current, html=raw.decode('utf-8'), semantic_snapshot=semantic_snapshot)
+    consumers = consumer_guard(P, root, gate, target['document_id'], raw.decode('utf-8'),
+                               current['document']['queryPresentations'])
+    need(P.stage_require(root, 'release')['tail_sha256'] == gate['tail_sha256'], 'Engagement changed during preparation')
+    return {'schema_version': 1, 'kind': 'native_app_publish_request', 'target': target,
+            'snapshot_sha256': digest(snapshot), 'html_sha256': hashlib.sha256(raw).hexdigest(),
+            'engagement': {'project_id': metadata['id'], 'artifact': artifact,
+                'snapshot_artifact': snapshot_artifact, 'candidate_sha256': gate['candidate_sha256'],
+                'stage_bindings': gate['stage_bindings'], 'tail_sha256': gate['tail_sha256']},
+            'request': {'method': 'POST', 'path': '/api/v2/documents/' + target['document_id'] + '/draft/publish'},
+            'data_consumers': consumers, **topics, **review_limits(gate),
+            'publication_authorized': False, 'native_verified': False,
+            'note': 'Host must authorize this exact whole draft and re-read it immediately before transport. '
+                    'No conditional server write is implied. Unknown results require readback, never automatic retry.'}
+
+
+def verify_publish(prepared, response, document, app, *, project, semantic_snapshot=None):
+    P = project_helper()
+    root, _ = P.load_project(project)
+    engagement = prepared['engagement']
+    snapshot = read(P.relative_file(root, engagement['snapshot_artifact']))
+    expected = prepare_publish(project=root, artifact=engagement['artifact'],
+        snapshot_artifact=engagement['snapshot_artifact'], current=snapshot, semantic_snapshot=semantic_snapshot)
+    need(encoded(expected) == encoded(prepared), 'Prepared publication changed; review current candidate')
+    target = prepared['target']
+    origin, ident = target['base_url'], target['document_id']
+    route = '/api/v2/documents/' + ident
+    result = create_capture(response, origin, 'POST', route + '/draft/publish', 200)
+    doc = create_capture(document, origin, 'GET', route, 200)
+    observed = create_capture(app, origin, 'GET', route + '/app', 200)
+    need(result.get('identifier') == ident, 'Published identifier mismatch')
+    # The documented draft-only identity and App URL change on promotion.
+    # Preserve every other supplied field, including controls and query order.
+    expected_doc = copy.deepcopy(snapshot['document'])
+    draft_of = expected_doc.pop('draftOf', None)
+    need(draft_of is None or draft_of == {'identifier': ident}, 'Draft parent identity mismatch')
+    expected_doc['app'] = {'url': route + '/app'}
+    findings = []
+    if doc != expected_doc:
+        findings.append('published_document_or_queries_mismatch')
+    if observed != snapshot['app']:
+        findings.append('published_html_or_settings_mismatch')
+    if set(result) - {'identifier', 'name', 'description'} or any(
+            k in expected_doc and result.get(k) != expected_doc[k] for k in ('name', 'description')):
+        findings.append('publish_metadata_mismatch')
+    return {'status': 'readback_mismatch' if findings else 'exact_publication_readback',
+            'findings': findings, 'candidate_sha256': engagement['candidate_sha256'],
+            'capture_sha256': {k: digest(v) for k, v in [('response', response), ('document', document), ('app', app)]},
+            'native_verified': False, 'publication_authorized': False, **review_limits(P.stage_status(root)),
+            'note': 'Supplied captures match only. Transport, live interactions, rendered quality and access remain separate.'}
 
 
 def demo_pin(root, record, P):
@@ -552,7 +643,9 @@ exact principal, audience and operation before a POST that publishes immediately
          'Account for every unobserved consultation')
     body = create_body(spec, html)
     need(P.stage_require(root, 'review')['tail_sha256'] == gate['tail_sha256'], 'Engagement changed during demo preparation')
+    consumers = consumer_guard(P, root, gate, spec['slug'], html, spec['queryPresentations'])
     return {'schema_version': 1, 'kind': 'native_demo_create_request', 'base_url': spec['base_url'], **topics,
+            'data_consumers': consumers, **review_limits(gate),
             'destination': destination, 'engagement': {'project_id': metadata['id'], 'artifact': artifact,
                 'spec_artifact': spec_artifact, 'demo_artifact': demo_artifact, 'html_sha256': hashes['html'],
                 'spec_sha256': hashes['spec'], 'demo_sha256': hashes['demo'], 'candidate_sha256': gate['candidate_sha256'],
@@ -680,7 +773,8 @@ def verify_demo(prepared, created, document, app, identity, *, project, artifact
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('operation', choices=['cli-json', 'route-check', 'query-body', 'plan-check',
-        'app-prepare', 'app-verify', 'app-create-prepare', 'app-create-verify', 'app-demo-prepare', 'app-demo-verify'])
+        'app-prepare', 'app-verify', 'app-create-prepare', 'app-create-verify', 'app-demo-prepare', 'app-demo-verify',
+        'app-publish-prepare', 'app-publish-verify'])
     parser.add_argument('--input', required=True, help='Response file or JSON request describing local input paths')
     parser.add_argument('--output', required=True, help='New private output file; never overwrite')
     parser.add_argument('--project', help='Required engagement root for App preparation and create verification')
@@ -705,6 +799,18 @@ def main():
             result = query_body(record['query'], record['model_id'], record.get('user_id'))
         elif args.operation == 'plan-check':
             result = plan_check(record)
+        elif args.operation == 'app-publish-prepare':
+            need(args.project is not None, 'Engagement required for publication')
+            need(set(record) - {'semantic_snapshot'} == {'html', 'snapshot', 'current'}, 'Exact publication paths required')
+            result = prepare_publish(project=args.project, artifact=record['html'], snapshot_artifact=record['snapshot'],
+                current=read(local(record['current'])),
+                semantic_snapshot=read(local(record['semantic_snapshot'])) if 'semantic_snapshot' in record else None)
+        elif args.operation == 'app-publish-verify':
+            need(args.project is not None, 'Engagement required for publication readback')
+            need(set(record) - {'semantic_snapshot'} == {'prepared', 'response', 'document', 'app'}, 'Exact publication captures required')
+            result = verify_publish(read(local(record['prepared'])), read(local(record['response'])),
+                read(local(record['document'])), read(local(record['app'])), project=args.project,
+                semantic_snapshot=read(local(record['semantic_snapshot'])) if 'semantic_snapshot' in record else None)
         elif args.operation == 'app-prepare':
             need(args.project is not None, 'Engagement required for App preparation')
             P = project_helper()

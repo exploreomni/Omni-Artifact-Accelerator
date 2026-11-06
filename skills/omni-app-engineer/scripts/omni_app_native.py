@@ -136,6 +136,18 @@ def apply_edits(html, patch, regions):
 
 
 class AppNativeAdapter(n.NativeAdapter):
+    def _topics(self, inspection, state, snapshot=None, *, readback=False, controls=None, app_html=None):
+        result = super()._topics(inspection, state, snapshot, readback=readback,
+                                  controls=controls, app_html=app_html)
+        if app_html is not None and (self.root / 'project.json').is_file() and 'app_release_policy' in w.ap.load_project(self.root)[1]:
+            P = w.ap
+            gate = P.stage_status(self.root)
+            P.routing_helper('native_data_consumers').guard(self.root, P,
+                document_id=self.target.document_id, app_html=app_html,
+                presentations=state.get('queryPresentations'),
+                reviewed_artifacts=(gate.get('candidate') or {}).get('artifacts', []))
+        return result
+
     surface = "app"
 
     @staticmethod

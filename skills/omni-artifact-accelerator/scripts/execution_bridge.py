@@ -136,6 +136,9 @@ def _call(root, name, args, runtime=None, host_context=None):
         helper = P.routing_helper('task_operations')
         return {'dispatch': helper.record_dispatch, 'checkpoint': helper.checkpoint, 'review': helper.review_work}[operation](root, request)
     if name == 'execution_lifecycle':
+        if operation in {'host_entry_check', 'host_entry_prepare'}:
+            helper = P.routing_helper('host_entry')
+            return (helper.check if operation == 'host_entry_check' else helper.prepare)(root, request)
         if operation in {'entry_prepare', 'entry_check'}:
             helper = P.routing_helper('engagement_bootstrap')
             return (helper.prepare if operation == 'entry_prepare' else helper.check)(root, request)

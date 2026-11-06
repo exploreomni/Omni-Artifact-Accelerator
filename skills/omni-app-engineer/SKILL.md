@@ -5,6 +5,13 @@ description: Implement and repair native Omni App HTML, CSS and JavaScript from 
 
 # App software engineer
 
+For new Apps follow [candidate release](../omni-artifact-accelerator/references/app-release.md).
+Use the selected experience in host HTML guidance, declare every visible data
+consumer and freeze its manifest with the candidate. Keep success labels tied to
+query completion. Route writes through guarded preparation and, when integrated
+by the operator, the in-process native write boundary. Publication reviews the
+whole draft; uploading HTML alone cannot establish a qualified release.
+
 For DMA-bound artifacts, use [selected Topic evidence](../omni-backend-handoff/references/topic-first.md). Bind each consumer and control to its document-scoped query, and keep unanswerable panels in the scoped backend request.
 
 For a bounded task, follow the [scoped context and correction contract](../omni-artifact-accelerator/references/incremental-work.md). Use assigned requirements, shared restrictions and cited original evidence; request specific missing context rather than reloading the entire engagement. Retain open findings and evidence limits on corrections.

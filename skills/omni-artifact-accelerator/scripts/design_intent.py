@@ -481,7 +481,7 @@ def project_requirements(requirements, role, scope_ids=(), *, experience=None):
                 for tag in r.get('delivery', {}).get('capabilities', []))]
 
 
-def experience_packet_scope(root, state):
+def experience_packet_scope(root, state, scope_ids=None):
     """Small shared meaning plus exact on-demand originals; never a second intent.
 
 Full scoped rows are selected separately. Unchosen creative alternatives stay in
@@ -511,7 +511,13 @@ the pinned index instead of being recopied into every role's bounded TASK.
     delegate = index.get('delegation_requirement_id')
     if delegate:
         ids.add(delegate)
-    chosen, design_pins = set(), {}
+    chosen, design_pins, adjustments = set(), {}, []
+    scope = set(scope_ids or [])
+    relevant_journeys = set(scope)
+    for req in spec['requirements']:
+        delivery = req.get('delivery', {})
+        if not scope or req['id'] in scope or scope.intersection(delivery.get('destinations', [])):
+            relevant_journeys.update(delivery.get('journeys', []))
     # A draft handoff is a proposal. Only a selected intent can supply the chosen
     # design's modes; sourced constraints below remain available before E.
     for selection in spec['selections'] if state.get('selected') else []:
@@ -533,6 +539,19 @@ the pinned index instead of being recopied into every role's bounded TASK.
              'experience_selected_modes_invalid')
         chosen.update(values)
         design_pins[path] = observed
+        amended = design.get('experience_handoff', {}).get('selection_adjustments')
+        if amended is not None:
+            need(type(amended) is dict and type(amended.get('elements')) is list
+                 and len(amended['elements']) <= 16, 'experience_adjustments_invalid')
+            for position, row in enumerate(amended['elements']):
+                need(type(row) is dict and type(row.get('journey_ids')) is list
+                     and all(type(j) is str for j in row['journey_ids']), 'experience_adjustment_journeys_invalid')
+                item = {'design': observed, 'pointer': '/experience_handoff/selection_adjustments/elements/' + str(position),
+                        'row_sha256': P.digest(P.canonical(row)), 'journey_ids': row['journey_ids'],
+                        'response_path': amended['response_path'], 'read_before_changing_linked_journey': True}
+                if not scope or relevant_journeys.intersection(row['journey_ids']):
+                    item['selected_element'] = copy.deepcopy(row)
+                adjustments.append(item)
     chosen.update(i for i in index['mode_requirement_ids'] if rows[i]['disposition'] == 'selected'
                   and rows[i]['product']['basis'] in {'user_statement', 'reused_decision'})
     need(all(rows[i]['disposition'] not in {'deferred', 'explicitly_omitted'} and rows[i].get('value') is not None
@@ -555,6 +574,7 @@ the pinned index instead of being recopied into every role's bounded TASK.
     summary = {'schema_version': 1, 'status': helper.experience_report(spec)['status'],
                'source': source, 'promises': promises, 'selected_modes': modes, 'delegation': delegation,
                'original_requirements': originals, 'design_pins': list(design_pins.values()),
+               'selection_adjustments': adjustments,
                'complete_requirement_coverage_owner': 'orchestrator', 'claims_authenticated': False,
                'note': 'Exact shared promise text and chosen-mode meaning; full task-relevant requirements follow. '
                        'Before changing another promised behavior, request its exact canonical row through source, '
@@ -570,7 +590,7 @@ def packet_context(root, role, *, bounded=None, scope_ids=None):
     state = check(root)
     if bounded:
         need(state['status'] != 'inconsistent', 'stale_or_invalid_packet_selection')
-        experience = experience_packet_scope(root, state)
+        experience = experience_packet_scope(root, state, scope_ids)
         requirements = project_requirements(state['requirements'], role, scope_ids, experience=experience)
         # Selection metadata is pinned, but does not mandate disclosing the whole
         # intent, historical versions, North Star or every source file.

@@ -282,7 +282,7 @@ def prepare(root, request):
     need(set(shared) <= set(request['shared_constraint_ids']), 'missing_shared_restriction')
     known_ids = {r['id'] for r in requirements}
     need(set(request['shared_constraint_ids']) <= known_ids, 'unknown_shared_restriction')
-    experience = intent.experience_packet_scope(root, state)
+    experience = intent.experience_packet_scope(root, state, assignment['scope_ids'])
     selected = intent.project_requirements(requirements, packet['role'], assignment['scope_ids'], experience=experience)
     selected_ids = {r['id'] for r in selected}
     selected += [r for r in requirements if r['id'] in request['shared_constraint_ids'] and r['id'] not in selected_ids]

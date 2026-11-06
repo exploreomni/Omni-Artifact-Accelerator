@@ -414,7 +414,7 @@ def _concept(root, option_manifest_path, spec, P, component):
             'dependencies': [pins[path] for path in sorted(pins)]}
     _fields(obj, {'schema_version', 'kind', 'option_id', 'surface', 'analytical_scope', 'structure',
                   'primary_interaction', 'quality_coverage', 'treatment_coverage', 'representative', 'responsive', 'constraints'},
-            {'experience_direction'}, label='concept_fields')
+            {'experience_direction', 'action_sequence'}, label='concept_fields')
     _need(type(obj['schema_version']) is int and obj['schema_version'] == 1
           and obj['kind'] == 'analyst_concept_manifest', 'concept_version_invalid')
     _texts(obj, ('option_id', 'analytical_scope', 'structure', 'primary_interaction', 'responsive'), 'concept')
@@ -450,11 +450,26 @@ def _concept(root, option_manifest_path, spec, P, component):
         _need(observation.strip() and len(observation) <= MAX_MANIFEST, 'render_observation_required')
         dependencies.append(pin)
     direction = _experience_direction(obj, spec, P)
+    sequence = obj.get('action_sequence')
+    if sequence is not None:
+        _fields(sequence, {'kind', 'first_view', 'action', 'result_view', 'useful_result'},
+                {'single_view_rationale'}, label='action_sequence')
+        _need(sequence['kind'] in {'transition', 'single_view'}, 'action_sequence_kind_invalid')
+        _texts(sequence, ('first_view', 'action', 'result_view', 'useful_result'), 'action_sequence')
+        _need(sequence['action'] == obj['primary_interaction'], 'action_sequence_interaction_changed')
+        _need(sequence['first_view'] in labels and sequence['result_view'] in labels,
+              'action_sequence_requires_visual_labels')
+        if sequence['kind'] == 'transition':
+            _need(sequence['first_view'] != sequence['result_view'], 'action_sequence_result_required')
+        else:
+            _need(_text(sequence.get('single_view_rationale')) and
+                  sequence['first_view'] == sequence['result_view'], 'single_view_rationale_required')
     return {'schema_version': 1, 'kind': 'analyst_concept_validation',
             'metadata': {**({'experience_direction': direction, 'experience_authors': direction['authors']} if direction else {}),
                          'option_id': obj['option_id'], 'surface': obj['surface'], 'surfaces': [obj['surface']],
                          'analytical_scope': obj['analytical_scope'], 'structure': obj['structure'],
                          'primary_interaction': obj['primary_interaction'],
+                         'action_sequence': sequence,
                          'quality_requirement_ids': sorted(active), 'evidence_kind': kind,
                          'treatment_requirement_ids': sorted(treatments),
                          'representative_sha256': visual_pin['sha256'],
@@ -480,7 +495,8 @@ def validate_handoff(root, design_path, spec, P):
     design, _, design_pin = _read(root, design_path, P, True)
     _need(type(design) is dict, 'design_object_required')
     handoff = design.get('experience_handoff')
-    _fields(handoff, {'schema_version', 'concept_manifest_path', 'quality_coverage'}, label='handoff_fields')
+    _fields(handoff, {'schema_version', 'concept_manifest_path', 'quality_coverage'},
+            {'selection_adjustments'}, label='handoff_fields')
     _need(type(handoff['schema_version']) is int and handoff['schema_version'] == 1, 'handoff_version_invalid')
     concept = validate_concept(root, handoff['concept_manifest_path'], spec, P)
     if P.routing_helper('product_intent').experience_context(spec) is not None:

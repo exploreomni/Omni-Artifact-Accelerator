@@ -59,6 +59,29 @@ native or human acceptance.
 
 ## Actual worker integration
 
+Before first dispatch, call `host_entry.check(project, request, provider=provider)`
+from the trusted package entry. The ordinary CLI and file-based calls use advisory
+mode. For enforcement reporting, the operator constructs an independently
+qualified provider with `verify_entry(binding)`. The binding includes project,
+host, loaded/verifier package identities, requested release, complete route
+inventory and a fresh challenge. It changes on each invocation.
+
+The provider returns exactly `binding_sha256`, `loaded_package_path`, `routes`,
+`denied_probes` and `qualification_reference`. It must verify the actual loaded
+path and tool inventory independently, then authenticate the exact current
+binding. Each available route needs a denied-write observation with `kind`,
+`name`, `outcome: denied` and an original `evidence_reference`. Bind the canonical
+JSON SHA-256 of the complete challenge-bearing binding. A changed or unknown
+route, missing probe, stale response or unavailable observer produces advisory
+mode. The provider's actual capability or credential boundary must deny those
+writes. This package ships the interface and synthetic contract fixtures.
+
+No provider is selected through request JSON, a module path or an environment
+variable. `prepare` may retain its observation for specialists through an existing
+startup pin. Retained enforcement observations are historical. Actual mutations
+still require current host participation and the action's existing candidate,
+stage and authorization checks.
+
 An operator-owned integration constructs `execution_runtime.Runtime(project,
 driver, binding)` and passes it to `visual_mcp.Bridge(...,
 tool_profile='execution', execution_runtime=runtime)`. This adds `execution_host`

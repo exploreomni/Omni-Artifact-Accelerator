@@ -53,6 +53,15 @@ quality, effective access or human acceptance. Retain outstanding findings and
 unobserved lanes in the handoff. Never broaden dependency or native-write authority
 to satisfy a quality check.
 
+Use [host-entry preflight](skills/omni-artifact-accelerator/references/engagement-entry.md#inspect-the-host-entry-first)
+from the trusted current source before dispatching an installed skill. Compare
+the actual loaded path, honor pinned/offline source choices and inventory raw
+write routes. Reuse its receipt; do not claim enforcement from an agent-written
+configuration. New Apps use [candidate release](skills/omni-artifact-accelerator/references/app-release.md)
+for concept action sequences, visible data consumers and exact whole-draft
+publication. Host-specific HTML examples remain subordinate to the selected
+native target and experience, without weakening host security requirements.
+
 Follow the workspace instructions and the [dependency policy](skills/omni-artifact-accelerator/references/dependency-policy.md).
 
 - Never install, import/load, vendor, update or activate a third-party package, library, skill, runtime image or decoder without Austin's explicit sign-off covering that exact action and dependency closure. Prior availability is not approval. This applies to local tools, subagents, CI, MCP and browser/CDN imports.

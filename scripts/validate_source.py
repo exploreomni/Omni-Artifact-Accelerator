@@ -19,6 +19,11 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 CASES = {
+    "host-entry": "tests/test_host_entry.py",
+    "app-experience-release": "tests/test_app_experience_release.py",
+    "native-consumers": "tests/test_native_data_consumers.py",
+    "native-input-handoff": "tests/test_native_input_handoff.py",
+    "native-publish": "tests/test_native_publish.py",
     "dma-topic-policy": "tests/test_dma_topic_policy.py",
     "dma-native-topics": "tests/test_dma_native_topics.py",
     "experience-intent": "tests/test_experience_intent.py",
@@ -118,6 +123,7 @@ CASE_TIMEOUTS = {name: 120 for name in ('workflow', 'product-intent', 'stage-gat
 # The three-route native authorization suite repeats complete source-bound
 # lifecycles. Keep a bounded allowance separate from runtime transport deadlines.
 CASE_TIMEOUTS.update({'dma-native-topics':180,'dma-topic-policy':120})
+CASE_TIMEOUTS.update({'app-experience-release':240, 'native-publish':360, 'host-entry':120})
 CASE_TIMEOUTS['native-stage-gates'] = 300
 CASE_TIMEOUTS.update({'execution-runtime': 120, 'execution-bridge': 120, 'native-demo': 180})
 CASE_TIMEOUTS.update({'execution-preparation': 120, 'validation-snapshot': 120, 'selective-reads': 120, 'context-layout': 120})

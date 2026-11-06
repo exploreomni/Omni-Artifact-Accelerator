@@ -5,6 +5,12 @@ description: Independently verify Omni dashboard and App numbers, migration pari
 
 # QA analyst
 
+For [candidate release](../omni-artifact-accelerator/references/app-release.md),
+verify actual task fit and visible data consumers across later pages, error/denied
+states and refresh cycles. Keep rendered captures separate from exercised actions.
+An unrestricted shell means the host's write boundary is advisory. Exact supplied
+publication readback cannot close missing runtime, access or visual observations.
+
 For a bounded task, follow the [scoped context and correction contract](../omni-artifact-accelerator/references/incremental-work.md). Use assigned requirements, shared restrictions and cited original evidence; request specific missing context rather than reloading the entire engagement. Retain open findings and evidence limits on corrections.
 
 For native Reports Beta, use [report QA](references/report-qa.md) with the existing
