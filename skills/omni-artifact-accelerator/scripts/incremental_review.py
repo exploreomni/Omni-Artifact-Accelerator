@@ -92,7 +92,45 @@ def freshness_findings(candidate, at=None):
     return findings
 
 
-def impact_state(state, at=None):
+def freeze_context(fd, iteration, deps, S, P):
+    """Project a fully pinned guarded freeze onto its review inputs. Unknown formats get full review."""
+    envelope = next((d for d in deps if d['id'] == 'freeze-envelope'), None)
+    base = 'evidence/candidate-history/' + iteration + '/'
+    if not envelope or envelope['kind'] != 'artifact' or envelope['path'] != base + 'candidate.json':
+        return {}
+    raw = S._read(fd, envelope['path'], P.MAX_BYTES)
+    need(P.digest(raw) == envelope['sha256'], 'freeze_envelope_changed')
+    value = S._json(raw, P)
+    fixed = {'schema_version', 'kind', 'project_id', 'id', 'artifacts', 'artifact_roles', 'retained',
+             'context', 'selected_intent', 'previous'}
+    if (not isinstance(value, dict) or not fixed <= set(value) <= fixed | {'workflow_context', 'native_create_preflight'}
+            or value['schema_version'] != 1 or value['kind'] != 'analyst_candidate' or value['id'] != iteration):
+        return {}
+    by_path = {d['path']: d for d in deps if d['kind'] == 'artifact' and d is not envelope}
+    retained, artifacts = value['retained'], value['artifacts']
+    if (not all(isinstance(v, dict) for v in (retained, artifacts, value['artifact_roles']))
+            or set(retained) != set(artifacts) or set(retained) != set(value['artifact_roles'])
+            or len(by_path) != len(retained) or set(retained.values()) != set(by_path)):
+        return {}
+    identities = {}
+    for original, snapshot in retained.items():
+        dep = by_path[snapshot]
+        if not snapshot.startswith(base) or dep['sha256'] != artifacts[original]:
+            return {}
+        identities[original] = dep['id']
+    # Exact artifact hashes already have individual scopes in deps. Original names,
+    # roles, context and request identity remain consequential for every reviewer.
+    relevant = {k: v for k, v in value.items() if k not in {'id', 'previous', 'artifacts', 'retained'}}
+    preflight = value.get('native_create_preflight')
+    if preflight is not None:
+        if not isinstance(preflight, dict) or not isinstance(preflight.get('spec'), str) or preflight['spec'] not in artifacts:
+            return {}
+        # The HTTPS origin is reviewed in the create specification, outside the POST body.
+        relevant['create_spec_sha256'] = artifacts[preflight['spec']]
+    return {'freeze_inputs_sha256': digest({**relevant, 'artifact_dependencies': identities})}
+
+
+def impact_state(state, at=None, *, replay=False):
     policy = state.get('incremental_policies', [])
     now, old = state.get('candidate'), state.get('previous_candidate')
     prior = state.get('previous_reviews', {})
@@ -125,9 +163,17 @@ def impact_state(state, at=None):
         broad.extend('prior_' + reason for reason in freshness_findings(old, at))
     if now and old and now['payload'].get('review_context') != old['payload'].get('review_context'):
         broad.append('stage_or_workflow_context_changed')
-    changed = sorted(key for key in set(newer) & set(older)
-                     if any(newer[key][field] != older[key][field] for field in ('sha256', 'bytes', 'freshness')) or
-                     newer[key]['kind'] != 'artifact' and newer[key]['path'] != older[key]['path'])
+    comparable_freezes = all(c and c['payload'].get('review_context', {}).get('freeze_inputs_sha256')
+                             for c in (now, old))
+    changed = []
+    for key in sorted(set(newer) & set(older)):
+        before, after = older[key], newer[key]
+        if key == 'freeze-envelope' and comparable_freezes:
+            # Changes to the projected context already invalidate all scopes above.
+            continue
+        if (any(before[f] != after[f] for f in ('sha256', 'bytes', 'freshness'))
+                or after['kind'] != 'artifact' and before['path'] != after['path']):
+            changed.append(key)
     for scope in SCOPES:
         reasons = list(dict.fromkeys(broad))
         reasons.extend('dependency_changed:' + key for key in changed
@@ -136,10 +182,14 @@ def impact_state(state, at=None):
         if source and now:
             independent = scope in {'qa', 'ui_ux'} or (scope == 'product_owner' and
                                                       'experience_dependencies' in source['payload'])
-            if independent and source['payload']['reviewer'] in now['payload']['builders']:
+            if (independent or not replay) and source['payload']['reviewer'] in now['payload']['builders']:
                 reasons.append('reviewer_is_current_builder')
+            if not replay and old and source['payload']['reviewer'] in old['payload']['builders']:
+                reasons.append('prior_review_by_builder')
             if source['payload']['basis'] != 'source':
                 reasons.append('observed_acceptance_requires_fresh_review')
+            if source['payload']['outcome'] != 'resolved' and not replay:
+                reasons.append('prior_finding_requires_fresh_review')
         proof = {'current': now['sha256'] if now else None, 'previous': old['sha256'] if old else None,
                  'source_review': source['sha256'] if source else None, 'scope': scope,
                  'current_dependencies': list(newer.values()), 'previous_dependencies': list(older.values())}
@@ -165,7 +215,9 @@ def carry_payload(state, request):
 
 
 def validate_carry(state, payload, at):
-    assessment = impact_state(state, at)
+    # Older journals could carry an explicitly unresolved finding as unresolved.
+    # Preserve replay of those records. Every new append uses carry_payload first.
+    assessment = impact_state(state, at, replay=True)
     need(assessment['mode'] == 'enforce', 'enforcement_not_adopted')
     row = assessment['scopes'][payload['scope']]
     need(row['eligible'] and row['proof_sha256'] == payload['proof_sha256'], 'carry_proof_invalid')

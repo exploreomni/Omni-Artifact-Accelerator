@@ -23,6 +23,7 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 CASES = {
     "source-runner": "tests/test_source_runner.py",
+    "omni-cli-setup": "tests/test_omni_cli_setup.py",
     "host-entry": "tests/test_host_entry.py",
     "app-experience-release": "tests/test_app_experience_release.py",
     "native-consumers": "tests/test_native_data_consumers.py",
@@ -81,6 +82,7 @@ CASES = {
     "native-query": "tests/test_native_query_probe.py",
     "native-authoring": "tests/test_native_authoring.py",
     "native-create": "tests/test_native_create.py",
+    "native-readback": "tests/test_native_readback.py",
     "assembly": "tests/test_experience_assembly.py",
     "product-intent": "tests/test_product_intent.py",
     "data-refresh": "tests/test_data_refresh_gates.py",
@@ -130,7 +132,7 @@ CASES = {
 # Journal integration cases revalidate retained source and candidate evidence.
 # Keep them bounded without turning a larger valid fixture into a false failure.
 CASE_TIMEOUTS = {name: 120 for name in ('workflow', 'product-intent', 'stage-gates',
-    'stage-gate-integration', 'conversation-choice', 'native-stage-gates', 'native-create',
+    'stage-gate-integration', 'conversation-choice', 'native-stage-gates', 'native-create', 'native-readback',
     'experience-enforcement', 'data-refresh', 'periscope-integration', 'metabase-integration', 'webfocus-integration', 'thoughtspot-integration', 'qlik-integration', 'microstrategy-integration', 'cognos-integration', 'businessobjects-integration', 'report-native', 'report-source-integration')}
 # The three-route native authorization suite repeats complete source-bound
 # lifecycles. Keep a bounded allowance separate from runtime transport deadlines.
@@ -288,17 +290,45 @@ def run_case(name, transport, node=None):
     return check
 
 
+def parallel_engagement(engagement, output):
+    """Identify the other job from its pinned startup; refuse overlapping checkouts or output."""
+    P = load('validation_project', 'skills/omni-artifact-accelerator/scripts/analyst_project.py')
+    root, project = P.load_project(engagement)
+    pointer = project.get('execution_start', {})
+    P.need(isinstance(pointer, dict) and set(pointer) == {'path', 'sha256'}, 'artifact startup required')
+    run, raw = P.read_json(P.relative_file(root, pointer['path']))
+    P.need(P.digest(raw) == pointer['sha256'] and run.get('kind') == 'analyst_execution_start'
+           and run.get('project_id') == project['id'], 'artifact startup changed')
+    other = P.no_links(Path(run['package_root']))
+    P.need(other.is_absolute() and other.is_dir(), 'artifact source unavailable')
+    suite = ROOT.resolve()
+    for protected in (root, other):
+        P.need(not suite.is_relative_to(protected) and not protected.is_relative_to(suite),
+               'run package validation from a separate checkout')
+        P.need(output is None or not Path(output).resolve().is_relative_to(protected),
+               'keep the validation report outside the artifact engagement and its checkout')
+    return {'job': 'package_validation', 'artifact_start_sha256': pointer['sha256']}
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--case", choices=CASES, help=argparse.SUPPRESS)
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument("--case", choices=CASES, metavar="NAME", help="Run one package regression case.")
+    mode.add_argument("--full-package", action="store_true", help="Run all accelerator package regression cases for maintenance or release.")
     parser.add_argument("--report", help="New output JSON outside repository; never overwrites")
     parser.add_argument('--node-runtime', help='Explicit existing native Node path for its original-source lane only')
     parser.add_argument('--node-sha256', help='SHA-256 of that existing runtime; integrity is not approval')
+    parser.add_argument('--alongside-engagement', help='For concurrent maintenance, check the separate artifact engagement and checkout before starting')
     args = parser.parse_args()
     if not sys.flags.isolated or not sys.flags.no_site or not sys.dont_write_bytecode:
         parser.error("use the existing interpreter with -I -S -B")
     if bool(args.node_runtime) != bool(args.node_sha256):
         parser.error('provide both --node-runtime and --node-sha256')
+    # Preserve the documented full release command with its explicit runtime pin.
+    # An unscoped invocation during artifact authoring should finish immediately.
+    if not (args.case or args.full_package or args.node_runtime):
+        parser.error('For an App or dashboard, use analyst_project.py stage-status --project PROJECT '
+                     'and verify the current artifact. For package maintenance select --case NAME or --full-package.')
     node = {'path': args.node_runtime, 'sha256': args.node_sha256} if args.node_runtime else None
     # Ambient variables never select a runtime for this maintained runner.
     os.environ.pop(NODE_PATH_ENV, None)
@@ -306,6 +336,12 @@ def main():
     # Normal imports are restricted as defense against accidental optional use.
     # Explicit first-party file loading still trusts reviewed repository source.
     sys.meta_path.insert(0, StandardLibraryOnly())
+    parallel = None
+    if args.alongside_engagement:
+        try:
+            parallel = parallel_engagement(args.alongside_engagement, args.report)
+        except (ValueError, OSError, KeyError, TypeError) as exc:
+            parser.error(str(exc))
     if args.case:
         if args.case == NODE_CASE:
             if node is None:
@@ -341,6 +377,8 @@ def main():
               "source_sha256": before, "interpreter": {"path": sys.executable, "version": sys.version.split()[0]},
               "qualification": {"source_local": True, "dependency_approval": False, "host_isolation": False,
                                 "native_tenant": False, "rendered": False, "release_authorized": False}}
+    if parallel:
+        report['concurrent_work'] = parallel
     if output:
         fd = os.open(output, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
         with os.fdopen(fd, "w") as stream:

@@ -476,6 +476,7 @@ def _concept(root, option_manifest_path, spec, P, component):
                          'representative_sha256s': [visual_pin['sha256']],
                          'representative_artifact_sha256s': [visual_pin['sha256']],
                          'representative_artifacts': [visual_pin],
+                         'representative_labels': labels,
                          'observation_limit': 'Source/structure validation only; supplied render claims are not authenticated; craft and native behavior unassessed.'},
             'dependencies': sorted(dependencies, key=lambda p: p['path'])}
 

@@ -19,6 +19,55 @@ T = R.load('source_runner_transport', 'skills/omni-bi-engineer/scripts/cli_proce
 
 
 class SourceRunnerTests(unittest.TestCase):
+    def test_parallel_package_check_requires_separate_checkout_and_output(self):
+        P = R.load('fixture_parallel_project', 'skills/omni-artifact-accelerator/scripts/analyst_project.py')
+        root = self.root / 'engagement'
+        P.init(root, 'Synthetic inspection', 'net-new', 'app', 'none')
+        project = P.load_project(root)[1]
+        record = {'kind': 'analyst_execution_start', 'project_id': project['id'], 'package_root': str(R.ROOT)}
+        path = 'evidence/fixture-start.json'
+        def bind():
+            P.write_json(root / path, record, replace=(root / path).exists())
+            project['execution_start'] = {'path': path, 'sha256': P.digest((root / path).read_bytes())}
+            P.write_json(root / 'project.json', project, replace=True)
+        bind()
+        with self.assertRaisesRegex(ValueError, 'separate checkout'):
+            R.parallel_engagement(root, None)
+        checkout = self.root / 'artifact-checkout'
+        checkout.mkdir()
+        record['package_root'] = str(checkout)
+        bind()
+        with self.assertRaisesRegex(ValueError, 'outside the artifact'):
+            R.parallel_engagement(root, root / 'report.json')
+        self.assertEqual(R.parallel_engagement(root, self.root / 'report.json')['job'], 'package_validation')
+        (root / path).write_text('{}')
+        with self.assertRaisesRegex(ValueError, 'startup changed'):
+            R.parallel_engagement(root, None)
+
+    def test_unscoped_invocation_never_starts_the_package_suite(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            report = Path(tmp) / 'report.json'
+            for args in ([], ['--report', str(report)], ['--case', 'metadata', '--full-package']):
+                with self.subTest(args=args), patch.object(sys, 'argv', ['validate_source.py', *args]), \
+                        patch.object(R, 'source_pins') as pins, patch.object(R, 'run_case') as run, \
+                        contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit) as caught:
+                    R.main()
+                self.assertEqual(caught.exception.code, 2)
+                pins.assert_not_called()
+                run.assert_not_called()
+                self.assertFalse(report.exists())
+
+    def test_explicit_and_legacy_package_release_select_every_case(self):
+        args_with_pin = ['--node-runtime', str(self.binary), '--node-sha256', self.selection['sha256']]
+        for args in (['--full-package', *args_with_pin], args_with_pin, ['--full-package']):
+            with self.subTest(args=args), patch.object(sys, 'argv', ['validate_source.py', *args]), \
+                    patch.object(sys, 'meta_path', list(sys.meta_path)), patch.dict(os.environ), \
+                    patch.object(R, 'source_pins', return_value={}), patch.object(R, 'load'), \
+                    patch.object(R, 'run_case', side_effect=lambda name, *_: {'case':name,'passed':True}) as run, \
+                    contextlib.redirect_stdout(io.StringIO()):
+                self.assertEqual(R.main(), 0)
+            self.assertEqual([call.args[0] for call in run.call_args_list], list(R.CASES))
+
     def setUp(self):
         folder = tempfile.TemporaryDirectory()
         self.addCleanup(folder.cleanup)

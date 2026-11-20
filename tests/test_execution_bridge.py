@@ -149,7 +149,15 @@ class BridgeTests(unittest.TestCase):
         gates.through('options')
         with self.assertRaises(ValueError):
             B.P.stage_require(self.root, 'build')
-        self.assertEqual(self.bridge.call('execution_status', {})['stage']['next_stage'], 'choice')
+        report = self.bridge.call('execution_status', {})
+        self.assertEqual(report['stage']['next_stage'], 'choice')
+        self.assertEqual(report['next_action']['action'], 'request_design_choice')
+        self.assertIsNone(report['next_action']['tool'])
+        checkpoint = report['stage']['host_checkpoint']
+        self.assertEqual(checkpoint['pending_human_decision'], 'design_choice')
+        self.assertIsNone(checkpoint['iteration_id'])
+        page = self.bridge.call('execution_status', {'request': self.save('resume-page', {'limit': 1})})
+        self.assertEqual(page['stage']['host_checkpoint'], checkpoint)
 
     def test_reference_lifecycle_selection_bounded_worker_freeze_and_review(self):
         # One local vertical slice through real package operations. The synthetic
@@ -221,11 +229,14 @@ class BridgeTests(unittest.TestCase):
             observed = bridge.call('execution_host', {'operation': 'launch', 'attempt_id': 'integrated'})
             self.assertEqual(observed['status'], 'completed')
             self.assertFalse(observed['host_isolation_verified'])
-            bridge.call('execution_record', {'operation': 'checkpoint', 'request': self.save('checkpoint',
+            checkpoint = bridge.call('execution_record', {'operation': 'checkpoint', 'request': self.save('checkpoint',
                 {'attempt_id': 'integrated', 'status': 'outputs_recorded', 'reason': 'Synthetic completion', 'outputs': [output]})})
-            bridge.call('execution_lifecycle', {'operation': 'freeze', 'request': self.save('freeze',
+            self.assertEqual(checkpoint['host_checkpoint']['action'], 'prepare_candidate')
+            frozen = bridge.call('execution_lifecycle', {'operation': 'freeze', 'request': self.save('freeze',
                 {'id': 'integrated', 'builders': ['synthetic-local-invocation'], 'artifacts': [output],
                  'context': ['contracts/execution.json']})})
+            self.assertEqual(frozen['host_checkpoint']['iteration_id'], 'integrated')
+            self.assertEqual(set(frozen['host_checkpoint']['pending_review_scopes']), set(gates.S.REVIEW_SCOPES))
             gates.reviews()
             status = bridge.call('execution_status', {})
             self.assertTrue(status['stage']['release_ready'])

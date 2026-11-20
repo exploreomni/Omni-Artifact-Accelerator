@@ -1,5 +1,9 @@
 # Testing and contribution checks
 
+This guide is for changes to the accelerator package. For a new or migrated App,
+dashboard or report, use the [artifact execution workflow](../skills/omni-artifact-accelerator/references/execution-workflow.md#keep-validation-scoped-to-the-artifact).
+Creating or reviewing an artifact does not require rerunning the package suite.
+
 Use the [package-use policy](../skills/omni-artifact-accelerator/references/dependency-policy.md) before every runtime/import path. No automatic installation or unapproved imports. The current manual CI workflow records the selected revision only; **it does not run code validation**. A dependency-backed CI job remains disabled until its host-enforced human approval gate is qualified. Existing remote required-check settings are not changed by this source work.
 
 For source-only package review with an existing Python runtime:
@@ -14,7 +18,7 @@ existing-Node source lane. For a complete passing run, explicitly select that
 already-installed native runtime and its SHA-256 (use actual reviewed values):
 
 ```sh
-python3 -I -S -B scripts/validate_source.py \
+python3 -I -S -B scripts/validate_source.py --full-package \
   --node-runtime /absolute/canonical/path/to/node \
   --node-sha256 REPLACE_WITH_64_HEX_DIGEST \
   --report /absolute/private/output/source-check.json
@@ -22,6 +26,9 @@ python3 -I -S -B scripts/validate_source.py \
 
 This selects existing bytes for original-source/built-in checks only; it does not
 acquire a runtime, load third-party packages, grant approval or qualify a host.
+The earlier full-suite command with both explicit runtime arguments still works.
+A bare invocation or a report path alone exits before running tests. For a
+deliberately incomplete package diagnostic, select `--full-package` explicitly.
 The Python child PATH stays `/usr/bin:/bin`. Only the Node-backed case receives
 the explicit path and pin, which are checked before and after that case and before
 each Node invocation. Ambient runtime-selection variables are ignored by the

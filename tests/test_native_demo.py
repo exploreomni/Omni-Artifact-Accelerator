@@ -53,7 +53,8 @@ class NativeDemo(unittest.TestCase):
             'name': 'Synthetic demonstration', 'description': 'Original fixture only.',
             'queryPresentations': {'data': {'1': {'name': 'Observations', 'topicName': 'observations',
                 'type': 'query', 'isSql': False, 'query': {'fields': ['observations.id'],
-                'table': 'observations', 'limit': 10, 'userEditedSQL': ''}}}, 'order': ['1']}}
+                'table': 'observations', 'limit': 10, 'userEditedSQL': '', 'calculations': [], 'pivots': [],
+                'fill_fields': [], 'column_totals': {}, 'row_totals': {}}}}, 'order': ['1']}}
         self.save(self.spec_path, self.spec)
         proof = self.gates.evidence('minimum-proof', 'Synthetic source review only; not actual access or permission.')
         self.demo = {'schema_version': 1, 'kind': 'native_demo_scope',

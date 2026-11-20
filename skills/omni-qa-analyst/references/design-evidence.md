@@ -14,6 +14,10 @@ Inspect observable behavior, not component names or element existence. A calenda
 
 Choose a few task-relevant phone, short-laptop or wide contexts by usable width/height and permitted methods. Check a real drill/return journey, not just disconnected screenshots; native behavior requires actual exercise. Under prohibited rendering/native observation, retain independent assembled/source findings and leave the affected visual/native cases unrun. Fix material findings within existing authorization, retest only affected behavior, and name remaining differences in closeout rather than treating publication or matching readback as experience acceptance.
 
+Before judging a responsive App, measure the shortest supported **usable App frame** after the signed-in host's header, navigation and any persistent controls have taken their space. Record that width and height alongside the outer viewport, candidate, host and observation method. Exercise the actual first task and one repeat task with long labels, detail, return and the on-screen keyboard where applicable. Check whether important evidence or actions disappear, and whether the available scroll area can still reach them. Local simulation or a desktop screenshot leaves native short-frame behavior unobserved.
+
+Test claims against counterexamples from the governed scope. A customer with no qualifying *purchase* rows can still have an active *subscription*. Check a case with both facts, and constrain empty-state wording to the particular source and time period. An observed 99.97% displayed as 100.0%, or a positive 0.03% displayed as 0.0%, can falsely imply certainty or absence. Check both sides near the display boundary plus exact zero, exact 100, null and an absent row. Use sufficient precision or a clearly bounded label and retain the actual numerator, denominator, filters and period when available.
+
 Include the complete custom chrome when selecting those cases. A shared primitive
 pass does not cover an App's independent scope panels or status badges. Check the
 final CSS cascade and actually observe hidden controls/warnings after navigation;

@@ -12,6 +12,10 @@ Keep the existing A–F sequence, actual selection and candidate review boundari
 
 ## Inspect the host entry first
 
+For a CLI-backed local setup, use the [Omni CLI setup offer](omni-cli-setup.md)
+before running the executable. An existing MCP, API or offline route can proceed
+directly to its own checks.
+
 Invoke `scripts/host_entry.py` from the current trusted checkout before dispatching
 through an installed copy. The request's `loaded_package_path` identifies the
 reported package root, either the checkout or the directory containing installed

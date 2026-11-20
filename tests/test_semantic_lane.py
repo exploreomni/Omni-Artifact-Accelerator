@@ -29,8 +29,11 @@ class SemanticLane(unittest.TestCase):
         tmp = tempfile.TemporaryDirectory()
         self.addCleanup(tmp.cleanup)
         self.root = Path(tmp.name).resolve() / 'engagement'
-        P.init(self.root, 'Operations review', 'net-new', 'dashboard', modeling_lane='omni-only')
-        self.context = {'base_url':'https://example.omni.test','model_id':'model','branch_id':'dev',
+        self.setup_project()
+
+    def setup_project(self, *, surface='dashboard', branch='dev'):
+        P.init(self.root, 'Operations review', 'net-new', surface, modeling_lane='omni-only')
+        self.context = {'base_url':'https://example.omni.test','model_id':'model','branch_id':branch,
                         'workbook_model_id':None,'principal_id':'analyst'}
         self.topic = 'orders'
         self.models = {'model':{'id':'model','connectionId':'conn','modelKind':'SHARED'},
@@ -40,7 +43,7 @@ class SemanticLane(unittest.TestCase):
         self.inventory = {'kind':'omni_modeling_inventory', 'context':self.context, 'connection_id':'conn',
             'identity':self.put('evidence/model-user.json',self.who),'models':self.put('evidence/models.json',self.models),
             'model_visibility':'complete','complete':True,'physical_status':'ready','topic_names':[],'suitability':{}}
-        self.baseline = {'model_id':'model','branch_id':'dev','evidence_ref':'readback-1','topic_names':[],
+        self.baseline = {'model_id':'model','branch_id':branch,'evidence_ref':'readback-1','topic_names':[],
             'views':{'orders':{'physical_binding':'ANALYTICS.ORDERS','dimensions':['id','total'],'measures':[]}},
             'user_attributes':[],'access_grants':[]}
         self.inventory['baseline'] = self.put('evidence/baseline.json', self.baseline)
@@ -183,6 +186,7 @@ class SemanticLane(unittest.TestCase):
             self.candidate(route)
 
     def bind(self, reuse):
+        surface = P.load_project(self.root)[1]['surfaces'][0]
         if reuse:
             self.inventory.update(topic_names=['orders'],suitability={'orders':{'status':'suitable','reason':'exact scope and access'}})
             route = self.route()
@@ -199,7 +203,7 @@ class SemanticLane(unittest.TestCase):
             original = self.put('evidence/branch-yaml.json', {'version': 1, 'files':raw, 'checksums':{k:'native-revision' for k in raw}})
             application = self.put('evidence/branch-file.json', {'kind':'omni_branch_file_readback','model_id':'dev',
                 'candidate_sha256':digest, 'context':self.context, 'source_ref':'original/branch-model','yaml_response':original})
-        case = V.Case()
+        case = V.Case(self.context['branch_id'])
         for key in case.refs:
             def edit(r):
                 r['scope']['candidate_sha256'] = digest
@@ -207,16 +211,23 @@ class SemanticLane(unittest.TestCase):
                     r['response'] = self.response
                 if key == 'policy':
                     r['topic_response_sha256'] = P.digest(P.canonical(self.response))
+                    if surface == 'app':
+                        r['surfaces']['control'] = {'resources':[],'not_applicable_reason':'No controls on the App.'}
+                        for persona in r['personas'].values():
+                            persona['probes'] = [p for p in persona['probes'] if p['kind'] != 'control']
+                if surface == 'app' and key in ('allowed','restricted','default'):
+                    r['probes'] = [p for p in r['probes'] if p['id'] != 'control']
             case.edit(key,edit)
         for path, data in case.originals.items():
             (self.root/path).write_bytes(data)
-        scope = {'context':self.context,'effective_model_id':'dev','topic':'orders','query_ref':'trial/1'}
+        effective_model = self.context['branch_id'] or self.context['model_id']
+        scope = {'context':self.context,'effective_model_id':effective_model,'topic':'orders','query_ref':'trial/1'}
         trial = {**scope,'query':self.query,'status':'succeeded',
                  'result':self.put('evidence/trial-result.json',{**scope,'kind':'omni_topic_trial_result','status':'complete',
                      'query_sha256':P.digest(P.canonical(self.query)),'columns':['orders.n'],'rows':[{'orders.n':3}]})}
         obs = {'schema_version':1,'kind':'omni_topic_observation','review_sha256':digest,'context':self.context,
                'observed_at':'2026-10-01T16:00:00Z','identity':self.inventory['identity'],'models':self.inventory['models'],
-               'topics':{'orders':self.put('evidence/topic.json',{'context':self.context,'effective_model_id':'dev',
+               'topics':{'orders':self.put('evidence/topic.json',{'context':self.context,'effective_model_id':effective_model,
                                                                  'topic_name':'orders','response':self.response})},
                'trials':{'orders':self.put('evidence/trial.json',trial)}}
         obs_pin = self.put('evidence/observation.json',obs)
@@ -225,7 +236,7 @@ class SemanticLane(unittest.TestCase):
         access = self.run_request('access',spec)
         self.assertEqual(self.load(access)['kind'],'omni_topic_access')
         tile = {'type':'query','isSql':False,'topicName':'orders','query':self.query}
-        row = {'consumer_id':'count','document_id':'doc','query_key':'1','surface':'dashboard','topic':'orders',
+        row = {'consumer_id':'count','document_id':'doc','query_key':'1','surface':surface,'topic':'orders',
                'question':'How many orders?','grain':'order','population':'orders','access_case':'assigned audience',
                'expectation_text':'Three orders','expectation':case.refs['policy'],'disposition':'new','tile':tile}
         queries = self.run_request('queries',{'kind':'omni_topic_consumer_plan','schema_version':1,'access':access,
@@ -258,6 +269,27 @@ class SemanticLane(unittest.TestCase):
 
     def test_authored_topic_through_saved_consumer(self):
         self.check_binding(False)
+
+    def test_shared_standalone_topic_prepares_native_app_from_sparse_plan(self):
+        self.root = self.root.with_name('shared-app')
+        self.setup_project(surface='app', branch=None)
+        spec, access, queries, tile, cycle = self.bind(True)
+        P.stage_record(self.root, {'stage':'access','source_scope':'orders','user_identity':'analyst',
+            'evidence':{'data':access['path'],'user_access':spec['observation']['path']}})
+        cycle.stage('analysis')
+        def delivery(artifact):
+            checks = self.load(spec['checks'])
+            observations = []
+            for pin in checks['access']:
+                observed = self.load(pin)
+                document = next(probe for probe in observed['probes'] if probe['id'] == 'document')
+                document['artifact_sha256'] = artifact
+                observations.append(self.put('evidence/delivery-'+observed['id']+'.json', observed))
+            checks['access'] = observations
+            self.run_request('delivery', {'access':access,'queries':queries,'artifact_sha256':artifact,
+                'checks':self.put('contracts/checked-app-delivery.json', checks)})
+        F.assert_shared_app_create(self, cycle, self.context, tile, 'count', 'doc', queries, 'omni-modeling-v1',
+                                   delivery=delivery)
 
 
 if __name__ == '__main__':

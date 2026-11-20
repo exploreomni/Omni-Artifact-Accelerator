@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -88,6 +89,30 @@ class ExperienceEnforcement(unittest.TestCase):
             P.stage_record(self.root, {'stage': 'brief', 'discovery_version': 1,
                 'evidence': {'brief': self.evidence('brief'), 'intent': 'contracts/no-quality.json'}})
 
+    def test_concept_preflight_checks_sources_before_independent_review_or_user_choice(self):
+        self.flow()
+        options = self.options()['options']
+        before = (self.root / S.JOURNAL).read_bytes()
+        seed = S.concept_preflight(self.root, {}, P)
+        self.assertEqual(seed['status'], 'concept_inputs_ready')
+        manifest = P.read_json(self.root / options[0]['evidence'])[0]
+        claim = {'option_id': options[0]['id'], 'label': manifest['representative']['labels'][0],
+                 'evidence_role': 'expectations', 'excerpt': 'Original synthetic evidence'}
+        result = S.concept_preflight(self.root, {'options': options, 'claims': [claim]}, P)
+        self.assertEqual(len(result['concepts']), 3)
+        self.assertEqual(result['analytical_and_design_evidence']['analysis']['expectations']['path'],
+                         seed['analytical_and_design_evidence']['analysis']['expectations']['path'])
+        self.assertEqual(result['linked_claim_count'], 1)
+        with self.assertRaisesRegex(ValueError, 'excerpt_missing'):
+            S.concept_preflight(self.root, {'options': options, 'claims': [dict(claim, excerpt='Unverified rate')]}, P)
+        self.assertFalse(result['creative_review_complete'])
+        self.assertFalse(result['choice_recorded'])
+        options[1]['evidence'] = options[0]['evidence']
+        with self.assertRaises(ValueError):
+            S.concept_preflight(self.root, {'options': options}, P)
+        self.assertEqual((self.root / S.JOURNAL).read_bytes(), before)
+        self.assertEqual(P.stage_status(self.root)['next_stage'], 'options')
+
     def test_three_text_files_do_not_satisfy_concept_evidence(self):
         self.flow()
         request = self.options()
@@ -170,6 +195,59 @@ class ExperienceEnforcement(unittest.TestCase):
         workflow.start(self.root, request)
         return {'stage': 'workflow_requalification', 'expected_tail_sha256': P.stage_status(self.root)['tail_sha256'],
                 'previous_start': previous}
+
+    def stub_startup_revision(self):
+        # Exercise a repository-style startup also when the suite runs from a
+        # read-only source archive without a .git directory.
+        helper = P.routing_helper('delivery_workflow')
+        read_helper = P.routing_helper
+        patcher = patch.object(P, 'routing_helper', side_effect=lambda name:
+                               helper if name == 'delivery_workflow' else read_helper(name))
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        helper.git_identity = lambda package: {'head': 'a' * 40, 'status': ''}
+        return helper
+
+    def test_partial_startup_resume_reuses_original_prefix_and_waits_for_actual_choice(self):
+        self.stub_startup_revision()
+        flow = self.flow('brief')
+        with P.trusted_stage_provider(flow.host):
+            prior = P.stage_status(self.root)
+            request = self.resume('resume-before-options')
+            blocked = P.stage_status(self.root)
+            self.assertEqual(blocked['resume_request'], request)
+            self.assertEqual(blocked['host_checkpoint']['action'], 'verify_recorded_prefix')
+            old = P.read_json(self.root / S.JOURNAL)[0]['events']
+            access = next(row for row in old if row['stage'] == 'access')
+            evidence = self.root / access['payload']['evidence']['data']['path']
+            contents = evidence.read_bytes()
+            evidence.write_bytes(contents + b' changed')
+            with self.assertRaisesRegex(ValueError, 'current_evidence_required'):
+                P.stage_record(self.root, request)
+            evidence.write_bytes(contents)
+            resumed = P.stage_record(self.root, request)
+            self.assertEqual(resumed['stage_bindings'], prior['stage_bindings'])
+            self.assertEqual(resumed['next_stage'], 'options')
+            self.assertEqual(resumed['host_checkpoint']['action'], 'prepare_three_options')
+            self.assertEqual(P.read_json(self.root / S.JOURNAL)[0]['events'][:-1], old)
+            flow.stage('options')
+            self.assertEqual(P.stage_status(self.root)['host_checkpoint']['pending_human_decision'], 'design_choice')
+            binding = P.stage_status(self.root)['choice_bindings']['option-1']
+            flow.host.grants[(P.canonical(binding), 'fixture-choice')] = 'fixture-user'
+            P.stage_record(self.root, {'stage': 'choice', 'option_id': 'option-1', 'receipt_ref': 'fixture-choice'})
+            check = P.stage_status(self.root)['host_checkpoint']
+            self.assertTrue(check['selected_option_id'])
+            self.assertIsNone(check['pending_human_decision'])
+            self.assertEqual(check['action'], 'detail_selected_design')
+
+    def test_partial_resume_rejects_a_different_revision(self):
+        helper = self.stub_startup_revision()
+        self.flow('analysis')
+        helper.git_identity = lambda package: {'head': 'b' * 40, 'status': ''}
+        request = self.resume()
+        self.assertNotIn('resume_request', P.stage_status(self.root))
+        with self.assertRaisesRegex(ValueError, 'prefix_source_changed'):
+            P.stage_record(self.root, request)
 
     def test_explicit_requalification_preserves_choice_and_retires_current_f_claims(self):
         flow = self.flow('design')

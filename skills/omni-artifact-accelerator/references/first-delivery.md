@@ -188,6 +188,20 @@ result rather than presenting source inspection as observation of a screen.
 
 Give each material request a disposition: implemented and observed in a named evidence lane, implemented but unobserved, blocked with a useful fallback, deferred, or explicitly omitted. A working external link does not fulfill inline playback. An agenda does not fulfill a month calendar. A decorative perspective does not establish camera interaction or measured height.
 
+### Native App delivery handoff
+
+Use the existing delivery record for these observations. Carry the candidate hash, target identifier, timestamp, evidence reference and relevant principal with each result. Reuse earlier evidence only when its own inputs and behavior still match.
+
+| Item | Evidence and scope |
+| --- | --- |
+| Creation and viewer link | Record the create response and created identifier. Give the signed-in viewer URL under `/apps/`. Label a derived URL until an authorized native host actually opens that same App and retains the final location. |
+| Stored content | Record HTML identity separately from typed readback parity. Keep exact, qualified equivalent and unresolved changes visible alongside the original capture hashes. |
+| Query results | Execute the saved query on the created workbook model and reconcile scope, filters, cutoff, row counts, types and independent expectations. Report which query inputs and principal were exercised. |
+| Native interaction | Exercise the selected first and repeat journeys on the native App. Retain before and after evidence, including selection changes, empty states and return. |
+| Rendered layout | Record measured usable host frame and outer viewport for the shortest supported layout. Note clipping, scrolling and touch reach on the actual rendered candidate. |
+| Effective access | Exercise intended viewer access to the document, controls and resulting rows under the applicable scope before wider sharing. Retain missing viewer observations separately. |
+| Business acceptance | Record the actual decision, actor, scope and date, or report it pending. A reviewer score or simulation supplies no user decision. |
+
 Tie native/media observations to the candidate, target, relevant settings, date and actual result. Keep separate numerical, local, native, rendered and human evidence. Source-only or simulated review can find defects but cannot establish visual polish. Respect CLI/MCP-only restrictions; do not route around them.
 
 When observation is permitted, use representative phone/laptop/wide sizes selected for the task. Review available content height, meaningful defaults, readable labels, no accidental overflow, stable identity/filter state, focus/scroll return and reversible motion. Fix concrete issues, then recheck affected paths. Discover the supported preview/draft route instead of assuming it exists. Do not silently reset existing repair limits when an unavailable capability keeps failing.

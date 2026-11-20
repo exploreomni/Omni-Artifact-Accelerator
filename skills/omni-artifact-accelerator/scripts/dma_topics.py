@@ -265,11 +265,24 @@ def checked_access(root, project, record, P):
     return rebuilt, snapshots, catalog
 
 
-def semantic_fields(query, topic):
+def semantic_query(query):
+    """Compare a saved query with its governed plan without changing either original."""
     need(isinstance(query,dict), 'semantic_query_required')
     plain = dict(query)
-    need(plain.pop('join_paths_from_topic_name',topic) == topic and plain.pop('userEditedSQL','') == '',
-         'query_topic_or_sql_conflict')
+    # Native App creation requires these containers even when the feature is unused.
+    # Older plans omit them. Nothing else in the query is a transport default here.
+    for field, kind in (('calculations', list), ('column_totals', dict), ('fill_fields', list),
+                        ('pivots', list), ('row_totals', dict)):
+        if field in plain:
+            value = plain.pop(field)
+            need(type(value) is kind and not value, 'unsupported_query_' + field)
+    need(plain.pop('userEditedSQL','') == '', 'query_topic_or_sql_conflict')
+    return plain
+
+
+def semantic_fields(query, topic):
+    plain = semantic_query(query)
+    need(plain.pop('join_paths_from_topic_name',topic) == topic, 'query_topic_or_sql_conflict')
     need(text(plain.get('table')), 'semantic_base_required')
     fields = peer('standalone').query_fields(plain)
     for condition in plain.get('filters',{}).values():
@@ -533,7 +546,8 @@ def guard(root, P, *, surface, document_id, context, presentations, controls=Non
             continue
         tile_fields(tile)
         row = planned.get(key)
-        need(row is not None and tile['topicName'] == row['topic'] and same(row['tile']['query'],tile['query'],P),
+        need(row is not None and tile['topicName'] == row['topic'] and
+             same(semantic_query(row['tile']['query']), semantic_query(tile['query']), P),
              'saved_query_differs_from_selected_topic_plan')
         seen.add(key)
     need(seen == set(planned), 'planned_query_missing')

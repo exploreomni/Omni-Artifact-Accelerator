@@ -115,18 +115,69 @@ class IncrementalGateTests(unittest.TestCase):
         self.assertNotEqual(new['iteration_sha256'], old_review['iteration_sha256'])
         self.assertFalse(self.f.inspect()['release_ready'])
 
-    def test_unobserved_and_findings_remain_unresolved_across_multiple_carries(self):
+    def test_unobserved_prior_work_requires_a_fresh_reviewer_return(self):
         self.baseline(outcome='unobserved')
-        origin = self.f.inspect()['reviews']['qa']['event_sha256']
         self.freeze('two')
         for scope in I.SCOPES:
-            self.carry(scope)
+            self.assertIn('prior_finding_requires_fresh_review',
+                          self.f.inspect()['incremental_review']['scopes'][scope]['reasons'])
+            with self.assertRaisesRegex(ValueError, 'fresh_review_required'):
+                self.carry(scope)
         self.assertFalse(self.f.inspect()['release_ready'])
-        self.freeze('three')
-        new = self.carry('qa')['reviews']['qa']
-        self.assertEqual(new['origin_review_sha256'], origin)
-        self.assertEqual(new['outcome'], 'unobserved')
-        self.assertFalse(self.f.inspect()['review_assurance']['native_acceptance'])
+
+    def test_guarded_refreeze_retains_audit_history_and_compares_substantive_inputs(self):
+        self.adopt()
+        self.f.through()
+        workflow = P.routing_helper('delivery_workflow')
+        artifact, context = 'deliverables/primary.html', 'evidence/scoped-context.txt'
+        self.f.write(artifact, '<main>Original fictional comparison</main>')
+        self.f.write(context, 'Same filter and decision')
+        def freeze(ident):
+            deps = [{'id': 'primary', 'kind': 'artifact', 'scopes': sorted(I.SCOPES), 'path': artifact,
+                     'freshness': {'mode': 'immutable', 'checked_at': self.checked.isoformat(), 'expires_at': None}}]
+            for kind in sorted(I.REQUIRED_KINDS):
+                deps.append({'id': kind, 'kind': kind, 'scopes': sorted(I.SCOPES),
+                             'path': 'evidence/fixed-' + kind + '.txt',
+                             'freshness': {'mode': 'until', 'checked_at': self.checked.isoformat(),
+                                           'expires_at': self.expiry.isoformat()}})
+            path = 'evidence/manifest-' + ident + '.json'
+            self.f.write(path, I.manifest_template(self.root, {'dependencies': deps}, P=P))
+            with P.trusted_stage_provider(self.f.host):
+                workflow.freeze(self.root, {'id': ident, 'builders': ['builder-worker'], 'artifacts': [artifact],
+                                            'context': [context], 'review_manifest': path})
+        freeze('one')
+        self.f.reviews()
+        first = self.f.inspect()['candidate_sha256']
+        freeze('two')
+        self.assertNotEqual(first, self.f.inspect()['candidate_sha256'])
+        self.assertTrue(all(r['eligible'] for r in self.f.inspect()['incremental_review']['scopes'].values()))
+        for scope in I.SCOPES:
+            self.carry(scope)
+        self.assertTrue(self.f.inspect()['release_ready'])
+        self.f.write(context, 'Different selected filter')
+        freeze('three')
+        self.assertTrue(all(not r['eligible'] for r in self.f.inspect()['incremental_review']['scopes'].values()))
+
+    def test_new_create_destination_remains_a_dependency_for_every_scope(self):
+        path = 'evidence/candidate-history/first/candidate.json'
+        spec = 'contracts/create-spec.json'
+        snapshot = 'evidence/candidate-history/first/artifact-0.bin'
+        spec_hash = 'a' * 64
+        record = {'schema_version': 1, 'kind': 'analyst_candidate', 'id': 'first', 'previous': None,
+                  'project_id': 'fixture', 'context': {}, 'selected_intent': None, 'retained': {spec: snapshot},
+                  'artifacts': {spec: spec_hash}, 'artifact_roles': {spec: 'supporting'},
+                  'native_create_preflight': {'html': 'deliverables/app.html', 'spec': spec, 'request_sha256': 'c'*64}}
+        def inputs():
+            self.f.write(path, record)
+            deps = [{'kind': 'artifact', 'id': 'freeze-envelope', 'path': path,
+                     'sha256': P.digest((self.root / path).read_bytes())},
+                    {'kind': 'artifact', 'id': 'source', 'path': snapshot, 'sha256': record['artifacts'][spec]}]
+            with S._root_fd(self.root, P) as (_, fd):
+                return I.freeze_context(fd, 'first', deps, S, P)
+        before = inputs()
+        record['artifacts'][spec] = 'b' * 64
+        self.assertIn('freeze_inputs_sha256', before)
+        self.assertNotEqual(before, inputs())
 
     def test_changed_data_dependency_and_unknown_map_require_all_scopes(self):
         self.baseline()

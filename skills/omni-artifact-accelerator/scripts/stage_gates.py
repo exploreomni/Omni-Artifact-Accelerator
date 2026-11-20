@@ -212,7 +212,8 @@ def _fresh(fd, event, P):
         return False
 
 
-def _workflow_fresh(root, event, P, *, contexts=None, workflow=None, snapshot=None, incremental=False):
+def _workflow_fresh(root, event, P, *, contexts=None, workflow=None, snapshot=None, incremental=False,
+                    candidate_drift=()):
     """Compare phase-relevant startup/ownership bytes, not self-attested authority."""
     if 'workflow_quality_policy' not in event['payload']:
         return True  # historical events remain readable without invented startup
@@ -221,14 +222,20 @@ def _workflow_fresh(root, event, P, *, contexts=None, workflow=None, snapshot=No
         action = 'review' if event['stage'] == 'review_carry_forward' else event['stage']
         check = workflow.phase_check(root, action, _snapshot=snapshot)
         expected = (contexts or {}).get(event['sha256'], event['payload']['workflow_context'])
-        return check['status'] == 'ready' and (check['context'] == expected or
+        # A read-only inspection can still verify upstream events when the only
+        # failed phase check is the separately identified working candidate.
+        upstream_only = (bool(candidate_drift) and action in STAGES and action != 'design' and snapshot is not None
+                         and check['findings'] == ['selected_intent_inconsistent']
+                         and snapshot['state'].get('integrity_issue') == 'dependency_pins'
+                         and set(snapshot['state']['stale_paths']) == set(candidate_drift))
+        return (check['status'] == 'ready' or upstream_only) and (check['context'] == expected or
             incremental and action in STAGES and workflow.semantic_phase_context(check['context']) ==
             workflow.semantic_phase_context(expected))
     except (ValueError, OSError, KeyError, TypeError):
         return False
 
 
-def _context(root, fd, P):
+def _context(root, fd, P, *, changed_candidates=None):
     project = _json(_read(fd, 'project.json', P.MAX_BYTES), P)
     _need(type(project) is dict and project.get('kind') == 'omni_analyst_project' and
           type(project.get('schema_version')) is int and project['schema_version'] == 1 and
@@ -279,10 +286,18 @@ def _context(root, fd, P):
         journal = {'schema_version': 1, 'kind': KIND, 'project_id': project['id'],
                    'engagement': str(root), 'events': []}
     if required:
+        changed = []
         for expected in selected_dependencies:
             data = _read(fd, expected['path'], P.MAX_BYTES)
-            _need(len(data) == expected['bytes'] and P.digest(data) == expected['sha256'],
-                  'stage_gate_selected_dependency_changed')
+            if len(data) != expected['bytes'] or P.digest(data) != expected['sha256']:
+                _need(changed_candidates is not None, 'stage_gate_selected_dependency_changed')
+                changed.append(expected['path'])
+        if changed:
+            # A file that also defines requirements, branding or another input
+            # cannot be treated as an isolated edit to the implementation.
+            inputs = {record['spec_file']['path'], *P.intent_helper().references(spec, include_candidates=False)}
+            _need(inputs.isdisjoint(changed), 'stage_gate_selected_dependency_changed')
+            changed_candidates.extend(changed)
     # Genuine pre-policy work keeps role-scoped intent checks. A stale visual
     # contract cannot turn unrelated legacy source investigation into a new
     # product lifecycle. Net-new scope or any retained journal always stays gated.
@@ -339,12 +354,12 @@ def _discovery_snapshot(fd, project, payload, P, *, current=True):
     return helper.visual_report(spec), paths
 
 
-def _experience_options(root, fd, project, payload, P):
-    """Bind concrete comparable proposals; no inference of beauty or user preference."""
+def _concept_inputs(root, fd, project, options, P):
+    """Shared source checks for pre-review dispatch and the recorded options gate."""
     helper = P.routing_helper('product_intent')
     spec = _current_spec(fd, project, P)
     results, visuals, dependencies = [], [], {}
-    for option in payload['options']:
+    for option in options:
         path = option['evidence']['path']
         result = helper.validate_concept(root, path, spec, P)
         metadata = result['metadata']
@@ -368,12 +383,69 @@ def _experience_options(root, fd, project, payload, P):
           'stage_gate_comparable_concept_scope_required')
     _need(len({(normalize(r['structure']), normalize(r['primary_interaction'])) for r in results}) == 3,
           'stage_gate_distinct_product_structures_required')
+    return spec, results, dependencies
+
+
+def concept_preflight(root, request, P=None):
+    """Prepare a small reviewer packet from the current analytical and design evidence."""
+    P = _helpers(P)
+    _need(type(request) is dict and set(request) <= {'options', 'claims'} and
+          ('options' in request or not request), 'stage_gate_concept_preflight_request_invalid')
+    gate = P.stage_require(root, 'options')
+    with _root_fd(root, P) as (root, fd):
+        project, _, journal = _context(root, fd, P)
+        state = _replay(root, project, journal, P)
+        _need(gate['tail_sha256'] == state['tail'], 'stage_gate_evidence_changed_during_preflight')
+        sources = {stage: state['current'][stage]['payload']['evidence'] for stage in ('analysis', 'narrative', 'brief')}
+        packet = {'tail_sha256': state['tail'], 'analytical_and_design_evidence': sources,
+                  'creative_review_complete': False, 'rendered_verified': False, 'choice_recorded': False}
+        if not request:
+            return {**packet, 'status': 'concept_inputs_ready'}
+        # Validate the ordinary options request shape without creating an event.
+        _payload_shape('options', {'options': request['options'], 'evidence': {'comparison': 'evidence/pending.json'}}, saved=False)
+        options = [dict(o, evidence=_pin(fd, o['evidence'], P)) for o in request['options']]
+        _, concepts, _ = _concept_inputs(root, fd, project, options, P)
+        proofs = request.get('claims', [])
+        _need(type(proofs) is list and len(proofs) <= 128, 'stage_gate_invalid_concept_claims')
+        labels = {c['option_id']: {s for surface in c.get('surface_metadata', [c])
+                                  for s in surface['representative_labels']} for c in concepts}
+        for row in proofs:
+            _need(type(row) is dict and set(row) == {'option_id', 'label', 'evidence_role', 'excerpt'}
+                  and _ident(row['option_id']) and _text(row['label'], 512)
+                  and row['label'] in labels.get(row['option_id'], ()) and _text(row['excerpt'])
+                  and row['evidence_role'] in ('expectations', 'insights', 'profile', 'queries'),
+                  'stage_gate_concept_claim_or_label_missing')
+            pin = sources['analysis'][row['evidence_role']]
+            raw = _read(fd, pin['path'], P.MAX_BYTES)
+            _need(P.digest(raw) == pin['sha256'] and row['excerpt'].encode() in raw,
+                  'stage_gate_concept_claim_excerpt_missing')
+        return {**packet, 'status': 'ready_for_creative_review', 'linked_claim_count': len(proofs), 'concepts': [
+                    {'id': o['id'], 'manifest': o['evidence'], 'visuals': c['representative_artifacts'],
+                     'scope': c['analytical_scope'], 'structure': c['structure'], 'interaction': c['primary_interaction']}
+                    for o, c in zip(options, concepts)]}
+
+
+def _experience_options(root, fd, project, payload, P):
+    spec, results, dependencies = _concept_inputs(root, fd, project, payload['options'], P)
     for pin in P.routing_helper('experience_review').comparison(
             root, payload['evidence']['comparison']['path'], payload['options'], results, spec, P,
             expected_reviewer=payload.get('workflow_context', {}).get('responsibilities', {}).get('creative_review', {}).get('worker')):
         _need(_pin(fd, pin['path'], P) == pin, 'stage_gate_comparison_changed')
         dependencies[pin['path']] = pin
     return [dependencies[path] for path in sorted(dependencies)]
+
+
+def review_requests(root, P=None):
+    """Blank reviewer-owned returns for the current frozen candidate and remaining scopes."""
+    P = _helpers(P)
+    report = P.stage_require(root, 'review')
+    candidate = report['candidate']
+    _need(candidate is not None, 'stage_gate_candidate_required')
+    return {'candidate_sha256': report['candidate_sha256'], 'requests': [
+        {'stage': 'review', 'scope': scope, 'iteration_sha256': candidate['event_sha256'],
+         'candidate_sha256': report['candidate_sha256'], 'reviewer': None, 'outcome': None,
+         'basis': None, 'evidence': {'review': None}}
+        for scope in REVIEW_SCOPES if scope not in report['reviews']]}
 
 
 def _refresh_handoff(fd, project, payload, P):
@@ -432,15 +504,30 @@ def _experience_handoff(root, fd, project, payload, state, P):
 
 
 
+def _stage_prefix(names):
+    return bool(names) and set(names) == set(STAGES[:len(names)])
+
+
+def _same_startup_source(old, new):
+    revision = old.get('git', {}).get('head')
+    before, after = old.get('source_expectation', {}), new.get('source_expectation', {})
+    return (isinstance(revision, str) and re.fullmatch(r'[a-f0-9]{40}|[a-f0-9]{64}', revision)
+            and revision == new.get('git', {}).get('head')
+            and all(before.get(k) == after.get(k) for k in ('kind', 'revision', 'manifest_sha256'))
+            and all(old.get(k) == new.get(k) for k in
+                    ('package_files', 'source_mode', 'host', 'entrypoint', 'execution_path'))
+            and old.get('brief_pins') == new.get('brief_pins'))
+
+
 def _requalification(root, fd, project, request, state, P, provider):
     """Requalify exact prior A–E events after a truthful source startup, never F."""
     _need(request['expected_tail_sha256'] == state['tail'], 'stage_gate_requalification_tail_mismatch')
     current = state['current']
-    _need(set(current) == set(STAGES) and all(_fresh(fd, current[s], P) for s in STAGES),
+    _need(_stage_prefix(current) and all(_fresh(fd, event, P) for event in current.values()),
           'stage_gate_requalification_current_evidence_required')
-    _need(all(current[s]['payload'].get('workflow_quality_policy') == QUALITY_POLICY for s in STAGES),
+    _need(all(event['payload'].get('workflow_quality_policy') == QUALITY_POLICY for event in current.values()),
           'stage_gate_requalification_prior_quality_context_required')
-    _need(current['design']['payload']['selected_intent'] == project.get('design_intent'),
+    _need('design' not in current or current['design']['payload']['selected_intent'] == project.get('design_intent'),
           'stage_gate_requalification_selected_intent_changed')
     workflow = P.routing_helper('delivery_workflow')
     run, pointer = workflow.active_run(root, project)
@@ -454,25 +541,32 @@ def _requalification(root, fd, project, request, state, P, provider):
         dependencies[pin['path']] = pin
         visited.add(pin['path'])
         retained = _json(_read(fd, pin['path'], P.MAX_BYTES), P)
+        if len(current) < len(STAGES) and pointer == request['previous_start']:
+            _need(_same_startup_source(retained, run), 'stage_gate_prefix_source_changed')
         brief = _pin(fd, retained['brief_retained'], P)
         dependencies[brief['path']] = brief
         pointer = retained.get('previous_start')
-    _discovery_snapshot(fd, project, current['brief']['payload'], P)
-    _need(_experience_options(root, fd, project, current['options']['payload'], P) ==
-          current['options']['payload']['experience_dependencies'], 'stage_gate_requalification_options_changed')
-    _need(_experience_handoff(root, fd, project, current['design']['payload'], state, P) ==
-          current['design']['payload']['experience_dependencies'], 'stage_gate_requalification_handoff_changed')
-    choice = current['choice']['payload']
+    if 'brief' in current:
+        _discovery_snapshot(fd, project, current['brief']['payload'], P)
+    if 'options' in current:
+        _need(_experience_options(root, fd, project, current['options']['payload'], P) ==
+              current['options']['payload']['experience_dependencies'], 'stage_gate_requalification_options_changed')
+    if 'design' in current:
+        _need(_experience_handoff(root, fd, project, current['design']['payload'], state, P) ==
+              current['design']['payload']['experience_dependencies'], 'stage_gate_requalification_handoff_changed')
+    choice = current.get('choice', {}).get('payload')
     if state['selection_policy'] is not None:
         _need(_fresh(fd, state['selection_policy'], P), 'stage_gate_stale_selection_policy')
-        _conversation_response(fd, choice, P)
-    else:
+        if choice is not None:
+            _conversation_response(fd, choice, P)
+    elif choice is not None:
         subject = _subject(provider, _binding(root, project, current['options'], choice['option_id']), choice['receipt_ref'])
         _need(subject is not None and subject == choice['subject'], 'stage_gate_trusted_choice_unverified')
     contexts = {}
-    for stage in STAGES:
-        event = current[stage]
+    for stage, event in current.items():
         previous_context = state['requalified_contexts'].get(event['sha256'], event['payload']['workflow_context'])
+        if len(current) < len(STAGES):
+            _need(previous_context.get('run') == request['previous_start'], 'stage_gate_prefix_startup_changed')
         contexts[stage] = {'event_sha256': event['sha256'],
                           'workflow_context': workflow.requalify_context(root, previous_context, stage)}
     return dict(request, workflow_quality_policy=QUALITY_POLICY, phase_contexts=contexts,
@@ -515,7 +609,7 @@ def _payload_shape(stage, payload, saved=True):
         _relative(pointer['path'])
         if saved:
             _need(payload['workflow_quality_policy'] == QUALITY_POLICY and
-                  type(payload['phase_contexts']) is dict and set(payload['phase_contexts']) == set(STAGES),
+                  type(payload['phase_contexts']) is dict and _stage_prefix(payload['phase_contexts']),
                   'stage_gate_invalid_requalification_contexts')
             for value in payload['phase_contexts'].values():
                 _need(type(value) is dict and set(value) == {'event_sha256', 'workflow_context'} and
@@ -558,6 +652,14 @@ def _payload_shape(stage, payload, saved=True):
         expected.add('selected_intent')
     if saved and stage == 'candidate':
         expected.update({'prior_iteration_sha256', 'prior_reviews_sha256', 'candidate_sha256'})
+        if 'native_create_preflight' in payload:
+            expected.add('native_create_preflight')
+            receipt = payload['native_create_preflight']
+            if receipt is not None:
+                _need(type(receipt) is dict and set(receipt) == {'html', 'spec', 'request_sha256'}
+                      and _hash(receipt['request_sha256']), 'stage_gate_invalid_native_preflight')
+                _relative(receipt['html'])
+                _relative(receipt['spec'])
     if stage == 'candidate' and 'review_manifest' in payload:
         expected.add('review_manifest')
         if saved:
@@ -727,7 +829,7 @@ def _replay(root, project, journal, P):
             predecessor = previous
             selection_policy = event
         elif stage == 'workflow_requalification':
-            _need(all(s in current for s in STAGES) and
+            _need(_stage_prefix(current) and set(payload['phase_contexts']) == set(current) and
                   (last_candidate is None or _complete(last_reviews)), 'stage_gate_requalification_predecessors_required')
             _need(payload['expected_tail_sha256'] == previous, 'stage_gate_requalification_tail_mismatch')
             for name, value in payload['phase_contexts'].items():
@@ -848,7 +950,7 @@ def _subject(provider, binding, receipt_ref):
     return subject if _text(subject, 256) else None
 
 
-def _report(root, fd, project, required, state, P, provider):
+def _report(root, fd, project, required, state, P, provider, *, changed_candidates=()):
     report = {'required': required, 'policy': POLICY if required else None,
               'status': 'not_applicable', 'next_stage': None, 'completed_stages': [], 'stage_bindings': {},
               'findings': [], 'choice_bindings': {}, 'candidate': None, 'candidate_sha256': None, 'reviews': {},
@@ -861,6 +963,7 @@ def _report(root, fd, project, required, state, P, provider):
               'data_refresh': {'status': 'not_assessed', 'version': None},
               'app_refresh_required': 'app' in project['surfaces'],
               'workflow_quality_policy': project.get('workflow_quality_policy'),
+              'startup_required': project.get('workflow_quality_policy') == QUALITY_POLICY and not project.get('execution_start'),
               'historical_selected_continuation': (project.get('workflow_quality_policy') is None and
                                                     project.get('design_intent') is not None),
               'experience_quality': {'status': 'not_assessed'},
@@ -900,6 +1003,8 @@ def _report(root, fd, project, required, state, P, provider):
             # phase_check re-derives the failure; no cross-request cache/fallback.
             pass
     for stage in STAGES:
+        if stage == 'design' and changed_candidates:
+            break
         event = current.get(stage)
         if event is None:
             report['findings'].append('missing_stage:' + stage)
@@ -916,7 +1021,8 @@ def _report(root, fd, project, required, state, P, provider):
             break
         if not _workflow_fresh(root, event, P, contexts=state['requalified_contexts'],
                                workflow=workflow, snapshot=snapshot,
-                               incremental=report['incremental_review']['mode'] == 'enforce'):
+                               incremental=report['incremental_review']['mode'] == 'enforce',
+                               candidate_drift=changed_candidates):
             report['findings'].append('stale_workflow_context:' + stage)
             report['next_stage'] = stage
             break
@@ -1010,6 +1116,23 @@ def _report(root, fd, project, required, state, P, provider):
     if 'options' in report['completed_stages']:
         report['choice_bindings'] = {o['id']: _binding(root, project, current['options'], o['id'], state['selection_policy'])
                                     for o in current['options']['payload']['options']}
+    if 'choice' in report['completed_stages']:
+        report['selected_option_id'] = current['choice']['payload']['option_id']
+    # A new startup may make a retained prefix stale. Offer its existing journal
+    # operation only after checking its source, evidence and phase bindings.
+    if (not changed_candidates and len(current) < len(STAGES) and snapshot and
+            report['findings'] == ['stale_workflow_context:access'] and
+            snapshot['run'].get('previous_start') and state['last_candidate'] is None):
+        request = {'expected_tail_sha256': state['tail'], 'previous_start': snapshot['run']['previous_start']}
+        try:
+            _requalification(root, fd, project, request, state, P, provider)
+        except (ValueError, KeyError, TypeError, OSError):
+            pass  # The recorded access action still needs attention.
+        else:
+            report['next_stage'] = 'workflow_requalification'
+            report['resume_request'] = dict(request, stage='workflow_requalification')
+    if changed_candidates:
+        return report  # inspection reports recovery; design and F have no current binding
     last = state['last_candidate']
     if last:
         dependencies = [last, *state['last_reviews'].values(), *state['iteration_dependencies']]
@@ -1063,21 +1186,65 @@ def _report(root, fd, project, required, state, P, provider):
     return report
 
 
+def _host_checkpoint(report):
+    """Replace a host's cached checklist from this read of the journal."""
+    next_stage = report.get('next_stage')
+    actions = {'options': 'prepare_three_options', 'design': 'detail_selected_design',
+               'candidate': 'prepare_candidate', 'review': 'complete_candidate_reviews',
+               'workflow_requalification': 'verify_recorded_prefix',
+               'repair_selected_candidate': 'repair_selected_candidate', 'repair_state': 'repair_evidence'}
+    waiting = (next_stage == 'choice' and report.get('findings') == ['missing_stage:choice']
+               and len(report.get('choice_bindings', {})) == 3)
+    if waiting:
+        action = 'request_design_choice'
+    elif report.get('startup_required') and next_stage == 'access':
+        action = 'record_startup'
+    elif next_stage == 'candidate' and report.get('candidate') and report.get('status') != 'blocked':
+        action = 'revise_candidate'
+    elif report.get('release_ready'):
+        action = 'check_release_authority'
+    elif not report.get('required'):
+        action = 'use_existing_engagement'
+    elif report.get('status') == 'blocked' and next_stage not in ('workflow_requalification', 'repair_selected_candidate'):
+        action = 'resolve_stage_findings'
+    else:
+        action = actions.get(next_stage, 'complete_stage')
+    candidate = report.get('candidate') or {}
+    return {'action': action, 'next_stage': next_stage, 'tail_sha256': report.get('tail_sha256'),
+            'completed_stages': list(report.get('completed_stages', ())),
+            'selected_option_id': report.get('selected_option_id'),
+            'pending_human_decision': 'design_choice' if waiting else None,
+            'iteration_id': candidate.get('iteration_id'), 'candidate_sha256': report.get('candidate_sha256'),
+            'pending_review_scopes': [scope for scope in REVIEW_SCOPES
+                                      if candidate and scope not in report.get('reviews', {})]}
+
+
 def inspect(root, *, P=None, provider=None):
     """Read current integrity/readiness; invalid or missing state never means ready."""
     P = _helpers(P)
     try:
         with _root_fd(root, P) as (root, fd):
-            project, required, journal = _context(root, fd, P)
+            changed = []
+            project, required, journal = _context(root, fd, P, changed_candidates=changed)
             state = _replay(root, project, journal, P)
-            return _report(root, fd, project, required, state, P, provider)
+            report = _report(root, fd, project, required, state, P, provider, changed_candidates=changed)
+            if changed:
+                choice = state['current'].get('choice')
+                report.update(status='blocked', next_stage='repair_selected_candidate',
+                              recovery={'changed_paths': changed, 'journal_events': len(journal['events']),
+                                        'recorded_option_id': choice['payload']['option_id'] if choice else None})
+                report['findings'].append('stage_gate_selected_candidate_changed')
+            report['host_checkpoint'] = _host_checkpoint(report)
+            return report
     except (ValueError, OSError, KeyError, TypeError, AttributeError, RecursionError):
-        return {'required': True, 'policy': POLICY, 'status': 'invalid', 'next_stage': 'repair_state',
+        report = {'required': True, 'policy': POLICY, 'status': 'invalid', 'next_stage': 'repair_state',
                 'completed_stages': [], 'stage_bindings': {}, 'findings': ['stage_gate_invalid_state'], 'choice_bindings': {},
                 'candidate': None, 'candidate_sha256': None, 'reviews': {}, 'release_ready': False, 'claims_authenticated': False,
                 'selection_policy': None, 'selection_policy_event_sha256': None, 'tail_sha256': None,
                 'choice_assurance': None, 'choice_authenticated': False,
                 'external_mutations_authorized': False, 'limits': list(LIMITS)}
+        report['host_checkpoint'] = _host_checkpoint(report)
+        return report
 
 
 def candidate_commit_status(root, iteration_id, *, P=None):
@@ -1104,6 +1271,7 @@ def _require(report, action, provider):
     if not report['required']:
         return
     _need(report['status'] != 'invalid', 'stage_gate_invalid_state')
+    _need('stage_gate_selected_candidate_changed' not in report['findings'], 'stage_gate_selected_candidate_changed')
     _need('stale_evidence:selection_policy' not in report['findings'], 'stage_gate_stale_selection_policy')
     _need('stale_incremental_policy_evidence' not in report['findings'], 'stage_gate_stale_incremental_policy')
     if action == 'incremental_policy':
@@ -1236,6 +1404,7 @@ def record(root, request, *, P=None, provider=None):
                           'stage_gate_review_candidate_mismatch')
                 before['recorded'] = {'stage': stage, 'sequence': existing['sequence'],
                                       'sha256': existing['sha256'], 'reused': True}
+                before['host_checkpoint'] = _host_checkpoint(before)
                 return before
         if stage not in {'selection_policy', 'workflow_requalification', 'incremental_policy'}:
             phase = P.routing_helper('delivery_workflow').require_phase(root, 'review' if stage == 'review_carry_forward' else stage)
@@ -1321,6 +1490,11 @@ def record(root, request, *, P=None, provider=None):
             _refresh_handoff(fd, project, payload, P)
         if stage == 'candidate':
             payload['artifacts'] = [_pin(fd, p, P) for p in payload['artifacts']]
+            envelope = 'evidence/candidate-history/' + payload['iteration_id'] + '/candidate.json'
+            paths = {p['path']: p['sha256'] for p in payload['artifacts']}
+            if 'app' in project['surfaces'] and envelope not in paths:
+                payload['native_create_preflight'] = P.routing_helper('delivery_workflow').preflight_new_app(
+                    root, project, paths)
             payload['candidate_sha256'] = _candidate_hash(payload['artifacts'], P)
             last = state['last_candidate']
             payload['prior_iteration_sha256'] = last['sha256'] if last else None
@@ -1331,6 +1505,8 @@ def record(root, request, *, P=None, provider=None):
                     fd, payload['review_manifest'], payload['artifacts'], P.routing_helper('stage_gates'), P)
                 payload['review_context'] = {'stages': {s: state['current'][s]['sha256'] for s in STAGES},
                                              'workflow': payload.get('workflow_context')}
+                payload['review_context'].update(_incremental().freeze_context(
+                    fd, payload['iteration_id'], payload['review_dependencies'], P.routing_helper('stage_gates'), P))
         if stage == 'review' and P.routing_helper('product_intent').experience_context(_current_spec(fd, project, P)) is not None:
             dependencies = P.routing_helper('experience_review').fit(root, payload['evidence']['review']['path'],
                 _current_spec(fd, project, P), state['candidate']['payload'], payload, P)
@@ -1353,7 +1529,7 @@ def record(root, request, *, P=None, provider=None):
         updated = _replay(root, project, journal, P)
         report = _report(root, fd, project, True, updated, P, provider)
         _need((report['workflow_requalification']['event_sha256'] == event['sha256'] and
-               report['completed_stages'] == list(STAGES) and report['candidate'] is None)
+               report['completed_stages'] == list(STAGES[:len(payload['phase_contexts'])]) and report['candidate'] is None)
               if stage == 'workflow_requalification' else
               report['incremental_review']['policy_event_sha256'] == event['sha256'] if stage == 'incremental_policy' else
               report['selection_policy_event_sha256'] == event['sha256'] if stage == 'selection_policy' else
@@ -1366,4 +1542,5 @@ def record(root, request, *, P=None, provider=None):
             _need(not _incremental().freshness_findings(updated['candidate']), 'stage_gate_evidence_changed_during_record')
         _atomic(fd, journal, P)
         report['recorded'] = {'stage': stage, 'sequence': event['sequence'], 'sha256': event['sha256']}
+        report['host_checkpoint'] = _host_checkpoint(report)
         return report

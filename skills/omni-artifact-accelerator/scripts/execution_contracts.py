@@ -4,8 +4,8 @@ import copy
 OPERATIONS = {
     'execution_prepare': ('work', 'context', 'preflight', 'claim', 'recipe'),
     'execution_record': ('dispatch', 'checkpoint', 'usage', 'blocker', 'review'),
-    'execution_lifecycle': ('host_entry_check', 'host_entry_prepare', 'entry_prepare', 'entry_check', 'start', 'guidance', 'phase', 'stage', 'freeze', 'product_brief', 'product_check', 'intent_select', 'intent_check'),
-    'execution_review': ('policy', 'impact', 'carry', 'manifest'),
+    'execution_lifecycle': ('host_entry_check', 'host_entry_prepare', 'entry_prepare', 'entry_check', 'start', 'guidance', 'phase', 'stage', 'concept_preflight', 'freeze', 'product_brief', 'product_check', 'intent_select', 'intent_check'),
+    'execution_review': ('policy', 'impact', 'carry', 'manifest', 'requests'),
     'execution_qualification': ('catalog', 'record', 'check'),
     'execution_assembly': ('build', 'verify', 'compare'),
     'execution_analysis': ('normalize', 'compare', 'read'),
@@ -34,6 +34,8 @@ FIELDS = {
     ('execution_record', 'blocker'): (['attempt_id', 'event_id', 'error_family', 'detail'], []),
     ('execution_record', 'review'): (['attempt_id', 'action'], ['changes', 'dependency_state', 'result', 'correction_attempt_id']),
     ('execution_lifecycle', 'phase'): (['action'], []),
+    ('execution_lifecycle', 'concept_preflight'): ([], ['options', 'claims']),
+    ('execution_lifecycle', 'freeze'): (['id', 'artifacts', 'context'], ['builders', 'supporting_artifacts', 'review_manifest', 'create_spec']),
     ('execution_lifecycle', 'product_brief'): (['output'], []),
     ('execution_lifecycle', 'intent_select'): (['spec', 'output'], []),
     ('execution_analysis', 'normalize'): (['source', 'layout', 'source_fields', 'bindings', 'output'], []),
@@ -44,11 +46,11 @@ FIELDS = {
     ('execution_assembly', 'verify'): (['record'], []),
     ('execution_assembly', 'compare'): (['previous', 'current'], []),
 }
-NO_REQUEST = {('execution_review', 'impact'), ('execution_qualification', 'catalog'),
+NO_REQUEST = {('execution_review', 'impact'), ('execution_review', 'requests'), ('execution_qualification', 'catalog'),
     ('execution_efficiency', 'report'), ('execution_efficiency', 'configuration'), ('execution_efficiency', 'local_metrics'),
     ('execution_lifecycle', 'product_check'), ('execution_lifecycle', 'intent_check')}
 OUTPUT_REQUIRED = {('execution_prepare', 'context'), ('execution_qualification', 'record')}
-LIST_FIELDS = {'inputs', 'decisions', 'constraints', 'stop_conditions', 'shared_constraint_ids', 'outputs', 'source_fields', 'bindings', 'changes', 'routes'}
+LIST_FIELDS = {'inputs', 'decisions', 'constraints', 'stop_conditions', 'shared_constraint_ids', 'outputs', 'source_fields', 'bindings', 'changes', 'routes', 'artifacts', 'builders', 'supporting_artifacts', 'options', 'claims'}
 OBJECT_FIELDS = {'assignment', 'disclosure', 'work', 'context', 'usage', 'delta', 'comparison', 'provenance', 'host', 'startup', 'runtime_observation', 'host_entry', 'source_expectation'}
 INTEGER_FIELDS = {'schema_version', 'max_packet_bytes', 'elapsed_ms', 'host_instruction_bytes'}
 NULLABLE = {'observed_model', 'observed_effort', 'requested_model', 'requested_effort', 'fallback_reason', 'usage', 'elapsed_ms', 'host_instruction_bytes', 'changes'}
@@ -97,6 +99,10 @@ def validate(name, operation, value):
     if set(value) - set(required) - set(optional):
         fail('unexpected_fields')
     for key, item in value.items():
+        if name == 'execution_lifecycle' and operation == 'freeze' and key == 'context':
+            if type(item) is not list:
+                fail('array_required', key)
+            continue
         if item is None and key in NULLABLE:
             continue
         if key in FLEXIBLE:
@@ -108,6 +114,10 @@ def validate(name, operation, value):
 
 def diagnostic(name, operation, error):
     message = error.args[0] if error and error.args and type(error.args[0]) is str else ''
+    if name == 'execution_lifecycle' and operation in ('freeze', 'stage') and type(error).__name__ == 'CreateSchemaError':
+        # Return only diagnostics constructed by the bounded first-party validator.
+        return {'code': 'execution_native_create_schema', 'field': 'queryPresentations',
+                'expected': message, 'next_action': 'Correct the local specification and its consumer bindings, then repeat this preflight.'}
     remedies = {
         'stage_gate_experience_intent_required': ('experience_discovery', 'intent', 'Recover the actual task, promise and first/repeat-use outcome in canonical experience intent; then record the D checkpoint. See experience-continuity.md.'),
         'stage_gate_experience_intent_checkpoint_required': ('experience_checkpoint', 'intent', 'Record adopted experience intent at D in the same engagement; preserve the prior journal and actual decisions.'),

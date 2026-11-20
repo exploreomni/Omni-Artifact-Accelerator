@@ -415,6 +415,23 @@ Re-record the affected stage and its dependents. New options require a new human
 selection for their exact binding. The design checkpoint also binds the selected
 canonical intent and its pinned dependencies; changing design/brand inputs blocks
 authoring. Packets pin completed stage events and become stale when those change.
+When selecting a candidate, point `candidate_path` at a versioned snapshot.
+Keep a separate editable copy for the next iteration.
+
+If an edit changes only the bytes of a selected working candidate,
+`stage-status` returns `repair_selected_candidate`. Read
+`recovery.changed_paths` and inspect the edit. `recovery.journal_events` counts
+the retained events. `recovery.recorded_option_id` identifies the saved answer;
+reuse it only when `choice` appears in `completed_stages` after revalidation.
+Other findings can identify an earlier checkpoint that also needs attention.
+
+For an intended revision, preserve the revised file at a versioned path, select
+the updated spec with `intent-select`, then read `stage-status` and record the
+design checkpoint it requests. Freeze and review the revised candidate through
+the existing workflow. For an unintended edit, restore the exact retained bytes
+and recheck. An inspection never updates the pins. Keep the package checkout
+stable throughout an engagement; make concurrent package changes in a separate
+checkout.
 
 Candidate and review snapshots are immutable history. Finish and record the four
 reviews before replacing an iteration or changing its upstream context. If an

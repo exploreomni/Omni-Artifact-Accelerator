@@ -1,0 +1,154 @@
+"""Local onboarding for the official Omni CLI. Discovery and planning are read-only.
+
+Staging checks a host-acquired archive and writes one inert payload. The host owns
+permission, acquisition, installation and execution. No network or subprocess here.
+"""
+import argparse
+import gzip
+import hashlib
+import io
+import json
+import os
+from pathlib import Path
+import platform
+import re
+import shutil
+import stat
+import tarfile
+import zipfile
+
+
+REPOSITORY = "https://github.com/exploreomni/cli"
+RELEASE_API = "https://api.github.com/repos/exploreomni/cli/releases/latest"
+MAX_BYTES = 128 * 1024 * 1024
+
+
+def local_setup(route):
+    if route != "cli":
+        return {"status": "cli_not_needed", "route": route}
+    system = {"Darwin": "darwin", "Linux": "linux", "Windows": "windows"}.get(platform.system())
+    machine = platform.machine().lower()
+    arch = {"x86_64": "amd64", "amd64": "amd64", "arm64": "arm64", "aarch64": "arm64"}.get(machine)
+    member = "omni.exe" if system == "windows" else "omni"
+    destination = Path.home() / ".local" / "bin" / member
+    details = {"os": system, "arch": arch, "member": member, "destination": str(destination)}
+    configured = os.environ.get("OAA_OMNI_CLI_PATH")
+    if configured:
+        return dict(details, status="inspect_configured_cli", path=configured)
+    if any(os.environ.get(key) for key in ("OAA_OMNI_CLI_SHA256", "OAA_OMNI_RUNTIME_PATH", "OAA_OMNI_RUNTIME_SHA256")):
+        return dict(details, status="inspect_incomplete_pin")
+    # Inventory only. PATH can contain an unrelated program with the same name.
+    found = shutil.which(member)
+    if found or os.path.lexists(destination):
+        return dict(details, status="inspect_existing_cli", path=found or str(destination))
+    if not system or not arch or (system == "windows" and arch != "amd64"):
+        return dict(details, status="unsupported_platform")
+    if any(parent.is_symlink() or (parent.exists() and not parent.is_dir())
+           for parent in destination.parents):
+        return dict(details, status="inspect_destination")
+    return dict(details, status="prepare_install_offer", release_metadata_url=RELEASE_API)
+
+
+def read_bounded(path, limit):
+    if not path.is_file() or path.stat().st_size > limit:
+        raise ValueError("Expected a regular file within the input size limit")
+    with path.open("rb") as stream:
+        data = stream.read(limit + 1)
+    if len(data) > limit:
+        raise ValueError("Input exceeds size limit")
+    return data
+
+
+def release_plan(setup, release):
+    if setup["status"] != "prepare_install_offer":
+        raise ValueError("Resolve the current setup status before offering installation")
+    tag = release.get("tag_name")
+    if (not isinstance(tag, str) or not re.fullmatch(r"v[0-9]+\.[0-9]+\.[0-9]+", tag)
+            or release.get("draft") is not False or release.get("prerelease") is not False
+            or release.get("html_url") != f"{REPOSITORY}/releases/tag/{tag}"):
+        raise ValueError("Expected stable release metadata from exploreomni/cli")
+    suffix = "zip" if setup["os"] == "windows" else "tar.gz"
+    filename = f"omni_{tag[1:]}_{setup['os']}_{setup['arch']}.{suffix}"
+    url = f"{REPOSITORY}/releases/download/{tag}/{filename}"
+    listing = release.get("assets")
+    if not isinstance(listing, list):
+        raise ValueError("Expected a release asset list")
+    assets = [a for a in listing if isinstance(a, dict) and a.get("name") == filename]
+    if len(assets) != 1 or assets[0].get("browser_download_url") != url:
+        raise ValueError("Expected exactly one matching official release archive")
+    digest = assets[0].get("digest")
+    if not isinstance(digest, str) or not re.fullmatch("sha256:[a-f0-9]{64}", digest):
+        raise ValueError("An official SHA-256 release asset digest is required")
+    plan = {"status": "awaiting_host_permission", "tag": tag, "archive": filename,
+            "url": url, "archive_sha256": digest[7:], "member": setup["member"],
+            "destination": setup["destination"], "actions": ["acquire", "verify", "install_new", "version_check"]}
+    plan["plan_sha256"] = hashlib.sha256(json.dumps(plan, sort_keys=True).encode()).hexdigest()
+    return plan
+
+
+def stage_archive(plan, expected_plan, archive, directory):
+    if plan["plan_sha256"] != expected_plan:
+        raise ValueError("Release or destination changed since the install offer")
+    raw = read_bounded(archive, MAX_BYTES)
+    if hashlib.sha256(raw).hexdigest() != plan["archive_sha256"]:
+        raise ValueError("Archive SHA-256 differs from the selected release")
+    member = plan["member"]
+    if plan["archive"].endswith(".zip"):
+        with zipfile.ZipFile(io.BytesIO(raw)) as pack:
+            entries = [e for e in pack.infolist() if e.filename == member]
+            if (len(entries) != 1 or stat.S_IFMT(entries[0].external_attr >> 16) not in (0, stat.S_IFREG)
+                    or not 0 < entries[0].file_size <= MAX_BYTES):
+                raise ValueError("Expected a single regular CLI binary")
+            payload = pack.read(entries[0])
+    else:
+        # Bound the expanded tar, including non-binary members and padding.
+        tar_limit = MAX_BYTES + 8 * 1024 * 1024
+        with gzip.GzipFile(fileobj=io.BytesIO(raw)) as compressed:
+            unpacked = compressed.read(tar_limit + 1)
+        if len(unpacked) > tar_limit:
+            raise ValueError("Expanded release archive exceeds size limit")
+        with tarfile.open(fileobj=io.BytesIO(unpacked), mode="r:") as pack:
+            entries = [e for e in pack if e.name == member]
+            if len(entries) != 1 or not entries[0].isfile() or not 0 < entries[0].size <= MAX_BYTES:
+                raise ValueError("Expected a single regular CLI binary")
+            payload = pack.extractfile(entries[0]).read()
+    if not directory.is_absolute() or directory.resolve(strict=True) != directory or not directory.is_dir():
+        raise ValueError("Use a canonical private staging directory")
+    if os.name == "posix" and (directory.stat().st_uid != os.getuid() or directory.stat().st_mode & 0o077):
+        raise ValueError("Staging requires a user-owned private directory")
+    path = directory / "omni.payload"
+    with os.fdopen(os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY | getattr(os, "O_BINARY", 0), 0o600), "wb") as out:
+        out.write(payload)
+    return {"status": "verified_payload_staged", "path": str(path),
+            "binary_sha256": hashlib.sha256(payload).hexdigest(), "destination": plan["destination"]}
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--route", choices=("cli", "mcp", "api", "offline"), required=True)
+    parser.add_argument("--release-metadata", type=Path, help="Official release API JSON obtained by the host")
+    parser.add_argument("--archive", type=Path, help="Archive acquired by the authorized host")
+    parser.add_argument("--stage-in", type=Path, help="Private directory on the destination filesystem")
+    parser.add_argument("--plan-sha256", help="Bind staging to the exact reviewed plan (integrity only)")
+    args = parser.parse_args()
+    staging = (args.archive, args.stage_in, args.plan_sha256)
+    if any(staging) and not (all(staging) and args.release_metadata):
+        parser.error("Staging requires --release-metadata, --archive, --stage-in and --plan-sha256 together")
+    if args.release_metadata and args.route != "cli":
+        parser.error("Release setup applies only to the CLI route")
+    try:
+        result = local_setup(args.route)
+        if args.release_metadata:
+            release = json.loads(read_bounded(args.release_metadata, 2 * 1024 * 1024))
+            if not isinstance(release, dict):
+                raise ValueError("Expected a release object")
+            result = release_plan(result, release)
+            if args.archive:
+                result = stage_archive(result, args.plan_sha256, args.archive, args.stage_in)
+        print(json.dumps(result, indent=2))
+    except (ValueError, TypeError, KeyError, OSError, EOFError, tarfile.TarError, zipfile.BadZipFile) as exc:
+        parser.exit(2, f"CLI setup: {exc}\n")
+
+
+if __name__ == "__main__":
+    main()

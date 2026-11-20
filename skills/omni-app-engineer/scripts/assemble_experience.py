@@ -176,7 +176,7 @@ def _assemble(root, manifest_path):
     return html, receipt
 
 
-def build(root, manifest_path, output, *, builders=None, iteration_id=None):
+def build(root, manifest_path, output, *, builders=None, iteration_id=None, create_spec=None):
     root = Path(root).resolve(strict=True)
     P = project_helper(root)
     gates = P.stage_require(root, 'build')
@@ -227,8 +227,14 @@ def build(root, manifest_path, output, *, builders=None, iteration_id=None):
                 created.append(path)
                 stream.write(value)
         if gates['required']:
+            if create_spec is None and (root / 'contracts/create-spec.json').is_file():
+                create_spec = 'contracts/create-spec.json'
+            companions = [create_spec] if create_spec is not None else []
+            if companions and P.load_project(root)[1].get('app_release_policy'):
+                companions.append('contracts/native-data-consumers.json')
             frozen = W.freeze(root, {'id': iteration_id, 'builders': builders,
-                'artifacts': [(destination / 'index.html').relative_to(root).as_posix()],
+                'artifacts': [(destination / 'index.html').relative_to(root).as_posix(), *companions],
+                'supporting_artifacts': companions, 'create_spec': create_spec,
                 'context': [manifest_path, (destination / 'assembly.json').relative_to(root).as_posix()]})
             receipt['candidate'] = frozen['path']
     except Exception:
@@ -255,10 +261,11 @@ def main():
     parser.add_argument("--output", required=True, help="New project-relative directory")
     parser.add_argument("--builder", action="append", help="Actual builder identity; repeat as needed")
     parser.add_argument("--iteration-id", help="New candidate identity for this build")
+    parser.add_argument("--create-spec", help="Engagement-relative new App create specification to check before review")
     args = parser.parse_args()
     try:
         print(json.dumps(build(args.project, args.manifest, args.output,
-                               builders=args.builder, iteration_id=args.iteration_id), indent=2))
+                               builders=args.builder, iteration_id=args.iteration_id, create_spec=args.create_spec), indent=2))
     except (ValueError, OSError, UnicodeError) as exc:
         print(json.dumps({"error": str(exc)}))
         return 2

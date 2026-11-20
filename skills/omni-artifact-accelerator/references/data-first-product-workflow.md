@@ -157,6 +157,25 @@ Carry the recorded App cache/refresh decision into every concept. After selectio
 resolve its UI states, refresh controls, hidden/return behavior and recovery in the
 same design and query handoff. A visual concept choice does not reset that policy.
 
+Before drawing, run `concept-preflight --project PROJECT --request INPUT.json`
+with `{}` to obtain the approved analysis, expectations, narrative and brief
+references from A–D. Give the designer one short shared fact sheet from those
+records with representative values, units, cohort, period/cutoff, permitted
+assets, target size, and the first and repeat task. Mark illustrative values.
+
+Before dispatching the independent creative reviewer, run the same command
+with the ordinary three `options` rows (`id`, `thesis`, `evidence`). For
+quantitative callouts include `claims` rows with `option_id`, a representative
+`label`, `evidence_role` (expectations, insights, profile or queries) and an
+exact short `excerpt` from that Stage B record. This checks the label and citation.
+The analyst verifies units, denominator, interpretation and rounding. The designer
+checks type, clipping, overlap, touch targets and the return path at the target
+size on permitted renders. Supply their actual observations to the creative
+reviewer. Record any unavailable render as unobserved. For revisions return the
+affected visuals, underlying evidence and open findings. Ordinary Stage E still
+validates the complete set and requires an independent comparison and real choice.
+Connected hosts use `execution_lifecycle/concept_preflight` for this same check.
+
 For each option present:
 
 - The intended user outcome and supported questions/insights.

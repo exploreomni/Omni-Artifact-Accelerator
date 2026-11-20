@@ -241,6 +241,9 @@ def _status_view(root, request, full_status):
     stage = {key: full['stage'].get(key) for key in ('required', 'status', 'next_stage', 'completed_stages',
                                                     'tail_sha256', 'candidate_sha256', 'release_ready',
                                                     'choice_assurance', 'review_assurance', 'experience_intent')}
+    for key in ('host_checkpoint', 'resume_request', 'recovery'):
+        if key in full['stage']:
+            stage[key] = full['stage'][key]
     # Full current state participates, including freshness changes outside the
     # selected rows. A timestamp alone is not semantic status movement.
     current = {key: value for key, value in full.items() if key != 'snapshot_at'}

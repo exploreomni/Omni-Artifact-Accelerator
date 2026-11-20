@@ -55,8 +55,8 @@ destination. No request is executed, and no source artifact is overwritten.
 
 For supplied readback, use `verify_demo(prepared, created, document, app, identity,
 project=..., artifact=..., spec_artifact=..., demo_artifact=...)` or
-`app-demo-verify`. This rechecks the current demo preparation and shares exact
-create/readback validation with the existing release route. The additional
+`app-demo-verify`. This rechecks the current demo preparation and shares the
+[typed create comparison and viewer-link check](../../omni-app-engineer/references/authoring-preflight.md) with the release route. The additional
 identity capture must be a successful GET of
 `/api/v1/whoami?modelId=<exact model>` at the same origin, reporting the exact
 user-scoped principal. Capture data remains unauthenticated supplied evidence.

@@ -34,7 +34,48 @@ raw authoring routes, and local evidence does not authenticate effective access.
 It adds no universal layout, approval interview or permanent agent team. Focused
 repairs retain their current engagement and inspect only affected obligations.
 
+## Keep validation scoped to the artifact
+
+Read `stage-status` for this engagement before resuming from a background task or
+an out-of-date host checklist. Use `host_checkpoint` to replace the host's task
+view with the verified choice, candidate iteration, pending reviews and next
+action at the current journal tail. Only `pending_human_decision: design_choice`
+asks the user to choose one of the three options. Carry forward a verified
+`selected_option_id` through edits to the candidate.
+
+A fresh startup on the same source revision can preserve a verified prefix of
+A–E. When status supplies a `resume_request`, submit those exact fields through
+`stage-record` or the host's lifecycle stage operation. The journal appends one
+requalification event and verifies the original evidence again before returning
+the next stage. A changed revision, older origin, changed evidence, owner or
+unverified choice can require fresh work. The full-design requalification path
+has its own checks for version upgrades.
+
+| Current journal state | Work to do |
+| --- | --- |
+| `options` | Prepare three comparable concepts at the agreed ambition and complete the independent creative comparison. Keep prototypes scoped to the decision the user needs to make. |
+| `choice` | Present the reviewed options and wait for the user. Record their actual selection against those options. |
+| `design`, `candidate` or `review` | Use the recorded choice, consolidate known changes before freezing a revision, and collect security, UI/UX, product-owner and QA findings on those exact bytes. Reopen affected work when evidence changes. |
+
+Exercise the selected queries, interactions, access and visual quality with the
+artifact's own evidence. Reserve the full source suite, its release report and
+clean-checkout reruns for work on the accelerator package. A localhost preview's
+uptime alone cannot establish that a stage is blocked.
+If the user also requests a release suite, bind that job to a separate checkout
+at the requested revision and write its result outside the package and engagement.
+Pass `--alongside-engagement /absolute/engagement` to the package validator once
+artifact startup is recorded. It checks the pinned startup and rejects overlapping
+checkout or report paths before running any cases. For a suite already running
+when the user requests an artifact, launch the artifact from a separate checkout.
+Keep the engagement's helper path and package bytes stable. Record the preview
+as a service and the suite as a package-validation job. Either can run while
+the host presents an available design choice.
+
 ## Select the actual host route
+
+Before the first CLI-backed operation, run [guided CLI setup](omni-cli-setup.md)
+in the intended execution environment. Resume existing selections on later calls.
+The agent offers an exact install when needed and continues after the host verifies it.
 
 | Route | Entry | Evidence and limitations |
 | --- | --- | --- |
@@ -378,6 +419,11 @@ be relabeled supporting to hide it from coverage. Supporting bytes remain fully
 frozen, hash-pinned and covered by the candidate reviews and freshness checks;
 this distinction does not exempt create metadata, queries or settings from review.
 Historical candidates without roles keep their original primary-only interpretation.
+The standard App specification lives at `contracts/create-spec.json`. Supply
+`create_spec` for a custom path. Include the native data-consumer manifest when
+the release policy applies. Check the frozen `native_create_preflight.request_sha256`
+against final preparation. A local-only candidate can still be reviewed for its
+own scope. A candidate used for native creation must cover the actual request.
 The first assembly may precede selecting its newly produced artifact bytes. It can
 be frozen as a provisional candidate, but it cannot pass delivery coverage or new
 App creation preparation until the actual App artifact is bound into selected

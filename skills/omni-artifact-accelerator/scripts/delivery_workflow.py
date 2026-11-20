@@ -882,10 +882,43 @@ def history_check(root, project_id, pointer):
     return len(visited)
 
 
+def preflight_new_app(root, project, artifacts, *, spec_path=None, selected_html=None):
+    canonical = 'contracts/create-spec.json'
+    if 'app' not in project['surfaces']:
+        need(spec_path is None, 'native create preflight requires an App')
+        return None
+    if spec_path is None and canonical in artifacts:
+        spec_path = canonical
+    if spec_path is None:
+        matches = []
+        for path in artifacts:
+            if path.endswith('.json') and not path.startswith('evidence/candidate-history/'):
+                try:
+                    value, _ = P.read_json(P.relative_file(root, path))
+                except ValueError:
+                    continue
+                if isinstance(value, dict) and {'base_url', 'slug', 'model_id', 'queryPresentations'} <= value.keys():
+                    matches.append(path)
+        if not matches:
+            return None
+        need(len(matches) == 1, 'identify one native create specification with create_spec')
+        spec_path = matches[0]
+    need(type(spec_path) is str and spec_path in artifacts, 'include the native create specification in artifacts')
+    if not selected_html:
+        candidates = [p for p in artifacts if Path(p).suffix.lower() in {'.html', '.htm'}]
+        need(len(candidates) == 1, 'select the App HTML for the native create preflight')
+        selected_html = candidates[0]
+    path = Path(__file__).resolve().parents[2] / 'omni-app-engineer/scripts/native_authoring.py'
+    module_spec = importlib.util.spec_from_file_location('candidate_native_authoring', path)
+    native = importlib.util.module_from_spec(module_spec)
+    module_spec.loader.exec_module(native)
+    return native.preflight_create(root, P, selected_html, spec_path, artifacts)
+
+
 def freeze(root, request):
     root, project = P.load_project(root)
     need(type(request) is dict and {'id', 'artifacts', 'context'} <= set(request)
-         and set(request) <= {'id', 'artifacts', 'context', 'builders', 'supporting_artifacts', 'review_manifest'},
+         and set(request) <= {'id', 'artifacts', 'context', 'builders', 'supporting_artifacts', 'review_manifest', 'create_spec'},
          'invalid candidate request')
     gates = P.stage_require(root, 'build')
     if gates['required']:
@@ -896,6 +929,11 @@ def freeze(root, request):
              and len(set(builders)) == len(builders), 'stage_gate_candidate_builders_required')
     ident = identity(request['id'])
     artifacts = pins(root, request['artifacts'])
+    canonical = 'contracts/create-spec.json'
+    if (project['mode'] == 'net-new' and 'app' in project['surfaces'] and not request.get('create_spec')
+            and any(Path(p).suffix.lower() in {'.htm', '.html'} for p in artifacts)
+            and (root / canonical).is_file()):
+        need(canonical in artifacts, 'include the staged contracts/create-spec.json as a supporting artifact before review')
     readiness = require_phase(root, 'candidate')
     context = pins(root, sorted(set([*request['context'], *readiness['paths']])))
     state = P.intent_helper().check(root)
@@ -914,6 +952,8 @@ def freeze(root, request):
     # artifact coverage and native create independently requires that binding.
     if state['selected']:
         context.update(pins(root, state['paths']))
+    app_path = next((s.get('candidate_path') for s in state['selections'] if s.get('surface') == 'app'), None)
+    preflight = preflight_new_app(root, project, artifacts, spec_path=request.get('create_spec'), selected_html=app_path)
     directory = P.no_links(root / 'evidence' / 'candidate-history')
     directory.mkdir(mode=0o700, exist_ok=True)
     first, head = directory / 'first.json', directory / 'head.json'
@@ -953,6 +993,8 @@ def freeze(root, request):
               'artifacts': artifacts, 'artifact_roles': artifact_roles,
               'context': context, 'retained': retained, 'selected_intent': state['selected'],
               'previous': previous}
+    if 'app' in project['surfaces']:
+        record['native_create_preflight'] = preflight
     if readiness['status'] == 'ready':
         record['workflow_context'] = readiness['context']
     saved = path / 'candidate.json'
@@ -963,9 +1005,7 @@ def freeze(root, request):
         for dep in deps:
             if dep['kind'] == 'artifact':
                 dep['path'] = retained[dep['path']]
-        # The current freeze envelope carries context and selected bindings.
-        # Conservatively map all of it to every scope; do not pretend that a
-        # monolithic envelope admits verified semantic section-level reuse.
+        # Preserve the full audit envelope even when the only change is a revision ID.
         deps.append({'id': 'freeze-envelope', 'kind': 'artifact', 'scopes': sorted(helper.SCOPES),
                      'path': saved.relative_to(root).as_posix(), 'sha256': P.digest(saved.read_bytes()),
                      'bytes': saved.stat().st_size, 'freshness': {'mode': 'immutable',

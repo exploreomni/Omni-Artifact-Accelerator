@@ -50,6 +50,15 @@ By default the request asks the model owner for clarification against the existi
 
 ## Candidate and readback
 
+For a new App, include the required empty query fields in the native create request.
+An existing governed plan may omit empty calculation, total, fill, pivot and
+SQL fields. The guard compares their meaning while preserving both original
+records and their hashes. The Topic, saved query key, selected fields, filters,
+sorts and limit still have to match. Active calculations or pivots require
+explicit support before they can pass this check. When adapting a generic API
+example, keep the plan's original filter and sort shapes and omit any unqualified
+query version.
+
 After the design choice, prepare the App's actual consumer-to-query bindings. Create a `dma_topic_panels` request with `html_path`, `document_id` and one `panels` row per supported consumer. Each row has `consumer_id`, `query_key`, the unique HTML `element_id` and an exact `script_fragment` from an inline script that references that element ID and query key as quoted literals. Include `controls` with `control_key`, `element_id` and an exact fragment referencing the affected keys for governed App controls outside native control maps. This verifies declared wiring in the exact source. Observe callback behavior separately in a qualified runtime.
 
 ```sh

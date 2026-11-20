@@ -38,6 +38,13 @@ CREATE_QUERY_KEYS = {'calculations', 'column_totals', 'controls', 'custom_summar
                      'default_group_by', 'fields', 'fill_fields', 'filters', 'join_via_map',
                      'join_paths_from_topic_name', 'limit', 'period_over_period_computations', 'pivots', 'row_totals',
                      'sorts', 'table', 'transposed_measures', 'userEditedSQL', 'version'}
+CREATE_QUERY_ENVELOPE = {'calculations': list, 'column_totals': dict, 'fill_fields': list,
+                         'pivots': list, 'row_totals': dict, 'userEditedSQL': str}
+OPTIONAL_QUERY_TYPES = {'filters': dict, 'sorts': list, 'version': int}
+
+
+class CreateSchemaError(ValueError):
+    """Field-only diagnostics safe to return before review; never include submitted values."""
 
 
 def need(condition, message):
@@ -381,10 +388,12 @@ def create_spec_check(spec):
          and type(presentations['data']) is dict and 0 < len(presentations['data']) <= 48
          and type(presentations['order']) is list, 'Exact nonempty query collection required')
     keys, order = set(presentations['data']), presentations['order']
-    need(all(type(k) is str and ID.fullmatch(k) for k in keys)
-         and all(type(k) is str for k in order) and len(order) == len(keys)
-         and set(order) == keys, 'Query order must name every unique query key once')
-    for tile in presentations['data'].values():
+    if not all(type(k) is str and re.fullmatch('[0-9]{1,128}', k) for k in keys):
+        raise CreateSchemaError('queryPresentations.data requires numeric string keys')
+    if not (all(type(k) is str for k in order) and len(order) == len(keys) and set(order) == keys):
+        raise CreateSchemaError('queryPresentations.order must list each saved key exactly once')
+    for key in order:
+        tile = presentations['data'][key]
         need(type(tile) is dict and set(tile) <= CREATE_TILE_KEYS
              and {'name', 'query', 'topicName', 'type', 'isSql'} <= set(tile)
              and tile['type'] == 'query' and tile['isSql'] is False
@@ -393,6 +402,14 @@ def create_spec_check(spec):
              and all(type(tile[k]) is str and tile[k].strip() for k in ('name', 'topicName')),
              'Unsupported query presentation or linked/SQL tile')
         query = tile['query']
+        if type(query) is not dict:
+            raise CreateSchemaError(f'queryPresentations.data.{key}.query must be an object')
+        invalid = [field for field, expected in CREATE_QUERY_ENVELOPE.items()
+                   if type(query.get(field)) is not expected]
+        invalid.extend(field for field, expected in OPTIONAL_QUERY_TYPES.items()
+                       if field in query and type(query[field]) is not expected)
+        if invalid:
+            raise CreateSchemaError(f'queryPresentations.data.{key}.query missing or mistyped: ' + ', '.join(invalid))
         need(type(query) is dict and set(query) <= CREATE_QUERY_KEYS
              and {'fields', 'table', 'limit'} <= set(query)
              and type(query['fields']) is list and query['fields']
@@ -408,9 +425,42 @@ def create_spec_check(spec):
 
 
 def create_body(spec, html):
+    create_spec_check(spec)
+    need(type(html) is str and 0 < len(html.encode('utf-8')) <= MAX_HTML, 'Invalid create HTML')
     return {'name': spec['name'], 'description': spec['description'], 'identifier': spec['slug'],
             'modelId': spec['model_id'], 'queryPresentations': copy.deepcopy(spec['queryPresentations']),
             'app': {'html': html, 'settings': copy.deepcopy(CREATE_SETTINGS)}}
+
+
+def preflight_create(root, P, artifact, spec_artifact, artifacts):
+    """Check the same body as final preparation, using only local pinned inputs."""
+    spec_raw = read_bytes(P.relative_file(root, spec_artifact), MAX_JSON)
+    html_raw = read_bytes(P.relative_file(root, artifact), MAX_HTML)
+    need(artifacts.get(spec_artifact) == P.digest(spec_raw) and artifacts.get(artifact) == P.digest(html_raw),
+         'Preflight requires the exact candidate and creation specification')
+    spec, html = decode(spec_raw, 'object'), html_raw.decode('utf-8')
+    body = create_body(spec, html)
+    app_topics(P, root, spec['slug'], {'base_url': spec['base_url'], 'model_id': spec['model_id'],
+               'branch_id': None}, spec, html=html)
+    P.routing_helper('native_data_consumers').guard(root, P, document_id=spec['slug'], app_html=html,
+        presentations=body['queryPresentations'],
+        reviewed_artifacts=[{'path': p, 'sha256': sha} for p, sha in artifacts.items()])
+    return {'html': artifact, 'spec': spec_artifact, 'request_sha256': digest(body)}
+
+
+def check_frozen_preflight(root, P, gate, artifact, spec_artifact, body):
+    candidate = gate['candidate']
+    expected = {'html': artifact, 'spec': spec_artifact, 'request_sha256': digest(body)}
+    if 'native_create_preflight' in candidate:
+        need(candidate['native_create_preflight'] == expected, 'Freeze the exact native create request before review')
+        return
+    path = 'evidence/candidate-history/' + candidate['iteration_id'] + '/candidate.json'
+    pin = next((p for p in candidate['artifacts'] if p['path'] == path), None)
+    if pin:
+        record, raw = P.read_json(P.relative_file(root, path))
+        need(P.digest(raw) == pin['sha256'], 'Reviewed creation candidate changed')
+        if 'native_create_preflight' in record:
+            need(record['native_create_preflight'] == expected, 'Freeze the exact native create request before review')
 
 
 def prepare_create(*, project, artifact, spec_artifact):
@@ -427,14 +477,14 @@ def prepare_create(*, project, artifact, spec_artifact):
     html_raw = read_bytes(P.relative_file(root, artifact), MAX_HTML)
     spec_raw = read_bytes(P.relative_file(root, spec_artifact), MAX_JSON)
     html_sha, spec_sha = (hashlib.sha256(raw).hexdigest() for raw in (html_raw, spec_raw))
-    pins = {pin['sha256'] for pin in gate['candidate']['artifacts']}
-    need({html_sha, spec_sha} <= pins, 'Freeze and review the exact HTML and create specification')
+    candidate_bindings(root, metadata['id'], gate, {artifact: html_sha, spec_artifact: spec_sha}, P)
     html = html_raw.decode('utf-8')
-    spec = create_spec_check(decode(spec_raw, 'object'))
+    spec = decode(spec_raw, 'object')
+    body = create_body(spec, html)
+    check_frozen_preflight(root, P, gate, artifact, spec_artifact, body)
     topics = app_topics(P, root, spec['slug'], {'base_url': spec['base_url'],
         'model_id': spec['model_id'], 'branch_id': None}, spec, html=html)
     consumers = consumer_guard(P, root, gate, spec['slug'], html, spec['queryPresentations'])
-    body = create_body(spec, html)
     need(P.stage_require(root, 'release')['tail_sha256'] == gate['tail_sha256'],
          'Engagement changed during preparation')
     return {'kind': 'native_app_create_request', 'schema_version': 1, **topics,
@@ -539,7 +589,7 @@ def demo_pin(root, record, P):
     return raw
 
 
-def demo_candidate_bindings(root, project_id, gate, expected, P):
+def candidate_bindings(root, project_id, gate, expected, P):
     """Resolve direct stage pins or the guarded freeze's original-to-snapshot map."""
     candidate = gate['candidate']
     reviewed = {(p['path'], p['sha256']) for p in candidate['artifacts']}
@@ -547,21 +597,21 @@ def demo_candidate_bindings(root, project_id, gate, expected, P):
         return {path: {'path': path, 'sha256': sha} for path, sha in expected.items()}
     envelope = 'evidence/candidate-history/' + candidate['iteration_id'] + '/candidate.json'
     binding = next((p for p in candidate['artifacts'] if p['path'] == envelope), None)
-    need(binding is not None, 'Freeze exact HTML, create specification and demo scope before preparation')
+    need(binding is not None, 'Freeze exact inputs and review the exact HTML and create specification before preparation')
     retained, raw = P.read_json(P.relative_file(root, envelope))
     need(P.digest(raw) == binding['sha256'] and retained.get('schema_version') == 1
          and retained.get('kind') == 'analyst_candidate' and retained.get('project_id') == project_id
-         and retained.get('id') == candidate['iteration_id'], 'Demo freeze envelope differs from current candidate')
+         and retained.get('id') == candidate['iteration_id'], 'Freeze envelope differs from current candidate')
     artifacts, mapping = retained.get('artifacts'), retained.get('retained')
     need(type(artifacts) is dict and type(mapping) is dict and set(artifacts) == set(mapping),
-         'Demo retained artifact inventory differs')
+         'Retained artifact inventory differs')
     result = {}
     for original, sha in expected.items():
         need(artifacts.get(original) == sha and type(mapping.get(original)) is str,
-             'Demo original bytes differ from the reviewed freeze mapping')
+             'Candidate original bytes differ from the reviewed freeze mapping')
         saved = mapping[original]
         need((saved, sha) in reviewed and P.digest(P.relative_file(root, saved).read_bytes()) == sha,
-             'Demo retained snapshot is not pinned to the current candidate')
+             'Retained snapshot is not pinned to the current candidate')
         result[original] = {'path': saved, 'sha256': sha}
     return result
 
@@ -586,9 +636,11 @@ exact principal, audience and operation before a POST that publishes immediately
     raw = {key: read_bytes(P.relative_file(root, path), MAX_HTML if key == 'html' else MAX_JSON)
            for key, path in (('html', artifact), ('spec', spec_artifact), ('demo', demo_artifact))}
     hashes = {key: hashlib.sha256(value).hexdigest() for key, value in raw.items()}
-    reviewed_artifacts = demo_candidate_bindings(root, metadata['id'], gate,
+    reviewed_artifacts = candidate_bindings(root, metadata['id'], gate,
         {artifact: hashes['html'], spec_artifact: hashes['spec'], demo_artifact: hashes['demo']}, P)
-    spec = create_spec_check(decode(raw['spec'], 'object'))
+    spec = decode(raw['spec'], 'object')
+    html = raw['html'].decode('utf-8')
+    body = create_body(spec, html)
     demo = decode(raw['demo'], 'object')
     need(set(demo) == {'schema_version', 'kind', 'html', 'create_spec', 'destination', 'minimums', 'pending_observations'}
          and type(demo['schema_version']) is int and demo['schema_version'] == 1
@@ -607,7 +659,6 @@ exact principal, audience and operation before a POST that publishes immediately
          'Demo requires one explicit user-scoped test principal')
     need(destination['audience'] == {'kind': 'named_test_principal', 'membership_id': principal['membership_id']},
          'Demo audience must be the same named test principal')
-    html = raw['html'].decode('utf-8')
     topics = app_topics(P, root, spec['slug'], {'base_url': spec['base_url'], 'model_id': spec['model_id'],
         'branch_id': None, 'principal_id': principal['membership_id']}, spec, html=html)
     minimums = demo['minimums']
@@ -641,7 +692,7 @@ exact principal, audience and operation before a POST that publishes immediately
         scopes.add(item['scope'])
     need(scopes == {key for key, review in reviews.items() if review['outcome'] == 'unobserved'},
          'Account for every unobserved consultation')
-    body = create_body(spec, html)
+    check_frozen_preflight(root, P, gate, artifact, spec_artifact, body)
     need(P.stage_require(root, 'review')['tail_sha256'] == gate['tail_sha256'], 'Engagement changed during demo preparation')
     consumers = consumer_guard(P, root, gate, spec['slug'], html, spec['queryPresentations'])
     return {'schema_version': 1, 'kind': 'native_demo_create_request', 'base_url': spec['base_url'], **topics,
@@ -674,7 +725,90 @@ def create_capture(capture, origin, method, path, status):
     return capture['body']
 
 
-def verify_create(prepared, created, document, app, *, project, artifact, spec_artifact, identity=None, snapshot=None):
+# Only for server-added fields on the new-document GET routes below.
+# Query bodies, user-specified fields and existing App/draft policies stay exact.
+CREATE_PRESENTATION_DEFAULTS = {
+    'aiConfig': None, 'automaticVis': False, 'filterOrder': [], 'prefersChart': False,
+    'resultConfig': {}, 'sourceQueryPresentationKey': None, 'subTitle': None,
+    'visConfig': {'chartType': None, 'fields': [], 'version': 0,
+                  'visConfig': {'config': {}, 'visType': None}},
+}
+MISSING_FIELD = object()
+
+
+def readback_value(value):
+    if value is MISSING_FIELD:
+        return {'type': 'missing'}
+    kind = {type(None): 'null', bool: 'boolean', int: 'integer', float: 'float',
+            str: 'string', list: 'array', dict: 'object'}[type(value)]
+    if type(value) in (bool, int, float, type(None)):
+        return {'type': kind, 'value': value}
+    # Keep private strings, HTML and complete query/filter values in their original captures.
+    return {'type': kind, 'length': len(value), 'sha256': digest(value)}
+
+
+def create_readback_comparison(body, response, doc, app, route):
+    """Classify typed JSON deltas. Raw captures and reviewed values are never edited."""
+    findings, differences = [], []
+    total = 0
+
+    def compare(path, expected, actual, finding):
+        nonlocal total
+        if type(expected) is dict and type(actual) is dict:
+            for key in sorted(expected.keys() | actual.keys()):
+                compare((*path, key), expected.get(key, MISSING_FIELD), actual.get(key, MISSING_FIELD), finding)
+            return
+        if type(expected) is list and type(actual) is list:
+            for i in range(max(len(expected), len(actual))):
+                compare((*path, str(i)), expected[i] if i < len(expected) else MISSING_FIELD,
+                        actual[i] if i < len(actual) else MISSING_FIELD, finding)
+            return
+        if type(expected) is type(actual) and encoded(expected) == encoded(actual):
+            return
+        rule = None
+        if expected is MISSING_FIELD and path == ('app', 'settings', 'allowLocalNetwork') and actual is False:
+            rule = 'added_disabled_local_network'
+        elif (expected is MISSING_FIELD and len(path) == 5 and
+                path[:3] == ('document', 'queryPresentations', 'data') and
+                path[4] in CREATE_PRESENTATION_DEFAULTS and
+                encoded(actual) == encoded(CREATE_PRESENTATION_DEFAULTS[path[4]])):
+            rule = 'added_inactive_presentation_default'
+        if rule is None and finding not in findings:
+            findings.append(finding)
+        total += 1
+        if len(differences) < 512:
+            pointer = '/' + '/'.join(key.replace('~', '~0').replace('/', '~1') for key in path)
+            differences.append({'path': pointer, 'expected': readback_value(expected),
+                                'observed': readback_value(actual),
+                                'classification': 'equivalent' if rule else 'unresolved', 'rule': rule})
+
+    for key in ('name', 'description'):
+        compare(('created', key), body[key], response[key], 'create_metadata_mismatch')
+    if 'warnings' in response:
+        compare(('created', 'warnings'), [], response['warnings'], 'create_warnings_require_review')
+    fields = {'app': ({'url': route + '/app'}, 'app_route_mismatch'),
+              'queryPresentations': (body['queryPresentations'], 'query_presentations_mismatch')}
+    for key in ('name', 'description', 'modelId'):
+        fields[key] = (body[key], 'document_metadata_or_model_mismatch')
+    for key, (expected, finding) in fields.items():
+        compare(('document', key), expected, doc.get(key, MISSING_FIELD), finding)
+    if fields.keys() - doc.keys():
+        findings.append('unsupported_document_readback_fields')
+    for key in sorted(doc.keys() - fields.keys() - {'workbookModelId'}):
+        compare(('document', key), MISSING_FIELD, doc[key], 'unsupported_document_readback_fields')
+    for key in sorted(body['app'].keys() | app.keys()):
+        finding = {'html': 'html_readback_mismatch', 'settings': 'settings_readback_mismatch'}.get(
+            key, 'unsupported_app_readback_fields')
+        compare(('app', key), body['app'].get(key, MISSING_FIELD), app.get(key, MISSING_FIELD), finding)
+    if body['app'].keys() - app.keys() and 'unsupported_app_readback_fields' not in findings:
+        findings.append('unsupported_app_readback_fields')
+    parity = 'unresolved' if findings else 'equivalent' if total else 'exact'
+    return {'parity': parity, 'findings': findings, 'differences': differences,
+            'difference_count': total, 'omitted_difference_count': total - len(differences)}
+
+
+def verify_create(prepared, created, document, app, *, project, artifact, spec_artifact,
+                  identity=None, snapshot=None, navigation=None):
     """Compare supplied create + per-create GET captures with current reviewed bytes.
 
     Nothing is transported. No unknown/default/generated fields are silently
@@ -683,10 +817,11 @@ def verify_create(prepared, created, document, app, *, project, artifact, spec_a
     """
     expected = prepare_create(project=project, artifact=artifact, spec_artifact=spec_artifact)
     return verify_create_captures(expected, prepared, created, document, app, project=project, identity=identity,
-                                 snapshot=snapshot)
+                                 snapshot=snapshot, navigation=navigation)
 
 
-def verify_create_captures(expected, prepared, created, document, app, *, project, identity=None, snapshot=None):
+def verify_create_captures(expected, prepared, created, document, app, *, project, identity=None, snapshot=None,
+                           navigation=None):
     """Shared exact-capture comparison; caller supplies its separately gated route."""
     need(type(prepared) is dict and encoded(prepared) == encoded(expected), 'Prepared create request drift')
     origin, body = expected['base_url'], expected['request']['body']
@@ -717,31 +852,41 @@ def verify_create_captures(expected, prepared, created, document, app, *, projec
         need(isinstance(roles, dict) and body['modelId'] in roles and who.get('keyScope') == 'user',
              'DMA-bound creation readback requires a model-scoped user identity')
     need(topics.get('dma_topics') == prepared.get('dma_topics'), 'DMA Topic contract changed since preparation')
-    findings = []
-    if response['name'] != body['name'] or response['description'] != body['description']:
-        findings.append('create_metadata_mismatch')
-    if response.get('warnings'):
-        findings.append('create_warnings_require_review')
-    if set(doc) != {'app', 'description', 'modelId', 'name', 'queryPresentations', 'workbookModelId'}:
-        findings.append('unsupported_document_readback_fields')
-    if any(doc.get(k) != body[k] for k in ('name', 'description', 'modelId')):
-        findings.append('document_metadata_or_model_mismatch')
-    if doc.get('app') != {'url': route + '/app'}:
-        findings.append('app_route_mismatch')
-    if encoded(doc.get('queryPresentations')) != encoded(body['queryPresentations']):
-        findings.append('query_presentations_mismatch')
-    if set(app_body) != {'html', 'settings'}:
-        findings.append('unsupported_app_readback_fields')
-    if app_body.get('html') != body['app']['html']:
-        findings.append('html_readback_mismatch')
-    if encoded(app_body.get('settings')) != encoded(body['app']['settings']):
-        findings.append('settings_readback_mismatch')
+    comparison = create_readback_comparison(body, response, doc, app_body, route)
+    parity = comparison['parity']
     capture_hashes = {'created': digest(created), 'document': digest(document), 'app': digest(app)}
     if identity is not None:
         capture_hashes['identity'] = digest(identity)
     if snapshot is not None:
         capture_hashes['semantic_snapshot'] = digest(snapshot)
-    return {'status': 'readback_mismatch' if findings else 'exact_create_readback', 'findings': findings, **topics,
+    # The validated create identifier and API App binding identify the viewer URL;
+    # neither one observes navigation, user interaction or effective access.
+    app_link_bound = doc.get('app') == {'url': route + '/app'} and doc.get('modelId') == body['modelId']
+    handoff = {
+        'app_url': origin + '/apps/' + identifier if app_link_bound else None,
+        'url_basis': 'derived_from_matching_api_bindings' if app_link_bound else 'binding_unresolved',
+        'viewer_navigation': 'not_observed', 'observed_app_url': None,
+        'creation': 'supplied_201_matching_identifier',
+        'html_identity': 'matched' if app_body.get('html') == body['app']['html'] else 'mismatch',
+        'query_reconciliation': 'not_observed', 'native_interaction': 'not_observed',
+        'host_viewport': 'not_observed', 'effective_viewer_access': 'not_observed',
+        'business_acceptance': 'not_observed',
+    }
+    if navigation is not None:
+        # A host observation of the final viewer route, never inferred from the API GET.
+        # A redirect to login, a workbook URL or another document does not corroborate the link.
+        capture_hashes['navigation'] = digest(navigation)
+        try:
+            opened = create_capture(navigation, origin, 'GET', '/apps/' + identifier, 200)
+        except ValueError:
+            opened = {}
+        if (app_link_bound and opened.get('final_url') == handoff['app_url']
+                and opened.get('document_id') == identifier and opened.get('basis') == 'native_host_navigation'):
+            handoff.update(viewer_navigation='matches_supplied_navigation_capture', observed_app_url=handoff['app_url'])
+        else:
+            handoff['viewer_navigation'] = 'unresolved_navigation_capture'
+    return {'status': 'readback_mismatch' if parity == 'unresolved' else parity + '_create_readback',
+            **comparison, **topics, 'handoff': handoff,
             'request_sha256': expected['request_sha256'],
             'capture_sha256': capture_hashes,
             'derived_identifiers': {'document': identifier, 'workbook_model': doc['workbookModelId'],
@@ -751,17 +896,18 @@ def verify_create_captures(expected, prepared, created, document, app, *, projec
                     'execution, initial publication and App runtime/rendering need separate evidence.'}
 
 
-def verify_demo(prepared, created, document, app, identity, *, project, artifact, spec_artifact, demo_artifact, snapshot=None):
+def verify_demo(prepared, created, document, app, identity, *, project, artifact, spec_artifact, demo_artifact,
+                snapshot=None, navigation=None):
     expected = prepare_demo(project=project, artifact=artifact, spec_artifact=spec_artifact, demo_artifact=demo_artifact)
     result = verify_create_captures(expected, prepared, created, document, app, project=project, identity=identity,
-                                    snapshot=snapshot)
+                                    snapshot=snapshot, navigation=navigation)
     principal = expected['destination']['principal']
     who = create_capture(identity, expected['base_url'], 'GET',
                          '/api/v1/whoami?modelId=' + expected['destination']['model_id'], 200)
     need(who.get('keyScope') == principal['key_scope'] and type(who.get('user')) is dict
          and who['user'].get('id') == principal['user_id']
          and who['user'].get('membershipId') == principal['membership_id'], 'Demo principal readback mismatch')
-    result.update(status='exact_demo_readback' if not result['findings'] else 'readback_mismatch',
+    result.update(status='readback_mismatch' if result['findings'] else result['parity'] + '_demo_readback',
                   destination=expected['destination'], pending_observations=expected['pending_observations'],
                   execution_authorized=False, release_validated=False, audience_verified=False,
                   claims_authenticated=False,
@@ -831,24 +977,28 @@ def main():
                 need(set(record) == {'html', 'spec', 'demo'}, 'Exact demo input paths required')
                 result = prepare_demo(project=args.project, artifact=record['html'], spec_artifact=record['spec'],
                                       demo_artifact=record['demo'])
-            elif args.operation == 'app-demo-verify':
-                need(set(record) - {'semantic_snapshot'} == {'html', 'spec', 'demo', 'prepared', 'created', 'document', 'app', 'identity'},
-                     'Exact demo readback input paths required')
-                result = verify_demo(read(local(record['prepared'])), read(local(record['created'])),
-                    read(local(record['document'])), read(local(record['app'])), read(local(record['identity'])),
-                    project=args.project, artifact=record['html'], spec_artifact=record['spec'], demo_artifact=record['demo'],
-                    snapshot=read(local(record['semantic_snapshot'])) if 'semantic_snapshot' in record else None)
             elif args.operation == 'app-create-prepare':
                 need(set(record) == {'html', 'spec'}, 'Exact create input paths required')
                 result = prepare_create(project=args.project, artifact=record['html'], spec_artifact=record['spec'])
             else:
-                need(set(record) - {'identity', 'semantic_snapshot'} == {'html', 'spec', 'prepared', 'created', 'document', 'app'},
+                demo = args.operation == 'app-demo-verify'
+                required = {'html', 'spec', 'prepared', 'created', 'document', 'app'}
+                if demo:
+                    required.update({'demo', 'identity'})
+                need(required <= record.keys() <= required | {'identity', 'semantic_snapshot', 'navigation'},
                      'Exact create readback input paths required')
-                result = verify_create(read(local(record['prepared'])), read(local(record['created'])),
-                    read(local(record['document'])), read(local(record['app'])), project=args.project,
-                    artifact=record['html'], spec_artifact=record['spec'],
-                    identity=read(local(record['identity'])) if 'identity' in record else None,
-                    snapshot=read(local(record['semantic_snapshot'])) if 'semantic_snapshot' in record else None)
+                captures, file_hashes = {}, {}
+                for key in ('created', 'document', 'app', 'identity', 'semantic_snapshot', 'navigation'):
+                    if key in record:
+                        raw = read_bytes(local(record[key]), MAX_JSON)
+                        file_hashes[key] = hashlib.sha256(raw).hexdigest()
+                        captures['snapshot' if key == 'semantic_snapshot' else key] = decode(raw)
+                if demo:
+                    captures['demo_artifact'] = record['demo']
+                verifier = verify_demo if demo else verify_create
+                result = verifier(read(local(record['prepared'])), project=args.project, artifact=record['html'],
+                                  spec_artifact=record['spec'], **captures)
+                result['capture_file_sha256'] = file_hashes
     data = encoded(result) + b'\n'
     fd = os.open(output, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
     with os.fdopen(fd, 'wb') as stream:
@@ -861,6 +1011,8 @@ def main():
 if __name__ == '__main__':
     try:
         raise SystemExit(main())
+    except CreateSchemaError as exc:
+        raise SystemExit(str(exc))
     except (ValueError, OSError, KeyError, TypeError, RecursionError):
         # No raw API errors, paths, row values or candidate HTML in diagnostics.
         raise SystemExit('Authoring input rejected; inspect the retained local captures and contract.')

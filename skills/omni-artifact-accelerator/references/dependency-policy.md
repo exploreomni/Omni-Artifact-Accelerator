@@ -12,7 +12,7 @@ Source-only review and original package-owned code can use an existing runtime's
 
 ## Current controls and honest limits
 
-- The manual CI workflow only records a selected revision; it performs no code validation. It does not install packages, provision runtimes, run package hooks, import PyYAML or run the broad test suite. Dispatch is not approval, review completion or execution authority. Run `python3 -I -S -B scripts/validate_source.py` locally within its allowed scope. The [security operations guide](../../../docs/SECURITY.md) separates its exact-source results from CI runtime approval and remote required-check enforcement.
+- The manual CI workflow records a selected revision. For accelerator maintenance or release, use the [package testing procedure](../../../docs/TESTING.md) with its scoped runtime approval. For an App, dashboard or report engagement, use the current stage and verify the artifact, including its access policy. The [security operations guide](../../../docs/SECURITY.md) covers CI runtime approval and remote required-check enforcement.
 - `scripts/check_package.py` checks the repository's deliberately restricted metadata format using the standard library. YAML-dependent migration readers still require separately approved PyYAML use.
 - The local skill installer supports preview and verification. Its public apply path is disabled until a trusted installation gate is integrated; there is no self-asserted approval flag.
 - The optional harness ships original compiler/validator source and a blocked launcher. It cannot install a sandbox or execute jobs on the host as a fallback. A host integration needs separate qualification and explicit package/runtime permission.

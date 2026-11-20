@@ -181,13 +181,15 @@ def validate(spec, project):
     return spec
 
 
-def references(spec):
+def references(spec, *, include_candidates=True):
     paths = set()
     paths.update(spec.get('product', {}).get('note_paths', []))
     if spec.get('product', {}).get('source_inventory_path'):
         paths.add(spec['product']['source_inventory_path'])
     for selection in spec['selections']:
-        paths.update(selection[k] for k in ('design_path', 'brand_path', 'candidate_path') if selection.get(k))
+        paths.update(selection[k] for k in ('design_path', 'brand_path') if selection.get(k))
+        if include_candidates and selection.get('candidate_path'):
+            paths.add(selection['candidate_path'])
         target = selection.get('target') or {}
         if selection['surface'] == 'report' and target.get('capability_evidence_path'):
             paths.add(relative(target['capability_evidence_path']))
@@ -428,6 +430,8 @@ def check(root):
         base['findings'].extend({'code': 'changed_or_missing_file', 'path': path} for path in base['stale_paths'])
         if any(f['code'] == 'design_brand_reference_mismatch' for f in base['findings']):
             base['status'] = 'inconsistent'
+        elif base['stale_paths']:
+            base['integrity_issue'] = 'dependency_pins'
     except (ValueError, OSError, KeyError, TypeError) as exc:
         base['status'] = 'inconsistent'
         base['findings'].append({'code': 'invalid_current_selection', 'detail': str(exc)})

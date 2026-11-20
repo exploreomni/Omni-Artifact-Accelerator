@@ -946,6 +946,11 @@ def stage_status(root):
     return result
 
 
+def with_host_checkpoint(root, result):
+    status = stage_status(root)
+    return {**result, **{key: status[key] for key in ('host_checkpoint', 'resume_request') if key in status}}
+
+
 def stage_require(root, action):
     module = routing_helper('stage_gates')
     result = module.require_action(root, action, provider=module._host_provider_context.get())
@@ -1217,14 +1222,14 @@ def main():
                     "checkpoint-work", "work-status", "review-work", "packet-check", "experience-check",
                     "run-start", "run-check", "run-guidance", "source-check", "phase-check", "candidate-freeze", "delivery-check", "source-inventory",
                     "delivery-project", "delivery-evidence-template", "product-brief", "product-check",
-                    "stage-status", "stage-record", "stage-check", "context-build", "context-check",
+                    "stage-status", "stage-record", "stage-check", "concept-preflight", "review-requests", "context-build", "context-check",
                     "efficiency-configure", "efficiency-report", "work-prepare", "work-preflight", "work-usage", "work-blocker",
                     "review-policy", "review-impact", "review-carry", "review-manifest"):
         cmd = commands.add_parser(command)
         cmd.add_argument("--project", required=True)
         if command in ("claim-work", "prepare-dispatch", "record-dispatch", "checkpoint-work", "review-work",
                        "run-start", "run-check", "run-guidance", "source-check", "phase-check", "candidate-freeze", "delivery-check", "source-inventory",
-                       "delivery-project", "delivery-evidence-template", "stage-record", "context-build",
+                       "delivery-project", "delivery-evidence-template", "stage-record", "concept-preflight", "context-build",
                        "efficiency-configure", "work-prepare", "work-preflight", "work-usage", "work-blocker",
                        "review-policy", "review-carry", "review-manifest"):
             cmd.add_argument('--request', required=True)
@@ -1304,6 +1309,10 @@ def main():
             result = stage_status(args.project)
         elif args.command == 'stage-record':
             result = stage_record(args.project, read_json(args.request)[0])
+        elif args.command in ('concept-preflight', 'review-requests'):
+            gates = routing_helper('stage_gates')
+            result = (gates.concept_preflight(args.project, read_json(args.request)[0])
+                      if args.command == 'concept-preflight' else gates.review_requests(args.project))
         elif args.command == 'stage-check':
             result = stage_require(args.project, args.action)
         elif args.command in ('product-brief', 'product-check'):
@@ -1369,6 +1378,8 @@ def main():
         else:
             result = packet(args.project, args.role, args.input, args.output,
                             read_json(args.assignment)[0] if args.assignment else None)
+        if args.command in ('run-start', 'candidate-freeze', 'checkpoint-work'):
+            result = with_host_checkpoint(args.project, result)
         print(json.dumps(result, indent=2))
         return 1 if result.get("status") == "inconsistent" or (args.command == 'stage-status' and
                     result.get('status') in {'blocked', 'invalid', 'incomplete'}) or (args.command in {'run-check', 'delivery-check'} and

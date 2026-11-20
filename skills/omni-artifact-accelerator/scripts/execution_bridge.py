@@ -47,11 +47,19 @@ def status(root):
     gates = P.stage_status(root)
     tasks = P.routing_helper('task_operations').status(root)
     next_stage = gates.get('next_stage')
-    return {'stage': {k: gates.get(k) for k in ('required', 'status', 'next_stage', 'completed_stages',
-                'tail_sha256', 'candidate_sha256', 'release_ready', 'choice_assurance', 'review_assurance', 'experience_intent')},
+    checkpoint = gates['host_checkpoint']
+    tool = 'execution_lifecycle' if next_stage else 'execution_qualification'
+    if checkpoint['pending_human_decision']:
+        tool = None
+    stage = {k: gates.get(k) for k in ('required', 'status', 'next_stage', 'completed_stages',
+             'tail_sha256', 'candidate_sha256', 'release_ready', 'choice_assurance', 'review_assurance', 'experience_intent')}
+    for key in ('host_checkpoint', 'resume_request', 'recovery'):
+        if key in gates:
+            stage[key] = gates[key]
+    return {'stage': stage,
             'blockers': ([{'area': 'stage', 'code': value} for value in gates.get('findings', [])] +
                          [{'area': 'tasks', 'code': value} for value in tasks.get('findings', [])]),
-            'next_action': {'stage': next_stage, 'tool': 'execution_lifecycle' if next_stage else 'execution_qualification',
+            'next_action': {'stage': next_stage, 'action': checkpoint['action'], 'tool': tool,
                             'requires_current_preflight': True},
             'tasks': tasks['tasks'], 'external_mutations_authorized': False,
             'incomplete': tasks.get('incomplete', False),
@@ -68,7 +76,8 @@ def call(root, name, args, runtime=None, host_context=None):
     operation = operation if operation in OPERATIONS.get(name, ()) else None
     read_only = name == 'execution_status' or (name, operation) in {
         ('execution_prepare', 'preflight'), ('execution_lifecycle', 'product_check'),
-        ('execution_lifecycle', 'intent_check'), ('execution_review', 'impact'),
+        ('execution_lifecycle', 'intent_check'), ('execution_lifecycle', 'concept_preflight'),
+        ('execution_review', 'impact'), ('execution_review', 'requests'),
         ('execution_qualification', 'check')}
     try:
         if read_only and hasattr(P, 'validation_operation'):
@@ -77,6 +86,11 @@ def call(root, name, args, runtime=None, host_context=None):
             counters = scope.counters()
         else:
             value = _call(root, name, args, runtime, host_context)
+        # Sync the host's task view at actual handoffs. Ordinary stage writes
+        # already return the checkpoint from their freshly committed event.
+        if (name, operation) in {('execution_lifecycle', 'start'), ('execution_lifecycle', 'freeze'),
+                                 ('execution_record', 'checkpoint'), ('execution_host', 'reconcile')}:
+            value = P.with_host_checkpoint(root, value)
         outcome = 'returned'
         return value
     finally:
@@ -136,6 +150,8 @@ def _call(root, name, args, runtime=None, host_context=None):
         helper = P.routing_helper('task_operations')
         return {'dispatch': helper.record_dispatch, 'checkpoint': helper.checkpoint, 'review': helper.review_work}[operation](root, request)
     if name == 'execution_lifecycle':
+        if operation == 'concept_preflight':
+            return P.routing_helper('stage_gates').concept_preflight(root, request, P)
         if operation in {'host_entry_check', 'host_entry_prepare'}:
             helper = P.routing_helper('host_entry')
             return (helper.check if operation == 'host_entry_check' else helper.prepare)(root, request)
@@ -160,6 +176,8 @@ def _call(root, name, args, runtime=None, host_context=None):
             return helper.phase_check(root, request['action'])
         return {'start': helper.start, 'guidance': helper.record_guidance, 'freeze': helper.freeze}[operation](root, request)
     if name == 'execution_review':
+        if operation == 'requests':
+            return P.routing_helper('stage_gates').review_requests(root, P)
         helper = P.routing_helper('incremental_review')
         if operation == 'impact':
             P.stage_status(root)  # Register a fresh final observer for its direct journal reader.

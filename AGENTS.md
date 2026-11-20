@@ -1,9 +1,16 @@
 # Project execution boundaries
 
+For first-time CLI setup, initiate [guided Omni CLI setup](skills/omni-artifact-accelerator/references/omni-cli-setup.md) from the selected checkout. Offer the exact install through the user's host when the CLI is missing.
+
 For substantial Omni artifact creation/redesign/migration, enter through
 [the orchestrator](skills/omni-artifact-accelerator/SKILL.md) and its
 [execution procedure](skills/omni-artifact-accelerator/references/execution-workflow.md).
 Repository maintenance and focused repairs do not require a new artifact engagement.
+
+For artifact development, use the existing engagement's `stage-status` and
+artifact-specific checks. Reserve the full repository regression suite and its
+clean-checkout reruns for package maintenance or release. Refresh the host task list
+from the current journal when background work finishes.
 
 For repository-only work, use [explicit engagement entry](skills/omni-artifact-accelerator/references/engagement-entry.md)
 to bind the exact checkout and declared host to the existing sibling engagement.

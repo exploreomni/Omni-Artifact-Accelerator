@@ -1,9 +1,29 @@
 # Start an artifact engagement
 
+For first-time CLI setup, initiate [guided Omni CLI setup](skills/omni-artifact-accelerator/references/omni-cli-setup.md) from the selected checkout. Offer the exact install through the user's host when the CLI is missing.
+
 For a request to create, redesign or migrate an Omni App or dashboard, first read
 [the orchestrator](skills/omni-artifact-accelerator/SKILL.md) and follow its
 [execution entry procedure](skills/omni-artifact-accelerator/references/execution-workflow.md).
 Repository maintenance, a focused repair and review-only requests retain their own scope.
+
+For an artifact build, validate the artifact in its existing engagement. The complete
+repository regression suite (`scripts/validate_source.py`) belongs to package
+maintenance and release. Keep it off the build task list, including background
+tasks and clean-checkout retries. Use `analyst_project.py stage-status --project PROJECT`
+to update the checklist after a handoff or background task. If E is current, finish
+the concept comparison and present the choice. If the journal confirms the choice,
+resume the indicated design or candidate work. At F keep the four candidate reviews
+and the actual query, interaction, access, and rendering checks for the artifact.
+
+Build the host task list from the current journal's `host_checkpoint`. On resume or
+worker completion, replace stale entries using its tail, selected option, iteration,
+pending review scopes and human decision. When `resume_request` is present, submit
+that exact request to `stage-record`, then continue from the returned checkpoint.
+Keep a running preview separate from validation jobs. A healthy preview may remain
+open while the user chooses a direction. For explicitly requested package tests,
+use a separate checkout at the requested revision and write results outside both
+checkouts. Keep the engagement bound to its original helper path and package bytes.
 
 For repository-only work, use [explicit engagement entry](skills/omni-artifact-accelerator/references/engagement-entry.md)
 and read the generated reference to the exact checkout and existing sibling

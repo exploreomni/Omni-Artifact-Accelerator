@@ -467,5 +467,99 @@ class StageGateTests(unittest.TestCase):
             self.assertEqual(self.inspect()['status'], 'invalid')
 
 
+class SelectedCandidateRecoveryTests(unittest.TestCase):
+    def test_changed_selected_app_preserves_only_revalidated_stages_and_never_repairs_corrupt_history(self):
+        # This fixture exercises the experience-intent contract and a real host-bound choice.
+        source = importlib.util.spec_from_file_location(
+            'stage_gate_experience_recovery_fixture', ROOT / 'tests/test_experience_continuity.py')
+        continuity = importlib.util.module_from_spec(source)
+        source.loader.exec_module(continuity)
+        fixture = continuity.ExperienceContinuity()
+        fixture.setUp()
+        self.addCleanup(fixture.doCleanups)
+        flow = fixture.prepare()
+        project = continuity.P
+        root = fixture.root
+        artifact = 'deliverables/app.html'
+        (root / artifact).write_text('<main id="workspace">Original selected experience</main>')
+        original_artifact = (root / artifact).read_bytes()
+        draft = project.load_project(root)[1]['design_intent_draft']
+        intent = fixture.current_spec()
+        intent['selections'][0].update(candidate_path=artifact, target={'surface': 'app', 'state': 'local'})
+        fixture.save(draft, intent)
+        G.refresh_request_review(root, project)
+
+        with project.trusted_stage_provider(flow.host):
+            fixture.advance(flow)
+            before = project.stage_status(root)
+            self.assertIn('design', before['completed_stages'])
+            project.stage_require(root, 'build')
+            journal_path = root / flow.S.JOURNAL
+            original_journal = journal_path.read_bytes()
+            journal = json.loads(original_journal)
+            selection_path = root / project.load_project(root)[1]['design_intent']['path']
+            selected_bytes = selection_path.read_bytes()
+            artifact_pin = next(pin for pin in json.loads(selected_bytes)['pins'] if pin['path'] == artifact)
+            self.assertEqual(artifact_pin['sha256'], project.digest(original_artifact))
+
+            (root / artifact).write_text('<main id="workspace">Revised, not yet reviewed</main>')
+            status = project.stage_status(root)
+            prefix = before['completed_stages'][:before['completed_stages'].index('choice') + 1]
+            self.assertEqual(status['status'], 'blocked')
+            self.assertEqual(status['next_stage'], 'repair_selected_candidate')
+            self.assertEqual(status['host_checkpoint']['action'], 'repair_selected_candidate')
+            self.assertEqual(status['host_checkpoint']['selected_option_id'], status['recovery']['recorded_option_id'])
+            self.assertIsNone(status['host_checkpoint']['iteration_id'])
+            self.assertIn('stage_gate_selected_candidate_changed', status['findings'])
+            self.assertEqual(status['completed_stages'], prefix)
+            self.assertEqual(status['stage_bindings'], {stage: before['stage_bindings'][stage] for stage in prefix})
+            self.assertEqual(status['recovery']['changed_paths'], [artifact])
+            self.assertEqual(status['recovery']['journal_events'], len(journal['events']))
+            self.assertEqual(status['recovery']['recorded_option_id'], 'two')
+            self.assertFalse(status['release_ready'])
+            self.assertIsNone(status['candidate'])
+            self.assertFalse(status['reviews'])
+            for action in ('build', 'release'):
+                with self.assertRaises(ValueError):
+                    project.stage_require(root, action)
+            self.assertEqual(journal_path.read_bytes(), original_journal)
+            self.assertEqual(selection_path.read_bytes(), selected_bytes)
+
+            # The recorded option remains historical evidence when the host cannot confirm it.
+            grants = dict(flow.host.grants)
+            flow.host.grants.clear()
+            no_choice = project.stage_status(root)
+            self.assertNotIn('choice', no_choice['completed_stages'])
+            self.assertNotIn('design', no_choice['completed_stages'])
+            self.assertFalse(no_choice['release_ready'])
+            flow.host.grants.update(grants)
+
+            access = next(e for e in journal['events'] if e['stage'] == 'access')
+            source_path = root / access['payload']['evidence']['data']['path']
+            source_bytes = source_path.read_bytes()
+            source_path.write_bytes(source_bytes + b'\nChanged governed observations')
+            stale_source = project.stage_status(root)
+            self.assertNotIn('access', stale_source['completed_stages'])
+            self.assertNotIn('choice', stale_source['completed_stages'])
+            self.assertFalse(stale_source['release_ready'])
+            source_path.write_bytes(source_bytes)
+
+            # A damaged predecessor/hash chain must not produce even a recovery summary.
+            journal['events'][-1]['predecessor_sha256'] = '0' * 64
+            fixture.save(flow.S.JOURNAL, journal)
+            corrupt = project.stage_status(root)
+            self.assertEqual(corrupt['status'], 'invalid')
+            self.assertEqual(corrupt['completed_stages'], [])
+            self.assertFalse(corrupt.get('recovery'))
+            with self.assertRaises(ValueError):
+                project.stage_require(root, 'build')
+
+            journal_path.write_bytes(original_journal)
+            (root / artifact).write_bytes(original_artifact)
+            restored = project.stage_status(root)
+            self.assertEqual(restored['stage_bindings'], before['stage_bindings'])
+            project.stage_require(root, 'build')
+
+
 if __name__ == '__main__':
     unittest.main()

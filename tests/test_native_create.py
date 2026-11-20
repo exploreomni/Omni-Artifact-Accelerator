@@ -60,7 +60,8 @@ class NativeCreate(unittest.TestCase):
             'queryPresentations': {'data': {'1': {'name': 'Jobs', 'topicName': 'jobs',
                 'type': 'query', 'isSql': False,
                 'query': {'fields': ['jobs.id'], 'table': 'jobs', 'limit': 10, 'userEditedSQL': '',
-                          'filters': {}, 'sorts': [], 'calculations': [], 'version': 5}}}, 'order': ['1']}}
+                          'filters': {}, 'sorts': [], 'calculations': [], 'column_totals': {}, 'row_totals': {},
+                          'pivots': [], 'fill_fields': [], 'version': 5}}}, 'order': ['1']}}
         self.save_spec()
 
     def save_spec(self):
@@ -84,6 +85,8 @@ class NativeCreate(unittest.TestCase):
         prepared = self.prepare()
         self.assertFalse(prepared['publication_authorized'])
         candidate = P.read_json(self.root / frozen['path'])[0]
+        self.assertEqual(candidate['native_create_preflight'], {'html': self.html_path, 'spec': self.spec_path,
+                         'request_sha256': prepared['request_sha256']})
         self.assertEqual(candidate['artifact_roles'], {self.html_path: 'primary', self.spec_path: 'supporting'})
         self.assertEqual(set(candidate['retained']), {self.html_path, self.spec_path})
         workflow.evidence_template(self.root, {'candidate': frozen['path'], 'output': 'evidence/delivery-fixture.json'})
@@ -116,6 +119,52 @@ class NativeCreate(unittest.TestCase):
         self.assertFalse(result['claims']['published_readback_verified'])
         with self.assertRaises(ValueError):
             self.prepare()
+
+    def test_native_schema_failures_block_before_review_without_changing_history(self):
+        workflow = P.routing_helper('delivery_workflow')
+        base = self.spec['queryPresentations']
+        tile = base['data']['1']
+        shortened = copy.deepcopy(tile)
+        for field in a.CREATE_QUERY_ENVELOPE:
+            shortened['query'].pop(field)
+        before = (self.root / 'stage-gates.json').read_bytes()
+        with self.assertRaisesRegex(ValueError, 'include the staged'):
+            workflow.freeze(self.root, {'id': 'initial', 'builders': ['builder'],
+                            'artifacts': [self.html_path], 'context': ['contracts/execution.json']})
+        self.assertEqual((self.root / 'stage-gates.json').read_bytes(), before)
+        for presentations, diagnostic in [
+                ({'data': {'jobs': tile}, 'order': ['jobs']}, 'numeric string keys'),
+                ({'data': {'1': shortened}, 'order': ['1']}, 'calculations.*row_totals.*userEditedSQL'),
+                ({'data': {'1': tile}, 'order': ['2']}, 'order must list')]:
+            self.spec['queryPresentations'] = presentations
+            self.save_spec()
+            with self.subTest(diagnostic=diagnostic):
+                with self.assertRaisesRegex(ValueError, diagnostic):
+                    workflow.freeze(self.root, {'id': 'initial', 'builders': ['builder'],
+                        'artifacts': [self.html_path, self.spec_path], 'supporting_artifacts': [self.spec_path],
+                        'context': ['contracts/execution.json']})
+                with self.assertRaisesRegex(ValueError, diagnostic):
+                    self.stage(reviews=False)
+                self.assertEqual((self.root / 'stage-gates.json').read_bytes(), before)
+                self.assertFalse((self.root / 'evidence/candidate-history/initial').exists())
+        self.spec['queryPresentations'] = base
+        self.save_spec()
+        original = (self.root / self.spec_path).read_bytes()
+        frozen = workflow.freeze(self.root, {'id': 'initial', 'builders': ['builder'],
+            'artifacts': [self.html_path, self.spec_path], 'supporting_artifacts': [self.spec_path],
+            'context': ['contracts/execution.json']})
+        self.assertEqual((self.root / self.spec_path).read_bytes(), original)
+        self.assertEqual(P.stage_status(self.root)['reviews'], {})
+        templates = P.routing_helper('stage_gates').review_requests(self.root, P)['requests']
+        self.assertEqual({row['scope'] for row in templates}, {'security', 'ui_ux', 'qa', 'product_owner'})
+        self.assertTrue(all(row['outcome'] is None and row['reviewer'] is None for row in templates))
+        with self.assertRaises(ValueError):
+            P.stage_record(self.root, templates[0])
+        with self.assertRaises(ValueError):
+            self.prepare()
+        self.gates.reviews()
+        digest = P.read_json(self.root / frozen['path'])[0]['native_create_preflight']['request_sha256']
+        self.assertEqual(self.prepare()['request_sha256'], digest)
 
     def captures(self, prepared):
         body, origin = prepared['request']['body'], prepared['base_url']
@@ -207,7 +256,7 @@ class NativeCreate(unittest.TestCase):
                 a.create_spec_check({**original, 'slug': bad})
         for key, value in [('sql', 'SELECT secret'), ('modelId', 'another-model'),
                            ('userEditedSQL', 'SELECT secret'), ('limit', True), ('results', []),
-                           ('credentials', {'token': 'synthetic'})]:
+                           ('credentials', {'token': 'synthetic'}), ('filters', 42), ('sorts', False), ('version', True)]:
             spec = copy.deepcopy(original)
             spec['queryPresentations']['data']['1']['query'][key] = value
             with self.subTest(query_key=key), self.assertRaises(ValueError):

@@ -132,6 +132,22 @@ and origin. The caller cannot substitute a new pass. All four coverage dispositi
 remain required; unobserved or requested changes remain unresolved. Current
 candidate/dependency versions are rechecked while recording the event.
 
+For ordinary guarded freezes the journal retains the exact revision envelope,
+including the previous candidate and every snapshot. A revision ID and its
+timestamp alone do not invalidate the same reviewed content. The original
+artifact identities, roles, declared dependencies, context and selected intent
+must still agree. A change to the native create request covers every scope.
+Only a previously resolved source review is eligible for a new carry. Keep
+unresolved findings open and obtain a fresh reviewer return for those scopes.
+
+Use `review-requests --project PROJECT` (or `execution_review/requests`) to obtain
+blank stage-record requests for the outstanding scopes on the current candidate.
+Give each reviewer its own request and relevant evidence. The reviewer writes its
+identity, outcome, basis and evidence path and returns the completed JSON file.
+Pass that file unchanged to `stage-record --request FILE`. UI/UX and product fit
+still need the experience-fit evidence when applicable. A generated blank form
+has no disposition or authority.
+
 Conservative boundary: modular candidates can retain unaffected source reviews.
 Use [deterministic assembly provenance](assembly-provenance.md) to retain exact
 component/query/asset/runtime inputs and generate bounded correction evidence.

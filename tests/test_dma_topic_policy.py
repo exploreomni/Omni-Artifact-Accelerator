@@ -21,13 +21,13 @@ G = module('topic_lifecycle','tests/stage_gate_fixture.py')
 
 
 class Fixture:
-    def __init__(self, root):
+    def __init__(self, root, *, branch='branch'):
         self.root = root
         P.init(root,'Inspection workbook','net-new','app')
         topics = ['instrument_readings','instrument_samples']
         self.topic = topics[0]
         self.ctx = {'base_url':'https://synthetic.omniapp.co','model_id':'shared',
-                    'branch_id':'branch','workbook_model_id':None,'principal_id':'fixture-user'}
+                    'branch_id':branch,'workbook_model_id':None,'principal_id':'fixture-user'}
         self.review = {'schema_version':1,'kind':'omni_semantic_handoff','version':'omni-handoff-v1',
             'pins':{'source_fingerprint':'a'*64,'context_sha256':'b'*64,'model_candidate_sha256':'c'*64,
                     'model_context_sha256':'d'*64,'target':{'warehouse':'test'}},
@@ -54,10 +54,10 @@ class Fixture:
             'topics':{},'trials':{}}
         self.expected = self.put('evidence/expected.json',{'volume':12})
         for t in topics:
-            self.obs['topics'][t] = self.put('evidence/topic-'+t+'.json',{'context':self.ctx,'effective_model_id':'branch',
+            self.obs['topics'][t] = self.put('evidence/topic-'+t+'.json',{'context':self.ctx,'effective_model_id':branch or 'shared',
                 'topic_name':t,'response':self.views[t]})
             query = {'fields':[t+'_base.volume'],'table':t+'_base','limit':1}
-            trial = {'context':self.ctx,'effective_model_id':'branch','topic':t,'query_ref':'supplied-trial-'+t}
+            trial = {'context':self.ctx,'effective_model_id':branch or 'shared','topic':t,'query_ref':'supplied-trial-'+t}
             result = self.put('evidence/result-'+t+'.json', {**trial, 'kind':'omni_topic_trial_result',
                 'status':'complete','query_sha256':P.digest(P.canonical(query)), 'columns':query['fields'],
                 'rows':[{query['fields'][0]:12}]})
@@ -100,11 +100,123 @@ class Fixture:
                        presentations={'data':{'1':self.tile if tile is None else tile},'order':['1']},**kwargs)
 
 
+def assert_shared_app_create(case, cycle, ctx, tile, consumer, document, queries, policy, *, delivery=None):
+    """Use the reviewed pre-native-envelope plan for a concrete shared-model App."""
+    root = cycle.root
+    native = module('governed_app_create','skills/omni-app-engineer/scripts/native_authoring.py')
+    paths = ['deliverables/app.html', 'contracts/create-spec.json']
+    fragment = 'display("panel","1")'
+    html = '<main id="panel"></main><script>' + fragment + '</script>'
+    (root / paths[0]).write_text(html)
+    native_query = dict(tile['query'], calculations=[], column_totals={}, fill_fields=[], pivots=[],
+                        row_totals={}, userEditedSQL='')
+    presentations = {'data':{'1':dict(tile,name='Observation',query=native_query)},'order':['1']}
+    create = {'base_url':ctx['base_url'],'model_id':ctx['model_id'],'slug':document,'name':'Inspection',
+              'description':'Local synthetic fixture','queryPresentations':presentations}
+    P.write_json(root / paths[1], create)
+    original_receipt = (root / queries['path']).read_bytes()
+    source = D.evidence(root, queries, P)['source']
+    original_plan = (root / source['path']).read_bytes()
+    case.assertNotIn('calculations', D.evidence(root, source, P)['consumers'][0]['tile']['query'])
+    panels = 'contracts/native-panel-input.json'
+    P.write_json(root / panels, {'kind':'dma_topic_panels','html_path':paths[0],'document_id':document,
+        'panels':[{'element_id':'panel','consumer_id':consumer,'query_key':'1','script_fragment':fragment}]})
+    D.prepare_panels(root,P,panels)
+    with P.trusted_stage_provider(cycle.host):
+        for stage in ('narrative','brief','options'):
+            cycle.stage(stage)
+        binding = P.stage_status(root)['choice_bindings']['option-1']
+        receipt = 'fixture-choice'
+        cycle.host.grants[(P.canonical(binding), receipt)] = 'fixture-user'
+        P.stage_record(root, {'stage':'choice','option_id':'option-1','receipt_ref':receipt})
+        draft = root/'contracts/design-intent.json'
+        intent = P.read_json(draft)[0]
+        intent['selections'][0]['candidate_path'] = paths[0]
+        intent['selections'][0]['target'] = {'surface':'app','state':'local','document_id':None,'draft_id':None}
+        P.write_json(draft, intent, replace=True)
+        cycle.stage('design')
+        frozen = P.routing_helper('delivery_workflow').freeze(root, {'id':'governed-app','builders':['fixture-builder'],
+            'artifacts':paths,'supporting_artifacts':[paths[1]],'context':['contracts/execution.json']})
+        if delivery:
+            delivery(P.stage_status(root)['candidate_sha256'])
+        cycle.reviews()
+        prepared = native.prepare_create(project=root, artifact=paths[0], spec_artifact=paths[1])
+        native_tests = module('governed_create_capture_fixture','tests/test_native_create.py')
+        captures = native_tests.NativeCreate().captures(prepared)
+        returned = captures[1]['body']
+        returned_tile = returned['queryPresentations']['data']['1']
+        returned_tile.update(copy.deepcopy(native.CREATE_PRESENTATION_DEFAULTS))
+        access = D.evidence(root, D.evidence(root, queries, P)['access'], P)
+        observation = D.evidence(root, access['observation'], P)
+        who = D.evidence(root, observation['identity'], P)
+        identity = {'method':'GET','path':'/api/v1/whoami?modelId='+ctx['model_id'],
+                    'base_url':ctx['base_url'],'status':200,'body':who}
+        models = D.evidence(root, observation['models'], P)
+        workbook = returned['workbookModelId']
+        models[workbook] = {'id':workbook,'modelKind':'WORKBOOK','baseModelId':ctx['model_id']}
+        snapshot = {'target':dict(ctx,document_id=document),'draft_context':{'workbookModelId':workbook},
+                    'identity':who,'models':models,'topics':{name:D.evidence(root, pin, P)['response']
+                                                               for name,pin in observation['topics'].items()}}
+        def readback():
+            return native.verify_create_captures(prepared, prepared, *captures, project=root,
+                                                  identity=identity, snapshot=snapshot)
+        accepted = readback()
+        case.assertEqual(accepted['parity'], 'equivalent')
+        case.assertEqual(accepted['dma_topics'], prepared['dma_topics'])
+        returned_tile['query'].pop('pivots')
+        case.assertIn('query_presentations_mismatch', readback()['findings'])
+        returned_tile['query']['filters'] = {}
+        with case.assertRaisesRegex(ValueError, 'saved_query_differs_from_selected_topic_plan'):
+            readback()
+    case.assertEqual(prepared['request']['body']['queryPresentations'], presentations)
+    case.assertEqual(prepared['request_sha256'], P.read_json(root/frozen['path'])[0]['native_create_preflight']['request_sha256'])
+    case.assertEqual(prepared['dma_topics']['queries_sha256'], queries['sha256'])
+    case.assertEqual(prepared['dma_topics']['policy'], policy)
+    case.assertFalse(prepared['publication_authorized'])
+    case.assertEqual((root / queries['path']).read_bytes(), original_receipt)
+    case.assertEqual((root / source['path']).read_bytes(), original_plan)
+
+
 class TopicPolicy(unittest.TestCase):
     def setUp(self):
         temp = tempfile.TemporaryDirectory()
         self.addCleanup(temp.cleanup)
         self.f = Fixture(Path(temp.name).resolve()/'project')
+
+    def test_create_preflight_rejects_schema_valid_request_to_a_different_governed_model(self):
+        f = self.f
+        f.cycle.through('analysis')
+        query = dict(f.query, calculations=[], column_totals={}, fill_fields=[], pivots=[], row_totals={}, userEditedSQL='')
+        target = {'base_url': f.ctx['base_url'], 'slug': 'instrument-report', 'model_id': 'another-model',
+                  'name': 'Inspection', 'description': '', 'queryPresentations': {
+                      'order': ['1'], 'data': {'1': dict(f.tile, query=query)}}}
+        f.put('contracts/create-spec.json', target)
+        html = 'deliverables/app.html'
+        (f.root / html).write_text('<main>Inspection</main>')
+        workflow = P.routing_helper('delivery_workflow')
+        artifacts = workflow.pins(f.root, [html, 'contracts/create-spec.json'])
+        with self.assertRaisesRegex(ValueError, 'native_context_changed_model_id'):
+            workflow.preflight_new_app(f.root, P.load_project(f.root)[1], artifacts)
+        self.assertIsNone(P.stage_status(f.root)['candidate'])
+
+    def test_shared_dma_sparse_plan_freezes_and_prepares_full_native_app(self):
+        f = Fixture(self.f.root.parent/'shared-dma-app', branch=None)
+        f.cycle.through('analysis')
+        assert_shared_app_create(self, f.cycle, f.ctx, f.tile, f.row['consumer_id'],
+                                 f.row['document_id'], f.analysis, D.POLICY)
+
+    def test_native_query_projection_rejects_active_defaults_and_keeps_exact_semantics(self):
+        f = self.f
+        f.cycle.through('analysis')
+        for field, values in {'calculations': ([{'name':'extra'}], {}), 'column_totals': ({'total':True}, []),
+                              'row_totals': ({'total':True}, False), 'pivots': (['lab_group.name'], None),
+                              'fill_fields': (['lab_group.name'], {}), 'userEditedSQL': ('select 1', False),
+                              'unknown_feature': ([],), 'fields': (list(reversed(f.query['fields'])),),
+                              'limit': (10,), 'table': ('other',), 'filters': ({},), 'sorts': ([],),
+                              'join_paths_from_topic_name': ('other',)}.items():
+            for value in values:
+                with self.subTest(field=field, value=value), self.assertRaises(ValueError):
+                    f.candidate(dict(f.tile, query={**f.query, field:value}))
 
     def test_real_stages_candidate_against_selected_topic_and_gap(self):
         f = self.f

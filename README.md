@@ -283,8 +283,11 @@ Use an existing approved Python runtime for source-only work. **Package installa
 third-party imports, updates and skill activation require explicit scoped sign-off.
 No Blender code or execution is permitted.** Read the
 [package-use policy](skills/omni-artifact-accelerator/references/dependency-policy.md).
-Setup in this release is guided through the steps below and your host's connection
-mechanism; an automatic first-launch wizard or credential-file generator is not included.
+For a CLI-backed workflow, the agent checks for an existing Omni CLI during setup.
+If it is missing, the agent offers to install an exact official release for your
+account and check its version, subject to your permission and the host's approval
+controls. You can skip setup or use an existing MCP or API connection.
+See [guided Omni CLI setup](skills/omni-artifact-accelerator/references/omni-cli-setup.md).
 
 ### 1. Review the source
 
@@ -302,8 +305,9 @@ affected cases through `scripts/validate_source.py --case <case>` using the same
 isolated Python flags; see [testing](docs/TESTING.md). Those checks exercise local
 contracts, without installing packages or contacting a tenant. The current GitHub
 workflow is manual-only and records a revision; it does not run validation.
-For the complete source lane, follow the explicit existing Node path and SHA-256
-selection in [testing](docs/TESTING.md); omitting them leaves required coverage failed.
+For a new App or dashboard, continue with its engagement and [artifact checks](skills/omni-artifact-accelerator/references/execution-workflow.md#keep-validation-scoped-to-the-artifact).
+Package maintainers can select the full regression suite and its required runtime
+as described in [testing](docs/TESTING.md).
 
 ### 2. Choose a repository or installed-skill entry
 
