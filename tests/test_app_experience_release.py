@@ -178,7 +178,9 @@ class ReleaseExperience(unittest.TestCase):
             F.G.refresh_request_review(self.root, P)
             P.stage_record(self.root, {'stage': 'design', 'resolved': True, 'evidence': {'design': path}})
             presentations = {'order': ['1'], 'data': {'1': {'name': 'Records', 'topicName': 'records',
-                'type': 'query', 'isSql': False, 'query': {'fields': ['records.id'], 'table': 'records', 'limit': 10}}}}
+                'type': 'query', 'isSql': False, 'query': {'fields': ['records.id'], 'table': 'records', 'limit': 10,
+                    'calculations': [], 'column_totals': {}, 'fill_fields': [], 'pivots': [],
+                    'row_totals': {}, 'userEditedSQL': ''}}}}
             self.f.save('contracts/create.json', {'base_url': 'https://synthetic.invalid', 'slug': 'record-workspace',
                 'model_id': 'model-1', 'name': 'Record workspace', 'description': 'Original fixture',
                 'queryPresentations': presentations})
