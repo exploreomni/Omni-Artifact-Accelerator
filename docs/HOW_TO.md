@@ -262,7 +262,9 @@ Connected acquisition needs its own configured credentials and allowed operation
 
 ## Work with Data Model Accelerator
 
-[Data Model Accelerator](https://github.com/exploreomni/Data-Model-Accelerator) owns warehouse and semantic design, implementation and backend validation. This package owns the analyst experience and can use an existing Omni model without requiring DMA.
+For existing warehouse tables, try “Our tables are ready. Use the Omni-only modeling lane to translate our existing metrics, create a Topic if needed, and build the App. Our regional managers may see only their own regions.” The coordinator checks ownership first, inventories the available Topics, and prepares a branch change only in the selected scope. [Standalone modeling steps](../skills/omni-artifact-accelerator/references/standalone-modeling.md)
+
+[Data Model Accelerator](https://github.com/exploreomni/Data-Model-Accelerator) owns upstream work and the semantic objects in its handoffs. An OAA-only engagement can own a scoped Omni semantic change on existing warehouse objects.
 
 For an existing DMA delivery, give the orchestrator its curated `omni/SEMANTIC_REVIEW.json`, the saved engagement context and any independent report inventory. Ask the agent to use the [DMA handoff contract](../skills/omni-artifact-accelerator/references/dma-handoff.md). The importer retains a pinned candidate and unresolved definitions; it does not execute the source project or deploy a model.
 

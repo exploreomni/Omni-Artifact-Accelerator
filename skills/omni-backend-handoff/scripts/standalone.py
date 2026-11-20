@@ -6,6 +6,7 @@ contracts offline; neither a self-hash nor a reported observation authenticates 
 origin or grants business acceptance. Legacy DMA returns remain in migration.py.
 """
 import copy
+from contextlib import nullcontext
 import importlib.util
 from pathlib import Path
 import re
@@ -207,6 +208,10 @@ def validate_spec(root, spec, workflow):
     if inventory.get("source", {}).get("platform") in {"looker", "hex", "periscope", "metabase", "webfocus", "thoughtspot", "qlik", "microstrategy", "cognos", "businessobjects", "ssrs", "powerbi_paginated", "crystal"}:
         ap.need(requirements["route"] != "unselected", "standalone.explicit_route_required")
         selected_backend(root, requirements, workflow)
+    elif requirements["route"] == "omni_semantic_reconstruction":
+        backend = selected_backend(root, requirements, workflow)
+        ap.need(backend and backend.get("source") == "standalone_omni_model",
+                "standalone.verified_omni_model_required")
     else:
         ap.need(requirements["route"] == "reuse_existing", "standalone.reuse_existing_required")
     payload = workflow.load(root, spec.get("payload_path"))
@@ -246,12 +251,24 @@ def validate_spec(root, spec, workflow):
 
 
 def selected_backend(root, requirements, workflow):
-    """A current model inspection cannot stand in for a selected DMA response."""
+    """Resolve the verified local Topic or the selected DMA owner for this route."""
     root, project = ap.load_project(root)
     imported = project.get("dma_import", {})
+    topics = ap.routing_helper("dma_topics")
+    dma_owned = topics.bound(project, root)
+    if (requirements["route"] in {"reuse_existing", "omni_semantic_reconstruction"}
+            and not dma_owned and topics.managed(project, root)):
+        with (ap.validation_operation(root) if ap.validation_helper().active() is None else nullcontext()):
+            # stage_inputs replays the current Stage A observation and Stage B
+            # consumer plan, including their originals. Retain those same pins.
+            access, queries = topics.stage_inputs(root, project, ap)
+            verified = topics.evidence(root, access, ap)
+            ap.need(verified["kind"] == "omni_topic_access" and verified["status"] == "observed_from_supplied_evidence",
+                    "standalone.verified_omni_model_required")
+            return {"source": "standalone_omni_model", "route": verified["route_pin"],
+                    "access": access, "queries": queries}
     if requirements["route"] == "reuse_existing" and "exchange_id" not in imported:
-        topics = ap.routing_helper("dma_topics")
-        if not topics.bound(project):
+        if not dma_owned:
             return None
         # A direct handoff or continuation can supply an existing-model catalog.
         # Recheck the producer and its registered bytes; no exchange is selected.
@@ -530,7 +547,7 @@ def build_return(root, project, scope_relative, spec_path, migration):
     files = [cw.file_pin(root, path, project) for path in paths]
     return cw.sealed({"schema_version": 1, "kind": RETURN_KIND, "project_id": project["id"],
         "scope": cw.file_pin(root, scope_relative, project), "scope_sha256": scope["sha256"],
-        "migration_scope": "standalone_frontend", "backend_context": None, "route": "reuse_existing",
+        "migration_scope": "standalone_frontend", "backend_context": None, "route": baseline["route"],
         "route_reference": baseline["route_reference"],
         "spec": cw.file_pin(root, spec_path, project), "baseline_sha256": baseline["sha256"],
         "candidate_sha256": candidate["candidate_sha256"], "target": baseline["target"], "files": files,

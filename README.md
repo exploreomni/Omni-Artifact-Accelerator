@@ -4,6 +4,8 @@ An analyst's sidekick for designing, building and reviewing **native Omni dashbo
 
 Start with an existing Omni model, bring an exported BI experience, or continue from the companion [Data Model Accelerator](https://github.com/exploreomni/Data-Model-Accelerator). Use only the specialists the task needs.
 
+**Building in Omni from tables you already have?** Ask the Accelerator to reuse a suitable Topic or prepare one on a development branch, translate any scoped legacy metrics, and verify who can see the results. The [standalone Omni modeling workflow](skills/omni-artifact-accelerator/references/standalone-modeling.md) works with this download alone. An incoming DMA handoff keeps its original model owner.
+
 **Current package: [0.40.0](package.json), with 30 registered skills.** Run it through
 your approved AI host using a repository checkout or an already approved skill
 installation. The host supplies model execution, connections and native-write

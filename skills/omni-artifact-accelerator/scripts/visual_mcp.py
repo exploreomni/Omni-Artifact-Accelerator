@@ -193,6 +193,9 @@ LOCAL_TOOLS = [
          {"source": STRING, "output": STRING}),
     tool("looker_check_capture", "Verify local Looker capture identity and attachments; does not establish native or business acceptance.",
          {"source": STRING}, read=True),
+    tool('semantic_model_prepare', 'Select governed Topic ownership, prepare branch-only changes, verify local evidence and bind saved consumers.',
+         {'operation': {**STRING, 'enum': list(workflow.ap.routing_helper('semantic_lane').OPERATIONS)},
+          'request': STRING, 'output': STRING}, ['operation', 'request']),
     tool('dma_topic_prepare', 'Prepare private Topic access, query coverage or a scoped backend gap for a DMA-bound engagement.',
          {'operation': {**STRING, 'enum': ['access','queries','gap','panels']}, 'request': STRING, 'output': STRING}, ['operation','request']),
     tool('domo_plan_source', 'Recover Domo scope and missing interview answers; prepare bounded source requests without loading a runtime.',
@@ -1389,6 +1392,9 @@ class Bridge:
                 {'tool_profile': self.tool_profile, 'tool_names': sorted(t['name'] for t in self.definitions())})
         if name in ('domo_source_operation', 'domo_source_doctor'):
             return self.domo_operations.describe() if name == 'domo_source_doctor' else self.domo_operations.run(args['operation_id'], args['resume'])
+        if name == 'semantic_model_prepare':
+            return workflow.ap.routing_helper('semantic_lane').execute(self.root, workflow.ap, args['operation'],
+                                                                      args['request'], args.get('output'))
         if name == 'dma_topic_prepare':
             module = workflow.ap.routing_helper('dma_topics')
             if args['operation'] == 'panels':

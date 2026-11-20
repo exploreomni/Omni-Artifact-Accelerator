@@ -557,7 +557,7 @@ def receive(project, request_path, response_dir):
             "working_baseline_changed": False}
 
 
-def select(project, exchange_id, *, verify_only=False):
+def select(project, exchange_id, *, verify_only=False, decision=None):
     root, obj = ap.load_project(project)
     selected = obj.get("dma_import", {}).get("exchange_id") == exchange_id
     ap.need(selected or not verify_only, "exchange must already be selected for verification")
@@ -586,6 +586,11 @@ def select(project, exchange_id, *, verify_only=False):
     response, _, _, rebuilt = checked_response(destination, request)
     saved, _ = ap.read_json(destination / "catalog.json")
     ap.need(saved == rebuilt, "saved catalog differs from exact returned review")
+    if obj.get('dma_continuation'):
+        topics = ap.routing_helper('dma_topics')
+        topics.check_continuation_topics(topics.peer('continuation').project_selection(root), saved)
+    elif not obj.get("dma_import") and (root / 'contracts/semantic-route-000001.json').is_file():
+        obj['semantic_adoption'] = ap.routing_helper('semantic_lane').check_adoption(root, obj, saved, decision, ap)
     relative = str((destination / "catalog.json").relative_to(root))
     record = {"id": "dma-catalog-" + exchange_id, "path": relative, "sha256": ap.digest((destination / "catalog.json").read_bytes())}
     ap.need(not any(r.get("id") == record["id"] or r.get("path") == relative for r in obj["sources"]), "candidate already registered inconsistently")
@@ -614,6 +619,7 @@ def main():
     cmd = subs.add_parser("select")
     cmd.add_argument("--project", required=True)
     cmd.add_argument("--exchange", required=True)
+    cmd.add_argument("--decision", help="late standalone-to-DMA ownership decision")
     args = parser.parse_args()
     try:
         if args.command == "request":
@@ -623,7 +629,7 @@ def main():
         elif args.command == "receive":
             result = receive(args.project, args.request, args.response)
         else:
-            result = select(args.project, args.exchange)
+            result = select(args.project, args.exchange, decision=args.decision)
         # Do not print source questions or potentially confidential result values.
         print(json.dumps({k: v for k, v in result.items() if k not in ("impact", "requirement_resolutions")}, indent=2))
     except (ValueError, OSError, KeyError, TypeError) as exc:

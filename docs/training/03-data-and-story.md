@@ -19,7 +19,7 @@ This is the text alternative to the [agent-flow diagram](assets/agent-flow.svg).
 
 Publication has its own authorization and verification after candidate preparation. The package checks its managed routes; those helpers do not control arbitrary commands or API calls outside them. Host enforcement must be qualified separately.
 
-Migration evidence enters through the translator and source specialist. Missing backend definitions go to Data Model Accelerator or the model owner; returned candidates are reconciled and affected access/query evidence is checked again before dependent work resumes.
+Migration evidence enters through the translator and source specialist. For existing warehouse tables, the [standalone modeling option](../../skills/omni-artifact-accelerator/references/standalone-modeling.md) can prepare a missing Topic. For a DMA handoff, missing backend definitions go to Data Model Accelerator or the model owner; returned candidates are reconciled and affected access/query evidence is checked again before dependent work resumes.
 
 ## A — Can the right person access the right data?
 

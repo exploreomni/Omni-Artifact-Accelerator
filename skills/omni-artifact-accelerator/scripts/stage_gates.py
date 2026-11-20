@@ -920,7 +920,7 @@ def _report(root, fd, project, required, state, P, provider):
             report['findings'].append('stale_workflow_context:' + stage)
             report['next_stage'] = stage
             break
-        if stage in ('access','analysis') and project.get('dma_topic_policy') == 'selected-topic-v1':
+        if stage in ('access','analysis') and P.routing_helper('dma_topics').managed(project, root):
             try:
                 P.routing_helper('dma_topics').check_stage(root, project, stage, event['payload'], P, current.get('access'))
             except (ValueError, KeyError, TypeError, OSError) as error:
@@ -1047,6 +1047,16 @@ def _report(root, fd, project, required, state, P, provider):
                 report['next_stage'] = 'candidate'
                 if all(e['payload']['outcome'] == 'resolved' for e in state['reviews'].values()):
                     report['next_stage'] = None
+                    topics = P.routing_helper('dma_topics')
+                    if topics.managed(project, root) and not topics.bound(project, root):
+                        try:
+                            P.routing_helper('semantic_lane').release_check(
+                                root, project, topics.small_pin(current['access']['payload']['evidence']['data']),
+                                topics.small_pin(current['analysis']['payload']['evidence']['queries']),
+                                report['candidate_sha256'], P, topics)
+                        except (ValueError, KeyError, TypeError, OSError):
+                            report['findings'].append('standalone_topic_delivery_access_pending')
+                            report['next_stage'] = 'review'
                     report['release_ready'] = not report['findings']
     report['status'] = ('ready_for_release' if report['release_ready'] else
                         'blocked' if any(not x.startswith('missing_stage:') for x in report['findings']) else 'incomplete')
@@ -1264,7 +1274,7 @@ def record(root, request, *, P=None, provider=None):
                   'stage_gate_review_candidate_mismatch')
         if stage in EVIDENCE:
             payload['evidence'] = {k: _pin(fd, v, P) for k, v in payload['evidence'].items()}
-        if stage in ('access','analysis') and any(k in project for k in ('dma_import','dma_continuation','dma_topic_policy')):
+        if stage in ('access','analysis') and P.routing_helper('dma_topics').managed(project, root):
             P.routing_helper('dma_topics').check_stage(root, project, stage, payload, P, state['current'].get('access'))
         if stage == 'brief':
             _, paths = _discovery_snapshot(fd, project, payload, P)

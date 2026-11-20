@@ -1,5 +1,7 @@
 # Workflow and ownership
 
+Resolve selected [standalone Omni modeling](standalone-modeling.md) or an existing DMA continuation before binding artifact queries. Return to the same engagement and A–F sequence.
+
 The shared [package-use policy](dependency-policy.md) applies to every route and worker. Routing a responsibility grants no package, runtime, installation or publication authority.
 
 All new engagements, including migration and enhancement modes, follow the authoritative
@@ -14,6 +16,7 @@ direct-design advice does not bypass a current gate.
 
 | Entry | First work | Semantic dependency | End product |
 | --- | --- | --- | --- |
+| Omni-only development | Inspect existing relations, Topics and audience access at A | Reuse a suitable Topic or prepare a reviewed branch Topic and verify its semantics | App or dashboard whose saved queries and controls use the verified Topic |
 | Standalone new dashboard | A–C: verify data/user access, qualify analysis/queries, create reusable narrative; then D–F | Reuse verified fields; request only real gaps | User-selected native dashboard specification/candidate and QA |
 | Standalone new app | A–C: verify data/user access, qualify analysis/queries, create reusable narrative; then D–F | Same governed field bindings | User-selected native Omni App design/code candidate and QA |
 | Migration / lift and shift | Frozen artifact inventory, independent scope denominator, original behavior | DMA handoff or existing Omni bindings | Original-ID crosswalk, facet parity matrix, selected target artifacts |

@@ -5,6 +5,8 @@ description: Discover and preserve product intent for substantial Omni App, dash
 
 # Omni product owner
 
+For standalone modeling, recover the intended audiences at A. Ask which objects and rows each audience can see, who may open or share the document and which filters people may change. Reuse those answers at D. Carry missing group or attribute mappings to the model owner. [Standalone modeling](../omni-artifact-accelerator/references/standalone-modeling.md)
+
 For a bounded task, follow the [scoped context and correction contract](../omni-artifact-accelerator/references/incremental-work.md). Use assigned requirements, shared restrictions and cited original evidence; request specific missing context rather than reloading the entire engagement. Retain open findings and evidence limits on corrections.
 
 Own the product question: who this serves, what they should understand or accomplish,

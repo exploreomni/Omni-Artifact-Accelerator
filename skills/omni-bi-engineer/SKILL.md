@@ -7,6 +7,8 @@ description: Bind reviewed analyst requirements to Omni topics, workbook queries
 
 For DMA-bound artifacts, use [selected Topic evidence](../omni-backend-handoff/references/topic-first.md). Bind each consumer and control to its document-scoped query, and keep unanswerable panels in the scoped backend request.
 
+For a standalone Omni engagement, apply the [modeling route](../omni-artifact-accelerator/references/standalone-modeling.md) and load the [bounded Topic author](references/semantic-modeler.md) only for selected changes. Reuse Topic fields under the intended principal and branch. A model or sharing change requires the model owner's scoped workflow.
+
 For native Reports Beta, partner with the [report builder](../omni-report-builder/SKILL.md).
 Own exact dataset/query/field/parameter mappings, grain, sort, filter stage and
 independent total expectations. Page groups and totals are not automatically

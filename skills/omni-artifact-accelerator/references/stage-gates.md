@@ -23,6 +23,8 @@ authenticated approval. No production privilege/approval service is supplied her
 
 ## Order and evidence
 
+A selected [Omni-only modeling engagement](standalone-modeling.md) pins its verified Topic at A, consumers and controls at B, and effective audience checks on the frozen artifact at release. Legacy projects retain their recorded policy. DMA imports use the existing selected-Topic contract.
+
 The journal is `stage-gates.json` in the private engagement. Evidence paths are
 relative to that engagement, bounded regular files, pinned by content hash. Keep
 credentials, private results and engagement records outside the repository.

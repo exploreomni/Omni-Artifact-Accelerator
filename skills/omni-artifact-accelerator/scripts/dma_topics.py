@@ -41,6 +41,11 @@ def bound(project, root=None):
         or root is not None and (Path(root)/'continuation-receipt.json').is_file())
 
 
+def managed(project, root):
+    return bound(project, root) or project.get('semantic_lane') == 'omni-modeling-v1' or (
+        root is not None and (Path(root) / 'contracts/semantic-route-000001.json').is_file())
+
+
 def read(root, path, P):
     return P.read_json(P.relative_file(root, path))
 
@@ -64,6 +69,12 @@ def evidence(root, record, P, *, json=True):
 
 def same(a, b, P):
     return P.canonical(a) == P.canonical(b)
+
+
+def check_continuation_topics(selection, catalog):
+    if selection:
+        need(set(selection['topic_names']) <= {row['id'] for row in catalog['topics']},
+             'selected_continuation_topic_missing_from_catalog')
 
 
 def current(root, project, P):
@@ -90,6 +101,7 @@ def current(root, project, P):
         lambda: P.dma_catalog(imported['original_path']))
     need(imported['original_sha256'] == rebuilt['source']['original_sha256'] and same(saved, rebuilt, P),
          'catalog_or_handoff_changed')
+    check_continuation_topics(selection, saved)
     return selection, file, saved
 
 
@@ -141,8 +153,8 @@ def check_execution_result(result, scope, query, P):
              for r in result['rows']), 'scoped_trial_result_changed')
 
 
-def check_observation(root, o, ctx, review_hash, topics, P):
-    need(isinstance(o, dict) and o.get('kind') == 'dma_topic_observation' and type(o.get('schema_version')) is int and o['schema_version'] == 1
+def check_observation(root, o, ctx, review_hash, topics, P, *, kind='dma_topic_observation'):
+    need(isinstance(o, dict) and o.get('kind') == kind and type(o.get('schema_version')) is int and o['schema_version'] == 1
          and o.get('context') == ctx and o.get('review_sha256') == review_hash, 'observation_scope_changed')
     observed = timestamp(o.get('observed_at'))
     need(observed <= datetime.now(timezone.utc), 'observation_in_future')
@@ -186,6 +198,8 @@ def access_value(root, project, source, P):
 
 
 def _access_value(root, project, source, P):
+    if not bound(project, root) and managed(project, root):
+        return P.routing_helper('semantic_lane').access_value(root, project, source, P, P.routing_helper('dma_topics'))
     spec = evidence(root, source, P)
     need(type(spec.get('schema_version')) is int and spec['schema_version'] == 1 and spec.get('kind') == 'dma_topic_selection', 'selection_spec_required')
     selection, catalog_pin, catalog = current(root, project, P)
@@ -208,6 +222,13 @@ def _access_value(root, project, source, P):
         chosen = list(candidates)
     if catalog:
         need(set(chosen) <= set(candidates), 'topic_outside_catalog')
+    if project.get('semantic_adoption'):
+        adoption = evidence(root, project['semantic_adoption'], P)
+        need(adoption['handoff_sha256'] == project['dma_import']['original_sha256'] or
+             project['dma_import'].get('exchange_id'), 'adopted_handoff_changed')
+        need(set(chosen) <= set(adoption['topics']) and ctx is not None and all(
+            ctx.get(key) == value for key, value in adoption['destination'].items() if key != 'principal_id'),
+            'adopted_dma_context_changed')
     target = selection.get('destination') if selection else None
     if target and ctx:
         need(all(ctx.get(k) == v for k,v in target.items()), 'continuation_destination_conflict')
@@ -328,7 +349,8 @@ def plan_value(root, project, source, P, prior=None):
 
 def _plan_value(root, project, source, P, prior):
     spec = evidence(root, source, P)
-    need(spec.get('kind') == 'dma_topic_consumer_plan' and type(spec.get('schema_version')) is int and spec['schema_version'] == 1, 'queries_spec_required')
+    standalone = not bound(project, root) and managed(project, root)
+    need(spec.get('kind') == ('omni_topic_consumer_plan' if standalone else 'dma_topic_consumer_plan') and type(spec.get('schema_version')) is int and spec['schema_version'] == 1, 'queries_spec_required')
     if prior:
         need(spec.get('access') == prior, 'stage_a_binding_changed')
     access, topics, catalog = checked_access(root, project, spec['access'], P)
@@ -357,6 +379,7 @@ def _plan_value(root, project, source, P, prior):
         if action != 'reuse':
             need(tile['query'].get('join_paths_from_topic_name') == name, 'explicit_query_topic_required')
         if action == 'exception':
+            need(not standalone, 'standalone_alternate_topic_requires_new_route')
             decision = evidence(root, row['decision'], P)
             need(name not in access['topics'] and decision.get('kind') == 'dma_topic_exception'
                  and all(decision.get(k) == row[k] for k in ('consumer_id','surface','document_id','query_key','topic'))
@@ -368,10 +391,10 @@ def _plan_value(root, project, source, P, prior):
                  'attributable_scoped_user_decision_required')
         else:
             need(name in access['topics'], 'query_outside_selected_topics')
-            need(set(fields) <= candidate_fields(catalog,name), 'field_outside_dma_candidate')
+            need(set(fields) <= (set(access['fields']) if standalone else candidate_fields(catalog,name)), 'field_outside_dma_candidate')
         definitions = peer('standalone').semantic_definitions({'topics':{name:topics[name]}},
                 [{'topic':name,'field_ids':fields,'query_key':row['query_key'],'query':tile['query']}])
-        if action != 'exception':
+        if action != 'exception' and not standalone:
             check_kinds(catalog,name,definitions[0]['fields'])
         if action == 'reuse':
             saved = evidence(root, row['saved_query'], P)
@@ -414,12 +437,12 @@ def _plan_value(root, project, source, P, prior):
             need(topic in topics and all(index.get((*key[:2],q),{}).get('topic') == topic for q in ctrl['query_keys'])
                  and peer('standalone').pointer(ctrl['config'], ref['pointer']) == field, 'control_binding_changed')
             if topic in access['topics']:
-                need(field in candidate_fields(catalog,topic), 'control_field_outside_candidate')
+                need(field in (access['fields'] if standalone else candidate_fields(catalog,topic)), 'control_field_outside_candidate')
             definitions = peer('standalone').semantic_definitions({'topics':{topic:topics[topic]}},
                         [{'topic':topic,'field_ids':[field],'query_key':None,'query':{}}])
-            if topic in access['topics']:
+            if topic in access['topics'] and not standalone:
                 check_kinds(catalog,topic,definitions[0]['fields'])
-    result = {'kind':'dma_topic_queries','schema_version':1,'source':source,'access':spec['access'],
+    result = {'kind':'omni_topic_queries' if standalone else 'dma_topic_queries','schema_version':1,'source':source,'access':spec['access'],
               'consumers':entries,'backend_request':gap_spec(project, consumers, spec.get('backend'), access, source, P), 'native_verified':False}
     if result['backend_request']:
         peer('cowork').check_spec(result['backend_request'])
@@ -431,7 +454,7 @@ def small_pin(record):
 
 
 def check_stage(root, project, stage, payload, P, access_event=None):
-    if not bound(project, root) or stage not in ('access','analysis'):
+    if not managed(project, root) or stage not in ('access','analysis'):
         return
     if stage == 'access':
         a, _, _ = checked_access(root, project, small_pin(payload['evidence']['data']), P)
@@ -448,7 +471,7 @@ def check_stage(root, project, stage, payload, P, access_event=None):
 
 def prepare(root, P, request, output, analysis=False):
     root, project = P.load_project(root)
-    need(bound(project, root), 'dma_engagement_required')
+    need(managed(project, root), 'topic_engagement_required')
     with P.validation_operation(root):
         ref = pin(root, request, P)
         result = plan_value(root, project, ref, P)[0] if analysis else access_value(root, project, ref, P)[0]
@@ -477,7 +500,7 @@ def guard(root, P, *, surface, document_id, context, presentations, controls=Non
     if root is None or not (Path(root) / 'project.json').exists():
         return None
     root, project = P.load_project(root)
-    if not bound(project, root):
+    if not managed(project, root):
         return None
     if P.validation_helper().active() is None:
         with P.validation_operation(root):
@@ -545,7 +568,7 @@ def guard(root, P, *, surface, document_id, context, presentations, controls=Non
         current_topics = snapshot.get('topics',{})
         for name in {row['topic'] for row in planned.values()}:
             need(isinstance(current_topics,dict) and isinstance(current_topics.get(name),dict) and same(current_topics[name].get('topic'),topics[name]['topic'],P), 'live_topic_definition_changed')
-    return {'policy':POLICY,'surface':surface,'document_id':document_id,
+    return {'policy':POLICY if bound(project, root) else 'omni-modeling-v1','surface':surface,'document_id':document_id,
             'access_sha256':access_pin['sha256'],'queries_sha256':query_pin['sha256'],
             **({'panel_mapping_sha256':panel_binding['sha256']} if panel_binding else {})}
 
@@ -641,7 +664,7 @@ def prepare_panels(root,P,request):
 
 def packet_context(root, project, role, stage, scope_ids, P):
     """Compact references only; no report/SQL/readback payload fan-out."""
-    if not bound(project, root) or role not in ('data-analyst','bi-engineer','app-engineer','dashboard-designer',
+    if not managed(project, root) or role not in ('data-analyst','bi-engineer','app-engineer','dashboard-designer',
                                           'qa-analyst','backend-handoff','product-owner','data-storyteller'):
         return None
     stages = stage.get('stage_bindings',{})
@@ -651,14 +674,14 @@ def packet_context(root, project, role, stage, scope_ids, P):
     for stage,field in [('access','data'),('analysis','queries')]:
         if stages.get(stage) in index:
             refs[stage] = small_pin(index[stages[stage]]['payload']['evidence'][field])
-    result = {'policy':POLICY,'evidence':refs,'status':'pending'}
+    result = {'policy':POLICY if bound(project, root) else 'omni-modeling-v1','evidence':refs,'status':'pending'}
     if 'access' in refs:
         access = evidence(root,refs['access'],P)
-        if access.get('kind') == 'dma_topic_access':
+        if access.get('kind') in ('dma_topic_access','omni_topic_access'):
             result.update(status=access['status'],topics=access['topics'],catalog=access['catalog'])
     if 'analysis' in refs:
         plan = evidence(root,refs['analysis'],P)
-        if plan.get('kind') == 'dma_topic_queries':
+        if plan.get('kind') in ('dma_topic_queries','omni_topic_queries'):
             selected = [r for r in plan['consumers'] if role not in ('app-engineer','dashboard-designer')
                         or r['surface'] == ('app' if role == 'app-engineer' else 'dashboard')]
             if scope_ids is not None:

@@ -5,6 +5,8 @@ description: Inventory and map existing BI dashboards, reports and data apps for
 
 # Omni Artifact Translator
 
+When warehouse bindings exist and the user selects Omni-only semantic migration, send scoped source IDs, expression and security evidence from the relevant adapter to the [standalone modeling workflow](../omni-artifact-accelerator/references/standalone-modeling.md). A DMA-bound source keeps its authoritative owner.
+
 Before runtime or tool use, follow the shared [package-use policy](../omni-artifact-accelerator/references/dependency-policy.md): no unapproved package installation/import or skill activation, and no Blender code or execution. Source review is separate from execution authority.
 
 Give the orchestrator a traceable analyst inventory and a proposed source-to-target mapping. Preserve what the analyst experiences: page hierarchy, metric meaning, filters, default states, interactions, visual intent, annotations, accessibility, responsive behavior and access boundaries. The data engineering inventory alone does not establish these.

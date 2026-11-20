@@ -5,6 +5,8 @@ description: Coordinate versioned requirements and candidate responses between t
 
 # Frontend and backend cowork
 
+For existing tables and a standalone owner, route bounded Omni-only work through the [standalone modeling lane](../omni-artifact-accelerator/references/standalone-modeling.md). Preserve any supplied DMA candidate and the exact continuation/exchange selection. Return physical and DMA-owned gaps to their owner.
+
 For [spatial analytics](../omni-app-engineer/references/native-scene-framework.md#optional-governed-data), reuse this same versioned exchange for missing entity keys, fields, grain, scope and numerical expectations. Return only the semantic gap; scene-only illustrations need no backend handoff. Keep shape/material/provenance with the modeler and exact approved query/mapping pins with the frontend. A semantic change invalidates affected data/access evidence without silently replacing the selected geometry or brand direction.
 
 Before runtime or tool use, follow the shared [package-use policy](../omni-artifact-accelerator/references/dependency-policy.md): no unapproved package installation/import or skill activation, and no Blender code or execution. Source review is separate from execution authority.

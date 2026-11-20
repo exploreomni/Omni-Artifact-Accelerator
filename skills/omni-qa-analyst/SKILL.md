@@ -5,6 +5,8 @@ description: Independently verify Omni dashboard and App numbers, migration pari
 
 # QA analyst
 
+For an OAA-authored or standalone reused Topic, apply [semantic access verification](references/semantic-access.md) at model validation and again on the exact artifact draft.
+
 For [candidate release](../omni-artifact-accelerator/references/app-release.md),
 verify actual task fit and visible data consumers across later pages, error/denied
 states and refresh cycles. Keep rendered captures separate from exercised actions.

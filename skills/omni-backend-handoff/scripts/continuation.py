@@ -240,7 +240,7 @@ def _current(packet, run_dir, dma_scripts):
     return state
 
 
-def _result(packet, project_id, context=None):
+def _result(packet, project_id, context=None, adoption=None):
     value = {"schema_version": 1, "kind": "analyst_frontend_continuation_receipt",
         "continuation_id": packet["continuation_id"], "packet_sha256": packet["sha256"],
         "scope_sha256": packet["scope_sha256"], "engagement_id": packet["engagement_id"], "project_id": project_id,
@@ -256,6 +256,8 @@ def _result(packet, project_id, context=None):
                      native_validation_assurance='supplied_unverified' if packet['native_validation'] else 'not_assessed',
                      host_instruction='Continue the retained ' + packet['task_mode'] + ' task for ' + ' and '.join(packet['target_surfaces']) +
                      ' with $omni-artifact-accelerator. Preserve selected Topics, source IDs and destination. Verify current Topic evidence before native work.')
+    if adoption is not None:
+        value['adoption_decision'] = adoption
     return dma.seal(value)
 
 
@@ -271,6 +273,34 @@ def _selection(packet, raw):
             'semantic_review': local(packet['semantic_review']), 'native_validation': local(packet.get('native_validation')),
             'topic_readback': readbacks[0] if len(readbacks) == 1 else None,
             **({'additional_topic_readbacks': readbacks} if len(readbacks) > 1 else {})}
+
+
+def _adoption_decision(root, project, packet, pin, ap, *, first=False):
+    """Bind the incoming scope to the existing project and previously selected route."""
+    lane = ap.routing_helper('semantic_lane')
+    topics = ap.routing_helper('dma_topics')
+    record = topics.evidence(root, pin, ap)
+    prior = lane.latest(root, ap, topics)
+    route = None
+    if prior:
+        route = lane.current_route(root, project, prior, ap, topics) if first else topics.evidence(root, prior, ap)
+        dma.need(route.get('project_id') == project['id'], 'prior route belongs to another project')
+    dma.need(record.get('action') == 'adopt_dma_continuation' and record.get('role') == 'user'
+             and record.get('project_id') == project['id'] and record.get('route') == prior
+             and 'prior_context' in record and record['prior_context'] == (route['context'] if route else None)
+             and record.get('packet_sha256') == packet['sha256'] and record.get('topics') == packet['topic_names'],
+             'continuation adoption decision must reconcile the exact project, prior route, packet and Topics')
+    _text(record.get('reference')); _text(record.get('response_text'))
+    dma.need('destination' in record, 'continuation adoption must address the destination')
+    destination = record['destination']
+    _destination(destination, packet['schema_version'])
+    dma.need(packet['destination'] is None or destination == packet['destination'], 'adoption destination differs from packet')
+    dma.need(not route or destination is not None, 'reconcile the prior destination when an undeployed packet omits it')
+    return record
+
+
+def _receipt_path(prefix, project):
+    return prefix + '/adoption-receipt.json' if project.get('semantic_continuation_adoption') else 'continuation-receipt.json'
 
 
 def project_selection(root):
@@ -291,7 +321,12 @@ def project_selection(root):
              'project surface or task mode differs from continuation')
     if packet['schema_version'] == 2 or 'dma_continuation_selection' in project:
         dma.need(project.get('dma_continuation_selection') == selection, 'continuation selection changed')
-    receipt, _ = ap.read_json(ap.relative_file(root, 'continuation-receipt.json'))
+    adoption = project.get('semantic_continuation_adoption')
+    if adoption:
+        decision = _adoption_decision(root, project, packet, adoption, ap)
+        if selection['destination'] is None:
+            selection['destination'] = decision['destination']
+    receipt, _ = ap.read_json(ap.relative_file(root, _receipt_path(prefix, project)))
     context = receipt.get('backend_context')
     dma.need((context is not None) == (packet['mode'] == 'integrated'), 'continuation context mode changed')
     if context is not None:
@@ -299,7 +334,7 @@ def project_selection(root):
                  'invalid continuation context pin')
         _, body = ap.read_json(ap.relative_file(root, context['path']))
         dma.need(context['sha256'] == dma.digest(body), 'continuation context changed')
-    dma.need(receipt == _result(packet, project['id'], context), 'continuation receipt changed')
+    dma.need(receipt == _result(packet, project['id'], context, adoption), 'continuation receipt changed')
     return selection
 
 
@@ -309,7 +344,90 @@ def _response(receipt, project, reused):
             "receipt_sha256": receipt["sha256"], "project": str(project), "reused": reused}
 
 
-def initiate(packet_path, project, *, run_dir=None, dma_scripts=None):
+def _stage_packet(staged, project, obj, packet, raw, captured, catalog, run_dir, dma_scripts, ap):
+    """Stage imported material only; the caller owns the final project manifest."""
+    prefix = 'inputs/continuations/' + packet['continuation_id']
+    retained = staged / prefix
+    retained.mkdir(parents=True, mode=0o700)
+    ap.private_write(retained / 'packet.json', raw)
+    registrations = []
+    for name, body in captured.items():
+        location = prefix + '/files/' + name
+        target = staged / location
+        target.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+        ap.private_write(target, body)
+        registrations.append({'id': 'continuation-input-' + dma.digest(name.encode())[:24],
+                              'path': location, 'sha256': dma.digest(body)})
+    context = None
+    if packet['mode'] == 'integrated':
+        location = prefix + '/backend-context.json'
+        exported = dma.export(run_dir, staged / location, dma_scripts=dma_scripts, domain_id=packet['domain_id'], scoped=True)
+        dma.need(exported['material_sha256'] == packet['scope_sha256'], 'DMA context changed during initiation')
+        context = {'path': location, 'sha256': exported['sha256']}
+    if catalog is not None:
+        catalog = copy.deepcopy(catalog)
+        catalog['source']['original_path'] = str(project / prefix / 'files' / packet['semantic_review']['path'])
+        location = 'inputs/dma-catalog.json'
+        ap.write_json(staged / location, catalog)
+        obj['dma_import'] = {**catalog['source'], 'catalog_path': location}
+        registrations.append({'id': 'dma-catalog', 'path': location, 'sha256': dma.digest((staged / location).read_bytes())})
+    paths = {row['path'] for row in obj['sources']}
+    ids = {row['id'] for row in obj['sources']}
+    dma.need(all(r['id'] not in ids and r['path'] not in paths for r in registrations), 'existing source registration conflicts with packet')
+    obj['sources'].extend(registrations)
+    obj['dma_continuation'] = {'id': packet['continuation_id'], 'packet_sha256': packet['sha256']}
+    obj['dma_topic_policy'] = 'selected-topic-v1'
+    if packet['schema_version'] == 2:
+        obj['dma_continuation_selection'] = _selection(packet, raw)
+    receipt = _result(packet, obj['id'], context, obj.get('semantic_continuation_adoption'))
+    ap.write_json(staged / _receipt_path(prefix, obj), receipt)
+    return receipt
+
+
+def _adopt_existing(project, existing, decision, packet_path, packet, raw, captured, catalog, run_dir, dma_scripts, ap):
+    import fcntl
+    topics = ap.routing_helper('dma_topics')
+    dma.need(decision is not None and not topics.bound(existing, project), 'existing project requires explicit continuation adoption')
+    decision_pin = topics.pin(project, decision, ap)
+    dma.need(existing['surfaces'] == packet.get('target_surfaces', ['dashboard']) and
+             existing['mode'] == packet.get('task_mode', 'migration'), 'retain the original project surfaces and task mode')
+    _adoption_decision(project, existing, packet, decision_pin, ap, first=True)
+    updated = copy.deepcopy(existing)
+    updated['semantic_continuation_adoption'] = decision_pin
+    with tempfile.TemporaryDirectory(prefix='.dma-adoption-', dir=project.parent) as temp:
+        staged = Path(temp)
+        receipt = _stage_packet(staged, project, updated, packet, raw, captured, catalog, run_dir, dma_scripts, ap)
+        # Concurrent adoptions share a directory lock. Keep other writers' manifest
+        # changes, and publish only complete, non-replacing immutable artifacts.
+        directory = os.open(project, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+        try:
+            fcntl.flock(directory, fcntl.LOCK_EX)
+            current = ap.load_project(project)[1]
+            if current.get('dma_continuation') == updated['dma_continuation'] and current.get('semantic_continuation_adoption') == decision_pin:
+                return initiate(packet_path, project, run_dir=run_dir, dma_scripts=dma_scripts, decision=decision)
+            dma.need(current == existing and not topics.bound(current, project), 'existing project changed during adoption')
+            materials = [(src, ap.no_links(project / src.relative_to(staged))) for src in staged.rglob('*') if src.is_file()]
+            for src, dest in materials:
+                dma.need(not dest.exists() or dest.is_file() and ap.read_bytes(dest, MAX_TOTAL) == src.read_bytes(),
+                         'retained adoption path already has different bytes')
+            _current(packet, run_dir, dma_scripts)
+            dma.need(validate_packet(packet_path)[1] == raw, 'incoming packet changed during adoption')
+            _adoption_decision(project, current, packet, decision_pin, ap, first=True)
+            ap.validation_helper().before_mutation()
+            for src, dest in materials:
+                dest.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+                try:
+                    os.link(src, dest)
+                except FileExistsError:
+                    dma.need(ap.read_bytes(dest, MAX_TOTAL) == src.read_bytes(), 'concurrent adoption input changed')
+            dma.need(ap.load_project(project)[1] == existing, 'existing project changed during adoption')
+            ap.write_json(project / 'project.json', updated, replace=True)
+        finally:
+            os.close(directory)
+    return _response(receipt, project, False)
+
+
+def initiate(packet_path, project, *, run_dir=None, dma_scripts=None, decision=None):
     packet_path, project = dma.path(packet_path), dma.path(project)
     packet, raw, captured, catalog = validate_packet(packet_path)
     surfaces = packet.get('target_surfaces', ['dashboard'])
@@ -326,7 +444,15 @@ def initiate(packet_path, project, *, run_dir=None, dma_scripts=None):
     prefix = "inputs/continuations/" + packet["continuation_id"]
     if project.exists():
         _, existing = ap.load_project(project)
-        receipt, _ = dma.read_json(project / "continuation-receipt.json")
+        if 'dma_continuation' not in existing:
+            return _adopt_existing(project, existing, decision, packet_path, packet, raw, captured,
+                                   catalog, run_dir, dma_scripts, ap)
+        adoption = existing.get('semantic_continuation_adoption')
+        if decision is not None:
+            dma.need(adoption == ap.routing_helper('dma_topics').pin(project, decision, ap), 'adoption decision differs on retry')
+        if adoption:
+            _adoption_decision(project, existing, packet, adoption, ap)
+        receipt, _ = dma.read_json(project / _receipt_path(prefix, existing))
         dma.check_seal(receipt, "analyst_frontend_continuation_receipt")
         dma.need(receipt["packet_sha256"] == packet["sha256"] and receipt["project_id"] == existing["id"]
                  and existing.get("dma_continuation") == {"id": packet["continuation_id"], "packet_sha256": packet["sha256"]},
@@ -353,49 +479,18 @@ def initiate(packet_path, project, *, run_dir=None, dma_scripts=None):
             context, body = dma.read_json(ap.relative_file(project, context_pin["path"]))
             dma.need(dma.digest(body) == receipt["backend_context"]["sha256"], "retained backend context changed")
             dma.check_context(context, state, dma_scripts=dma_scripts)
-        dma.need(receipt == _result(packet, existing["id"], context_pin), "continuation receipt changed")
+        dma.need(receipt == _result(packet, existing["id"], context_pin, adoption), "continuation receipt changed")
         return _response(receipt, project, True)
+    dma.need(decision is None, 'adoption requires an existing project')
     # Publish a complete project once. An interrupted private staging directory
     # never becomes the resumable project or a second imported baseline.
     with tempfile.TemporaryDirectory(prefix=".dma-continuation-", dir=project.parent) as temporary:
         staged = Path(temporary) / "project"
         ap.init(staged, "DMA continuation " + packet["continuation_id"], packet.get('task_mode', 'migration'),
                 'both' if len(surfaces) == 2 else surfaces[0])
-        retained = staged / prefix
-        retained.mkdir(parents=True, mode=0o700)
-        ap.private_write(retained / "packet.json", raw)
-        for name, body in captured.items():
-            target = retained / "files" / name
-            target.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
-            ap.private_write(target, body)
-        context_pin = None
-        if packet["mode"] == "integrated":
-            location = prefix + "/backend-context.json"
-            exported = dma.export(run_dir, staged / location, dma_scripts=dma_scripts,
-                                  domain_id=packet["domain_id"], scoped=True)
-            dma.need(exported["material_sha256"] == packet["scope_sha256"], "DMA context changed during initiation")
-            context_pin = {"path": location, "sha256": exported["sha256"]}
-        if catalog is not None:
-            # This follows import_dma's catalog/source structure, with final
-            # retained paths set before the atomic directory publication.
-            catalog = copy.deepcopy(catalog)
-            catalog["source"]["original_path"] = str(project / prefix / "files" / packet["semantic_review"]["path"])
-            ap.write_json(staged / "inputs/dma-catalog.json", catalog)
         _, obj = ap.load_project(staged)
-        obj["dma_continuation"] = {"id": packet["continuation_id"], "packet_sha256": packet["sha256"]}
-        obj['dma_topic_policy'] = 'selected-topic-v1'
-        if packet['schema_version'] == 2:
-            obj['dma_continuation_selection'] = _selection(packet, raw)
-        for name in captured:
-            obj["sources"].append({"id": "continuation-input-" + dma.digest(name.encode())[:24],
-                "path": prefix + "/files/" + name, "sha256": dma.digest(captured[name])})
-        if catalog is not None:
-            obj["dma_import"] = {**catalog["source"], "catalog_path": "inputs/dma-catalog.json"}
-            obj["sources"].append({"id": "dma-catalog", "path": "inputs/dma-catalog.json",
-                                   "sha256": dma.digest((staged / "inputs/dma-catalog.json").read_bytes())})
+        receipt = _stage_packet(staged, project, obj, packet, raw, captured, catalog, run_dir, dma_scripts, ap)
         ap.write_json(staged / "project.json", obj, replace=True)
-        receipt = _result(packet, obj["id"], context_pin)
-        ap.write_json(staged / "continuation-receipt.json", receipt)
         _current(packet, run_dir, dma_scripts)
         dma.need(not project.exists(), "frontend project appeared during initiation; retry against its retained receipt")
         os.rename(staged, project)
@@ -408,11 +503,12 @@ def main(argv=None):
     command = sub.add_parser("initiate")
     command.add_argument("--packet", required=True, help="Host disclosure-reviewed continuation JSON")
     command.add_argument("--project", required=True)
+    command.add_argument('--decision', help='Existing project-relative user decision reconciling this packet and prior semantic route')
     command.add_argument("--run")
     command.add_argument("--dma-scripts", help="Explicitly trusted DMA scripts path; never taken from packet")
     args = parser.parse_args(argv)
     try:
-        result = initiate(args.packet, args.project, run_dir=args.run, dma_scripts=args.dma_scripts)
+        result = initiate(args.packet, args.project, run_dir=args.run, dma_scripts=args.dma_scripts, decision=args.decision)
         print(json.dumps(result, sort_keys=True)); return 0
     except (OSError, ValueError, TypeError, KeyError, ImportError):
         parser.exit(2, "Continuation preparation stopped: check packet pins, scope, trusted-runtime compatibility and retained project locally.\n")

@@ -196,8 +196,10 @@ def load_project(root):
     return root, obj
 
 
-def init(output, name, mode, surface, branding=None, website=None, selection_policy='host-verified-v1', context_policy=None):
+def init(output, name, mode, surface, branding=None, website=None, selection_policy='host-verified-v1', context_policy=None, modeling_lane=None):
     root = no_links(output)
+    need(modeling_lane in (None, 'omni-only') and not (modeling_lane and surface == 'report'),
+         'standalone modeling requires an App or dashboard')
     need(mode in ("net-new", "migration", "enhancement"), "invalid mode")
     need(surface in ("dashboard", "app", "report", "both"), "invalid surface")
     need(isinstance(name, str) and name.strip(), "name required")
@@ -219,6 +221,8 @@ def init(output, name, mode, surface, branding=None, website=None, selection_pol
         "open_questions": list(STARTER_QUESTIONS), "open_questions_kind": "starter_prompts",
     }
     # Every new engagement is gated. A caller-controlled mode is not an exemption.
+    if modeling_lane:
+        project['semantic_lane'] = 'omni-modeling-v1'
     project['stage_gate_policy'] = 'data-first-v1'
     project['workflow_quality_policy'] = 'experience-evidence-v1'
     if surface != 'report':
@@ -850,12 +854,38 @@ def dma_catalog(review):
     return output
 
 
-def import_dma(root, review):
+def import_dma(root, review, decision=None):
     root, obj = load_project(root)
-    need(not obj.get("dma_import"), "DMA import already exists; use the backend-handoff round trip for revisions")
     output = dma_catalog(review)
+    if obj.get('dma_continuation'):
+        topics = routing_helper('dma_topics')
+        selection = topics.peer('continuation').project_selection(root)
+        topics.check_continuation_topics(selection, output)
+        original = selection.get('semantic_review')
+        need(original is None or output['source']['original_sha256'] == original['sha256'],
+             'continuation semantic review changed')
+        if original and not obj.get('dma_import'):
+            output = dma_catalog(relative_file(root, original['path']))
+    if obj.get("dma_import"):
+        incoming = output['source']
+        retained = obj['dma_import']
+        need(retained.get('original_sha256') == incoming['original_sha256'] and not retained.get('exchange_id'),
+             "DMA import already exists; use the backend-handoff round trip for revisions")
+        need(dma_catalog(retained['original_path'])['source']['original_sha256'] == incoming['original_sha256'],
+             'retained DMA handoff changed')
+        saved, raw = read_json(relative_file(root, retained['catalog_path']))
+        need(saved == {**output, 'source': {**incoming, 'original_path': retained['original_path']}} and
+             any(r['path'] == retained['catalog_path'] and r['sha256'] == digest(raw) for r in obj['sources']),
+             'existing DMA catalog differs from retained bytes')
+        return {"status": "already_imported_candidate", "path": str(root / retained['catalog_path']), "native_verified": False}
+    if not obj.get('dma_continuation') and (root / 'contracts/semantic-route-000001.json').is_file():
+        helpers = sys.modules.get(__name__) or routing_helper('visual_workflow').ap
+        obj['semantic_adoption'] = routing_helper('semantic_lane').check_adoption(root, obj, output, decision, helpers)
     destination = root / "inputs" / "dma-catalog.json"
-    write_json(destination, output)
+    if destination.exists():
+        need(read_json(destination)[0] == output, "conflicting retained DMA catalog")
+    else:
+        write_json(destination, output)
     obj["dma_topic_policy"] = "selected-topic-v1"
     obj["dma_import"] = {**output["source"], "catalog_path": "inputs/dma-catalog.json"}
     obj["sources"].append({"id": "dma-catalog", "path": "inputs/dma-catalog.json",
@@ -870,18 +900,22 @@ def routing_helper(name='task_routing'):
                   'context_packets', 'execution_efficiency', 'incremental_review', 'execution_bridge',
                   'execution_runtime', 'execution_qualification', 'assembly_provenance', 'analytical_evidence',
                   'execution_contracts', 'execution_observability', 'execution_preparation', 'selective_reads',
-                  'experience_intent', 'experience_review', 'engagement_bootstrap', 'dma_topics',
+                  'experience_intent', 'experience_review', 'engagement_bootstrap', 'dma_topics', 'semantic_lane',
                   'host_entry', 'native_data_consumers'}, 'unknown routing helper')
     # Fixed first-party module only. The host verifier never comes from a request,
     # file path or environment variable. Share its scope across helper imports.
-    cache_key = '_oaa_stage_gates_' + digest(str(Path(__file__).resolve().parent).encode())
-    if name == 'stage_gates' and cache_key in sys.modules:
+    # The existing DMA module is per caller. Share only the stage provider and
+    # the standalone coordinator; their evidence reads remain operation scoped.
+    shared = name in ('stage_gates', 'semantic_lane')
+    cache_key = '_oaa_' + name + '_' + digest(str(Path(__file__).resolve().parent).encode())
+    if shared and cache_key in sys.modules:
         return sys.modules[cache_key]
     spec = importlib.util.spec_from_file_location('oaa_' + name, Path(__file__).with_name(name + '.py'))
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     if name == 'stage_gates':
         module._host_provider_context = ContextVar(cache_key, default=None)
+    if shared:
         sys.modules[cache_key] = module
     return module
 
@@ -1073,10 +1107,10 @@ def packet_data(root, role, inputs, assignment=None):
         result["design_context"] = design_context
     if product_context['enabled'] or role == 'product-owner' or product_context.get('experience_summary'):
         result['product_context'] = product_context
-    if any(k in obj for k in ('dma_continuation','dma_continuation_selection','dma_import','dma_topic_policy')):
+    if routing_helper('dma_topics').managed(obj, root):
         binding = routing_helper('dma_topics').packet_context(root, obj, role, gate, scope_ids, sys.modules.get(__name__) or routing_helper('visual_workflow').ap)
         if binding is not None:
-            result['dma_topic_context'] = binding
+            result['omni_topic_context' if binding['policy'] == 'omni-modeling-v1' else 'dma_topic_context'] = binding
     if obj.get("dma_import"):
         result["current_dma_catalog"] = obj["dma_import"].get("catalog_path", "inputs/dma-catalog.json")
         result["baseline_note"] = "Other DMA catalogs are historical comparison evidence, not the current working binding."
@@ -1126,7 +1160,7 @@ def packet_check(root, packet_relative):
         if saved.get("assignment") is not None:
             need(saved.get("task_id") == current.get("task_id"), "assigned task identity changed")
         for key in ("skill", "objective", "allowed_actions", "external_mutations_authorized",
-                    "host_must_supply", "stop_conditions", "trust_note", "current_dma_catalog", "baseline_note", "dma_topic_context",
+                    "host_must_supply", "stop_conditions", "trust_note", "current_dma_catalog", "baseline_note", "dma_topic_context", "omni_topic_context",
                     "assignment", "assignment_sha256", "product_context", "stage_context"):
             if saved.get(key) != current.get(key):
                 findings.append({"code": "packet_context_changed", "field": key})
@@ -1171,13 +1205,14 @@ def main():
     cmd.add_argument("--website", help="official company HTTPS website; does not select a logo")
     cmd.add_argument('--selection-policy', choices=('host-verified-v1', 'conversation-evidence-v1'),
                      default='host-verified-v1', help='explicit chat workflow evidence or strict host verification; never execution permission')
+    cmd.add_argument('--modeling-lane', choices=('omni-only',), help='Prepare or reuse a governed Topic for a standalone App or dashboard')
     cmd.add_argument('--context-policy', choices=('bounded-context-v1', 'legacy-index-v1'), default='bounded-context-v1',
                      help='new CLI projects require bounded context receipts for managed dispatch; existing projects keep their policy')
     cmd = commands.add_parser('execution-tool', help='Host-neutral fixed execution operations; no worker adapter is loaded from CLI arguments')
     cmd.add_argument('--project', required=True)
     cmd.add_argument('--tool', required=True)
     cmd.add_argument('--request', required=True, help='JSON tool arguments; all referenced paths remain engagement-relative')
-    for command in ("plan", "verify", "dma-topic-access", "dma-topic-plan", "dma-topic-gap", "dma-topic-panels", "import-dma", "register", "packet", "packet-bindings", "design-freeze", "design-check", "design-pin",
+    for command in ("plan", "verify", "semantic-model", "dma-topic-access", "dma-topic-plan", "dma-topic-gap", "dma-topic-panels", "import-dma", "register", "packet", "packet-bindings", "design-freeze", "design-check", "design-pin",
                     "intent-select", "intent-check", "intent-cases", "claim-work", "prepare-dispatch", "record-dispatch",
                     "checkpoint-work", "work-status", "review-work", "packet-check", "experience-check",
                     "run-start", "run-check", "run-guidance", "source-check", "phase-check", "candidate-freeze", "delivery-check", "source-inventory",
@@ -1217,6 +1252,10 @@ def main():
             cmd.add_argument("--review-spec", help="engagement-relative review spec defining scope and required lanes")
         elif command == "design-check":
             cmd.add_argument("--record", help="engagement-relative historical review; default selected record")
+        elif command == "semantic-model":
+            cmd.add_argument('--operation', choices=routing_helper('semantic_lane').OPERATIONS, required=True)
+            cmd.add_argument('--request', required=True)
+            cmd.add_argument('--output', help='private contracts path; route, panels and delivery use fixed paths')
         elif command == "dma-topic-panels":
             cmd.add_argument('--request', required=True)
         elif command in ("dma-topic-access", "dma-topic-plan", "dma-topic-gap"):
@@ -1224,6 +1263,7 @@ def main():
             cmd.add_argument('--output', required=True)
         elif command == "import-dma":
             cmd.add_argument("--review", required=True)
+            cmd.add_argument("--decision", help="attributable adoption record for an active standalone route")
         elif command == "register":
             cmd.add_argument("--kind", choices=("sources", "artifacts"), required=True)
             cmd.add_argument("--path", required=True)
@@ -1237,7 +1277,7 @@ def main():
     args = parser.parse_args()
     try:
         if args.command == "init":
-            result = init(args.output, args.name, args.mode, args.surface, args.branding, args.website, args.selection_policy, args.context_policy)
+            result = init(args.output, args.name, args.mode, args.surface, args.branding, args.website, args.selection_policy, args.context_policy, args.modeling_lane)
         elif args.command == 'execution-tool':
             result = routing_helper('execution_bridge').call(args.project, args.tool, read_json(args.request)[0])
         elif args.command in ('context-build', 'context-check'):
@@ -1307,6 +1347,8 @@ def main():
             result = intent_helper().check(args.project)
         elif args.command == "intent-cases":
             result = intent_helper().case_templates(args.project, args.review_spec)
+        elif args.command == "semantic-model":
+            result = routing_helper('semantic_lane').execute(args.project, sys.modules[__name__], args.operation, args.request, args.output)
         elif args.command == "dma-topic-panels":
             result = routing_helper('dma_topics').prepare_panels(args.project, sys.modules[__name__], args.request)
         elif args.command == "dma-topic-gap":
@@ -1315,7 +1357,7 @@ def main():
             result = routing_helper('dma_topics').prepare(args.project, sys.modules[__name__], args.request, args.output,
                                                           analysis=args.command == 'dma-topic-plan')
         elif args.command == "import-dma":
-            result = import_dma(args.project, args.review)
+            result = import_dma(args.project, args.review, args.decision)
         elif args.command == "register":
             result = register(args.project, args.kind, args.path, args.id)
         elif args.command == 'packet-bindings':

@@ -30,6 +30,14 @@ CASES = {
     "native-publish": "tests/test_native_publish.py",
     "dma-topic-policy": "tests/test_dma_topic_policy.py",
     "dma-native-topics": "tests/test_dma_native_topics.py",
+    "semantic-lane": "tests/test_semantic_lane.py",
+    "semantic-modeler": "tests/test_semantic_modeler.py",
+    "semantic-branch": "tests/test_semantic_branch.py",
+    "semantic-native": "tests/test_semantic_native.py",
+    "semantic-governance": "tests/test_semantic_governance.py",
+    "semantic-verification": "tests/test_semantic_verification.py",
+    "semantic-continuation": "tests/test_semantic_continuation.py",
+    "semantic-release": "tests/test_semantic_release.py",
     "experience-intent": "tests/test_experience_intent.py",
     "experience-continuity": "tests/test_experience_continuity.py",
     "experience-packet-scope": "tests/test_experience_packet_scope.py",
@@ -127,6 +135,7 @@ CASE_TIMEOUTS = {name: 120 for name in ('workflow', 'product-intent', 'stage-gat
 # The three-route native authorization suite repeats complete source-bound
 # lifecycles. Keep a bounded allowance separate from runtime transport deadlines.
 CASE_TIMEOUTS.update({'dma-native-topics':180,'dma-topic-policy':120})
+CASE_TIMEOUTS.update({'semantic-release':180, 'semantic-lane':120, 'semantic-native':120})
 CASE_TIMEOUTS.update({'app-experience-release':240, 'native-publish':360, 'host-entry':120})
 CASE_TIMEOUTS['native-stage-gates'] = 600
 CASE_TIMEOUTS.update({'execution-runtime': 120, 'execution-bridge': 120, 'native-demo': 480})

@@ -11,6 +11,8 @@ Be the analyst's sidekick: turn a business decision into a useful, trustworthy d
 
 For DMA-supplied Topics, follow the [Topic sourcing workflow](../omni-backend-handoff/references/topic-first.md) at A and B. Reuse an inspected saved query or create a semantic workbook query through the selected Topic. Route missing fields to the model owner. Carry the scoped query receipt through candidate preparation and readback.
 
+At Stage A, when the user selects Omni-only development on existing warehouse data or brings just a legacy semantic layer, enter the [standalone modeling lane](references/standalone-modeling.md). Check for a DMA handoff before creating a model object. Reuse a suitable existing Topic, distinguish lack of visibility from genuine absence, and offer an isolated branch Topic for ready data. Resolve access rules with the model owner. Carry the exact Topic into saved queries and controls at B and F. The model draft belongs to source preparation at A; the artifact design choice and build retain their existing gates.
+
 For repository-only intake, use [explicit engagement entry](references/engagement-entry.md)
 to bind the actual checkout, declared host and existing sibling engagement. Read
 the generated reference explicitly; retained blockers do not qualify host access,

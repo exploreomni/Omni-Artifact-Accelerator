@@ -39,6 +39,8 @@ flowchart TD
 
 ## A. Establish data existence and user access
 
+If a handoff includes a DMA-owned Topic, follow its recorded scope and destination. For a standalone App or dashboard, ask whether the existing relations and business definitions are ready for Omni modeling. Inspect suitable Topics first. When the user selects Omni-only development, use the [standalone modeling workflow](standalone-modeling.md) to reuse a Topic, translate source semantics or prepare a missing Topic on a development branch. An inaccessible Topic stays an access question. Check the intended viewer before passing Stage A.
+
 **Owner:** orchestrator with BI/access verification support. Recover the user's
 decision, intended audience, requested source and target tenant. Ask only the
 minimum needed to identify this scope; preserve volunteered design preferences
