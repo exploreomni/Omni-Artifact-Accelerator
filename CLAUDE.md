@@ -1,6 +1,6 @@
 # Start an artifact engagement
 
-For first-time CLI setup, initiate [guided Omni CLI setup](skills/omni-artifact-accelerator/references/omni-cli-setup.md) from the selected checkout. Offer the exact install through the user's host when the CLI is missing.
+On first use, follow [Omni connection setup](skills/omni-artifact-accelerator/references/omni-cli-setup.md). Check the host for an Omni MCP tool that covers the next operation or use an existing verified Omni CLI. Honor the user's selected route on resume. Offer CLI installation only when the user chooses it.
 
 For a request to create, redesign or migrate an Omni App or dashboard, first read
 [the orchestrator](skills/omni-artifact-accelerator/SKILL.md) and follow its

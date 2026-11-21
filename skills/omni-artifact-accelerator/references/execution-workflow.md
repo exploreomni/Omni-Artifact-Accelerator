@@ -73,9 +73,10 @@ the host presents an available design choice.
 
 ## Select the actual host route
 
-Before the first CLI-backed operation, run [guided CLI setup](omni-cli-setup.md)
-in the intended execution environment. Resume existing selections on later calls.
-The agent offers an exact install when needed and continues after the host verifies it.
+Before the first connected operation, follow [Omni connection setup](omni-cli-setup.md).
+Discover the matching Omni MCP tool in the host or the existing CLI on the execution
+machine. Resume the selected route and check its capabilities when the task changes,
+such as moving from reading a Topic to creating a draft.
 
 | Route | Entry | Evidence and limitations |
 | --- | --- | --- |

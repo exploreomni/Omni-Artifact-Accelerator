@@ -5,7 +5,7 @@ description: Orchestrate Omni dashboard, native App and Reports Beta design, ana
 
 # Omni Artifact Accelerator
 
-On first setup for a CLI-backed workflow, initiate [Omni CLI setup](references/omni-cli-setup.md) before the first native action. Check for an existing executable. If missing, present the exact official release and ask permission to install and verify it on the user's machine through their host. Reuse the user's connection choice on resume. MCP, API and offline routes skip this step.
+Before the first native action, follow [Omni connection setup](references/omni-cli-setup.md). Honor an existing route choice. Otherwise discover the host’s Omni MCP tools for the next operation, then check for an existing Omni CLI if needed. Either connection can be sufficient. When neither is available, offer MCP setup, permission-based CLI installation or offline work.
 
 **Artifact validation.** Use the existing engagement's `stage-status` to resume the
 current phase and update the host checklist. Scope validation to the artifact

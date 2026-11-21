@@ -1,10 +1,36 @@
-# Set up the Omni CLI with the user
+# Connect through Omni MCP or the Omni CLI
 
-On first setup, use the connection the user selected. If the route is unclear, ask which available connection they want to use. Run this once in the local environment that will actually run the CLI. A remote chat with no shell cannot inspect a user's laptop. MCP, API and offline work can continue directly. Remember a decline for this engagement and reopen setup only on request or a change of route.
+Honor a user-selected connection, including on resume. For automatic setup, use the first available route that covers the next operation in the intended workspace.
 
-## Check before offering installation
+1. Discover the Omni connector through the host’s tool picker, deferred tool search or the configured Omni MCP server’s tool list. Match the tool description and inputs to the next task. For example, a tool that lists Topics can support discovery. Creating an App needs its own authoring operation. A documentation search, a legacy platform’s connector, or the accelerator’s local workflow MCP server does not establish an Omni data connection.
+2. If a matching Omni tool is available, use it and carry its name into the engagement’s host inventory. This works in a chat with no local shell. If the automatic check finds no match, inspect the CLI on the machine that will execute it. If the user explicitly chose MCP or CLI and it cannot do the task, explain what is missing and let them choose an alternative.
+3. When neither route covers the task, offer to connect Omni MCP through the host, set up the official CLI with permission, or continue offline. If the host cannot inspect a registry or machine, describe that part as unknown. Retain a declined installation for the engagement.
 
-Use the selected orchestrator's own `scripts/omni_cli_setup.py`. From a checkout:
+Discovery identifies a candidate connection. Verify the intended identity, instance, Topic access and any DMA handoff through the existing Stage A workflow. Use the existing publication and access approvals for writes. If the operation or target changes, check coverage again.
+
+## Use the setup helper in a shell
+
+The host owns MCP discovery. Pass the exact matching identifier from the configured Omni connector. When the host completed discovery and found no matching operation, use the second invocation instead. Omitting both discovery flags leaves MCP availability unknown.
+
+```sh
+OAA_SETUP=skills/omni-artifact-accelerator/scripts/omni_cli_setup.py
+python3 -I -S -B "$OAA_SETUP" --omni-mcp-tool "$OAA_MATCHING_TOOL"
+python3 -I -S -B "$OAA_SETUP" --no-matching-omni-mcp-tool
+```
+
+| Automatic or MCP result | Agent action |
+| --- | --- |
+| `use_mcp` | Continue through the named tool and the normal access checks. Skip CLI setup. |
+| `inspect_host_mcp` | Inspect the host’s available Omni tools. If discovery is unavailable, explain the limitation and available alternatives. |
+| `choose_connection` | The host found no matching tool and the helper found no usable CLI candidate. Use the reported CLI status to explain the choices. |
+| `mcp_operation_unavailable` | The explicitly selected MCP route lacks this operation. Surface that gap and available alternatives. |
+| `inspect_configured_cli`, `inspect_existing_cli` | Verify the CLI candidate as described below before use. |
+
+Use `--route mcp` for an explicit MCP choice. An explicit API or offline route skips both connection checks. In a host without a shell, use the same MCP selection directly and retain the existing execution requirements for later gates.
+
+## Check before offering CLI installation
+
+Once the user chooses the CLI, use the selected orchestrator's own helper on the intended machine:
 
 ```sh
 OAA_SETUP=skills/omni-artifact-accelerator/scripts/omni_cli_setup.py

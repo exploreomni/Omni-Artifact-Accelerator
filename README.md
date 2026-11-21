@@ -283,11 +283,12 @@ Use an existing approved Python runtime for source-only work. **Package installa
 third-party imports, updates and skill activation require explicit scoped sign-off.
 No Blender code or execution is permitted.** Read the
 [package-use policy](skills/omni-artifact-accelerator/references/dependency-policy.md).
-For a CLI-backed workflow, the agent checks for an existing Omni CLI during setup.
-If it is missing, the agent offers to install an exact official release for your
-account and check its version, subject to your permission and the host's approval
-controls. You can skip setup or use an existing MCP or API connection.
-See [guided Omni CLI setup](skills/omni-artifact-accelerator/references/omni-cli-setup.md).
+**You can connect through Omni MCP or the Omni CLI.** On first use, the agent checks
+whether your host has an Omni MCP tool for the task. If needed, it checks for an
+existing CLI on the machine that will run it. When both can do the job, it follows
+your preference or uses MCP by default. If neither is available, you can connect
+Omni MCP, approve an exact CLI installation, or work offline. An explicitly
+selected API route is also supported. [Connection setup](skills/omni-artifact-accelerator/references/omni-cli-setup.md)
 
 ### 1. Review the source
 

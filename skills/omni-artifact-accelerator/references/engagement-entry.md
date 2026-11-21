@@ -12,9 +12,9 @@ Keep the existing A–F sequence, actual selection and candidate review boundari
 
 ## Inspect the host entry first
 
-For a CLI-backed local setup, use the [Omni CLI setup offer](omni-cli-setup.md)
-before running the executable. An existing MCP, API or offline route can proceed
-directly to its own checks.
+Use [Omni connection setup](omni-cli-setup.md) to identify the host’s Omni MCP
+tool or existing CLI for the first operation. Reuse the actual tool name in the
+route inventory below. Honor an explicit API or offline choice.
 
 Invoke `scripts/host_entry.py` from the current trusted checkout before dispatching
 through an installed copy. The request's `loaded_package_path` identifies the

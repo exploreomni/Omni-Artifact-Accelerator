@@ -47,8 +47,45 @@ class SetupTests(unittest.TestCase):
             return json.loads(output.getvalue())
 
     def test_other_routes_skip_probe(self):
-        for route in ("mcp", "api", "offline"):
+        for route in ("api", "offline"):
             self.assertEqual(self.cli("--route", route)["status"], "cli_not_needed")
+        self.which.assert_not_called()
+
+    def test_discovered_mcp_works_with_or_without_local_cli(self):
+        for existing in (None, "/example/bin/omni"):
+            self.which.return_value = existing
+            self.assertEqual(self.cli("--omni-mcp-tool", "listTopics"),
+                             {"status": "use_mcp", "route": "mcp", "tool": "listTopics"})
+        self.which.assert_not_called()
+
+    def test_auto_finds_cli_when_mcp_does_not_cover_operation(self):
+        self.which.return_value = "/example/bin/omni"
+        result = self.cli("--no-matching-omni-mcp-tool")
+        self.assertEqual(result["route"], "cli")
+        self.assertEqual(result["status"], "inspect_existing_cli")
+        self.assertEqual(result["path"], self.which.return_value)
+
+    def test_missing_routes_and_unknown_inventory_are_distinct(self):
+        self.assertEqual(self.cli()["status"], "inspect_host_mcp")
+        self.assertEqual(self.cli("--no-matching-omni-mcp-tool"),
+                         {"status": "choose_connection", "route": "auto", "cli_status": "prepare_install_offer"})
+        with patch.dict(os.environ, {"OAA_OMNI_CLI_SHA256": "previous-setting"}):
+            self.assertEqual(self.cli("--no-matching-omni-mcp-tool")["cli_status"], "inspect_incomplete_pin")
+
+    def test_explicit_route_is_respected(self):
+        self.which.return_value = "/example/bin/omni"
+        self.assertEqual(self.cli("--route", "mcp")["status"], "inspect_host_mcp")
+        self.assertEqual(self.cli("--route", "mcp", "--no-matching-omni-mcp-tool")["status"],
+                         "mcp_operation_unavailable")
+        self.assertEqual(self.cli("--route", "mcp", "--omni-mcp-tool", "listTopics")["route"], "mcp")
+        self.which.assert_not_called()
+        self.assertEqual(self.cli("--route", "cli", "--omni-mcp-tool", "listTopics")["status"],
+                         "inspect_existing_cli")
+
+    def test_automatic_or_mcp_discovery_cannot_plan_install(self):
+        for args in ((), ("--route", "mcp"), ("--no-matching-omni-mcp-tool",)):
+            with self.subTest(args=args), contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
+                self.cli(*args, "--release-metadata", self.home / "release.json")
         self.which.assert_not_called()
 
     def test_existing_and_stale_configuration_do_not_offer_install(self):

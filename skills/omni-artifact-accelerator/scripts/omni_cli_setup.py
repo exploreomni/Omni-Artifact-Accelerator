@@ -1,4 +1,4 @@
-"""Local onboarding for the official Omni CLI. Discovery and planning are read-only.
+"""Choose an Omni connection using the host's MCP discovery and local CLI inventory.
 
 Staging checks a host-acquired archive and writes one inert payload. The host owns
 permission, acquisition, installation and execution. No network or subprocess here.
@@ -23,9 +23,7 @@ RELEASE_API = "https://api.github.com/repos/exploreomni/cli/releases/latest"
 MAX_BYTES = 128 * 1024 * 1024
 
 
-def local_setup(route):
-    if route != "cli":
-        return {"status": "cli_not_needed", "route": route}
+def inspect_cli():
     system = {"Darwin": "darwin", "Linux": "linux", "Windows": "windows"}.get(platform.system())
     machine = platform.machine().lower()
     arch = {"x86_64": "amd64", "amd64": "amd64", "arm64": "arm64", "aarch64": "arm64"}.get(machine)
@@ -47,6 +45,26 @@ def local_setup(route):
            for parent in destination.parents):
         return dict(details, status="inspect_destination")
     return dict(details, status="prepare_install_offer", release_metadata_url=RELEASE_API)
+
+
+def local_setup(route="auto", *, mcp_tool=None, mcp_checked=False):
+    if route in ("api", "offline"):
+        return {"status": "cli_not_needed", "route": route}
+    if route == "cli":
+        return inspect_cli()
+    # Only the host can see its connector registry and match a tool to the operation.
+    if mcp_tool is not None:
+        if not re.fullmatch(r"[A-Za-z0-9_.-]{1,256}", mcp_tool):
+            raise ValueError("Expected an Omni MCP tool identifier from the host registry")
+        return {"status": "use_mcp", "route": "mcp", "tool": mcp_tool}
+    if route == "mcp":
+        return {"status": "mcp_operation_unavailable" if mcp_checked else "inspect_host_mcp",
+                "route": "mcp"}
+    cli = inspect_cli()
+    if cli["status"] in ("inspect_existing_cli", "inspect_configured_cli"):
+        return dict(cli, route="cli")
+    return {"status": "choose_connection" if mcp_checked else "inspect_host_mcp",
+            "route": "auto", "cli_status": cli["status"]}
 
 
 def read_bounded(path, limit):
@@ -125,7 +143,12 @@ def stage_archive(plan, expected_plan, archive, directory):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--route", choices=("cli", "mcp", "api", "offline"), required=True)
+    parser.add_argument("--route", choices=("auto", "cli", "mcp", "api", "offline"), default="auto")
+    inventory = parser.add_mutually_exclusive_group()
+    inventory.add_argument("--omni-mcp-tool", metavar="NAME",
+                           help="Actual tool the host found on its Omni connection for the next operation")
+    inventory.add_argument("--no-matching-omni-mcp-tool", action="store_true",
+                           help="Host checked its Omni tools and found none covering the next operation")
     parser.add_argument("--release-metadata", type=Path, help="Official release API JSON obtained by the host")
     parser.add_argument("--archive", type=Path, help="Archive acquired by the authorized host")
     parser.add_argument("--stage-in", type=Path, help="Private directory on the destination filesystem")
@@ -137,7 +160,8 @@ def main():
     if args.release_metadata and args.route != "cli":
         parser.error("Release setup applies only to the CLI route")
     try:
-        result = local_setup(args.route)
+        result = local_setup(args.route, mcp_tool=args.omni_mcp_tool,
+                             mcp_checked=args.no_matching_omni_mcp_tool)
         if args.release_metadata:
             release = json.loads(read_bounded(args.release_metadata, 2 * 1024 * 1024))
             if not isinstance(release, dict):
@@ -147,7 +171,7 @@ def main():
                 result = stage_archive(result, args.plan_sha256, args.archive, args.stage_in)
         print(json.dumps(result, indent=2))
     except (ValueError, TypeError, KeyError, OSError, EOFError, tarfile.TarError, zipfile.BadZipFile) as exc:
-        parser.exit(2, f"CLI setup: {exc}\n")
+        parser.exit(2, f"Omni setup: {exc}\n")
 
 
 if __name__ == "__main__":

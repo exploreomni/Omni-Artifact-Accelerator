@@ -36,13 +36,14 @@ A host that can read instructions but cannot run the required gates can help gat
 
 **No installation is required to read this guide.** The package's skill installer currently supports read-only preview and verification; `--apply` is disabled pending a qualified host approval gate. Do not copy files into an active skills directory as a workaround. Installing, importing/loading, updating or activating dependencies or skills requires explicit scoped sign-off under the [dependency policy](../../skills/omni-artifact-accelerator/references/dependency-policy.md). No Blender code or execution is permitted.
 
-## Optional local setup for a technical partner
+## Connect to Omni
 
-If you want to use Omni's CLI, tell your agent **“Set up the Omni CLI for me.”**
-It checks for an existing copy. If one is missing, you see the version, source
-and destination and can choose whether to install it. After a successful install,
-the agent verifies the version and helps you connect privately. Your existing
-MCP or API connection can also be used directly. [Guided CLI setup](../../skills/omni-artifact-accelerator/references/omni-cli-setup.md)
+Start with your task. The agent checks for a matching tool on your host’s Omni MCP
+connection and looks for an existing Omni CLI if needed. You can also say **“Use
+my Omni CLI”** or **“Use my Omni MCP connection.”** If neither is available, you
+can connect MCP, review a CLI installation offer, or continue offline. A CLI
+offer shows the exact version, source and destination before you approve it.
+[Connection setup](../../skills/omni-artifact-accelerator/references/omni-cli-setup.md)
 
 Use an existing approved Python runtime. From the repository root, this original standard-library check reads package structure without installing dependencies:
 
