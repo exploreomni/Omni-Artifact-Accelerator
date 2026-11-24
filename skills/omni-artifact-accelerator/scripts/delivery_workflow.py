@@ -227,6 +227,8 @@ def _source_paths(root):
     trees = ([root / n for n in ('skills', 'scripts', 'tests', 'docs', 'integrations', 'harness', '.github')]
              if repo else [root / n for n in names])
     candidates = [root / n for n in ('README.md', 'AGENTS.md', 'CLAUDE.md', 'package.json')]
+    if repo:
+        candidates.append(root / '.cursor/rules/omni-artifact-entry.mdc')
     for tree in trees:
         if tree.exists():
             P.no_links(tree)

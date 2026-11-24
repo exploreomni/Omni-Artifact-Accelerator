@@ -13,8 +13,7 @@ For an artifact build, validate the artifact in its existing engagement. The com
 repository regression suite (`scripts/validate_source.py`) belongs to package
 maintenance and release. Keep it off the build task list, including background
 tasks and clean-checkout retries. Use `analyst_project.py stage-status --project PROJECT`
-to update the checklist after a handoff or background task. If E is current, finish
-the concept comparison and present the choice. If the journal confirms the choice,
+to update the checklist after a handoff or background task. If E is current, present the source specification for a preservation run or the reviewed three concepts for a new or redesigned artifact. If the journal confirms the decision,
 resume the indicated design or candidate work. At F keep the four candidate reviews
 and the actual query, interaction, access, and rendering checks for the artifact.
 
@@ -48,7 +47,7 @@ design is resolved. Check the stage before specialist dispatch and use guarded
 build/freeze plus candidate-bound consulting reviews. Do not route around a blocked
 gate through raw writes, changed project mode or local approval flags. For ordinary
 chat, use the explicit conversation-evidence policy and record the actual reply
-against the exact options. Strict host verification remains available without
+against the reviewed source specification or exact concept set. Strict host verification remains available without
 automatic fallback. Conversation evidence never grants native write authority.
 
 For net-new and redesign, present three concrete visual concepts at equal accepted ambition, retaining the

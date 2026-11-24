@@ -3,6 +3,7 @@ import copy
 import importlib.util
 import json
 from pathlib import Path
+import subprocess
 import sys
 import tempfile
 from types import SimpleNamespace
@@ -24,6 +25,9 @@ sys.modules['analyst_project'] = module('domo_workflow_project_test', 'skills/om
 W = module('domo_visual_workflow_test', 'skills/omni-artifact-accelerator/scripts/visual_workflow.py')
 T = module('domo_translation_test', 'skills/omni-artifact-translator/scripts/translate_artifact.py')
 S = module('domo_standalone_test', 'skills/omni-backend-handoff/scripts/standalone.py')
+
+
+G = module('domo_routing_stage_fixture', 'tests/stage_gate_fixture.py')
 
 
 class DomoVisualWorkflow(unittest.TestCase):
@@ -70,6 +74,62 @@ class DomoVisualWorkflow(unittest.TestCase):
                             {'name': 'amount', 'source': 'amount', 'target': 'amount', 'type': 'number'}]}
         self.put('contracts/comparison.json', spec)
         return capture, req, case, spec
+
+    def test_declared_app_family_reaches_plan_and_saved_specialist_packet(self):
+        intake_path = 'inputs/selected.json'
+        W.ap.select_migration_treatment(self.root, 'preserve')
+        self.put(intake_path, {'schema_version': 'oaa-domo-intake.v1', 'app_family': 'pro_code'})
+        W.ap.register(self.root, 'sources', intake_path, 'source-intake')
+        G.bootstrap(self.root, W.ap, experience=True)
+        plan = W.ap.plan(self.root)
+        specialist = next(row for row in plan['roles'] if row['role'] == 'domo-migrator')
+        self.assertEqual(specialist['modules'], ['references/pro-code-apps.md'])
+        packet = W.ap.packet(self.root, 'domo-migrator', [intake_path], self.root / 'tasks/source.json')
+        self.assertEqual(packet['stage_context']['source_modules'], specialist['modules'])
+        self.assertEqual(packet['stage_context']['migration_treatment'], 'preserve')
+        self.assertFalse(packet['external_mutations_authorized'])
+        self.assertEqual(W.ap.packet_check(self.root, 'tasks/source.json')['findings'], [])
+        with self.assertRaises(ValueError):
+            W.ap.stage_packet_gate(self.root, 'domo-migrator', {'outputs': ['deliverables/early.html']})
+
+    def test_terminal_and_mcp_prepare_the_same_source_plan(self):
+        source_path = 'inputs/selected.json'
+        self.put(source_path, {'schema_version': 'oaa-domo-intake.v1', 'app_family': 'pro_code',
+                               'scope': {'app_ids': ['example-instance']}})
+        script = ROOT / 'skills/omni-artifact-accelerator/scripts/analyst_project.py'
+        target = 'contracts/terminal-plan.json'
+        cmd = [sys.executable, '-I', '-S', '-B', str(script), 'domo-plan-source',
+               '--project', str(self.root), '--spec', source_path, '--output', target]
+        receipt = json.loads(subprocess.run(cmd, check=True, capture_output=True, text=True).stdout)
+        M = module('domo_parity_bridge', 'skills/omni-artifact-accelerator/scripts/visual_mcp.py')
+        mcp = M.Bridge(self.root).call('domo_plan_source', {'spec': source_path, 'output': 'contracts/mcp-plan.json'})
+        self.assertEqual(receipt['sha256'], mcp['sha256'])
+        self.assertFalse(W.load(self.root, target)['runtime_loaded'])
+
+    def test_generic_intake_and_source_mentions_do_not_classify_pro_code(self):
+        source = self.put('inputs/untyped.json', {'title': 'Domo Pro Code App'})
+        self.assertIsNone(W.ap.domo_modules(self.root, {'sources': [source]}))
+        studio = self.put('inputs/studio.json', {'schema_version': 'oaa-domo-intake.v1', 'app_family': 'app_studio'})
+        self.assertEqual(W.ap.domo_modules(self.root, {'sources': [source, studio]}), [])
+
+    def test_verified_selected_pro_code_capture_supplies_guidance(self):
+        value = F.app_fixture(self.folder)
+        app = next(row for row in value['inventory']['items'] if row['kind'] == 'app')
+        app['configuration']['app_family'] = 'pro_code'
+        def modules():
+            raw = self.put('inputs/capture/capture.json', F.seal(value))
+            projection = T.translate((self.folder / 'capture.json').read_bytes(), 'domo-agent', F.D.PROFILE)
+            inventory = self.put('inputs/inventory.json', projection)
+            return W.ap.domo_modules(self.root, {'sources': [raw, inventory]})
+        self.assertEqual(modules(), ['references/pro-code-apps.md'])
+        for row in value['inventory']['items']:
+            if row.get('app_id') == 'app-1':
+                row['disposition'] = 'out_of_scope'
+        del value['app_handoff']
+        self.assertEqual(modules(), [])
+        (self.folder / 'originals/definitions.json').write_bytes(b'{}')
+        with self.assertRaisesRegex(ValueError, 'evidence_bytes_changed'):
+            modules()
 
     def test_source_inventory_rederives_projection_and_verifies_pinned_bytes(self):
         capture, req, inventory = self.prepare()

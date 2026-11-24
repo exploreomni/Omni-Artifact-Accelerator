@@ -1,6 +1,6 @@
 ---
 name: omni-domo-migrator
-description: Coordinate Domo Card, Page, App Studio and custom App migrations within the Omni Artifact Accelerator, preserving original analytical behavior, app dependencies and source evidence. Use with supplied Domo contracts or a separately qualified source workflow; not automatic app-code conversion or source authoring.
+description: Coordinate Domo Card, Page, App Studio, Pro Code and custom JavaScript App migrations within the Omni Artifact Accelerator. Inspect supplied source files, preserve analytical behavior and App dependencies, and compare controls against the selected native candidate.
 ---
 
 # Omni Domo Migrator
@@ -36,6 +36,7 @@ Read only the references relevant to the selected work:
   summary metrics, formulas, grain, totals, repeated placements and controls.
 - [App behavior](references/app-behavior.md): App Studio, custom Apps, Bricks,
   persistent stores, workflows and explicit read-only versus write behavior.
+- [Pro Code Apps](references/pro-code-apps.md) covers the App design, installed instance wiring, original code and control parity. Use it for a named Pro Code or custom JavaScript App.
 - [Acquisition, security and QA](references/acquisition-security-qa.md): operation
   qualification, original files, matched-state comparisons and release boundaries.
 

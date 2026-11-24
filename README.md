@@ -135,9 +135,11 @@ control direct shell/file/API routes; these helpers are not a sandbox or proof o
 visual quality. Using Omni's CLI/API does not implicitly invoke
 Omni AI/Blobby.
 
+For a Domo **Pro Code App**, the specialist inventories the deployed instance, design version, data mappings and code-driven controls before mapping them to Omni. Follow the [Pro Code migration guide](skills/omni-domo-migrator/references/pro-code-apps.md).
+
 ## Start in your agent host
 
-For **Claude Code**, read [CLAUDE.md](CLAUDE.md). For **Codex** or **Cursor**, open the checkout and start at its root [AGENTS.md](AGENTS.md).
+For **Cursor**, open this checkout as a project folder and start an Agent chat. Its project rule points to the orchestrator on the first request. The [Cursor setup and troubleshooting guide](skills/omni-artifact-accelerator/references/cursor-entry.md) shows how to check which rules and revision the session used. For **Claude Code**, read [CLAUDE.md](CLAUDE.md). For **Codex**, start at [AGENTS.md](AGENTS.md).
 These entry points use the same orchestrator. For **Claude or ChatGPT connected chat**, explicitly
 ask the host to retrieve the orchestrator and relevant sibling guidance:
 

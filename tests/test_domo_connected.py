@@ -121,6 +121,131 @@ class ConnectedDomo(unittest.TestCase):
         self.assertFalse(H.contract.bridge_request(req)['include_model_suggestions'])
         self.assertEqual(req['scope']['page_ids'], ['page-1'])
 
+    def test_pro_code_plan_reads_originals_through_normal_tool_without_app_studio_capture(self):
+        H.ap.select_migration_treatment(self.root, 'preserve')
+        self.put('inputs/manifest.json', {'id': 'design-one', 'version': '2.3.1',
+            'datasetsMapping': [{'alias': 'sales', 'dataSetId': 'design-dataset', 'fields': [
+                {'alias': 'dealer', 'columnName': 'Dealer Name'}]}]})
+        (self.root / 'inputs/view.html').write_text('<select id="dealer"></select>\n<input type="date" id="period">')
+        self.intake.update(app_family='pro_code', scope={'app_ids': ['instance-one'], 'include_portfolio': False},
+            pro_code_assets=[{'kind': 'manifest', 'path': 'inputs/manifest.json'},
+                             {'kind': 'source', 'path': 'inputs/view.html'}])
+        self.put('inputs/intake.json', self.intake)
+        M.Bridge(self.root).call('domo_plan_source', {'spec': 'inputs/intake.json', 'output': 'contracts/plan.json'})
+        plan = W.wf.load(self.root, 'contracts/plan.json')
+        self.assertEqual(plan['requests'], [])
+        self.assertEqual(plan['next_action'], 'review_pro_code_source_and_instance_wiring')
+        app = plan['pro_code_source']
+        manifest, html = app['assets']
+        self.assertEqual(manifest['declarations']['dataset_mappings'][0], {'alias': 'sales', 'design_dataset_id': 'design-dataset',
+                         'fields': [{'alias': 'dealer', 'columnName': 'Dealer Name'}]})
+        self.assertEqual(manifest['declarations']['design_id'], 'design-one')
+        self.assertEqual([c['id'] for c in html['html_control_hints']], ['dealer', 'period'])
+        self.assertEqual(app['coverage'], [{'app_id': 'instance-one', 'missing_evidence_kinds': [
+            'instance_wiring', 'source_observation']}])
+        self.assertNotIn('experience.visual_preferences', {q['field'] for q in plan['questions']})
+        self.assertFalse(app['source_execution'])
+        self.assertFalse(plan['runtime_loaded'])
+
+    def test_pro_code_partial_intake_keeps_other_explicit_reads_and_family_scope(self):
+        self.intake.update(app_family='pro_code', scope={'app_ids': ['custom'], 'dataset_ids': ['dataset-1'],
+                                                       'include_portfolio': False})
+        self.put('inputs/intake.json', self.intake)
+        plan = W.plan_value(self.root, 'inputs/intake.json')
+        self.assertEqual(plan['requests'][0]['scope']['app_ids'], [])
+        self.assertEqual(plan['requests'][0]['scope']['dataset_ids'], ['dataset-1'])
+        self.assertEqual(len(plan['pro_code_source']['coverage'][0]['missing_evidence_kinds']), 4)
+        self.intake['pro_code_assets'] = [{'kind': 'manifest', 'path': 'inputs/intake.json', 'app_id': 'different'}]
+        self.put('inputs/intake.json', self.intake)
+        with self.assertRaisesRegex(ValueError, 'pro_code_asset_scope'):
+            W.plan_value(self.root, 'inputs/intake.json')
+
+    def test_unspecified_app_family_keeps_metadata_reads_open_and_asks_once(self):
+        self.intake['scope'].update(app_ids=['app-one'])
+        for family in (None, 'unknown'):
+            if family:
+                self.intake['app_family'] = family
+            self.put('inputs/intake.json', self.intake)
+            plan = W.plan_value(self.root, 'inputs/intake.json')
+            self.assertEqual([q['stage'] for q in plan['questions'] if q['field'] == 'app_family'], ['A'])
+            self.assertEqual(plan['app_family_status'], 'unverified_source_metadata_or_placeholder_only')
+            self.assertEqual(plan['requests'][0]['scope']['page_ids'], ['page-1'])
+            self.assertNotIn('pro_code_source', plan)
+
+    def test_pro_code_rejects_unsafe_paths_and_secret_bearing_originals(self):
+        self.intake.update(app_family='pro_code', scope={'app_ids': ['instance-one']},
+                           pro_code_assets=[{'kind': 'manifest', 'path': '../manifest.json'}])
+        self.put('inputs/intake.json', self.intake)
+        with self.assertRaisesRegex(ValueError, 'unsafe_path'):
+            W.plan_value(self.root, 'inputs/intake.json')
+        self.put('inputs/manifest.json', {'password': 'synthetic-value'})
+        self.intake['pro_code_assets'][0]['path'] = 'inputs/manifest.json'
+        self.put('inputs/intake.json', self.intake)
+        with self.assertRaisesRegex(ValueError, 'credential_bearing'):
+            W.plan_value(self.root, 'inputs/intake.json')
+
+    def test_pro_code_overflow_keeps_source_pins_and_bounds_all_hint_bytes(self):
+        html = ''.join('<input id="dealer-{}-{}">'.format(i, 'x' * 60) for i in range(110))
+        assets = []
+        for n in range(8):
+            path = 'inputs/view-' + str(n) + '.html'
+            (self.root / path).write_text(html)
+            assets.append({'kind': 'source', 'path': path})
+        self.put('inputs/wide-manifest.json', {'id': 'wide', 'datasetsMapping': [
+            {'alias': 'sales', 'dataSetId': 'design-data', 'fields': [
+                {'alias': 'field-' + str(i), 'columnName': 'long-field-' + str(i)} for i in range(1200)]}]})
+        assets.append({'kind': 'manifest', 'path': 'inputs/wide-manifest.json'})
+        self.intake.update(app_family='pro_code', pro_code_assets=assets)
+        self.put('inputs/intake.json', self.intake)
+        result = W.plan_value(self.root, 'inputs/intake.json')['pro_code_source']
+        self.assertEqual([a['file']['path'] for a in result['assets']], [a['path'] for a in assets])
+        self.assertTrue(result['assets'][0]['html_control_hints'])
+        self.assertEqual(result['assets'][-2]['summary_status'], 'read_pinned_source_for_details')
+        self.assertEqual(result['assets'][-1]['omitted_sections'], ['declarations'])
+        self.assertLess(len(W.ap.canonical(result)), 54 * 1024)
+
+    def test_pro_code_handoff_reuses_frozen_source_files_and_detects_drift(self):
+        self.intake.update(app_family='pro_code', scope={'app_ids': ['app-one']},
+                           pro_code_assets=[{'kind': 'manifest', 'path': 'inputs/manifest.json'}])
+        self.put('inputs/manifest.json', {'id': 'design-one', 'version': '1.0'})
+        self.put('inputs/intake.json', self.intake)
+        source = W.plan_value(self.root, 'inputs/intake.json')['pro_code_source']
+        source_ref = ['inputs/manifest.json']
+        baseline = {'schema_version': 1, 'source_evidence': source_ref, 'no_controls_evidence': source_ref,
+                    'views': [{'id': 'main', 'title': 'Summary', 'layout': 'One total', 'components': ['total'],
+                               'controls': [], 'evidence': source_ref}], 'controls': [], 'deviations': [],
+                    'cases': [{'id': 'default', 'controls': [], 'action': 'Open', 'persona': 'viewer',
+                               'state': {}, 'outputs': {'total': 2}, 'evidence': source_ref}]}
+        self.put('contracts/baseline.json', baseline)
+        value = W.ap.routing_helper('migration_fidelity').baseline(self.root, 'contracts/baseline.json')
+        gate = {'migration_baseline': {'path': 'contracts/baseline.json', 'baseline_sha256': value['baseline_sha256']}}
+        pro_code = W.module('domo_pro_code_under_test', W.HERE / 'domo_pro_code.py')
+        for treatment in ('preserve', 'redesign'):
+            receipt = pro_code.handoff(self.root, source, {'migration_treatment': treatment}, gate, W.ap)
+            self.assertEqual(receipt['assets'][0]['file'], source['assets'][0]['file'])
+            self.assertNotIn('declarations', receipt['assets'][0])
+            self.assertEqual(receipt['coverage'], source['coverage'])
+        self.put('inputs/extra.json', {'observed': True})
+        self.intake['pro_code_assets'].append({'kind': 'instance_wiring', 'path': 'inputs/extra.json'})
+        self.put('inputs/intake.json', self.intake)
+        extended = W.plan_value(self.root, 'inputs/intake.json')['pro_code_source']
+        with self.assertRaisesRegex(ValueError, 'include_current_files_in_source_baseline'):
+            pro_code.handoff(self.root, extended, {'migration_treatment': 'preserve'}, gate, W.ap)
+        self.put('inputs/manifest.json', {'id': 'design-one', 'version': '2.0'})
+        with self.assertRaisesRegex(ValueError, 'source_baseline_changed'):
+            pro_code.handoff(self.root, source, {'migration_treatment': 'redesign'}, gate, W.ap)
+
+    def test_selected_pro_code_capture_rejects_known_family_conflict_and_keeps_unknown(self):
+        folder = self.root / 'inputs/selected-app'
+        folder.mkdir()
+        capture = F.app_fixture(folder)
+        self.intake.update(app_family='pro_code', scope={'app_ids': ['app-1'], 'page_ids': ['page-1']})
+        with self.assertRaisesRegex(ValueError, 'selected_app_family_conflicts'):
+            W.check_selected_scope(self.intake, capture)
+        app = next(row for row in capture['inventory']['items'] if row['kind'] == 'app')
+        app['configuration']['app_family'] = 'unknown'
+        self.assertEqual(W.check_selected_scope(self.intake, capture), ['domo.app_family_unverified:app'])
+
     def test_plan_tampering_cannot_expand_scope(self):
         self.request()
         W.plan(self.root, 'inputs/intake.json', 'contracts/plan.json')

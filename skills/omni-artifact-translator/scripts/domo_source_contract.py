@@ -37,6 +37,11 @@ def reference(value):
     need(text(value) and not re.search(r'(?i)(?:bearer\s|[?&](?:token|key|signature)=)', value), 'reference_required')
 
 
+def scope_ids(ids):
+    need(type(ids) is list and len(ids) <= 500 and all(text(x, 200) and
+         re.fullmatch(r'[A-Za-z0-9_.:-]+', x) for x in ids) and len(ids) == len(set(ids)), 'distinct_safe_ids')
+
+
 def request(value):
     need(type(value) is dict and set(value) == {'schema_version', 'request_id', 'operation', 'source',
          'scope', 'completeness', 'limits', 'observed_at', 'evidence_mode'}, 'fields')
@@ -55,9 +60,7 @@ def request(value):
     need(type(scope) is dict and set(scope) == set(SCOPE_FIELDS) | {'include_portfolio',
          'include_dataflows', 'max_dependency_dataflows', 'max_dependency_datasets'}, 'scope_fields')
     for field in SCOPE_FIELDS:
-        ids = scope[field]
-        need(type(ids) is list and len(ids) <= 500 and all(text(x, 200) and
-             re.fullmatch(r'[A-Za-z0-9_.:-]+', x) for x in ids) and len(ids) == len(set(ids)), 'distinct_safe_ids')
+        scope_ids(scope[field])
     for field in ('include_portfolio', 'include_dataflows'):
         need(type(scope[field]) is bool, 'explicit_scope_flags')
     for field, maximum in (('max_dependency_dataflows', 500), ('max_dependency_datasets', 1000)):

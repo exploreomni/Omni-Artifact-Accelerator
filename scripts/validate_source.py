@@ -24,6 +24,7 @@ ROOT = Path(__file__).resolve().parents[1]
 CASES = {
     "source-runner": "tests/test_source_runner.py",
     "omni-cli-setup": "tests/test_omni_cli_setup.py",
+    "cursor-entry": "tests/test_cursor_entry.py",
     "work-intent": "tests/test_work_intent.py",
     "migration-stage-gates": "tests/test_migration_stage_gates.py",
     "migration-fidelity": "tests/test_migration_fidelity.py",

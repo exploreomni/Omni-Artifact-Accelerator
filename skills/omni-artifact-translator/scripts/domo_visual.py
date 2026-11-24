@@ -14,6 +14,7 @@ import re
 
 SCHEMA = 'oaa-domo-visual-capture.v1'
 HANDOFF_SCHEMA = 'oaa-domo-app-handoff.v1'
+APP_FAMILIES = {'app_studio', 'pro_code', 'brick', 'unknown'}
 PROFILE = 'oaa-domo-evidence@1'
 PRODUCER_PIN = '55eba0ca0690fbf14f39eddbc8a04c94a720c155'
 PRODUCER_PROFILES = {PRODUCER_PIN, 'domo-source-operations@0.1.0'}
@@ -215,8 +216,11 @@ def _inventory(value):
             _behavior(row.get('behaviors'))
             need(text(row.get('app_id')) and text(row.get('page_id')), 'component_app_page_identity')
         if row['kind'] == 'app':
-            need(row['configuration'].get('app_family') in {'app_studio', 'pro_code', 'brick', 'unknown'}
-                 and 'version' in row['configuration'] and (row['configuration']['version'] is None or text(row['configuration']['version'])),
+            config = row['configuration']
+            partial = value.get('status') in ('partial', 'blocked')
+            family = config.get('app_family')
+            need((isinstance(family, str) and family in APP_FAMILIES or partial and family is None)
+                 and ('version' in config or partial) and (config.get('version') is None or text(config['version'])),
                  'app_family_version')
     actual = {kind: sum(row['kind'] == kind for row in inv['items']) for kind in KINDS}
     if inv['completeness'] == 'selected_scope_declared':
@@ -368,7 +372,7 @@ def validate_capture(value):
                     if kind == 'response':
                         need(all(raw['file'][k] == a['file'][k] for k in ('sha256', 'bytes')), 'response_result_bytes_mismatch')
     apps = [r for r in index.values() if r['kind'] == 'app' and r['disposition'] == 'include']
-    if apps or value.get('app_handoff') is not None:
+    if (apps and value['status'] == 'complete') or value.get('app_handoff') is not None:
         validate_app_handoff(value.get('app_handoff'), value['inventory'])
     _strings(value.get('gaps'), 'capture_gaps')
     return value
@@ -401,12 +405,17 @@ def evidence_gaps(value):
     validate_capture(value)
     gaps = list(value['gaps'])
     index = {r['key']: r for r in value['inventory']['items']}
+    if value.get('app_handoff') is None:
+        gaps.extend('domo.app_handoff_missing:' + row['key'] for row in index.values()
+                    if row['kind'] == 'app' and row['disposition'] == 'include')
     if value['status'] != 'complete':
         gaps.append('domo.capture_' + value['status'])
     if value['inventory']['completeness'] != 'selected_scope_declared':
         gaps.append('domo.independent_inventory_partial')
     for row in index.values():
         if row['disposition'] == 'include':
+            if row['kind'] == 'app' and row['configuration'].get('app_family') in (None, 'unknown'):
+                gaps.append('domo.app_family_unverified:' + row['key'])
             covered = {a['kind'] for a in value['artifacts'] if row['key'] in a['object_keys']}
             if row.get('source_mapping', {}).get('artifact_id') == 'producer':
                 covered.add('definition')
@@ -426,7 +435,7 @@ def evidence_gaps(value):
             gaps.append('domo.source_asset_inert_not_security_qualified:' + a['artifact_id'])
         if a['kind'] == 'mcp_capture':
             gaps.append('domo.passive_mcp_not_execution_authority')
-    for op in value.get('app_handoff', {}).get('operations', []):
+    for op in (value.get('app_handoff') or {}).get('operations', []):
         if op['disposition'] in {'deferred', 'unsupported', 'unverified'}:
             gaps.append('domo.operation_unresolved:' + op['operation_id'])
     return sorted(set(gaps))

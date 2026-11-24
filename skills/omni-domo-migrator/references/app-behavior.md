@@ -1,5 +1,7 @@
 # Domo application behavior
 
+For a Pro Code or custom JavaScript App, follow the [Pro Code source workflow](pro-code-apps.md) to bind the selected design, installed instance and observed controls.
+
 Classify the source before designing a replacement: App Studio composition,
 custom App, Brick, embedded experience, or a combination. Retain original manifests,
 configuration, code, assets and wiring as inert evidence. Do not execute imported

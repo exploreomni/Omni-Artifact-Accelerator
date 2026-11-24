@@ -28,7 +28,8 @@ def plan_value(root, specification):
     root, project = ap.load_project(root)
     spec = wf.load(root, specification)
     allowed = {'schema_version', 'source', 'scope', 'route', 'route_reference', 'target',
-               'existing_run', 'observed_at', 'evidence_mode', 'limits', 'completeness', 'experience'}
+               'existing_run', 'observed_at', 'evidence_mode', 'limits', 'completeness', 'experience',
+               'app_family', 'pro_code_assets'}
     ap.need(type(spec) is dict and spec.get('schema_version') == 'oaa-domo-intake.v1'
             and not set(spec) - allowed, 'domo.intake_contract')
     source, scope, target = (spec.get(k, {}) for k in ('source', 'scope', 'target'))
@@ -37,23 +38,47 @@ def plan_value(root, specification):
     ap.need(not set(scope) - set(contract.SCOPE_FIELDS) - {'include_portfolio', 'include_dataflows',
             'max_dependency_dataflows', 'max_dependency_datasets'}, 'domo.scope_fields_rejected')
     ap.need(not set(target) - {'origin', 'surface', 'destination_reference'}, 'domo.target_fields_rejected')
+    domo = wf.domo_module()
+    family = spec.get('app_family')
+    ap.need(family is None or isinstance(family, str) and family in domo.APP_FAMILIES, 'domo.app_family')
+    pro_code = family == 'pro_code'
+    ap.need(pro_code or 'pro_code_assets' not in spec, 'domo.pro_code_family_required')
+    if pro_code:
+        contract.scope_ids(scope.get('app_ids', []))
+        for key, value in source.items():
+            if value:
+                (contract.origin if key == 'origin' else contract.reference)(value)
+    supplied_app = (module('domo_pro_code', HERE / 'domo_pro_code.py').inspect(root, spec, ap, domo)
+                    if pro_code else None)
+    # The companion's app_ids operation produces App Studio manual placeholders.
+    # Preserve other explicitly selected source reads and keep custom designs local.
+    connected_selected = any(scope.get(k) for k in contract.SCOPE_FIELDS if not pro_code or k != 'app_ids')
     questions = []
     prompts = {'origin': 'What exact HTTPS Domo tenant origin is authorized?',
         'tenant_ref': 'Which retained tenant evidence identifies the source organization?',
         'principal_ref': 'Whose effective Domo access should this migration verify?',
         'permission_context_ref': 'Which permission or PDP context applies to this person?',
         'authorization_ref': 'Which actual source-read authorization should be retained?'}
+    if pro_code and not connected_selected:
+        prompts['origin'] = 'Which Domo tenant supplied the selected App files?'
+        prompts['authorization_ref'] = 'What retained reference establishes access to the supplied App evidence?'
     for key, prompt in prompts.items():
         if not source.get(key):
             questions.append({'field': 'source.' + key, 'stage': 'A', 'question': prompt})
+    if scope.get('app_ids') and family in (None, 'unknown'):
+        questions.append({'field': 'app_family', 'stage': 'A', 'question':
+            'Does the retained source identify the selected App as Pro Code, App Studio, or a Brick?'})
     selected = any(scope.get(k) for k in contract.SCOPE_FIELDS)
-    if not selected:
+    if pro_code and not scope.get('app_ids'):
+        questions.append({'field': 'scope.app_ids', 'stage': 'A', 'question':
+            'Which Domo App instance and design version should the supplied files represent?'})
+    elif not selected:
         questions.append({'field': 'scope', 'stage': 'A', 'question':
             'Which discovered Pages, Cards, DataSets, Apps or workflows should be migrated?'})
-    if 'include_portfolio' not in scope:
+    if 'include_portfolio' not in scope and (not pro_code or connected_selected):
         questions.append({'field': 'scope.include_portfolio', 'stage': 'A', 'question':
             'May discovery enumerate the visible portfolio, or only inspect selected IDs?'})
-    if not spec.get('observed_at'):
+    if not spec.get('observed_at') and (not pro_code or connected_selected):
         questions.append({'field': 'observed_at', 'stage': 'A', 'question':
             'What timezone-aware acquisition timestamp should be recorded?'})
     if spec.get('route') not in ROUTES or not spec.get('route_reference'):
@@ -80,6 +105,8 @@ def plan_value(root, specification):
     }.items():
         if experience.get(field):
             continue
+        if pro_code and project.get('migration_treatment') == 'preserve' and field in ('visual_preferences', 'branding', 'quality_bar'):
+            continue
         if field == 'migration_fidelity' and project.get('migration_treatment') in ap.TREATMENTS:
             # Source capture supplies the initial scope. Only ask about actual ambiguities.
             continue
@@ -88,8 +115,10 @@ def plan_value(root, specification):
     ap.need(existing is None or type(existing) is dict and set(existing) == {'run_id', 'unit_id', 'cycle_id', 'reference'}
             and all(contract.text(v) for v in existing.values()), 'domo.existing_run_identity')
     requests = []
-    if all(source.get(k) for k in prompts) and spec.get('observed_at') and 'include_portfolio' in scope:
+    if (not pro_code or connected_selected) and all(source.get(k) for k in prompts) and spec.get('observed_at') and 'include_portfolio' in scope:
         full_scope = {k: scope.get(k, []) for k in contract.SCOPE_FIELDS}
+        if pro_code:
+            full_scope['app_ids'] = []
         full_scope.update({k: scope.get(k, default) for k, default in (
             ('include_portfolio', False), ('include_dataflows', False),
             ('max_dependency_dataflows', 0), ('max_dependency_datasets', 100))})
@@ -104,15 +133,23 @@ def plan_value(root, specification):
         if selected or full_scope['include_portfolio']:
             contract.request(value)
             requests.append(value)
-    return {'schema_version': 'oaa-domo-plan.v1', 'engagement_id': project['id'],
+    design_inputs = ('D: source layout, controls, delivery context and freshness'
+                     if pro_code and project.get('migration_treatment') == 'preserve'
+                     else 'D: experience, fidelity, brand and freshness interview')
+    result = {'schema_version': 'oaa-domo-plan.v1', 'engagement_id': project['id'],
         'intake': wf.pin(root, specification), 'existing_run': existing, 'route': spec.get('route'),
         'questions': questions, 'requests': requests, 'status': 'local_preparation',
         'next_action': 'review_runtime_and_capture' if requests else 'resolve_source_questions',
         'later_requirements': ['B: verified semantics and access', 'C: traceable narrative',
-            'D: experience, fidelity, brand and freshness interview',
+            design_inputs,
             ap.migration_design_step(project, 'E: exactly three rendered concepts, actual user choice, detailed design'),
             'F: guarded candidate plus independent security, UX, product and QA reviews'],
         'runtime_loaded': False, 'source_access_verified': False, 'target_write_authority': False}
+    if pro_code:
+        result.update(pro_code_source=supplied_app, next_action='review_pro_code_source_and_instance_wiring')
+    elif scope.get('app_ids') and family in (None, 'unknown'):
+        result['app_family_status'] = 'unverified_source_metadata_or_placeholder_only'
+    return result
 
 
 def plan(root, specification, destination):
@@ -156,11 +193,19 @@ def check_selected_scope(intake, capture):
     index = {row['key']: row for row in capture['inventory']['items']}
     mapping = {'page_ids': 'page', 'card_ids': 'card', 'app_ids': 'app',
                'dataset_ids': 'dataset', 'workflow_ids': 'operation'}
-    selected = set()
+    selected, family_gaps = set(), []
     for field, kind in mapping.items():
         for native in intake['scope'].get(field, []):
             matches = {key for key, row in index.items() if row['kind'] == kind and row['native_id'] == native}
             ap.need(matches, 'domo.selected_source_missing_from_capture')
+            expected = intake.get('app_family')
+            if kind == 'app':
+                for key in sorted(matches):
+                    actual = index[key]['configuration'].get('app_family')
+                    if actual in (None, 'unknown'):
+                        family_gaps.append('domo.app_family_unverified:' + key)
+                    elif expected in {'app_studio', 'pro_code', 'brick'}:
+                        ap.need(actual == expected, 'domo.selected_app_family_conflicts_with_capture')
             selected.update(matches)
     ap.need(selected, 'domo.selected_visual_scope_required')
     # Children of selected pages/apps, and explicit Card references from their
@@ -183,19 +228,20 @@ def check_selected_scope(intake, capture):
             cursor = index[cursor['parent_key']]
     ap.need(all(key in allowed or row['kind'] not in {'page', 'app', 'app_page', 'component', 'card', 'placement'}
                 or row['disposition'] != 'include' for key, row in index.items()), 'domo.capture_contains_unselected_artifact')
+    return family_gaps
 
 
 def build_handoff(root, specification, destination):
     root, project = ap.load_project(root)
-    gates = module('domo_build_gates', HERE / 'stage_gates.py')
-    gates.require_action(root, 'build')
+    gate = ap.stage_require(root, 'build')
     spec = wf.load(root, specification)
     ap.need(type(spec) is dict and set(spec) == {'schema_version', 'intake', 'requirements', 'target_context',
             'backend_evidence', 'app_handoff'} and spec['schema_version'] == 'oaa-domo-build-handoff-spec.v1',
             'domo.build_handoff_contract')
     intake_path = wf.check_pin(root, spec['intake'])
     prepared = plan_value(root, spec['intake']['path'])
-    ap.need(not prepared['questions'], 'domo.interview_incomplete')
+    # An existing typed capture can resolve an undeclared family. Unknown stays a gap.
+    ap.need(not any(q['field'] != 'app_family' for q in prepared['questions']), 'domo.interview_incomplete')
     intake, _ = ap.read_json(intake_path)
     _, requirements = wf.requirements(root, spec['requirements'])
     ap.need(requirements['route'] == intake['route'] in ROUTES, 'domo.route_mismatch')
@@ -204,11 +250,11 @@ def build_handoff(root, specification, destination):
     inventory = wf.load(root, inventory_pin['path'])
     ap.need(inventory['source']['platform'] == 'domo' and
             original.get('schema_version') == 'oaa-domo-visual-capture.v1', 'domo.reviewed_capture_required')
-    wf.domo_module().verify_capture_files(original, wf.check_pin(root, original_pin).parent)
+    verification = wf.domo_module().verify_capture_files(original, wf.check_pin(root, original_pin).parent)
     ap.need(original['identity'] == {'source_origin': intake['source']['origin'],
         'tenant_ref': intake['source']['tenant_ref'], 'principal_ref': intake['source']['principal_ref']},
         'domo.capture_identity_changed')
-    check_selected_scope(intake, original)
+    family_gaps = check_selected_scope(intake, original)
     target = wf.load(root, spec['target_context'])
     ap.need(target == intake['target'], 'domo.target_context_changed')
     expected_surfaces = {'app', 'dashboard'} if target['surface'] == 'both' else {target['surface']}
@@ -224,13 +270,19 @@ def build_handoff(root, specification, destination):
         ap.need(app == original.get('app_handoff'), 'domo.app_handoff_changed')
     else:
         ap.need(spec['app_handoff'] is None, 'domo.unselected_app_handoff')
-    return wf.output(root, destination, {'schema_version': 'oaa-domo-build-handoff.v1',
+    app_source = {}
+    if 'pro_code_source' in prepared:
+        pro_code = module('domo_pro_code', HERE / 'domo_pro_code.py')
+        app_source['pro_code_source'] = pro_code.handoff(root, prepared['pro_code_source'], project, gate, ap)
+    return wf.output(root, destination, {'schema_version': 'oaa-domo-build-handoff.v1', **app_source,
         'intake': spec['intake'], 'requirements': wf.pin(root, spec['requirements']),
         'target_context': wf.pin(root, spec['target_context']), 'route': intake['route'],
         'existing_run': intake.get('existing_run'), 'source_files': requirements['source_files'],
         'semantic_qualification': 'retained_references_only_candidate_adapter_must_validate',
         'build_authority': False,
         'backend_evidence': backend, 'app_handoff': spec['app_handoff'],
+        **({'app_family_gaps': family_gaps, 'source_capture_gaps': verification['gaps']}
+           if intake.get('app_family') or family_gaps else {}),
         'next_action': 'prepare_owned_native_candidate_from_selected_design',
         'native_adapter': 'existing_candidate_bound_omni_adapter',
         'source_access_verified': False, 'native_validation': 'not_performed',

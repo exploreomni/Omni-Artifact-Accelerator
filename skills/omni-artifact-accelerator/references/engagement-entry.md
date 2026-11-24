@@ -12,6 +12,8 @@ Keep the existing A–F sequence, actual selection and candidate review boundari
 
 Resolve [artifact work intent](work-intent.md) on first intake. An existing engagement uses its recorded route.
 
+For Cursor Agent, open the selected checkout as a workspace folder. The [Cursor entry guide](cursor-entry.md) explains how to distinguish a project rule being present, visible and used in a particular chat.
+
 ## Inspect the host entry first
 
 Use [Omni connection setup](omni-cli-setup.md) to identify the host’s Omni MCP

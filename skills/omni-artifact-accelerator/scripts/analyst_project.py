@@ -16,6 +16,7 @@ MAX_BYTES = 10 * 1024 * 1024
 PACKET_BYTES = 256 * 1024
 TREATMENTS = ("preserve", "redesign")
 TREATMENT_RECORD = "evidence/migration-treatment.json"
+DOMO_PRO_CODE_GUIDE = "references/pro-code-apps.md"
 STARTER_QUESTIONS = ["Who uses this and what decision or task must it support?",
                      "Which metrics and source behaviors are accepted or unresolved?",
                      "What branding, device, access and completion scope is required?"]
@@ -587,22 +588,38 @@ def sigma_scope(root, obj):
     return False
 
 
-def domo_scope(root, obj):
+def domo_modules(root, obj):
+    """Return the specialist’s optional guides, or None when no Domo scope is registered."""
+    recognized = False
     for record in obj['sources']:
         if not record.get('path', '').endswith('.json'):
             continue
-        value, raw = read_json(relative_file(root, record['path']))
+        path = relative_file(root, record['path'])
+        value, raw = read_json(path)
         need(digest(raw) == record.get('sha256'), 'registered source changed; review before Domo routing')
         if type(value) is not dict:
             continue
         if value.get('schema_version') == 'oaa-domo-intake.v1':
-            return True
-        if value.get('kind') == 'omni_analyst_source_inventory' and value.get('source', {}).get('platform') == 'domo':
+            recognized = True
+            if value.get('app_family') == 'pro_code':
+                return [DOMO_PRO_CODE_GUIDE]
+        elif (value.get('kind') == 'omni_analyst_source_inventory' and type(value.get('source')) is dict
+              and value['source'].get('platform') == 'domo'):
             matches = [r for r in obj['sources'] if r.get('sha256') == value['source'].get('input_sha256')]
             need(bool(matches), 'Domo routing requires its registered original source')
-            routing_helper('visual_workflow').source_inventory(root, matches[0]['path'], record['path'])
-            return True
-    return False
+            inventory = routing_helper('visual_workflow').source_inventory(root, matches[0]['path'], record['path'])
+            recognized = True
+            capture = inventory['upstream_payload']
+            if capture.get('schema_version') == 'oaa-domo-visual-capture.v1' and any(
+                    row['kind'] == 'app' and row['disposition'] == 'include'
+                    and row['configuration'].get('app_family') == 'pro_code'
+                    for row in capture['inventory']['items']):
+                return [DOMO_PRO_CODE_GUIDE]
+    return [] if recognized else None
+
+
+def domo_scope(root, obj):
+    return domo_modules(root, obj) is not None
 
 
 def plan(root, scope_ids=None):
@@ -616,7 +633,8 @@ def plan(root, scope_ids=None):
     roles = ["product-owner", "data-analyst", "branding", "bi-engineer"]
     if obj["mode"] == "migration":
         roles.insert(0, "artifact-translator")
-    domo = domo_scope(root, obj)
+    domo_guides = domo_modules(root, obj)
+    domo = domo_guides is not None
     if domo:
         roles.insert(0, "domo-migrator")
     sigma = sigma_scope(root, obj)
@@ -727,7 +745,8 @@ def plan(root, scope_ids=None):
                            if (scope_ids is None or q['id'] in scope_ids) and
                            (r in q.get('product', {}).get('suggested_roles', []) or
                             q['id'] in coverage['role_requirements'].get(r, []))],
-                       "modules": (["references/advanced-visualization.md"] if r == "app-engineer" and any(
+                       "modules": (domo_guides if r == "domo-migrator" and domo_guides else []) +
+                           (["references/advanced-visualization.md"] if r == "app-engineer" and any(
                            "custom-visualization" in q["capabilities"] and "app" in q["surfaces"]
                            for q in coverage["requirements"]) else []) +
                            (["references/spatial-integration.md"] if r == "app-engineer" and any(
@@ -970,7 +989,7 @@ def routing_helper(name='task_routing'):
                   'execution_runtime', 'execution_qualification', 'assembly_provenance', 'analytical_evidence',
                   'execution_contracts', 'execution_observability', 'execution_preparation', 'selective_reads',
                   'experience_intent', 'experience_review', 'engagement_bootstrap', 'dma_topics', 'semantic_lane',
-                  'host_entry', 'migration_fidelity', 'native_data_consumers'}, 'unknown routing helper')
+                  'host_entry', 'migration_fidelity', 'domo_workflow', 'native_data_consumers'}, 'unknown routing helper')
     # Fixed first-party module only. The host verifier never comes from a request,
     # file path or environment variable. Share its scope across helper imports.
     # The existing DMA module is per caller. Share only the stage provider and
@@ -1063,9 +1082,6 @@ def stage_packet_gate(root, role, assignment=None):
         root, obj = load_project(root)
         need(role in {REPORT_SOURCE_ROLES[p] for p in report_source_scope(root, obj)},
              'Report source specialist requires pinned source evidence')
-    if role == 'domo-migrator':
-        root, obj = load_project(root)
-        need(domo_scope(root, obj), 'Domo specialist requires pinned source intake or evidence')
     if role == 'sigma-migrator':
         root, obj = load_project(root)
         need(sigma_scope(root, obj), 'Sigma specialist requires pinned source intake or evidence')
@@ -1093,6 +1109,18 @@ def stage_packet_gate(root, role, assignment=None):
     if role == 'periscope-migrator':
         root, obj = load_project(root)
         need(periscope_scope(root, obj), 'Periscope specialist requires pinned CDT source evidence')
+    source_modules = None
+    if role == 'domo-migrator':
+        root, obj = load_project(root)
+        source_modules = domo_modules(root, obj)
+        need(source_modules is not None, 'Domo specialist requires pinned source intake or evidence')
+    gate = _stage_action_for_outputs(root, role, stage, outputs, report_output)
+    if source_modules:
+        return {**gate, 'source_modules': source_modules}
+    return gate
+
+
+def _stage_action_for_outputs(root, role, stage, outputs, report_output):
     status = stage_status(root)
     if report_output or role == 'report-builder' or stage == 'report':
         need(status['required'], 'stage_gate_report_build_requires_current_policy')
@@ -1181,6 +1209,8 @@ def packet_data(root, role, inputs, assignment=None):
         result['allowed_actions'] = ['read selected evidence',
             'author only the role work permitted by the current A-F stage; no implicit build or release grant']
         result['stop_conditions'].append('A-F prerequisites or trusted user selection are missing, changed or revoked')
+    if gate.get('source_modules'):
+        result.setdefault('stage_context', {})['source_modules'] = gate['source_modules']
     if design_context["paths"] or design_context["findings"] or design_context.get('requirements') or design_context.get('experience_summary'):
         result["design_context"] = design_context
     if product_context['enabled'] or role == 'product-owner' or product_context.get('experience_summary'):
@@ -1290,6 +1320,10 @@ def main():
     cmd = commands.add_parser("migration-select", help="Record the user's treatment for a pending migration handoff")
     cmd.add_argument("--project", required=True)
     cmd.add_argument("--migration-treatment", choices=TREATMENTS, required=True)
+    cmd = commands.add_parser('domo-plan-source', help='Prepare a local Domo source plan from supplied evidence')
+    cmd.add_argument('--project', required=True)
+    cmd.add_argument('--spec', required=True, help='engagement-relative Domo intake JSON')
+    cmd.add_argument('--output', required=True, help='new engagement-relative plan path')
     cmd = commands.add_parser('execution-tool', help='Host-neutral fixed execution operations; no worker adapter is loaded from CLI arguments')
     cmd.add_argument('--project', required=True)
     cmd.add_argument('--tool', required=True)
@@ -1367,6 +1401,8 @@ def main():
                               args.selection_policy, args.context_policy, args.modeling_lane, args.migration_treatment)
         elif args.command == "migration-select":
             result = select_migration_treatment(args.project, args.migration_treatment)
+        elif args.command == 'domo-plan-source':
+            result = routing_helper('domo_workflow').plan(args.project, args.spec, args.output)
         elif args.command == 'execution-tool':
             result = routing_helper('execution_bridge').call(args.project, args.tool, read_json(args.request)[0])
         elif args.command in ('context-build', 'context-check'):

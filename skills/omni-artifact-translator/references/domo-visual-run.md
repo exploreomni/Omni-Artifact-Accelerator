@@ -8,6 +8,8 @@ qualified image/Card-query/App-definition acquisition client.
 
 ## 1. Recover scope, access and architecture
 
+For a named Domo Pro Code or custom JavaScript App, use the [Pro Code intake and source workflow](../../omni-domo-migrator/references/pro-code-apps.md). Set `app_family` to `pro_code` and pass the available design and instance evidence to the existing `domo_plan_source` tool.
+
 Reuse the Domo manager/run, selected tenant/principal, Page/App/Card identities,
 source state and original evidence. Retain an independent object denominator,
 including components, repeated placements, non-query content and operational

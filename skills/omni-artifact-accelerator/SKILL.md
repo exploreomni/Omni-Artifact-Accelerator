@@ -22,6 +22,8 @@ For DMA-supplied Topics, follow the [Topic sourcing workflow](../omni-backend-ha
 
 At Stage A, when the user selects Omni-only development on existing warehouse data or brings just a legacy semantic layer, enter the [standalone modeling lane](references/standalone-modeling.md). Check for a DMA handoff before creating a model object. Reuse a suitable existing Topic, distinguish lack of visibility from genuine absence, and offer an isolated branch Topic for ready data. Resolve access rules with the model owner. Carry the exact Topic into saved queries and controls at B and F. The model draft belongs to source preparation at A; the artifact design choice and build retain their existing gates.
 
+For a Cursor repository session, use the [Cursor entry guide](references/cursor-entry.md) if the checkout, loaded rules or workflow are unclear.
+
 For repository-only intake, use [explicit engagement entry](references/engagement-entry.md)
 to bind the actual checkout, declared host and existing sibling engagement. Read
 the generated reference explicitly; retained blockers do not qualify host access,
@@ -117,7 +119,7 @@ Use the [current-context and resume check](references/design-intent.md#current-c
 For control-level quality feedback or substantial interactive work, route the affected families through [control craft](../omni-design-systems/references/control-craft.md). Design systems owns shared anatomy/tokens, the designer chooses controls for the task, engineering binds existing state/query mechanisms, and QA reviews the affected journey. Reuse current brand/interaction decisions and ask only material missing questions; neither a universal shell nor another permanent specialist is required.
 
 For Domo migrations, assign the [Domo specialist](../omni-domo-migrator/SKILL.md)
-and follow the [Domo workflow](../omni-artifact-translator/references/domo-visual-run.md).
+and follow the [Domo workflow](../omni-artifact-translator/references/domo-visual-run.md). When the user identifies a **Domo Pro Code App**, record `app_family: "pro_code"` in the Domo intake and consult the [Pro Code guide](../omni-domo-migrator/references/pro-code-apps.md). If the family is unclear, recover it from source evidence or ask which kind of App they use. The original request determines preservation or redesign independently.
 Reuse the originating manager/run and retain Card, Page, App/component and repeated
 placement identities. Select reuse, semantic reconstruction or warehouse refactoring
 explicitly. Opt-in source reads require the reviewed runtime and selected host

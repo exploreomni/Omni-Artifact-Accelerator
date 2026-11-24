@@ -277,6 +277,23 @@ class DomoEvidenceTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'read_only_app_has_side_effects'):
             D.validate_capture(seal(value))
 
+    def test_partial_app_capture_keeps_unknown_operational_scope_without_inventing_a_handoff(self):
+        value = app_fixture(self.root)
+        value['status'] = 'partial'
+        value['app_handoff'] = None
+        app = next(row for row in value['inventory']['items'] if row['kind'] == 'app')
+        app['configuration']['app_family'] = 'pro_code'
+        result = D.verify_capture_files(seal(value), self.root)
+        self.assertIn('domo.app_handoff_missing:app', result['gaps'])
+        self.assertIn('domo.capture_partial', result['gaps'])
+        self.assertFalse(result['target_write_authority'])
+        app['configuration'] = {}
+        self.assertIn('domo.app_family_unverified:app', D.evidence_gaps(seal(value)))
+        app['configuration'] = {'app_family': 'pro_code', 'version': None}
+        value['status'] = 'complete'
+        with self.assertRaisesRegex(ValueError, 'app_handoff'):
+            D.validate_capture(seal(value))
+
     def test_missing_component_facet_owner_or_acceptance_rejected(self):
         for field in ('facet', 'owner', 'acceptance'):
             value = app_fixture(self.root)

@@ -51,7 +51,7 @@ execution remain outside this supplied evidence contract.
 | `producer` | Original `contract_version`, declared `revision`, pinned `file` |
 | `inventory` | Independent reference, completeness, expected counts and item denominator |
 | `artifacts` | Original bounded files and their state, scope and execution bindings |
-| `app_handoff` | Required for selected apps; assignment-only responsibilities |
+| `app_handoff` | Assignment-only responsibilities for selected Apps. Required on a complete capture. A partial or blocked capture may retain the missing assignment as an explicit gap. |
 | `gaps` | Explicit retained unresolved evidence gaps |
 
 `source_origin` must be an HTTPS origin without credentials, path, query or
@@ -102,6 +102,8 @@ App records preserve `configuration.app_family`: `app_studio`, `pro_code`,
 `brick`, or `unknown`, plus `configuration.version`. Asset records preserve
 `app_id` and their own version. Unknown versions remain explicit gaps; an asset
 revision and an app release are not assumed equivalent.
+
+Partial or blocked captures may omit an unobserved App family, version or assignment. Keep the resulting gaps until identifiable source evidence resolves them. A selected Pro Code App with an explicitly conflicting captured family requires source reconciliation before handoff.
 
 ## Files and attachments
 
