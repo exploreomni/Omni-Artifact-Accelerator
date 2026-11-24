@@ -4,6 +4,8 @@
 
 This self-guided introduction explains what to provide, how the agents work together, and how to review the result. You can read it before setting anything up. You do not need to write code to supply requirements, choose a design or review a delivery; an approved agent host and technical access are needed to build.
 
+Ready to use it now? Follow the [three-step local quick start](../../README.md#quick-start) and bring the lessons back up as you need them.
+
 ## Follow the learning path
 
 | Lesson | You will learn | Observable checkpoint |

@@ -1,6 +1,32 @@
 # Omni Artifact Accelerator
 
-An analyst's sidekick for designing, building and reviewing **native Omni dashboards and native Omni Apps**, with a design and implementation-preparation foundation for **native Reports Beta**. The package brings together role-specific skills, source migration readers and local workflow helpers so an AI agent can carry a business question through design, implementation and independent QA.
+Use your AI coding assistant to build native Omni Apps and dashboards, prepare native Reports Beta, or migrate an existing BI experience.
+
+## Quick start
+
+**1. Create a workspace and clone the accelerator.** Run these commands once in a terminal with Git installed. If you already have a clone, use its containing folder in step 2.
+
+```sh
+mkdir -p ~/omni-workspace
+cd ~/omni-workspace
+git clone https://github.com/exploreomni/Omni-Artifact-Accelerator.git
+```
+
+**2. Open `omni-workspace` in your local AI coding assistant.** For example, open that folder in Cursor or Codex, or start Claude Code from the terminal you just used. Select the **parent folder** so the assistant can read the accelerator and save your project beside it. The clone is all the accelerator setup you need.
+
+**3. Paste this into a new chat.**
+
+> Read `Omni-Artifact-Accelerator/AGENTS.md` and use the accelerator in that folder. Help me get started.
+
+You can add your goal in the same message, such as “Migrate my existing dashboard 1:1, including its filters” or “Build an Omni App that helps store managers investigate margin changes.”
+
+The assistant asks whether you’re migrating or building something new if you haven’t already said. It handles the project files and checks for an existing Omni MCP connection or Omni CLI when it needs live data. If neither is available, it offers connection setup or offline planning and asks before installing anything. Keep API keys in your approved connection settings, outside chat.
+
+**Prefer to skip the terminal?** Create an empty folder, open it in your local coding assistant and send this message.
+
+> Clone `https://github.com/exploreomni/Omni-Artifact-Accelerator.git` into a subfolder named `Omni-Artifact-Accelerator`. Read `Omni-Artifact-Accelerator/AGENTS.md` and help me get started.
+
+## What to expect
 
 Start with an existing Omni model, bring an exported BI experience, or continue from the companion [Data Model Accelerator](https://github.com/exploreomni/Data-Model-Accelerator). Use only the specialists the task needs.
 
@@ -139,45 +165,11 @@ For a Domo **Pro Code App**, the specialist inventories the deployed instance, d
 
 ## Start in your agent host
 
-For **Cursor**, open this checkout as a project folder and start an Agent chat. Its project rule points to the orchestrator on the first request. The [Cursor setup and troubleshooting guide](skills/omni-artifact-accelerator/references/cursor-entry.md) shows how to check which rules and revision the session used. For **Claude Code**, read [CLAUDE.md](CLAUDE.md). For **Codex**, start at [AGENTS.md](AGENTS.md).
-These entry points use the same orchestrator. For **Claude or ChatGPT connected chat**, explicitly
-ask the host to retrieve the orchestrator and relevant sibling guidance:
+Use the [quick start](#quick-start) for a local coding assistant. Opening the parent folder gives the assistant access to the checkout and a place to save your work beside it. The starter message points directly at the checked-out instructions.
 
-> Use the Omni Artifact Accelerator from this repository for my requested artifact.
-> Start with its orchestrator and execution entry procedure. Confirm which revision
-> and files you can read, preserve my original request, and assign experience,
-> branding, semantics, implementation and independent review responsibilities.
-> Follow the data-first A–F workflow: verify my data/access, analyze governed queries
-> and create a reusable narrative before artifact discovery. For a faithful migration,
-> show me the source specification to confirm. For a redesigned or new artifact,
-> present three viable options. Carry my decision into detailed design and coding.
-> Build cohesively, retain all four review perspectives each iteration, and report
-> actual evidence separately from unobserved behavior.
+If you open **only the repository** in Cursor, Claude Code or Codex, its own [Cursor rule](.cursor/rules/omni-artifact-entry.mdc), [CLAUDE.md](CLAUDE.md) or [AGENTS.md](AGENTS.md) is at the project root. When your assistant needs to create the project folder beside the checkout, grant access to that location. For automatic Cursor rule discovery in a multi-folder workspace, include the checkout itself as a workspace folder. [Cursor setup guide](skills/omni-artifact-accelerator/references/cursor-entry.md)
 
-A repository URL alone does not activate skills. Missing repository/tool access is
-a stated limitation, not permission to install anything. See the [execution procedure](skills/omni-artifact-accelerator/references/execution-workflow.md)
-for repository-only, installed and connected routes. No host-specific route has
-universal enforcement or implied qualification.
-
-For a local repository-only start, use [explicit engagement entry](skills/omni-artifact-accelerator/references/engagement-entry.md)
-to bind the exact checkout, declared host and existing sibling engagement. The host
-must read that entry explicitly. Missing access can remain a recorded blocker;
-preparation does not install code, configure tools or grant execution authority.
-
-The local `run-start`, `run-guidance`, `phase-check`, `candidate-freeze` and
-`delivery-check` commands preserve source provenance, stage-appropriate
-responsibilities, first candidate bytes and current evidence. Record startup before
-the first new stage. Choose the actual checkout, a pinned clean revision or verified
-latest main explicitly, or an explicit offline snapshot bound to its manifest;
-`source-check` can read the configured HTTPS origin without
-fetching or activating code. A source mismatch never triggers installation or an
-automatic update. See the [exact entry procedure](skills/omni-artifact-accelerator/references/execution-workflow.md#record-startup-and-ownership).
-These augment existing intent and QA records. They do not run
-specialists, approve a dependency, or turn a published candidate into a polished,
-runtime-verified artifact. A host without gate execution can collect evidence and
-present options; a host with the helpers can continue local implementation using
-the recorded chat-choice workflow. Native execution retains separate controls. An unrun gate is
-not a passing gate.
+For a **web chat**, use a host with explicitly configured file access to the checkout. Pasting a local path into a chat that cannot read your computer will not open it. Reading instructions is enough to discuss the work. Running the local workflow also needs a host that can run the helpers and write to the project folder. [Agent execution guide](skills/omni-artifact-accelerator/references/execution-workflow.md)
 
 ## Preserve product intent through the workflow
 
@@ -282,107 +274,15 @@ The [native procedural scene framework](skills/omni-app-engineer/references/nati
 
 Try: “Create an illustrative equipment inspection App using our existing brand and governed asset query. Give geometry stable part IDs, show exact readings outside the canvas, preserve the view on refresh, and make camera movement optional. Use the simplest useful spatial treatment and identify missing dimension or runtime evidence.” Follow the [native scene workflow](docs/HOW_TO.md#native-procedural-scene-workflow); unobserved outcomes remain unrun.
 
-## Quick start
-
-Use an existing approved Python runtime for source-only work. **Package installation,
-third-party imports, updates and skill activation require explicit scoped sign-off.
-No Blender code or execution is permitted.** Read the
-[package-use policy](skills/omni-artifact-accelerator/references/dependency-policy.md).
-**You can connect through Omni MCP or the Omni CLI.** On first use, the agent checks
-whether your host has an Omni MCP tool for the task. If needed, it checks for an
-existing CLI on the machine that will run it. When both can do the job, it follows
-your preference or uses MCP by default. If neither is available, you can connect
-Omni MCP, approve an exact CLI installation, or work offline. An explicitly
-selected API route is also supported. [Connection setup](skills/omni-artifact-accelerator/references/omni-cli-setup.md)
-
-### 1. Review the source
-
-Obtain an authorized checkout, then run the original standard-library package checker:
-
-```sh
-cd Omni-Artifact-Accelerator
-python3 -I -S -B scripts/check_package.py
-```
-
-`-I -S` prevents user/site package startup in this source-only path. It is not an OS sandbox. The checker does not need PyYAML. `requirements.txt` still records PyYAML 6.0.3 for optional YAML readers; it is neither an installation instruction nor a grandfathered approval. Keep customer data, tokens and outputs outside this repository.
-
-The package checker is enough for this source/setup step. Developers can run
-affected cases through `scripts/validate_source.py --case <case>` using the same
-isolated Python flags; see [testing](docs/TESTING.md). Those checks exercise local
-contracts, without installing packages or contacting a tenant. The current GitHub
-workflow is manual-only and records a revision; it does not run validation.
-For a new App or dashboard, continue with its engagement and [artifact checks](skills/omni-artifact-accelerator/references/execution-workflow.md#keep-validation-scoped-to-the-artifact).
-Package maintainers can select the full regression suite and its required runtime
-as described in [testing](docs/TESTING.md).
-
-### 2. Choose a repository or installed-skill entry
-
-For repository-only use, have the host read [AGENTS.md](AGENTS.md) or
-[CLAUDE.md](CLAUDE.md), then [the orchestrator skill](skills/omni-artifact-accelerator/SKILL.md)
-in this checkout. This route requires no skill installation.
-
-If you use an existing approved skill directory, you can preview its differences:
-
-```sh
-OAA_SKILLS_DIR="$HOME/.codex/skills"
-python3 -I -S -B scripts/install_skills.py --destination "$OAA_SKILLS_DIR"
-```
-
-Preview and `--verify` are read-only. **`--apply` is disabled** until a qualified host approval gate is supplied. Do not bypass it by copying into an active skills directory. Installation/update approval must cover the exact source and target; an agent-written approval flag is insufficient. The registered sibling skill folders belong together once activation is authorized. See [installation and updates](docs/HOW_TO.md#installation-and-updates).
-
-Configure the tools needed for your chosen route; native writes require separate authorization.
-
-### 3. Create a local engagement
-
-Run these commands from the repository root. The example creates a private sibling
-folder, as required by the [repository entry helper](skills/omni-artifact-accelerator/references/engagement-entry.md).
-These commands use original source and the Python standard library:
-
-```sh
-python3 -I -S -B skills/omni-artifact-accelerator/scripts/analyst_project.py --help
-OAA_RUN="$(dirname "$PWD")/operations-pilot"
-python3 -I -S -B skills/omni-artifact-accelerator/scripts/analyst_project.py init \
-  --output "$OAA_RUN" --name 'Operations pilot' --mode net-new --surface both \
-  --selection-policy conversation-evidence-v1
-python3 -I -S -B skills/omni-artifact-accelerator/scripts/analyst_project.py plan \
-  --project "$OAA_RUN"
-```
-
-Use a new sibling directory name; initialization does not overwrite an existing
-engagement. Choose `dashboard`, `app`, `report` or `both`. Here `both` means a
-dashboard and an App; Reports Beta uses its [separate preparation workflow](skills/omni-artifact-accelerator/references/report-workflow.md).
-Open the generated `START_HERE.md`, then give the agent a concrete task:
-
-> Use $omni-artifact-accelerator for a service operations dashboard and App in this engagement. Reuse our existing Omni Topics. The dashboard should explain current performance; the App should help a viewer inspect an exception and its supporting data. Ask only for missing metric, audience, interaction and brand decisions. Start with a reviewable local design and QA plan. Do not write to the tenant yet.
-
-The initial files and role plan are a starting point, not a built dashboard or App. Add `--branding requested --website https://example.com` for a branded engagement, `--branding none` when branding is out of scope, or leave it unknown. The editable design-intent record retains missing required choices; a website alone does not choose a logo. See [saving intent and reviewing named requirements](skills/omni-artifact-accelerator/references/design-intent.md) for current design/brand/asset selection and per-surface completion. Continue with [the step-by-step how-to](docs/HOW_TO.md).
-
-### 4. Establish source and access before starting A–F
-
-Ask the host to prepare the [engagement entry](skills/omni-artifact-accelerator/references/engagement-entry.md)
-and record `run-start` before the first artifact stage. Supply your original brief,
-Omni instance, model/Topic references and whose access should be verified. The host
-records the actual package, available tools and task responsibilities; `plan` above
-only proposes role assignments.
-
-Local planning needs no Omni credentials. For source or native calls, configure
-credentials through your approved CLI/MCP/API or secret mechanism. Share identifiers
-in chat and keep secret values and generated evidence outside the repository.
-The package does not create accounts, issue API keys or configure remote connectors.
-See [access preparation](docs/training/02-prepare.md) and the
-[CLI configuration boundary](skills/omni-bi-engineer/references/omni-build-export.md#local-cli-trust-boundary).
-
-All new engagements, including migrations, include the A–C analytical handoff, artifact discovery, confirmation of the source specification or selection among three concepts, a resolved design and all four review perspectives on each implementation iteration. Focused continuation reuses existing valid decisions under its recorded policy. The optional [design evidence checker](skills/omni-qa-analyst/references/design-evidence.md) tracks which observations still match the current candidate; it does not enforce A–F, certify visual quality or authenticate customer acceptance.
-
-For an App, describe the intended experience as well as the metrics. For example: “Create an immersive branded entry that leads into a focused product investigation workspace, with persistent scope and a separate comparison view.” The [experience-mode guide](skills/omni-app-designer/references/app-patterns.md#choose-the-experience-mode) helps distinguish this from a direct workspace or a guided data story. If rendering is unavailable, the agent should retain that visual-review gap explicitly.
-
-Give the usable App width **and height** when known, including space occupied by Omni controls. For branded demos, specify whether source names should remain original or may use explicitly fictional aliases; logo permission alone does not decide that. The [data-input guide](skills/omni-app-engineer/references/native-data-input.md) keeps exported rows distinct from the native callback contract, while [presentation naming](skills/omni-branding/references/demo-presentation.md) preserves original IDs and arithmetic. See [context and resume](docs/HOW_TO.md#keep-context-current) for checking an older handoff before work continues.
-
 ## Start from one useful brief
 
 > Create a polished investigation App from our existing Omni model for regional operations leaders. Use our supplied company website and approved assets. Give returning users a direct path to investigate a change and inspect its evidence. Choose an appropriate visual direction, preserve data scope through navigation, and adapt to phone, laptop and wide screens. Reuse our prior answers; ask one short batch only for material missing context. Build and critique a complete journey before expanding it, then review every working destination. Keep unavailable runtime capabilities explicit. Prepare the candidate in our existing development workflow.
 
 The [first-delivery workflow](skills/omni-artifact-accelerator/references/first-delivery.md) turns that brief into named behavior, owners and dependencies. The agent refines the result internally; a single prompt does not mean a single generation. `experience-check` reports declared coverage and `plan` routes capabilities to existing roles. The App engineer can load an [advanced visualization module](skills/omni-app-engineer/references/advanced-visualization.md) for custom scenes. Actual object or environment modeling routes to `omni-3d-modeler` through the optional `spatial-modeling` capability. Neither custom visualization nor a premium brief automatically requires 3D.
+
+For an App, describe the intended experience as well as the metrics. For example: “Create an immersive branded entry that leads into a focused product investigation workspace, with persistent scope and a separate comparison view.” The [experience-mode guide](skills/omni-app-designer/references/app-patterns.md#choose-the-experience-mode) helps distinguish this from a direct workspace or a guided data story. If rendering is unavailable, the agent should retain that visual-review gap explicitly.
+
+Give the usable App width **and height** when known, including space occupied by Omni controls. For branded demos, specify whether source names should remain original or may use explicitly fictional aliases; logo permission alone does not decide that. The [data-input guide](skills/omni-app-engineer/references/native-data-input.md) keeps exported rows distinct from the native callback contract, while [presentation naming](skills/omni-branding/references/demo-presentation.md) preserves original IDs and arithmetic. See [context and resume](docs/HOW_TO.md#keep-context-current) for checking an older handoff before work continues.
 
 Before fixing the scope of a substantial design, the agent inventories useful source depth, dates/populations, comparisons and details rather than stopping at the first working query. `source-inventory` retains that evidence; `delivery-project` produces an unselected requirement-coverage proposal from explicit decisions; `delivery-evidence-template` keeps unobserved checks visible. See the [execution steps and examples](skills/omni-artifact-accelerator/references/execution-workflow.md). These helpers preserve the requested ambition without prescribing pages, charts or a visual template.
 
@@ -393,15 +293,6 @@ For each substantial working view, the designer resolves its dominant subject, u
 Reusable behavior does not impose a visual template. The [interaction controllers](skills/omni-app-engineer/references/experience-behaviors.md) provide identity, selection/return, recorded-time and calendar mechanics; each engagement owns its layout, typography, imagery, density and choreography. The [original behavior studio](skills/omni-app-engineer/assets/behavior-studio.html) presents one investigation through two different structures. Use [portable assembly](skills/omni-app-engineer/references/portable-assembly.md) to combine chosen sources without inheriting a tenant, query count, page structure or brand.
 
 > Build a useful analytical experience for our stated audience and task. Choose the composition from our data and brand requirements; reuse interaction mechanics where helpful. Record why the chosen form fits. Compare alternatives only where they resolve uncertainty, and review the actual implementation. An existing example is guidance, not the required layout.
-
-For an installed-skill evaluation, verify the installed files. For a repository-only
-blind test, use its working-tree manifest and do not consult installed copies:
-
-```sh
-python3 -I -S -B scripts/install_skills.py --destination "$OAA_SKILLS_DIR" --verify
-```
-
-A matching result identifies the compared source version and file manifest. Missing, changed and extra files stay visible; the command makes no changes and does not prove the host has reloaded cached skills.
 
 ## Choose a workflow
 

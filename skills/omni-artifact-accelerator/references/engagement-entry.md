@@ -14,6 +14,10 @@ Resolve [artifact work intent](work-intent.md) on first intake. An existing enga
 
 For Cursor Agent, open the selected checkout as a workspace folder. The [Cursor entry guide](cursor-entry.md) explains how to distinguish a project rule being present, visible and used in a particular chat.
 
+## When the user opens a local workspace
+
+If the user opened a folder containing the clone, resolve their named checkout inside it and run helpers from the checkout root. Once the work mode and surface are known, use `analyst_project.py init` to create a new sibling engagement, or resume the named existing one. Perform the startup steps below on the user's behalf. Opening the parent and explicitly reading the checkout works even when the host loads no nested project rules. If a host has access only to the checkout, identify the sibling directory access it needs. A fresh project directory is created by `init`; an empty pre-created directory fails the new-project check. [Human quick start](../../../README.md#quick-start)
+
 ## Inspect the host entry first
 
 Use [Omni connection setup](omni-cli-setup.md) to identify the host’s Omni MCP

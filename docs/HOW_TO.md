@@ -4,9 +4,13 @@ Start with a business question, a migration source or an existing model. The orc
 
 ## Installation and updates
 
-Follow the [source-only quick start](../README.md#quick-start) and [package-use policy](../skills/omni-artifact-accelerator/references/dependency-policy.md). Do not install/import dependencies or activate skills without explicit scoped human sign-off. Existing installations and pinned versions are not automatic approval.
+For first use, follow the [three-step local quick start](../README.md#quick-start). Your assistant reads the cloned repository directly and sets up your project in a sibling folder.
 
-All declared skills form one portable bundle. Preview an existing directory without writing:
+### Optional checks for operators
+
+To validate a checkout, run `python3 -I -S -B scripts/check_package.py` from the repository root using an existing approved Python 3 runtime. The check uses the standard library. For package development and release checks, see [testing](TESTING.md).
+
+If your organization already maintains a separate skill installation, use the read-only comparison below. Installing or updating dependencies and activating skills require the approval described in the [package-use policy](../skills/omni-artifact-accelerator/references/dependency-policy.md).
 
 ```sh
 OAA_SKILLS_DIR="$HOME/.codex/skills"
@@ -53,11 +57,10 @@ dependency use retain separate controls.
 
 ### 1. Create a private engagement
 
-Keep the output outside both the repository and skill installation. The parent directory must exist, and the engagement directory must be new:
+From the checkout root, have the agent initialize a new project beside the checkout. The two folders share the workspace you opened. Choose a new name or resume the existing project.
 
 ```sh
-mkdir -p "$HOME/omni-artifact-runs"
-OAA_RUN="$HOME/omni-artifact-runs/operations-pilot"
+OAA_RUN="$(dirname "$PWD")/operations-pilot"
 python3 -I -S -B skills/omni-artifact-accelerator/scripts/analyst_project.py init \
   --output "$OAA_RUN" --name 'Operations pilot' --mode net-new --surface both \
   --selection-policy conversation-evidence-v1
@@ -65,7 +68,7 @@ python3 -I -S -B skills/omni-artifact-accelerator/scripts/analyst_project.py pla
   --project "$OAA_RUN"
 ```
 
-Choose `dashboard`, `app` or `both`. Use `--mode enhancement` for a change to an existing experience. Resume an engagement by reopening it; do not initialize over its existing files. Helpers reject symlink paths, so use canonical paths and keep all relative file references inside the engagement.
+Choose `dashboard`, `app` or `both` here. For `report`, follow [Native Reports Beta](#native-reports-beta). Use `--mode enhancement` for a change to an existing experience. Resume an engagement by reopening it; do not initialize over its existing files. Helpers reject symlink paths, so use canonical paths and keep all relative file references inside the engagement.
 
 After each A–F checkpoint, use `stage-record --project "$OAA_RUN" --request <request.json>`
 and `stage-status --project "$OAA_RUN"`. Before coding, the host must pass
@@ -322,7 +325,7 @@ Configure only the source request, target documents and exact candidate operatio
 
 | Symptom | Next step |
 | --- | --- |
-| Skill is not discovered | Check the host's configured skill directory, refresh discovery and confirm all sibling folders were installed. Reading the orchestrator directly is a local fallback. |
+| Assistant cannot find the accelerator | Open the workspace that contains the clone and give the relative path to its `AGENTS.md` as in the [quick start](../README.md#quick-start). For a separately managed skill installation, check its configured directory and refresh host discovery. |
 | Installer reports customization | Inspect and preserve the existing folder; use a supported exact-baseline upgrade or a fresh approved directory. |
 | Helper rejects a path or existing output | Use canonical paths without symlinks and a new output filename; keep relative evidence paths inside the engagement. |
 | YAML dependency is unavailable | Retain the runtime gap and prepare the exact dependency/action request for explicit sign-off; use a source-only route where sufficient. Do not install or activate dependencies automatically, including those declared by customer exports. |

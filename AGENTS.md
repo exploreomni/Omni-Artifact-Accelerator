@@ -1,5 +1,7 @@
 # Project execution boundaries
 
+When someone points you at this checkout to get started, read [the orchestrator](skills/omni-artifact-accelerator/SKILL.md) here. Welcome them, confirm you found the local copy, and use the intake question below if their task is unclear. Once the task and surface are known, handle the local setup yourself through [repository entry](skills/omni-artifact-accelerator/references/engagement-entry.md). Use a new private folder beside the checkout or resume their existing project. Run helpers from this checkout and ask the user only for missing decisions, access or required approval.
+
 For a new artifact engagement, ask **“Are you migrating an existing artifact or building something new in Omni?”** Use an explicit answer from the request. For migration, confirm **preserve** or **redesign**. A 1:1 request selects preserve. Carry the route through the [migration and net-new workflow](skills/omni-artifact-accelerator/references/work-intent.md). Resume saved work and focused repairs from their existing decisions.
 
 When the host is Cursor, the [Cursor entry guide](skills/omni-artifact-accelerator/references/cursor-entry.md) explains checkout discovery and rule conflicts. A saved migration decision still governs the first design handoff.
