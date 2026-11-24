@@ -43,9 +43,7 @@ Read only the references relevant to the selected work:
 
 All new engagements follow [A–F](../omni-artifact-accelerator/references/stage-gates.md),
 including faithful migration. Verify access; analyze the data and source logic;
-form a traceable narrative; interview for the artifact; present exactly three
-concrete visual options with the same scope and quality ambition; record the actual
-user choice and resolve detailed design before target coding. Source discovery and
+form a traceable narrative and interview for the artifact. At E present one source specification for preservation, or three equally scoped designs for redesign. Record the user’s confirmation and resolve detailed design before target coding. For Pro-code Apps, inspect authorized manifests, code and component configuration as inert source material. Map each named control to its target behavior and matched-state cases in the [migration fidelity contract](../omni-artifact-accelerator/references/migration-fidelity.md). Source discovery and
 passive capture can precede the choice; they cannot authorize a target build.
 Resume historical engagements under their recorded policy rather than inventing
 missing decisions.

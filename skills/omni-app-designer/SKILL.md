@@ -5,6 +5,8 @@ description: Design task flows, screen layouts, interaction states, and responsi
 
 # Omni app designer
 
+For a faithful migration, use the confirmed [source specification](../omni-artifact-accelerator/references/migration-fidelity.md) and demonstrate its required journeys. The concept-comparison instructions below apply to net-new and explicit redesign.
+
 For new Apps, use [candidate release](../omni-artifact-accelerator/references/app-release.md)
 to put the first view and useful action outcome into all three comparable concepts.
 Keep a deliberate monitoring view valid. Carry actual selected combinations into

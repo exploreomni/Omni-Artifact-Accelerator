@@ -35,7 +35,7 @@ credentials, private results and engagement records outside the repository.
 | B | `analysis` | `profile`, `queries`, `insights`, `expectations` | `analyst`, `bi_engineer` |
 | C | `narrative` | `narrative`, `traceability`, `refresh` | `storyteller`, `analyst` |
 | D | `brief` | `brief`, `intent` | `discovery_version: 1`; App refresh version/context and note dependencies are generated/pinned |
-| E | `options` | `comparison` | exactly three `options` |
+| E | `options` | `source_baseline` for preservation, `comparison` for concepts, both for redesign | one source specification for preservation or three distinct options for net-new/redesign |
 | E | `choice` | conversation: `user_response`; strict: none | conversation: `basis`, `option_id`, `expected_binding`; strict: `option_id`, `receipt_ref` |
 | E | `design` | `design` | `resolved: true`; current selected intent is automatically bound |
 | F | `candidate` | artifact snapshots | `iteration_id`, `builders`, `artifacts` |
@@ -52,7 +52,9 @@ For ordinary stages, a request is `{"stage":"access","source_scope":"...",
 "user_access":"evidence/access.json"}}`. Other ordinary stages use the exact
 fields in the table. Unknown fields are rejected.
 
-An option contains `id`, `thesis` and `evidence` (a relative path). The three IDs,
+Use the [work intent](work-intent.md) selected at entry. A preservation run records its source specification in the E options checkpoint and obtains actual confirmation before design. A redesign binds the same migration scope to its three comparable concepts. References below to three concepts describe net-new, redesign and historical concept engagements.
+
+On the three-concept path, each option contains `id`, `thesis` and `evidence` (a relative path). The three IDs,
 normalized theses and evidence hashes must differ. Provide three feasible product
 structures on the same analytical foundation, not three differently named palettes.
 
@@ -100,8 +102,7 @@ retroactive claim that startup preceded it.
 
 New non-report engagements carry `experience_intent_policy: experience-continuity-v1`.
 At D the helper requires the canonical experience index and records
-`experience_intent_version: 1`; do not supply that generated field. E requires
-concrete mode meaning in each concept and a typed independent comparison. The
+`experience_intent_version: 1`; do not supply that generated field. For preservation, E binds the approved source specification and the source-backed mode to the detailed handoff. On the three-concept route, E requires concrete mode meaning in each concept and a typed independent comparison. The
 selected handoff preserves that meaning and links promises to governed journey
 behavior. F's product-owner and UI/UX reviews retain typed whole-product coverage.
 See [experience continuity](experience-continuity.md) for exact schemas and limits.
@@ -264,8 +265,7 @@ python3 -I -S -B "$OAA_HELPER" init --output "$OAA_RUN" --name 'Operations pilot
 
 Without that option, the existing **`host-verified-v1` default remains strict**.
 There is no automatic fallback when its provider is missing, denies or is revoked.
-Neither policy bypasses A–D, three options, resolved design, candidate freezing,
-or the four candidate-bound reviews.
+Both policies enforce A–D, the route-specific design decision, resolved design, candidate freezing and the four candidate-bound reviews.
 
 ### Continue an existing chat choice
 

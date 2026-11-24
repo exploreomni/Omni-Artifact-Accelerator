@@ -4,7 +4,7 @@ Use one retained Hex source scope to create native Omni dashboards and Apps with
 
 ## Intake and source scope
 
-Initialize a private migration engagement with `analyst_project.py init --output /absolute/new-run --name 'Hex migration' --mode migration --surface both`. Keep customer evidence outside the installed package. Select Classic reporting views, interactive App tasks and any Generative App files explicitly. Hex dashboard-like experiences are published Apps; do not search for an assumed separate dashboard API object.
+Initialize a private migration engagement with `analyst_project.py init --output /absolute/new-run --name 'Hex migration' --mode migration --migration-treatment preserve --surface both`. Keep customer evidence outside the installed package. Select Classic reporting views, interactive App tasks and any Generative App files explicitly. Hex dashboard-like experiences are published Apps; do not search for an assumed separate dashboard API object.
 
 Record the source project and resolved version, important tabs/screens, defaults and changed-input states, personas, refresh/cache expectations and upstream dependencies. Reuse the accepted backend route; `both` does not authorize a warehouse rewrite. Ask missing brand context once: **“What is your company website URL, and are there approved brand guidelines, logos, fonts or reusable images we should use?”** Separate website observations from approved rules and retain asset origins, reuse rights and fallbacks.
 

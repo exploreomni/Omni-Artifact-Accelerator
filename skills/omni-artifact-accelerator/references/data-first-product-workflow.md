@@ -7,26 +7,23 @@ source-review evidence; it never converts unobserved or source-only results into
 rendered/native acceptance. A role assignment is not a mandatory agent launch.
 
 
-Use this sequence for a net-new analytical product or an explicitly commissioned
-product reconception. It governs the order of work across the orchestrator and
-direct specialist entrypoints. It supersedes generic advice to choose a design
-direction directly or to add storytelling after screen design. A focused repair,
-faithful migration or continuation of an already selected product reuses current
-evidence and decisions; reopen only affected stages.
-
-The sequence is **access → analysis → narrative → artifact discovery → three
-options and user selection → detailed design → implementation and review**.
-The order is fixed for this route; the visual result is not a fixed template.
+Use this sequence at the orchestrator and specialist entrypoints. Start with the
+[saved or explicit work intent](work-intent.md). A faithful migration uses the existing
+product as its design reference. A new product or requested redesign needs three
+viable concepts. Each route resolves its design before implementation. A focused
+repair resumes its existing decisions and reopens affected stages.
 
 ```mermaid
 flowchart TD
-    U[User requests a product] --> A{A. Data exists and user access verified?}
+    U[Identify migration or net-new development] --> A{A. Data exists and user access verified?}
     A -->|No or unknown| H[Resolve source or access gap; hold dependent work]
     H --> A
     A -->|Yes, for the recorded scope| B[B. Profile data, qualify queries and derive insights]
     B --> C[C. Build traceable, refresh-safe analytical narrative]
     C --> D[D. Product owner gathers artifact requirements]
-    D --> E[E. Present three distinct, feasible product options]
+    D -->|Preserve source| M[E. Review one source specification]
+    M -->|User confirms the specification| P
+    D -->|Net-new or redesign| E[E. Present three distinct, feasible product options]
     E --> S{User selects an option}
     S -->|Selection pending| W[Retain options; wait for selection]
     W --> S
@@ -141,6 +138,8 @@ proposals. The product owner returns the brief to the orchestrator; the user doe
 not have to coordinate individual specialists or prescribe CSS.
 
 ## E. Offer three products, select one, then resolve its design
+
+For a faithful migration follow the [single source design and confirmation](work-intent.md). The concept procedure below applies to new products and explicit redesign.
 
 **Owners:** app/dashboard designer, product owner, branding and relevant specialists.
 Curate **exactly three materially different, feasible product options** using the

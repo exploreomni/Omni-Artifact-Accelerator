@@ -60,8 +60,7 @@ separate decisions. Read the [run guide](periscope-visual-run.md) for supported 
 For Metabase, the [source specialist](../../omni-metabase-migrator/SKILL.md) owns the
 bounded source slice within this same lifecycle. Use the [run guide](metabase-visual-run.md)
 and preserve every selected tab/placement/control independently of query conversion.
-All new engagements, including migration mode, follow the current A–F checkpoints:
-three viable options and actual user choice precede coding. Reuse valid historical
+Follow the current A–F checkpoints. A faithful migration requires confirmation of the source specification. Redesign requires a choice among three viable options bound to that specification. Reuse valid historical
 decisions under their recorded policy. The specialist cannot replace design
 selection, source-query authorization, native grants or independent QA. Semantic
 gaps use the existing normalized DMA request route, not a fabricated source adapter.
@@ -156,7 +155,7 @@ Strategy/MicroStrategy migrations use
 [omni-microstrategy-migrator](../../omni-microstrategy-migrator/SKILL.md) inside the
 current engagement. Follow the [run guide](microstrategy-visual-run.md), with
 independent inventory, original definitions, observed instance/prompt/selector
-state and separate execution/export grants. Keep A–F, actual three-option choice,
+state and separate execution/export grants. Keep A–F, the route-specific design decision,
 existing Omni reuse and scoped DMA exchange intact. Unknown source profiles and
 unperformed access/render/acceptance checks remain unresolved.
 

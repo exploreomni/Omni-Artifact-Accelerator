@@ -35,8 +35,7 @@ existing qualified Omni semantics, with genuine model gaps routed through the
 existing DMA handoff. This reader is not a DMA source producer or formula compiler.
 
 For target artifact work, retain A–F gates, original decisions and independent
-numerical expectations. The three E choices must preserve the same source scope
-and fidelity requirements. Source export state does not choose the target cache,
+numerical expectations. Confirm one source specification at E for preservation. For redesign, carry the same source requirements into all three concepts. Source export state does not choose the target cache,
 refresh or distribution policy. No report, subscription or recipient send follows
 automatically from capture permission.
 

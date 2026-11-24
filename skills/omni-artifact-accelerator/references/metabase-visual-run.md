@@ -10,7 +10,7 @@ convert a whole tenant or establish a successful live migration.
 Follow [execution startup](execution-workflow.md), record the actual package source
 and recover the existing engagement, target and user choices. All new engagements,
 including migration mode, follow [A–F](stage-gates.md). Reuse valid prior evidence
-in those checkpoints; obtain the actual choice among exactly three options before
+in those checkpoints; confirm the source specification for preservation or obtain the choice among three redesign concepts before
 detailed design and coding. A faithful option retains source obligations. Older
 engagements keep their recorded policy rather than inventing past choices.
 

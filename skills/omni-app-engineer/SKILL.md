@@ -5,6 +5,8 @@ description: Implement and repair native Omni App HTML, CSS and JavaScript from 
 
 # App software engineer
 
+For migration work, use the [confirmed treatment and source scope](../omni-artifact-accelerator/references/work-intent.md). Preservation uses one source-matched specification. The three-concept path applies to new development and explicit redesign. Retain each required control, its destinations and its matched-state checks.
+
 For new Apps follow [candidate release](../omni-artifact-accelerator/references/app-release.md).
 Use the selected experience in host HTML guidance, declare every visible data
 consumer and freeze its manifest with the candidate. Keep success labels tied to

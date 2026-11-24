@@ -29,7 +29,7 @@ existing artifact/brand questions. Reuse actual answers; explicit styling delega
 is scoped and never inferred from silence. Record the attributable quality bar in
 the existing requirement index, including observable destination/journey acceptance;
 see the linked discovery guidance. At E,
-coordinate exactly three distinct viable options, recommend with reasons and wait
+confirm the single source specification and deviations for preservation, or coordinate exactly three distinct viable options for net-new and redesign, recommend with reasons and wait
 for the user's selection before detailed design/full coding. Preserve attributable
 selection in current intent; do not let an agent's working proposal substitute for
 it. Review product fit against each candidate iteration in F.

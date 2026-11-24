@@ -5,6 +5,8 @@ description: Design or redesign native Omni dashboard layouts, chart specificati
 
 # Omni dashboard designer
 
+For migration work, use the [confirmed treatment and source scope](../omni-artifact-accelerator/references/work-intent.md). Preservation uses one source-matched specification. The three-concept path applies to new development and explicit redesign. Retain each required control, its destinations and its matched-state checks.
+
 Reuse current [visual-discovery preferences](../omni-product-owner/references/visual-experience-discovery.md)
 and [dimensional craft](../omni-design-systems/references/dimensional-visualization-craft.md)
 when relevant. Show the requested comparison treatment in each E concept within

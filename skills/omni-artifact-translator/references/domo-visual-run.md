@@ -25,7 +25,7 @@ Select the route explicitly:
 The route does not choose the target design or authorize deployment. Preserve
 source behavior and backend gaps regardless of route. New engagements follow
 [A–F](../../omni-artifact-accelerator/references/stage-gates.md); the actual user
-chooses one of exactly three feasible concepts before detailed design and coding.
+confirms the source-matched specification for preservation or selects one of three redesign concepts before detailed design and coding.
 At D resolve branding, quality ambition, delivery contexts and the target App
 [cache/refresh policy](../../omni-product-owner/references/data-refresh-policy.md).
 Source freshness is not a default refresh policy.

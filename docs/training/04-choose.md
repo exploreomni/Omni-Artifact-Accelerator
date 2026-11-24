@@ -40,7 +40,9 @@ The starting policy is to preserve existing Omni caching. Automatic polling, byp
 
 If you need something else, state the expected cadence and user behavior. The agent should explain relevant source freshness, cost and runtime constraints before implementing it.
 
-## E — Compare three concrete products
+## E — Confirm the source design or compare three products
+
+For preservation, review one source specification with its required controls and proposed deviations. Your confirmation unlocks detailed design. For net-new or redesign, use the three-concept process below.
 
 All three concepts must preserve the same accepted analytical scope and quality ambition. They should differ meaningfully in composition, journey or interaction rather than presenting one polished option against two weak ones.
 

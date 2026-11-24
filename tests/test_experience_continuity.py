@@ -83,7 +83,7 @@ class ExperienceContinuity(unittest.TestCase):
         return {'stage': 'options', 'options': options,
                 'evidence': {'comparison': self.save('evidence/comparison.json', comparison)}}
 
-    def handoff(self):
+    def handoff(self, *, selected_path='evidence/concept-two.json', extend=None):
         def transform(spec, design):
             _, intent_design = F.fixture()
             destination = design['destinations'][0]
@@ -95,7 +95,9 @@ class ExperienceContinuity(unittest.TestCase):
                                                        context=F.E.context(spec))
             for row in design['experience_handoff']['quality_coverage']:
                 row['destination_ids'] = ['workspace', 'detail']
-        return G.selected_handoff(self.root, P, {'evidence': 'evidence/concept-two.json'}, transform=transform)
+            if extend:
+                extend(spec, design)
+        return G.selected_handoff(self.root, P, {'evidence': selected_path}, transform=transform)
 
     def advance(self, flow):
         flow.through('brief')

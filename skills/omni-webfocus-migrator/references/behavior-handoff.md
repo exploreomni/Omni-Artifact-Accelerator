@@ -30,7 +30,7 @@ The bridge recognizes only qualified producer revisions; separate producer closu
 pins cannot be substituted merely because one parser file is identical.
 
 A–F applies to all new engagements. Data and narrative precede product discovery;
-exactly three concrete visual options and actual selection precede code. Preserve
+user confirmation of the source specification for preservation or selection among three redesign concepts precedes code. Preserve
 quality ambition and the selected surface; a paginated report, portal or offline
 document may require a different disposition from an interactive dashboard. Carry
 brand/website, advanced visual choices and refresh policy through design and QA.

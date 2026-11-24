@@ -32,8 +32,7 @@ Do not evaluate formulas to discover their meaning.
 
 After analytical understanding, the product owner resolves required formats,
 exact-match obligations, approved design changes, access and freshness. The
-[report designer](../omni-report-designer/SKILL.md) owns the three feasible target
-concepts; the [report builder](../omni-report-builder/SKILL.md) owns the selected
+[report designer](../omni-report-designer/SKILL.md) owns the source-matched specification for preservation or three target concepts for redesign; the [report builder](../omni-report-builder/SKILL.md) owns the selected
 native implementation. This specialist owns source evidence and mapping, not
 publication, schedules or recipient sends.
 

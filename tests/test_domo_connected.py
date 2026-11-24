@@ -107,6 +107,14 @@ class ConnectedDomo(unittest.TestCase):
         fields = {q['field'] for q in result['questions']}
         self.assertTrue({'source.origin', 'route', 'experience.cache_refresh_policy', 'experience.visual_preferences'} <= fields)
 
+    def test_source_preservation_reuses_the_recorded_treatment(self):
+        H.ap.select_migration_treatment(self.root, 'preserve')
+        self.put('inputs/intake.json', self.intake)
+        plan = W.plan_value(self.root, 'inputs/intake.json')
+        self.assertNotIn('experience.migration_fidelity', {q['field'] for q in plan['questions']})
+        self.assertTrue(any('one source-matched specification' in step for step in plan['later_requirements']))
+        self.assertFalse(any('three' in step for step in plan['later_requirements']))
+
     def test_selected_scope_never_enumerates_portfolio_by_default(self):
         req = self.request()
         self.assertFalse(req['scope']['include_portfolio'])

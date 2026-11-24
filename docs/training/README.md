@@ -11,7 +11,7 @@ This self-guided introduction explains what to provide, how the agents work toge
 | 1. [Understand the accelerator](01-understand.md) | What the package does, who does what, and which output fits your task | Explain the difference between the host, accelerator and Omni |
 | 2. [Prepare your first engagement](02-prepare.md) | Select the source, check access and give your agent a useful brief | Identify the exact package copy and private engagement folder |
 | 3. [Go from data to a story](03-data-and-story.md) | Verify access, analyze the data and make claims traceable | Explain one supported finding and one limitation |
-| 4. [Choose the experience](04-choose.md) | Set the quality bar, answer the design interview and select from three concepts | Choose a concrete direction with observable requirements |
+| 4. [Choose the experience](04-choose.md) | Set the quality bar and confirm the source design or choose among three concepts | Choose a concrete direction with observable requirements |
 | 5. [Review and deliver](05-review.md) | Assess numbers, complete journeys, visual quality and publication readiness | Distinguish a local candidate from a verified live result |
 | 6. [Resume, migrate and collaborate](06-continue.md) | Request focused changes, migrate source behavior and work with Data Model Accelerator | Resume the same engagement without repeating discovery |
 
@@ -21,7 +21,7 @@ The examples are generic learning prompts, not a required visual template or evi
 
 ## See the agent flow
 
-![Agent flow: your approved AI host runs the orchestrator through A access, B analysis, C narrative, D discovery, E three visual concepts and your selection, then F implementation with four review perspectives. Migration and backend handoffs are conditional; publication requires its own authorization and verification.](assets/agent-flow.svg)
+![Agent flow: your approved AI host runs the orchestrator through A access, B analysis, C narrative, D discovery, E your confirmation of a source specification or selection among three concepts, then F implementation with four review perspectives. Migration and backend handoffs are conditional; publication requires its own authorization and verification.](assets/agent-flow.svg)
 
 [Open the full-size diagram](assets/agent-flow.svg) · [Read the text walkthrough](03-data-and-story.md#the-a-f-sequence)
 
@@ -30,7 +30,7 @@ The roles are responsibilities, not a requirement to launch a separate agent for
 ## Keep these three rules in mind
 
 1. **Data before design.** Confirm access, supported analysis and the story before choosing the product experience.
-2. **You choose before the build.** Review three viable visual concepts; the agent records your actual choice and resolves the detailed design before coding the product.
+2. **You choose before the build.** Confirm one source specification for a faithful migration, or choose among three concepts for a redesigned or new product. The agent records your decision before coding.
 3. **Evidence before completion claims.** Correct source, rendered quality, live behavior and your acceptance are different checks. Missing checks stay visible.
 
 ## Continue beyond the introduction

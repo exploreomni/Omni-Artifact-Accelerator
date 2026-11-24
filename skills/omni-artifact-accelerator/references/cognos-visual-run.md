@@ -26,7 +26,7 @@ an Omni artifact.
    assets, devices, exports, navigation and visualization preferences. For Apps,
    ask the user's cache/refresh/expiry policy, including a valid no-custom-policy
    answer. Carry the same resolved policy through E design and F implementation/QA.
-6. Present exactly three concrete viable concepts and record the actual user
+6. Present one source-matched specification for preservation, or three concrete concepts for redesign and record the actual user
    choice before detailed design and coding. Use existing A–F gates in all new
    engagements; reuse current accepted evidence when continuing an existing one.
 7. Review the candidate against the original request and source obligations.

@@ -14,7 +14,7 @@ Space/dashboard scope, principal, supplied Git/export evidence, Omni destination
 audience and preserve-versus-improve intent. Reuse brand/website answers.
 
 All new engagements, including faithful migrations, follow [A–F](stage-gates.md),
-including the actual choice among three concepts before code. Reuse valid historical
+including actual confirmation of the faithful specification or selection among three redesign concepts before code. Reuse valid historical
 scope, answers and accepted designs within their recorded policy rather than
 repeating discovery unnecessarily. Existing journals and candidate reviews remain
 in force. Source acquisition may proceed only within its own authorization; a chat

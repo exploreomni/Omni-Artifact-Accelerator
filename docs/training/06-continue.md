@@ -27,7 +27,7 @@ The artifact translator and selected source specialist distinguish:
 
 The same A–F sequence applies. Screenshots help communicate layout; they do not prove formulas, security or interactions. A connected source tool does not establish every capture operation or an end-to-end migration path. Check the [migration matrix](../../README.md#choose-a-workflow) and [source coverage](../parser-coverage.md) for the selected platform.
 
-> Use [source artifact/export] to migrate [scoped analytical experience]. Inventory its calculations, filters, interactions and access behavior. Preserve source IDs and separate verified behavior from missing evidence. Follow A–F, compare three viable directions and wait for my selection. Reuse the existing Omni model where it meets the requirements; return specific backend gaps rather than rebuilding it by default.
+> Use [source artifact/export] to migrate [scoped analytical experience]. Inventory its calculations, filters, interactions and access behavior. Preserve source IDs and separate verified behavior from missing evidence. Preserve the existing experience. Follow A–F and show me one source-matched specification with all deviations before coding. Reuse the existing Omni model where it meets the requirements; return specific backend gaps rather than rebuilding it by default.
 
 Keep page-precise report obligations separate from interactive dashboard behavior. SSRS, Power BI paginated and extracted Crystal Reports evidence route through report-specific specialists and the Reports Beta foundation.
 
@@ -65,7 +65,7 @@ For your first engagement, be able to show:
 
 - The audience, decision, selected source and actual access context.
 - One finding with supporting evidence and a visible limitation.
-- Three concrete concepts and your recorded selection.
+- The confirmed source specification for preservation, or three concepts and your recorded selection for redesign or new development.
 - A full journey that expresses the agreed quality and brand choices.
 - Current review evidence, remaining gaps and the intended publication boundary.
 - A clear way to resume or request a backend change without starting over.

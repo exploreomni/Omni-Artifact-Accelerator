@@ -78,8 +78,12 @@ def plan_value(root, specification):
         'cache_refresh_policy': 'Keep existing caching, use manual refresh, or request another freshness policy?',
         'migration_fidelity': 'Which source layouts and behaviors must remain exact, and which may be redesigned?'
     }.items():
-        if not experience.get(field):
-            questions.append({'field': 'experience.' + field, 'stage': 'D', 'question': question})
+        if experience.get(field):
+            continue
+        if field == 'migration_fidelity' and project.get('migration_treatment') in ap.TREATMENTS:
+            # Source capture supplies the initial scope. Only ask about actual ambiguities.
+            continue
+        questions.append({'field': 'experience.' + field, 'stage': 'D', 'question': question})
     existing = spec.get('existing_run')
     ap.need(existing is None or type(existing) is dict and set(existing) == {'run_id', 'unit_id', 'cycle_id', 'reference'}
             and all(contract.text(v) for v in existing.values()), 'domo.existing_run_identity')
@@ -106,7 +110,7 @@ def plan_value(root, specification):
         'next_action': 'review_runtime_and_capture' if requests else 'resolve_source_questions',
         'later_requirements': ['B: verified semantics and access', 'C: traceable narrative',
             'D: experience, fidelity, brand and freshness interview',
-            'E: exactly three rendered concepts, actual user choice, detailed design',
+            ap.migration_design_step(project, 'E: exactly three rendered concepts, actual user choice, detailed design'),
             'F: guarded candidate plus independent security, UX, product and QA reviews'],
         'runtime_loaded': False, 'source_access_verified': False, 'target_write_authority': False}
 

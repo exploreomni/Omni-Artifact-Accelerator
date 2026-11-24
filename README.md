@@ -14,6 +14,8 @@ local helpers.
 
 When DMA has already built the Topic, [start the artifact from that Topic](skills/omni-backend-handoff/references/topic-first.md). The accelerator verifies the user and destination, maps supported panels to saved workbook queries and returns missing measures to the model owner.
 
+**First decision: migrate or build new?** For an existing artifact, choose **preserve** to review one source-matched specification, or **redesign** to compare three concepts that retain its required behavior. Net-new work also gets three concepts after data discovery. A clear opening request supplies the answer, and a returning engagement resumes its recorded choice. [Start or resume the right workflow](skills/omni-artifact-accelerator/references/work-intent.md)
+
 **New to the tool? [Take the self-guided introduction](docs/training/README.md)** — six short lessons covering setup, the agent workflow, design choices, delivery review and migrations. Each lesson ends with an observable checkpoint; you can start learning without installing anything.
 
 | Your goal | Start here |
@@ -29,7 +31,7 @@ When DMA has already built the Topic, [start the artifact from that Topic](skill
 
 ## See the agent flow
 
-![Agent flow: your approved AI host runs the orchestrator through A access, B analysis, C narrative, D discovery, E three visual concepts and your selection, then F implementation with security, UI/UX, product-owner and independent QA review. Migration and backend handoffs are conditional; publication requires separate authorization and verification.](docs/training/assets/agent-flow.svg)
+![Agent flow: your approved AI host runs the orchestrator through A access, B analysis, C narrative, D discovery, E confirmation of the source specification or selection among three concepts, then F implementation with security, UI/UX, product-owner and independent QA review. Migration and backend handoffs are conditional; publication requires separate authorization and verification.](docs/training/assets/agent-flow.svg)
 
 [Open the full-size diagram](docs/training/assets/agent-flow.svg) · [Read the text walkthrough](docs/training/03-data-and-story.md#the-a-f-sequence)
 
@@ -42,7 +44,7 @@ New engagements containing an App use the [candidate release contract](skills/om
 | Area | Current behavior |
 | --- | --- |
 | Loaded package and host | [Entry preflight](skills/omni-artifact-accelerator/references/engagement-entry.md#inspect-the-host-entry-first) compares the reported loaded source with the requested release and inventories write routes. The default host status is advisory; real enforcement needs independent host verification. |
-| Experience selection | Three visual concepts show a first view, primary action and useful result. The actual choice, including requested elements from other options, follows the engineer into the selected design. A deliberate monitoring overview remains valid. |
+| Experience selection | Preservation confirms one source specification with explicit deviations. For new development or redesign, three visual concepts show a first view, primary action and useful result. The actual choice, including requested elements from other options, follows the engineer into the selected design. A deliberate monitoring overview remains valid. |
 | Visible data | A reviewed manifest binds live values to queries and callbacks, labels snapshots and scenarios, and retains independent expectations. Refresh completion follows query outcomes and the user's selected freshness policy. |
 | Native release | The reviewed candidate includes the HTML and relevant query/settings evidence. Whole-draft publication checks the complete frozen draft; an optional operator-integrated write gate requires exact-action authorization and retains uncertain outcomes for reconciliation. |
 
@@ -125,7 +127,7 @@ Existing selected products and focused fixes reuse prior evidence and decisions.
 Publication follows its own authorization and verification. The [executable stage gates](skills/omni-artifact-accelerator/references/stage-gates.md)
 block missing/stale predecessors in package entrypoints. In the explicit
 **conversation-evidence workflow**, your actual chat reply is recorded against the
-exact three options; resolved design is still required before coding. This is
+reviewed specification or exact concept set. The agent resolves detailed design before coding. This is
 agent-attested workflow evidence, not independently authenticated approval. The
 strict host-verifier policy remains available and never falls back automatically.
 Conversation evidence cannot authorize installations or native writes. Hosts must also
@@ -135,8 +137,8 @@ Omni AI/Blobby.
 
 ## Start in your agent host
 
-For **Claude Code**, read [CLAUDE.md](CLAUDE.md); for **Codex**, read [AGENTS.md](AGENTS.md).
-Both enter the same orchestrator. For **Claude or ChatGPT connected chat**, explicitly
+For **Claude Code**, read [CLAUDE.md](CLAUDE.md). For **Codex** or **Cursor**, open the checkout and start at its root [AGENTS.md](AGENTS.md).
+These entry points use the same orchestrator. For **Claude or ChatGPT connected chat**, explicitly
 ask the host to retrieve the orchestrator and relevant sibling guidance:
 
 > Use the Omni Artifact Accelerator from this repository for my requested artifact.
@@ -144,8 +146,9 @@ ask the host to retrieve the orchestrator and relevant sibling guidance:
 > and files you can read, preserve my original request, and assign experience,
 > branding, semantics, implementation and independent review responsibilities.
 > Follow the data-first A–F workflow: verify my data/access, analyze governed queries
-> and create a reusable narrative before artifact discovery. Present three viable
-> product options and wait for my selection before detailed design and coding.
+> and create a reusable narrative before artifact discovery. For a faithful migration,
+> show me the source specification to confirm. For a redesigned or new artifact,
+> present three viable options. Carry my decision into detailed design and coding.
 > Build cohesively, retain all four review perspectives each iteration, and report
 > actual evidence separately from unobserved behavior.
 
@@ -179,7 +182,7 @@ not a passing gate.
 The [product owner](skills/omni-product-owner/SKILL.md) recovers existing answers at
 intake. For new products, artifact questions follow verified access, analysis and
 the reusable narrative. It keeps attributable notes in the private engagement,
-coordinates the three-option decision and hands prioritized requirements back to
+records the confirmed source specification or selected concept and hands prioritized requirements back to
 the orchestrator. Focused repairs reuse current intent without another interview.
 
 New non-report `init` engagements require a sourced or explicitly delegated D
@@ -217,7 +220,7 @@ For example:
 - “Recommend the experience families and choose all visual treatments within our brand and native dashboard capabilities. Bring me three product concepts.” This explicitly delegates treatment while retaining the actual product-choice step.
 - “Use refined 2D for the comparisons. Prioritize typography, annotation and quick drill/return.” Depth and camera controls are not required for a premium result.
 
-The agent shows **exactly three distinct feasible products**, each honoring current
+For net-new or explicit redesign, the agent shows **exactly three distinct feasible products**, each honoring current
 preferences, the same analytical scope and quality ambition, then waits for your choice before detailed
 design and coding. A styling answer does not choose the product, install a renderer
 or authorize a different surface. The selected experience receives the existing four
@@ -367,7 +370,7 @@ The package does not create accounts, issue API keys or configure remote connect
 See [access preparation](docs/training/02-prepare.md) and the
 [CLI configuration boundary](skills/omni-bi-engineer/references/omni-build-export.md#local-cli-trust-boundary).
 
-All new engagements, including migrations, include the A–C analytical handoff, artifact discovery, three viable options, actual user selection, a resolved design and all four review perspectives on each implementation iteration. Focused continuation reuses existing valid decisions under its recorded policy. The optional [design evidence checker](skills/omni-qa-analyst/references/design-evidence.md) tracks which observations still match the current candidate; it does not enforce A–F, certify visual quality or authenticate customer acceptance.
+All new engagements, including migrations, include the A–C analytical handoff, artifact discovery, confirmation of the source specification or selection among three concepts, a resolved design and all four review perspectives on each implementation iteration. Focused continuation reuses existing valid decisions under its recorded policy. The optional [design evidence checker](skills/omni-qa-analyst/references/design-evidence.md) tracks which observations still match the current candidate; it does not enforce A–F, certify visual quality or authenticate customer acceptance.
 
 For an App, describe the intended experience as well as the metrics. For example: “Create an immersive branded entry that leads into a focused product investigation workspace, with persistent scope and a separate comparison view.” The [experience-mode guide](skills/omni-app-designer/references/app-patterns.md#choose-the-experience-mode) helps distinguish this from a direct workspace or a guided data story. If rendering is unavailable, the agent should retain that visual-review gap explicitly.
 

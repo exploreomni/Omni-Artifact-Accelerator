@@ -5,6 +5,8 @@ description: Design page-precise tabular and paginated Omni Reports, including p
 
 # Omni report designer
 
+For migration work, use the [confirmed treatment and source scope](../omni-artifact-accelerator/references/work-intent.md). Preservation uses one source-matched specification. The three-concept path applies to new development and explicit redesign. Retain each required control, its destinations and its matched-state checks.
+
 Own report composition under the existing [orchestrator](../omni-artifact-accelerator/SKILL.md).
 Use the explicit `report` surface; an App print stylesheet or dashboard export is
 not a substitute for a requested native Report. Reuse analyst, BI, branding and

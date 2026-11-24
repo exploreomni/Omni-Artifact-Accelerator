@@ -2,6 +2,8 @@
 
 Use `scripts/native_authoring.py` for offline preparation and supplied-capture checks. It uses the existing Python standard library, writes a new private output, and never connects to Omni, reads secrets, executes SQL/HTML, creates drafts or publishes. These checks reduce repeated glue code; they do not authenticate evidence or grant a host permission to write.
 
+Before requesting logs, identify the unknown. For an App creation payload, run the packaged create-spec preflight against the actual request. For a runtime filter callback, identify the exact query, expected field or event, and missing observation. Reuse the authorized target or supplied redacted observation. If a disposable App is genuinely needed, explain the missing evidence, destination and effects and obtain separate creation permission first. Raw browser logs and trial Apps are not routine migration inputs.
+
 ## Select the real route
 
 Discover configured MCP tools first. When unavailable or incomplete, inspect the installed CLI version and help, then use current official APIs for missing operations. Keep profile, HTTPS origin, key scope, principal/membership, model, document and named draft explicit. A missing MCP connector is a host capability gap; do not install one automatically.

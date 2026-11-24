@@ -74,8 +74,7 @@ analysis; C creates a reusable traceable narrative. At D resolve fidelity versus
 redesign, audience, quality ambition, official branding/assets, devices, exports,
 interaction and 2D/2.5D/3D preferences, and the user's independent
 [cache/refresh policy](../omni-product-owner/references/data-refresh-policy.md).
-Preserve valid answers. At E present exactly three concrete viable concepts with
-the same analytical scope and quality bar. Record the actual user choice before
+Preserve valid answers. At E present one specification for faithful migration or three redesign concepts with the same source scope and quality bar. Record the actual user choice before
 detailed design and F coding. Use existing gates, not a source-specific shortcut.
 
 Reuse governed Omni bindings first. Send genuine gaps to

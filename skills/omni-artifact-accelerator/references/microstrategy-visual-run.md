@@ -30,7 +30,7 @@ It does not install software, configure a remote connector or publish an Omni ta
 7. Finish A access, B analysis and C narrative before the D product interview.
    Preserve fidelity/redesign decisions, quality ambition, official branding,
    devices, exports, interactive/dimensional visuals and cache/refresh policy.
-   At E produce exactly three concrete viable concepts and record the actual
+   At E produce one source specification for preservation or three concepts for redesign and record the actual
    user choice before detailed design and F coding. Reuse valid prior answers.
 8. Reuse existing Omni bindings; send genuine gaps through scoped DMA cowork.
    Preserve source pins, scope, route, grain, semantics/security and independent

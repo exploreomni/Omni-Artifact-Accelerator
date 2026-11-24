@@ -9,8 +9,7 @@ backend handoff and native QA. It is not a whole-tenant converter or procedure r
 Follow [execution startup](execution-workflow.md) and [A–F](stage-gates.md). Record
 the actual package source, target, installed WebFOCUS version, authoring origin,
 principal, selected resources and prior decisions. Separate source reads, source
-execution, native writes and publication. All new migrations still require exactly
-three concrete design options and the actual user selection before code.
+execution, native writes and publication. All new migrations require user confirmation of the faithful specification or selection among three redesign concepts before code.
 
 Read the [source contract](../../omni-artifact-translator/references/webfocus-source-contract.md)
 and selected [competencies](../../omni-webfocus-migrator/references/source-competencies.md).
@@ -142,7 +141,7 @@ After access, analysis and narrative, conduct product discovery. Preserve the
 quality bar, official branding/website answers, native surface and selected visual
 ambition. Ask the App [refresh/cache/expiry question](../../omni-product-owner/references/data-refresh-policy.md)
 at D and retain the actual choice in E/F. Source cache and preview settings do not
-impose target timers. All three options share the accepted analytical scope.
+impose target timers. Every redesign option retains the accepted analytical scope.
 
 The [BI engineer](../../omni-bi-engineer/SKILL.md) and
 [App engineer](../../omni-app-engineer/SKILL.md) own target implementation. Use current

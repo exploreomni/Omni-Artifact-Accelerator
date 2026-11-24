@@ -43,7 +43,7 @@ Use [behavior obligations](references/behavior-obligations.md) for source review
 ## Coordinate architecture, design and delivery
 
 Preserve A–F: verify access, analyze, build the traceable narrative, interview,
-present exactly three equally scoped visual concepts and record the actual choice,
+present one source specification for preservation or three equally scoped concepts for redesign and record the user’s selection,
 then resolve design and build. Capture can proceed before E; target artifact coding
 and converter-package handoff cannot. At D retain audience, brand, quality ambition,
 responsive contexts, visual treatments and the user's target cache/refresh policy.

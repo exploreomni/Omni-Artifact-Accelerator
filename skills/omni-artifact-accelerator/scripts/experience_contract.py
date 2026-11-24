@@ -338,9 +338,14 @@ def _coverage(value, active, handoff=False, destination_ids=()):
     _need(seen == set(active), 'same_active_quality_coverage_required')
 
 
-def validate_concept(root, option_manifest_path, spec, P):
+def _retained_controls(baseline):
+    omitted = {d['control_id'] for d in baseline['deviations'] if d['disposition'] == 'omit'}
+    return set(baseline['control_ids']) - omitted
+
+
+def validate_concept(root, option_manifest_path, spec, P, *, source_baseline=None):
     """Pin one concrete option. Stage E owns count, comparability and selection."""
-    return _concept(root, option_manifest_path, spec, P, component=False)
+    return _concept(root, option_manifest_path, spec, P, component=False, source_baseline=source_baseline)
 
 
 def _experience_direction(obj, spec, P):
@@ -375,13 +380,25 @@ def _experience_direction(obj, spec, P):
     return copy.deepcopy(value)
 
 
-def _concept(root, option_manifest_path, spec, P, component):
+def _concept(root, option_manifest_path, spec, P, component, source_baseline=None):
     obj, _, manifest_pin = _read(root, option_manifest_path, P, True)
+    scope_fields = set()
+    if source_baseline is not None:
+        _need(type(obj) is dict, 'migration_concept_required')
+        scope = obj.get('migration_scope')
+        _fields(scope, {'source_baseline_sha256', 'control_ids', 'view_ids'}, label='migration_concept_scope')
+        _need(scope['source_baseline_sha256'] == source_baseline['baseline_sha256'], 'migration_source_baseline_changed')
+        for key, expected in (('control_ids', _retained_controls(source_baseline)),
+                              ('view_ids', {v['id'] for v in source_baseline['views']})):
+            ids = scope[key]
+            _need(type(ids) is list and all(_text(i, 128) for i in ids) and sorted(ids) == sorted(expected),
+                  'migration_concept_scope_incomplete')
+        scope_fields.add('migration_scope')
     if type(obj) is dict and obj.get('kind') == 'analyst_concept_set':
         _need(not component, 'nested_concept_sets_forbidden')
         _fields(obj, {'schema_version', 'kind', 'option_id', 'analytical_scope', 'structure',
                       'primary_interaction', 'surface_manifests'},
-                {'experience_direction'}, label='concept_set_fields')
+                {'experience_direction'} | scope_fields, label='concept_set_fields')
         _need(type(obj['schema_version']) is int and obj['schema_version'] == 1, 'concept_set_version_invalid')
         _texts(obj, ('option_id', 'analytical_scope', 'structure', 'primary_interaction'), 'concept_set')
         _ids(obj['surface_manifests'], 'surface_manifests')
@@ -414,7 +431,7 @@ def _concept(root, option_manifest_path, spec, P, component):
             'dependencies': [pins[path] for path in sorted(pins)]}
     _fields(obj, {'schema_version', 'kind', 'option_id', 'surface', 'analytical_scope', 'structure',
                   'primary_interaction', 'quality_coverage', 'treatment_coverage', 'representative', 'responsive', 'constraints'},
-            {'experience_direction', 'action_sequence'}, label='concept_fields')
+            {'experience_direction', 'action_sequence'} | scope_fields, label='concept_fields')
     _need(type(obj['schema_version']) is int and obj['schema_version'] == 1
           and obj['kind'] == 'analyst_concept_manifest', 'concept_version_invalid')
     _texts(obj, ('option_id', 'analytical_scope', 'structure', 'primary_interaction', 'responsive'), 'concept')
@@ -491,21 +508,78 @@ def _capability(value, fields, label):
     return True
 
 
-def validate_handoff(root, design_path, spec, P):
-    """Validate selected design detail; caller binds its concept to actual choice."""
+def _migration_destinations(handoff, baseline, destination_ids):
+    views = {v['id']: v for v in baseline['views']}
+    coverage = handoff['view_coverage']
+    _need(type(coverage) is list and len(coverage) == len(views), 'migration_view_coverage_incomplete')
+    targets = {}
+    for row in coverage:
+        _fields(row, {'view_id', 'destination_ids'}, label='migration_view_coverage')
+        ident = row['view_id']
+        _need(_text(ident, 128) and ident in views and ident not in targets, 'migration_view_unknown_or_duplicate')
+        _ids(row['destination_ids'], 'migration_view_destinations')
+        targets[ident] = set(row['destination_ids'])
+        _need(targets[ident] <= destination_ids, 'migration_view_target_unknown')
+
+    required = _retained_controls(baseline)
+    rows = handoff['control_coverage']
+    _need(type(rows) is list and len(rows) == len(required), 'migration_control_coverage_incomplete')
+    seen = set()
+    for row in rows:
+        _fields(row, {'control_id', 'destination_ids', 'target_binding'}, label='migration_control_coverage')
+        ident = row['control_id']
+        _need(_text(ident, 128) and ident in required and ident not in seen, 'migration_control_unknown_or_duplicate')
+        _ids(row['destination_ids'], 'migration_control_destinations')
+        locations = set(row['destination_ids'])
+        _need(locations <= destination_ids and _text(row['target_binding']), 'migration_control_target_required')
+        _need(all(locations & targets[view_id] for view_id, view in views.items() if ident in view['controls']),
+              'migration_control_missing_from_mapped_view')
+        seen.add(ident)
+
+
+def validate_handoff(root, design_path, spec, P, *, source_baseline=None):
+    """The gate supplies the current migration baseline and binds this design to the user's choice."""
     design, _, design_pin = _read(root, design_path, P, True)
     _need(type(design) is dict, 'design_object_required')
     handoff = design.get('experience_handoff')
-    _fields(handoff, {'schema_version', 'concept_manifest_path', 'quality_coverage'},
-            {'selection_adjustments'}, label='handoff_fields')
-    _need(type(handoff['schema_version']) is int and handoff['schema_version'] == 1, 'handoff_version_invalid')
-    concept = validate_concept(root, handoff['concept_manifest_path'], spec, P)
+    required = {'schema_version', 'quality_coverage'}
+    selection = {}
+    dependencies = [design_pin]
+    preserve = source_baseline is not None and source_baseline['migration_treatment'] == 'preserve'
+    treatments = {}
+    if preserve:
+        for selected_surface in spec['surfaces']:
+            treatments.update(_treatments(spec, selected_surface))
+        if treatments:
+            required.add('treatment_coverage')
+    if source_baseline is not None:
+        _need(source_baseline['migration_treatment'] in ('preserve', 'redesign'), 'migration_treatment_invalid')
+        required.update({'source_baseline_path', 'source_baseline_sha256', 'view_coverage', 'control_coverage'})
+    if not preserve:
+        required.add('concept_manifest_path')
+    _fields(handoff, required, () if preserve else ('selection_adjustments',), label='handoff_fields')
+    version = 1 if source_baseline is None else 2
+    _need(type(handoff['schema_version']) is int and handoff['schema_version'] == version, 'handoff_version_invalid')
+    if source_baseline is not None:
+        _need(handoff['source_baseline_path'] == source_baseline['baseline_path']
+              and handoff['source_baseline_sha256'] == source_baseline['baseline_sha256'],
+              'migration_source_baseline_changed')
+        selection.update(source_baseline_path=handoff['source_baseline_path'],
+                         source_baseline_sha256=handoff['source_baseline_sha256'])
+        dependencies.extend(source_baseline['pins'])
+    if preserve:
+        surface = spec['surfaces'][0] if len(spec['surfaces']) == 1 else None
+    else:
+        concept = validate_concept(root, handoff['concept_manifest_path'], spec, P, source_baseline=source_baseline)
+        surface = concept['metadata']['surface']
+        selection.update(option_id=concept['metadata']['option_id'], concept_manifest_path=handoff['concept_manifest_path'])
+        dependencies.extend(concept['dependencies'])
     if P.routing_helper('product_intent').experience_context(spec) is not None:
         P.routing_helper('product_intent').validate_experience_handoff(design, spec)
-        _need(set(design['experience_intent_handoff']['selected_mode_ids']) ==
-              set(concept['metadata']['experience_direction']['mode_requirement_ids']),
-              'experience_handoff_differs_from_chosen_concept')
-    surface = concept['metadata']['surface']
+        if not preserve:
+            _need(set(design['experience_intent_handoff']['selected_mode_ids']) ==
+                  set(concept['metadata']['experience_direction']['mode_requirement_ids']),
+                  'experience_handoff_differs_from_chosen_concept')
     active = _active(spec, None)
     destinations = design.get('destinations')
     _need(type(destinations) is list and 0 < len(destinations) <= 32, 'handoff_destinations_required')
@@ -535,6 +609,13 @@ def validate_handoff(root, design_path, spec, P):
                 if _capability(destination[name], fields, name):
                     capabilities[name].add(destination_surface)
     _need(set(surface_by_id.values()) == set(spec['surfaces']), 'handoff_surface_coverage_required')
+    if source_baseline is not None:
+        _migration_destinations(handoff, source_baseline, set(ids))
+    if treatments:
+        _coverage(handoff['treatment_coverage'], treatments, True, ids)
+        for row in handoff['treatment_coverage']:
+            _need({surface_by_id[i] for i in row['destination_ids']} == set(treatments[row['requirement_id']]['surfaces']),
+                  'treatment_destination_surface_coverage_required')
     journeys = design.get('journeys')
     _need(type(journeys) is list and 0 < len(journeys) <= 64, 'canonical_journeys_required')
     journey_ids = set()
@@ -567,11 +648,10 @@ def validate_handoff(root, design_path, spec, P):
     report = None
     if 'report' in spec['surfaces']:
         report = P.routing_helper('report_contract').validate_handoff(root, design, spec, P)
-    pins = {p['path']: p for p in [design_pin, *concept['dependencies'],
-                                 *(report['dependencies'] if report else [])]}
+        dependencies.extend(report['dependencies'])
+    pins = {p['path']: p for p in dependencies}
     return {'schema_version': 1, 'kind': 'analyst_handoff_validation',
-            'metadata': {'option_id': concept['metadata']['option_id'], 'surface': surface, 'surfaces': sorted(spec['surfaces']),
-                         'concept_manifest_path': handoff['concept_manifest_path'],
+            'metadata': {**selection, 'surface': surface, 'surfaces': sorted(spec['surfaces']),
                          'quality_requirement_ids': sorted(active), 'destination_ids': sorted(ids),
                          **({'report_capability_gaps': report['gaps'],
                              'report_native_authoring_qualified': False} if report else {}),

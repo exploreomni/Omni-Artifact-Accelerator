@@ -1,5 +1,7 @@
 # Project execution boundaries
 
+For a new artifact engagement, ask **“Are you migrating an existing artifact or building something new in Omni?”** Use an explicit answer from the request. For migration, confirm **preserve** or **redesign**. A 1:1 request selects preserve. Carry the route through the [migration and net-new workflow](skills/omni-artifact-accelerator/references/work-intent.md). Resume saved work and focused repairs from their existing decisions.
+
 On first use, follow [Omni connection setup](skills/omni-artifact-accelerator/references/omni-cli-setup.md). Check the host for an Omni MCP tool that covers the next operation or use an existing verified Omni CLI. Honor the user's selected route on resume. Offer CLI installation only when the user chooses it.
 
 For substantial Omni artifact creation/redesign/migration, enter through
@@ -29,11 +31,11 @@ and preserve older records rather than rewriting its history.
 
 For artifact work, obey the [executable A–F gates](skills/omni-artifact-accelerator/references/stage-gates.md).
 Inspect stage status before dispatch; never code a new product before the actual
-user selects one of exactly three options and detailed design is resolved. Use
+user confirms the source specification for preservation or selects one of three concepts for net-new or redesign, and detailed design is resolved. Use
 guarded assembly/freeze and candidate-bound reviews. A blocked gate is not permission
 to switch to raw shell/file/API authoring, change mode, delete policy or synthesize
 an approval. For ordinary chat, explicitly configure the conversation-evidence
-selection policy and retain the actual user reply against the exact options.
+selection policy and retain the actual user reply against the source specification or exact concept set.
 This permits local design/coding; it does not authenticate an approval or authorize
 native writes. Existing strict engagements never fall back automatically. The
 host must qualify privileged execution and enforce routes outside package helpers.

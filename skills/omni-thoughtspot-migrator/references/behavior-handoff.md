@@ -10,7 +10,7 @@ disposition can remove an obligation from the target scope.
 | Source specialist / translator | Original JSON TML, independent inventory, exact pointers and source-state captures | Original hashes, tenant/Org/principal/version, distinct IDs, missing/denied/unknown coverage |
 | Data analyst | Metric and result semantics | Grain, units, formula/aggregation order, nulls, totals, sorting, limits, query population, timestamp and independent expectations |
 | BI engineer / DMA | Governed target bindings and actual backend gaps | Existing-model reuse or selected reconstruction route; pinned response; no automatic deployment |
-| Designers / product owner | Faithful behavior or explicit adaptation | Three concrete concepts, user choice, brand, devices, visual ambition, controls, exports and target refresh policy |
+| Designers / product owner | Faithful behavior or explicit adaptation | One faithful specification or three redesign concepts, user confirmation, brand, devices, visual ambition, controls, exports and target refresh policy |
 | App/dashboard engineers | Separate native candidates | Current baseline, field/control bindings, source pins and candidate-specific write authorization |
 | QA | Independent comparison and return | Numerical, visual, behavior, allowed/denied access and operational observations; unresolved cases remain visible |
 

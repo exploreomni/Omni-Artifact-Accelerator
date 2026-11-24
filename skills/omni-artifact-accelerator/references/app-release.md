@@ -31,7 +31,9 @@ for an answer that materially changes the design. Keep target surface, workflow
 mode and visual treatment separate. Preserve qualified A–C analysis and Topic
 bindings. Frequency of use does not imply a compact dashboard composition.
 
-## Show the first action in all three concepts
+## Preserve the source task or show the first action in each concept
+
+For a [source-preserving migration](work-intent.md), confirm the source specification and map its views, controls and user actions into the detailed design. The concept-manifest and three-option instructions below apply to new development and explicit redesign. All App candidates retain downstream query, review and release requirements.
 
 For each App concept manifest, add `action_sequence` alongside its existing
 `representative` and `primary_interaction`:

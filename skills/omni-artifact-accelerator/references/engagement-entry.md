@@ -10,6 +10,8 @@ directory is not evidence that the host discovered or loaded it. Read the exact
 repository orchestrator and follow [the execution procedure](execution-workflow.md).
 Keep the existing A–F sequence, actual selection and candidate review boundaries.
 
+Resolve [artifact work intent](work-intent.md) on first intake. An existing engagement uses its recorded route.
+
 ## Inspect the host entry first
 
 Use [Omni connection setup](omni-cli-setup.md) to identify the host’s Omni MCP

@@ -151,7 +151,11 @@ or human acceptance. Review the first complete journey early, then retain the
 denominator of all consequential destinations and promised behavior. Permission
 limits leave unobserved requirements pending; they do not lower the quality promise.
 
-## Compare three selectable products
+## Carry the source experience into a faithful migration
+
+Recover the source task and its first-use and return-use behavior at D. At E confirm the single [source specification](work-intent.md), then map its views, controls and user journeys into the selected handoff. Apply the ordinary product and UI/UX fit reviews to the frozen candidate.
+
+## Compare three selectable products for new development or redesign
 
 Each concept must honor sourced mode constraints and name one viable mode per
 surface; a hybrid is one mode. Keep every concept at the accepted analytical scope

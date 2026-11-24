@@ -5,6 +5,8 @@ description: Orchestrate Omni dashboard, native App and Reports Beta design, ana
 
 # Omni Artifact Accelerator
 
+Begin a new engagement with [work intent](references/work-intent.md). Ask migration or net-new, then preservation or redesign if needed. Preserve a named source in one spec, and carry its controls into implementation and QA. Three concepts apply to net-new or explicit redesign. A saved route or clear original request answers its question.
+
 Before the first native action, follow [Omni connection setup](references/omni-cli-setup.md). Honor an existing route choice. Otherwise discover the host’s Omni MCP tools for the next operation, then check for an existing Omni CLI if needed. Either connection can be sufficient. When neither is available, offer MCP setup, permission-based CLI installation or offline work.
 
 **Artifact validation.** Use the existing engagement's `stage-status` to resume the
@@ -42,8 +44,9 @@ shared report target foundation, and keep unqualified native behavior explicit.
 For every new engagement, including migration and enhancement modes, follow the authoritative
 [data-first product workflow](references/data-first-product-workflow.md): **A verify
 data and user access → B analyze and qualify queries → C create a traceable,
-refresh-safe narrative → D interview for the artifact → E present three distinct
-viable options and obtain the user's selection, then resolve detailed design → F
+refresh-safe narrative → D interview for the artifact → E obtain the user's confirmation
+of one source specification for preservation or selection among three viable concepts for
+redesign or net-new work, then resolve detailed design → F
 implement and obtain security, UI/UX, product-owner and independent QA feedback on
 every iteration**. This ordering supersedes generic direct-design shortcuts below.
 Retain supplied preferences early, but do not begin product design before A–C.
@@ -53,8 +56,8 @@ For query-backed Apps, also resolve [caching and refresh preferences](../omni-pr
 at D and carry the decision through design, query bindings and QA. Preserve existing
 Omni caching; automatic refresh, cache bypass and client expiry are opt-in choices,
 not package defaults. Reuse attributable decisions for focused repairs.
-Carry current answers/delegation and the accepted quality bar into all three E
-concepts and their representative visuals. Keep analytical scope and ambition
+Carry current answers and the accepted quality bar into the source specification or,
+when offering three concepts, into each concept and its representative visuals. Keep analytical scope and ambition
 comparable; prose pitches alone are insufficient. A treatment preference never
 substitutes for the actual product choice. Static source specimens stay explicitly
 unrendered; no library, 3D treatment or fixed concept trio is required.
@@ -144,7 +147,7 @@ routing retains the same A–F and DMA boundaries.
 Before a fresh run, use the trusted current package's [host-entry preflight](references/engagement-entry.md#inspect-the-host-entry-first)
 to check the actual loaded revision and real write routes. Reuse that receipt
 across specialists. For new Apps follow [candidate release](references/app-release.md):
-three first-view/action/result concepts, traceable choice and amendments, visible
+a confirmed source specification for preservation or three first-view/action/result concepts for redesign and net-new, traceable choice and amendments, visible
 data consumers, and exact whole-draft publication. The selected task determines
 composition; a monitoring overview remains a valid choice. An unmediated host
 stays advisory, and source/readback success leaves rendered quality unverified.
@@ -255,7 +258,7 @@ Give each worker only its objective, pinned source slice, accepted decisions, de
 
 ## Design, build, and verify
 
-At E, use the [concept preflight](references/data-first-product-workflow.md#e-offer-three-products-select-one-then-resolve-its-design)
+For net-new or redesigned products at E, use the [concept preflight](references/data-first-product-workflow.md#e-offer-three-products-select-one-then-resolve-its-design)
 before creative review. For a native new-document App, include the create spec and
 visible-consumer manifest at [candidate freeze](references/native-authoring.md).
 Dispatch reviewers after the request passes and have them return the generated
@@ -293,7 +296,7 @@ and follow the [run guide](references/thoughtspot-visual-run.md). Require typed,
 pinned source scope; preserve original TML and independent visual obligations.
 Saved queries, renders and metadata reads use separate grants; retained Spotter
 MCP checks do not execute tools. There is no ThoughtSpot DMA producer. Keep A–F,
-three actual concepts/user selection, target cache policy, current baselines and
+the selected migration treatment, target cache policy, current baselines and
 separate App/dashboard delivery evidence intact.
 
 For Qlik Cloud or qualified Qlik Sense evidence, assign the

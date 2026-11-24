@@ -93,7 +93,7 @@ Use the current [product-intent contract](../../omni-artifact-accelerator/refere
 for its versioned discovery index and the [stage gate](../../omni-artifact-accelerator/references/stage-gates.md)
 for D evidence; neither is a second ledger or independent authentication.
 
-At E, each of exactly three feasible products must honor the current preferences,
+At E a faithful source specification carries its approved visual treatments. For net-new or redesign, each of three feasible products must honor the current preferences,
 use the same analytical narrative and show a representative comparison treatment
 when relevant. Do not turn the four choices above into a fixed concept trio. Wait
 for the actual product selection before detailed design/code. Reopening material

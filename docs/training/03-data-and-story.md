@@ -14,7 +14,7 @@ This is the text alternative to the [agent-flow diagram](assets/agent-flow.svg).
 | B — Analyze and qualify queries | Analyst and BI engineer examine grain, dates, completeness, definitions and useful comparisons | Supported questions, reviewed queries and independent numerical expectations |
 | C — Create the analytical story | Storyteller and analyst connect claims to evidence and define update behavior | A reusable narrative that responds honestly to new data and changed filters |
 | D — Discover the experience | Product owner brings in design, branding and relevant specialists | Sourced requirements covering audience, outcome, quality, interaction and constraints |
-| E — Compare and choose | Designers propose three distinct viable visual concepts; you select one; specialists resolve its detailed design | The actual choice tied to its option set, with behavior and design decisions ready for implementation |
+| E — Compare and choose | Confirm the source specification for preservation, or choose among three viable concepts for redesign or new development. Specialists resolve the detailed design. | The actual choice tied to its option set, with behavior and design decisions ready for implementation |
 | F — Build and refine | Target engineer/builder implements; security, UI/UX, product owner and independent QA review each iteration | A current candidate with findings, fixes and clear evidence limits |
 
 Publication has its own authorization and verification after candidate preparation. The package checks its managed routes; those helpers do not control arbitrary commands or API calls outside them. Host enforcement must be qualified separately.

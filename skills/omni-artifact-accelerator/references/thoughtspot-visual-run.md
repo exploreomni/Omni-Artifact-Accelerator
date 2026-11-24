@@ -22,7 +22,7 @@ installation, browser automation, source authoring or target publication.
    typed evidence, not a product name in a prompt.
 6. Complete A–C with access, analysis and a traceable narrative. At D record the
    target experience, quality bar, behavior adaptations and cache/refresh choice.
-   At E present exactly three concrete options and obtain the actual user's
+   At E present one source specification for preservation or three redesign options and obtain the actual user's
    selection before detailed design and F implementation.
 7. Reuse current governed Omni fields where suitable. Route actual semantic or
    physical gaps through DMA's normal requirement exchange. No ThoughtSpot DMA

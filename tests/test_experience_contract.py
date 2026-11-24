@@ -73,6 +73,25 @@ def design():
                                   'destination_ids': ['main']}]}}
 
 
+def migration_design(treatment):
+    # The gate independently re-reads the actual baseline; this fixture isolates
+    # what a downstream handoff must retain from that verified receipt.
+    path = 'contracts/source.json'
+    receipt = {'migration_treatment': treatment, 'baseline_path': path, 'baseline_sha256': 'a' * 64,
+               'pins': [{'path': path, 'bytes': 123, 'sha256': 'b' * 64}],
+               'views': [{'id': 'original', 'controls': ['period', 'region']}],
+               'control_ids': ['period', 'region'], 'deviations': []}
+    detailed = design()
+    handoff = detailed['experience_handoff']
+    handoff.update(schema_version=2, source_baseline_path=path, source_baseline_sha256=receipt['baseline_sha256'],
+                   view_coverage=[{'view_id': 'original', 'destination_ids': ['main']}],
+                   control_coverage=[{'control_id': ident, 'destination_ids': ['main'],
+                                      'target_binding': 'observations.' + ident} for ident in receipt['control_ids']])
+    if treatment == 'preserve':
+        del handoff['concept_manifest_path']
+    return detailed, receipt
+
+
 def png():
     def chunk(kind, body):
         return struct.pack('>I', len(body)) + kind + body + struct.pack('>I', zlib.crc32(kind + body) & 0xffffffff)
@@ -192,6 +211,79 @@ class ExperienceEvidenceTests(unittest.TestCase):
         old = result['dependencies'][-1]['sha256']
         (self.root / 'concepts/a.svg').write_text(SVG.replace('170', '171'))
         self.assertNotEqual(N.validate_concept(self.root, 'concepts/a.json', self.spec, P)['dependencies'][-1]['sha256'], old)
+
+    def test_preserve_uses_source_handoff_and_requires_views_and_controls(self):
+        detailed, source = migration_design('preserve')
+        (self.root / 'concepts/a.json').unlink()
+        self.write('contracts/design.json', detailed)
+        def validate():
+            return N.validate_handoff(self.root, 'contracts/design.json', self.spec, P, source_baseline=source)
+        result = validate()
+        self.assertNotIn('option_id', result['metadata'])
+        self.assertEqual(result['metadata']['source_baseline_sha256'], source['baseline_sha256'])
+        self.assertIn(source['pins'][0], result['dependencies'])
+        for update, error in (({'view_coverage': []}, 'migration_view_coverage_incomplete'),
+                              ({'control_coverage': []}, 'migration_control_coverage_incomplete'),
+                              ({'source_baseline_sha256': 'c' * 64}, 'migration_source_baseline_changed'),
+                              ({'concept_manifest_path': 'concepts/a.json'}, 'handoff_fields_invalid')):
+            changed = copy.deepcopy(detailed)
+            changed['experience_handoff'].update(update)
+            self.write('contracts/design.json', changed)
+            with self.subTest(error=error), self.assertRaisesRegex(ValueError, error):
+                validate()
+        # Only an evidenced omission from the selected baseline changes the
+        # denominator; adaptation still needs a destination and target binding.
+        detailed['experience_handoff']['control_coverage'].pop()
+        self.write('contracts/design.json', detailed)
+        source['deviations'] = [{'control_id': 'region', 'disposition': 'adapt'}]
+        with self.assertRaisesRegex(ValueError, 'migration_control_coverage_incomplete'):
+            validate()
+        source['deviations'][0]['disposition'] = 'omit'
+        validate()
+
+    def test_redesign_rechecks_the_source_scope_of_the_chosen_concept(self):
+        detailed, source = migration_design('redesign')
+        c = concept()
+        c['migration_scope'] = {'source_baseline_sha256': source['baseline_sha256'],
+                                'control_ids': ['region', 'period'], 'view_ids': ['original']}
+        self.write('concepts/a.json', c)
+        self.write('contracts/design.json', detailed)
+        result = N.validate_handoff(self.root, 'contracts/design.json', self.spec, P, source_baseline=source)
+        self.assertEqual(result['metadata']['option_id'], 'a')
+        c['migration_scope']['control_ids'].pop()
+        self.write('concepts/a.json', c)
+        with self.assertRaisesRegex(ValueError, 'migration_concept_scope_incomplete'):
+            N.validate_concept(self.root, 'concepts/a.json', self.spec, P, source_baseline=source)
+        with self.assertRaisesRegex(ValueError, 'migration_concept_scope_incomplete'):
+            N.validate_handoff(self.root, 'contracts/design.json', self.spec, P, source_baseline=source)
+
+    def test_preserved_control_must_reach_each_mapped_view_that_used_it(self):
+        detailed, source = migration_design('preserve')
+        source['views'].append({'id': 'breakdown', 'controls': ['period']})
+        detailed['destinations'].append(dict(detailed['destinations'][0], id='detail'))
+        detailed['journeys'][0]['destination_ids'].append('detail')
+        handoff = detailed['experience_handoff']
+        handoff['view_coverage'].append({'view_id': 'breakdown', 'destination_ids': ['detail']})
+        self.write('contracts/design.json', detailed)
+        with self.assertRaisesRegex(ValueError, 'migration_control_missing_from_mapped_view'):
+            N.validate_handoff(self.root, 'contracts/design.json', self.spec, P, source_baseline=source)
+        handoff['control_coverage'][0]['destination_ids'].append('detail')
+        self.write('contracts/design.json', detailed)
+        N.validate_handoff(self.root, 'contracts/design.json', self.spec, P, source_baseline=source)
+
+    def test_preservation_carries_a_selected_visual_treatment_through_design(self):
+        detailed, source = migration_design('preserve')
+        self.spec['product']['visual_experience'] = {'schema_version': 1, 'family_requirement_ids': ['family'],
+            'follow_up': {'disposition': 'answered', 'requirement_ids': ['treatment']}}
+        self.spec['requirements'] += [requirement('family', {'family': 'compare_track'}),
+                                      requirement('treatment', {'treatment': 'refined_2d'})]
+        self.write('contracts/design.json', detailed)
+        with self.assertRaisesRegex(ValueError, 'handoff_fields_invalid'):
+            N.validate_handoff(self.root, 'contracts/design.json', self.spec, P, source_baseline=source)
+        detailed['experience_handoff']['treatment_coverage'] = [{'requirement_id': 'treatment',
+            'implementation': 'Retain the source comparison on a common scale.', 'destination_ids': ['main']}]
+        self.write('contracts/design.json', detailed)
+        N.validate_handoff(self.root, 'contracts/design.json', self.spec, P, source_baseline=source)
 
     def test_svg_active_content_external_resources_and_prose_only_rejected(self):
         examples = [SVG.replace('</svg>', '<script>bad()</script></svg>'),

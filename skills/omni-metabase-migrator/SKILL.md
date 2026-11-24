@@ -51,7 +51,7 @@ preserve source obligations; do not treat these as a second acceptance system.
 
 All new engagements follow [A–F](../omni-artifact-accelerator/references/stage-gates.md),
 including migration mode: source access, analysis and narrative precede artifact
-discovery; exactly three viable options and the actual user selection precede
+discovery. Confirm one source specification for preservation or a choice among three options for redesign before
 detailed design and coding. A faithful option preserves source behavior; it is not
 an exemption from a new engagement's gates. Resume historical engagements under
 their recorded policy and reuse valid decisions without inventing missing evidence.

@@ -1,5 +1,7 @@
 # Start an artifact engagement
 
+For a new artifact engagement, ask **“Are you migrating an existing artifact or building something new in Omni?”** Use an explicit answer from the request. For migration, confirm **preserve** or **redesign**. A 1:1 request selects preserve. Carry the route through the [migration and net-new workflow](skills/omni-artifact-accelerator/references/work-intent.md). Resume saved work and focused repairs from their existing decisions.
+
 On first use, follow [Omni connection setup](skills/omni-artifact-accelerator/references/omni-cli-setup.md). Check the host for an Omni MCP tool that covers the next operation or use an existing verified Omni CLI. Honor the user's selected route on resume. Offer CLI installation only when the user chooses it.
 
 For a request to create, redesign or migrate an Omni App or dashboard, first read
@@ -41,7 +43,7 @@ The bounded `source-check` reads the configured HTTPS origin without fetching,
 installing or activating code. A mismatch is a source gap, not an automatic update.
 
 Use the [executable A–F gates](skills/omni-artifact-accelerator/references/stage-gates.md).
-Never code before the actual user chooses one of exactly three options and detailed
+For a faithful migration, obtain the user’s confirmation of the source specification. For net-new or redesign, obtain the actual choice among three concepts. In both cases, wait until detailed
 design is resolved. Check the stage before specialist dispatch and use guarded
 build/freeze plus candidate-bound consulting reviews. Do not route around a blocked
 gate through raw writes, changed project mode or local approval flags. For ordinary
@@ -49,7 +51,7 @@ chat, use the explicit conversation-evidence policy and record the actual reply
 against the exact options. Strict host verification remains available without
 automatic fallback. Conversation evidence never grants native write authority.
 
-Present three concrete visual concepts at equal accepted ambition, retaining the
+For net-new and redesign, present three concrete visual concepts at equal accepted ambition, retaining the
 same analytical scope. Label source-only specimens as unrendered; do not substitute
 three prose pitches. Preserve quality intent through the selected design and four
 candidate reviews. Responsibilities may share workers when independence permits;

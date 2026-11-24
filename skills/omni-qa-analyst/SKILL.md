@@ -5,6 +5,8 @@ description: Independently verify Omni dashboard and App numbers, migration pari
 
 # QA analyst
 
+For migration work, use the [confirmed treatment and source scope](../omni-artifact-accelerator/references/work-intent.md). Preservation uses one source-matched specification. The three-concept path applies to new development and explicit redesign. Retain each required control, its destinations and its matched-state checks.
+
 For an OAA-authored or standalone reused Topic, apply [semantic access verification](references/semantic-access.md) at model validation and again on the exact artifact draft.
 
 For [candidate release](../omni-artifact-accelerator/references/app-release.md),

@@ -451,6 +451,8 @@ def start(root, request):
               'host_qualification': 'unobserved', 'publication_authorized': False}
     if project.get('app_release_policy'):
         record['app_release_policy'] = project['app_release_policy']
+    if 'migration_treatment' in project:
+        record['migration_treatment'] = project['migration_treatment']
     if entry is not None:
         record['entry_source_status'] = entry['release_status']
         record['entry_boundary_status'] = 'historical_observation_only'
@@ -476,6 +478,9 @@ def active_run(root, project):
     need(run.get('startup_timing') != 'late', 'workflow_startup_recorded_late')
     need(run.get('app_release_policy') is None or
          run['app_release_policy'] == project.get('app_release_policy'), 'recorded_app_release_policy_removed')
+    if 'migration_treatment' in run:
+        need('migration_treatment' in project and project['mode'] == 'migration' and
+             run['migration_treatment'] in ('pending', project['migration_treatment']), 'recorded_migration_treatment_changed')
     need(str(source_root()) == run['package_root'] and source_manifest(source_root()) == run['package_files'],
          'package_changed_since_start')
     need(current(root, run['brief_pins']) and P.digest(P.read_bytes(P.relative_file(root, run['brief_retained']))) ==
@@ -596,8 +601,13 @@ def phase_check(root, action, _snapshot=None):
         if phase >= PHASES.index('brief'):
             guidance.add(prefix + 'omni-product-owner/references/visual-experience-discovery.md')
         if phase >= PHASES.index('options'):
-            guidance.update(prefix + 'omni-design-systems/references/' + p + '.md'
-                            for p in ('experience-brief', 'visual-craft', 'experience-curriculum', 'ideation-playbook'))
+            references = ['experience-brief', 'visual-craft', 'experience-curriculum']
+            if project.get('migration_treatment') != 'preserve':
+                references.append('ideation-playbook')
+            if project.get('migration_treatment') in P.TREATMENTS:
+                guidance.add(prefix + 'omni-artifact-accelerator/references/migration-fidelity.md')
+                guidance.add(prefix + 'omni-artifact-translator/SKILL.md')
+            guidance.update(prefix + 'omni-design-systems/references/' + p + '.md' for p in references)
             guidance.add(prefix + 'omni-design-systems/SKILL.md')
             creative = owners.get('creative_review', {}).get('worker')
             if creative and creative in {owners.get('experience', {}).get('worker'), owners.get('engineering', {}).get('worker')}:
@@ -930,7 +940,8 @@ def freeze(root, request):
     ident = identity(request['id'])
     artifacts = pins(root, request['artifacts'])
     canonical = 'contracts/create-spec.json'
-    if (project['mode'] == 'net-new' and 'app' in project['surfaces'] and not request.get('create_spec')
+    creating_app = project['mode'] == 'net-new' or project.get('migration_treatment') in P.TREATMENTS
+    if (creating_app and 'app' in project['surfaces'] and not request.get('create_spec')
             and any(Path(p).suffix.lower() in {'.htm', '.html'} for p in artifacts)
             and (root / canonical).is_file()):
         need(canonical in artifacts, 'include the staged contracts/create-spec.json as a supporting artifact before review')

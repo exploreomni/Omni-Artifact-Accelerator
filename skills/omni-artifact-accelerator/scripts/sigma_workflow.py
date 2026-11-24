@@ -107,7 +107,7 @@ def plan(root, specification, destination):
         'status': 'local_preparation', 'next_action': 'resolve_source_questions' if any(q['stage'] == 'A' and q['field'] != 'scope.workbook_ids' for q in questions) else 'review_runtime_then_check_source',
         'later_requirements': ['B: qualify query semantics and effective access', 'C: traceable analytical narrative',
             'D: quality, branding, devices, visual treatments, cache/refresh interview',
-            'E: three rendered concepts with equal analytical scope, actual user choice and detailed design',
+            ap.migration_design_step(project, 'E: three rendered concepts with equal analytical scope, actual user choice and detailed design'),
             'F: guarded candidate and independent security, UX, product and QA reviews'],
         'runtime_loaded': False, 'source_access_verified': False, 'target_write_authority': False})
 

@@ -9,7 +9,7 @@ does not install an engine, provide a universal compiler or expose report writes
 | --- | --- | --- |
 | Intent and acceptance | Existing product owner | Report interview, actual decisions and quality bar |
 | Data and metric meaning | Existing analyst and BI engineer | Qualified queries, fields, parameters, totals and independent expectations |
-| Page composition | [Report designer](../../omni-report-designer/SKILL.md) | Three concepts, selected page/section design and output rules |
+| Page composition | [Report designer](../../omni-report-designer/SKILL.md) | Source-matched pages for preservation or three concepts for redesign/new development, selected output rules |
 | Native preparation | [Report builder](../../omni-report-builder/SKILL.md) | Version-qualified definition/binding handoff, preserved scope and gaps |
 | Brand and craft | Existing branding/design systems | Approved assets, typography and format-specific adaptations |
 | Independent verification | Existing QA, security and creative review responsibilities | Candidate-bound numbers, page/export observations, access and acceptance |
@@ -25,7 +25,7 @@ evidence; they do not own target design, publication or customer acceptance.
 3. At D use the [report interview](../../omni-product-owner/references/report-interview.md).
    Preserve outputs, physical page constraints, layout semantics, branding,
    parameter context and separate cache/refresh/distribution decisions.
-4. At E retain exactly three concrete report options and the actual selection.
+4. At E retain the confirmed source page specification for preservation, or three report options and the actual selection for redesign and new development.
    Resolve the selected design with `report_contract`; use the
    [contract reference](../../omni-report-designer/references/report-contract.md).
    A static one-page report needs no invented interactive screens.

@@ -26,6 +26,6 @@ outputs. A request for “paginated” can mean very different delivery behavior
 
 Record decisions and quotations in private notes and existing design-intent
 requirements. Refer unresolved engine features to the builder before proposing
-them. At E present three feasible concrete report directions at the same quality
+them. For preservation, confirm the source page and export specification. For new development or redesign, present three feasible report directions at the same quality
 bar, then preserve the actual user's choice. Do not substitute three themes for
 three meaningful compositions or discard necessary report behavior for appearance.

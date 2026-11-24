@@ -24,6 +24,9 @@ ROOT = Path(__file__).resolve().parents[1]
 CASES = {
     "source-runner": "tests/test_source_runner.py",
     "omni-cli-setup": "tests/test_omni_cli_setup.py",
+    "work-intent": "tests/test_work_intent.py",
+    "migration-stage-gates": "tests/test_migration_stage_gates.py",
+    "migration-fidelity": "tests/test_migration_fidelity.py",
     "host-entry": "tests/test_host_entry.py",
     "app-experience-release": "tests/test_app_experience_release.py",
     "native-consumers": "tests/test_native_data_consumers.py",
@@ -140,6 +143,7 @@ CASE_TIMEOUTS.update({'dma-native-topics':180,'dma-topic-policy':120})
 CASE_TIMEOUTS.update({'semantic-release':180, 'semantic-lane':120, 'semantic-native':120})
 CASE_TIMEOUTS.update({'app-experience-release':240, 'native-publish':360, 'host-entry':120})
 CASE_TIMEOUTS['native-stage-gates'] = 600
+CASE_TIMEOUTS['migration-stage-gates'] = 240
 CASE_TIMEOUTS.update({'execution-runtime': 120, 'execution-bridge': 120, 'native-demo': 480})
 CASE_TIMEOUTS.update({'execution-preparation': 120, 'validation-snapshot': 120, 'selective-reads': 120, 'context-layout': 120})
 CASE_TIMEOUTS.update({'experience-continuity': 180, 'engagement-bootstrap': 120})

@@ -158,16 +158,84 @@ class ReleaseExperience(unittest.TestCase):
     def test_current_policy_reaches_guarded_create_with_reviewed_consumers(self):
         flow = self.f.prepare()
         self.adopt()
-        with P.trusted_stage_provider(flow.host), patch.object(A, 'project_helper', return_value=P):
+        with P.trusted_stage_provider(flow.host):
             flow.through('brief')
             P.stage_record(self.root, self.options())
             binding = P.stage_status(self.root)['choice_bindings']['two']
             flow.host.grants[(P.canonical(binding), 'synthetic-choice')] = 'fixture-user'
             P.stage_record(self.root, {'stage': 'choice', 'option_id': 'two', 'receipt_ref': 'synthetic-choice'})
-            path = self.f.handoff()
+            self.assert_guarded_create(flow, self.f.handoff())
+
+    def test_preserve_app_reaches_guarded_create_with_source_workflow_and_no_concepts(self):
+        self.root = self.f.root = self.root.parent / 'preserved-app'
+        P.init(self.root, 'Migrate record inspector', 'migration', 'app', 'none', migration_treatment='preserve')
+        F.G.bootstrap(self.root, P, experience=True, app_release=True)
+        flow = self.f.prepare()
+        source = self.f.save('inputs/source.json', {'fixture': 'Source list, record selector and detail inspector',
+            'default_count': 12, 'selected_count': 1})
+        spec = self.f.current_spec()
+        spec['product']['scope'] = 'migration'
+        spec['product']['note_paths'].append(source)
+        mode_id = 'existing-workspace'
+        spec['requirements'] = [r for r in spec['requirements'] if r['id'] != 'workspace-hypothesis']
+        mode = F.F.requirement(mode_id, {'kind': 'experience_mode', 'mode': 'workspace',
+            'rationale': 'Preserve the existing list and record inspection workflow.'}, basis='reused_decision')
+        mode['decision_ref'] = source
+        mode['product']['source_refs'] = [source]
+        spec['requirements'].append(mode)
+        spec['product']['experience_intent']['mode_requirement_ids'] = [mode_id]
+        self.f.save('contracts/design-intent.json', spec)
+        F.G.refresh_request_review(self.root, P)
+        flow.through('brief')
+        cases = [{'id': ident, 'controls': ['record'], 'action': action, 'persona': 'reader',
+            'state': {'record': selection}, 'outputs': {'count': count}, 'evidence': [source]}
+            for ident, action, selection, count in [('open', 'Open the list', None, 12), ('select', 'Inspect one record', 'r1', 1)]]
+        baseline = self.f.save('contracts/source-baseline.json', {'schema_version': 1, 'source_evidence': [source],
+            'views': [{'id': 'original', 'title': 'Inspector', 'layout': 'Record list opens a detail view.',
+                'components': ['count'], 'controls': ['record'], 'evidence': [source]}],
+            'controls': [{'id': 'record', 'label': 'Record', 'kind': 'selector', 'default': None,
+                'affected': ['count'], 'exempt': [], 'evidence': [source]}], 'cases': cases, 'deviations': []})
+        offer = P.stage_record(self.root, {'stage': 'options', 'migration_treatment': 'preserve',
+            'evidence': {'source_baseline': baseline}})
+        digest = offer['migration_baseline']['baseline_sha256']
+        self.assertEqual(set(offer['choice_bindings']), {'source-baseline'})
+        with P.trusted_stage_provider(flow.host):
+            binding = offer['choice_bindings']['source-baseline']
+            flow.host.grants[(P.canonical(binding), 'confirm-baseline')] = 'fixture-user'
+            P.stage_record(self.root, {'stage': 'choice', 'option_id': 'source-baseline', 'receipt_ref': 'confirm-baseline'})
+
+            def preserve(spec, design):
+                handoff = design['experience_handoff']
+                del handoff['concept_manifest_path']
+                handoff.update(schema_version=2, source_baseline_path=baseline, source_baseline_sha256=digest,
+                    view_coverage=[{'view_id': 'original', 'destination_ids': ['workspace', 'detail']}],
+                    control_coverage=[{'control_id': 'record', 'destination_ids': ['workspace'], 'target_binding': 'records.id'}],
+                    treatment_coverage=[{'requirement_id': i, 'destination_ids': ['workspace'],
+                        'implementation': 'Keep the source comparison.'} for i in spec['product']['visual_experience']['follow_up']['requirement_ids']])
+                design['experience_intent_handoff']['selected_mode_ids'] = [mode_id]
+
+            path = self.f.handoff(selected_path=baseline, extend=preserve)
+
+            def observations(candidate):
+                evidence = self.f.save('evidence/target-capture.json', {'fixture': 'Synthetic target observations',
+                    'open_count': 12, 'inspect_r1_count': 1})
+                return self.f.save('evidence/migration-qa.json', {'schema_version': 1, 'baseline_sha256': digest,
+                    'candidate_sha256': candidate['candidate_sha256'], 'controls': [{'id': 'record',
+                        'target_locator': '#record', 'evidence': [evidence]}], 'cases': [
+                        {'id': 'open', 'persona': 'reader', 'state': {'record': None}, 'outputs': {'count': 12}, 'evidence': [evidence]},
+                        {'id': 'select', 'persona': 'reader', 'state': {'record': 'r1'}, 'outputs': {'count': 1}, 'evidence': [evidence]}]})
+
+            self.assert_guarded_create(flow, path, observations)
+            status = P.stage_status(self.root)
+            self.assertEqual(status['experience_intent']['status'], 'ready')
+            self.assertEqual(status['migration_parity'], 'matched')
+            self.assertFalse(any(self.root.rglob('*concept*')))
+
+    def assert_guarded_create(self, flow, path, migration_observations=None):
+        with patch.object(A, 'project_helper', return_value=P):
             P.stage_record(self.root, {'stage': 'design', 'resolved': True, 'evidence': {'design': path}})
             P.stage_require(self.root, 'build')
-            html = '<main id="total" data-oaa-consumer="total-panel"></main><script>bind("total-panel","1");</script>'
+            html = '<main id="total" data-oaa-consumer="total-panel"></main><button id="record">Inspect record</button><script>bind("total-panel","1");</script>'
             (self.root / 'deliverables/app.html').write_text(html)
             spec = self.f.current_spec()
             spec['selections'][0]['candidate_path'] = 'deliverables/app.html'
@@ -201,9 +269,12 @@ class ReleaseExperience(unittest.TestCase):
             for scope in flow.S.REVIEW_SCOPES:
                 evidence = (self.f.save('evidence/fit-' + scope + '.json', self.f.fit(candidate, scope))
                     if scope in {'product_owner', 'ui_ux'} else flow.evidence(scope))
+                evidence = {'review': evidence}
+                if scope == 'qa' and migration_observations is not None:
+                    evidence['migration_observations'] = migration_observations(candidate)
                 P.stage_record(self.root, {'stage': 'review', 'scope': scope, 'reviewer': scope + '-reviewer',
                     'iteration_sha256': candidate['event_sha256'], 'candidate_sha256': candidate['candidate_sha256'],
-                    'outcome': 'resolved', 'basis': 'source', 'evidence': {'review': evidence}})
+                    'outcome': 'resolved', 'basis': 'source', 'evidence': evidence})
             result = A.prepare_create(project=self.root, artifact='deliverables/app.html', spec_artifact='contracts/create.json')
             self.assertEqual(result['data_consumers']['status'], 'source_bound')
             self.assertFalse(result['publication_authorized'])

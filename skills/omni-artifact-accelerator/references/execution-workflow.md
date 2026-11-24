@@ -17,7 +17,7 @@ For a repository checkout and sibling engagement, [prepare an explicit entry](en
 so the host has an exact source reference and recoverable startup instructions.
 Generated instructions are not evidence of host loading. New non-report engagements
 also require [experience continuity](experience-continuity.md): recover the user's
-task and promise at D, compare viable modes at E, and assess the complete selected
+task and promise at D, confirm the source specification or compare viable modes at E, and assess the complete selected
 experience in F. Existing attributable answers avoid repeated questions.
 
 For net-new products and explicit product reconception, the
@@ -40,7 +40,7 @@ Read `stage-status` for this engagement before resuming from a background task o
 an out-of-date host checklist. Use `host_checkpoint` to replace the host's task
 view with the verified choice, candidate iteration, pending reviews and next
 action at the current journal tail. Only `pending_human_decision: design_choice`
-asks the user to choose one of the three options. Carry forward a verified
+asks the user to choose one of the three options. A pending `source_baseline_confirmation` asks the user to confirm the reviewed migration specification. Carry forward a verified
 `selected_option_id` through edits to the candidate.
 
 A fresh startup on the same source revision can preserve a verified prefix of
@@ -53,8 +53,8 @@ has its own checks for version upgrades.
 
 | Current journal state | Work to do |
 | --- | --- |
-| `options` | Prepare three comparable concepts at the agreed ambition and complete the independent creative comparison. Keep prototypes scoped to the decision the user needs to make. |
-| `choice` | Present the reviewed options and wait for the user. Record their actual selection against those options. |
+| `options` | For preservation, inventory and pin one source specification for confirmation. For new products and redesign, prepare three comparable concepts at the agreed ambition and complete the independent creative comparison. Keep prototypes scoped to the decision the user needs to make. |
+| `choice` | Present the reviewed source specification or the three concepts and record the user’s actual decision against the exact material shown. |
 | `design`, `candidate` or `review` | Use the recorded choice, consolidate known changes before freezing a revision, and collect security, UI/UX, product-owner and QA findings on those exact bytes. Reopen affected work when evidence changes. |
 
 Exercise the selected queries, interactions, access and visual quality with the
@@ -71,6 +71,8 @@ Keep the engagement's helper path and package bytes stable. Record the preview
 as a service and the suite as a package-validation job. Either can run while
 the host presents an available design choice.
 
+For a new artifact, resolve [work intent](work-intent.md) before choosing a source specialist or starting the design interview. Resume the saved treatment for existing work.
+
 ## Select the actual host route
 
 Before the first connected operation, follow [Omni connection setup](omni-cli-setup.md).
@@ -81,6 +83,7 @@ such as moving from reading a Topic to creating a draft.
 | Route | Entry | Evidence and limitations |
 | --- | --- | --- |
 | Repository in Claude Code | Read root CLAUDE.md, then this skill | Record working-tree bytes, host tools and constraints; the file is guidance, not enforcement. |
+| Repository in Cursor | Open the checkout and read root AGENTS.md and this orchestrator | Confirm the loaded revision, your intent and the actual Omni route. Start with the missing source or runtime observation if coverage is incomplete. |
 | Repository in Codex | Read root AGENTS.md, then this skill | Same portable contracts; no assumption that a plan dispatched specialists. |
 | Approved installed skills | Invoke the orchestrator from the installed location | Read-only compare with the selected source when available. Cached host loading remains unproven. |
 | Claude/ChatGPT connected chat or repository link | Explicitly retrieve the orchestrator and applicable sibling guidance | Confirm tool access and consumed revision. No local file auto-loading or hosted MCP provisioning is implied. |

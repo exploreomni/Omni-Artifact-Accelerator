@@ -52,8 +52,7 @@ expectations; C produces a reusable evidence-linked narrative. At D resolve
 fidelity/redesign, native dashboard/App/both, audience, ambition, branding, devices,
 exports and interaction/visual preferences. Ask the independent target App
 [cache/refresh policy](../omni-product-owner/references/data-refresh-policy.md)
-question; source cache settings do not choose the answer. At E present exactly
-three concrete viable concepts and record the actual user selection before
+question; source cache settings do not choose the answer. At E present one source-matched specification for preservation or three concepts for redesign and record the actual user selection before
 detailed design and F coding. Reuse valid prior decisions for an existing
 engagement; migration is not a blanket exemption from the gates.
 

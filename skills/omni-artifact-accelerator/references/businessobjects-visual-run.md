@@ -21,7 +21,7 @@ a report name or source URL does not select a target or grant access.
 5. At D resolve fidelity/redesign, target surfaces, audience, quality ambition,
    branding, devices, navigation, print/export/delivery, optional spatial/3D
    visualizations and the independent target caching/refresh question.
-6. At E provide exactly three viable concrete concepts and retain the actual
+6. At E provide one source specification for preservation or three redesign concepts and retain the actual
    user's choice. Then complete detailed design and F implementation with
    security, UX, product-owner and QA feedback. A migration role cannot bypass gates.
 7. Compare the candidate to the original scope using exact result/state bindings.

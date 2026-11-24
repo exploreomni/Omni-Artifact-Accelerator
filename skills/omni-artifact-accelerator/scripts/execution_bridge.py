@@ -53,6 +53,9 @@ def status(root):
         tool = None
     stage = {k: gates.get(k) for k in ('required', 'status', 'next_stage', 'completed_stages',
              'tail_sha256', 'candidate_sha256', 'release_ready', 'choice_assurance', 'review_assurance', 'experience_intent')}
+    for key in ('migration_treatment', 'migration_baseline', 'migration_parity'):
+        if key in gates:
+            stage[key] = gates[key]
     for key in ('host_checkpoint', 'resume_request', 'recovery'):
         if key in gates:
             stage[key] = gates[key]
@@ -150,6 +153,8 @@ def _call(root, name, args, runtime=None, host_context=None):
         helper = P.routing_helper('task_operations')
         return {'dispatch': helper.record_dispatch, 'checkpoint': helper.checkpoint, 'review': helper.review_work}[operation](root, request)
     if name == 'execution_lifecycle':
+        if operation == 'migration_select':
+            return P.select_migration_treatment(root, request['migration_treatment'])
         if operation == 'concept_preflight':
             return P.routing_helper('stage_gates').concept_preflight(root, request, P)
         if operation in {'host_entry_check', 'host_entry_prepare'}:

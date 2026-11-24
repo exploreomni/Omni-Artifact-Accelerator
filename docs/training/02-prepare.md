@@ -36,6 +36,10 @@ A host that can read instructions but cannot run the required gates can help gat
 
 **No installation is required to read this guide.** The package's skill installer currently supports read-only preview and verification; `--apply` is disabled pending a qualified host approval gate. Do not copy files into an active skills directory as a workaround. Installing, importing/loading, updating or activating dependencies or skills requires explicit scoped sign-off under the [dependency policy](../../skills/omni-artifact-accelerator/references/dependency-policy.md). No Blender code or execution is permitted.
 
+## Select the work
+
+Start with migration or net-new. For an existing artifact, tell the agent whether to preserve it or redesign it. An explicit request answers the question. Existing work resumes from its saved choice. [Workflow and examples](../../skills/omni-artifact-accelerator/references/work-intent.md)
+
 ## Connect to Omni
 
 Start with your task. The agent checks for a matching tool on your host’s Omni MCP
@@ -68,12 +72,12 @@ Initialization creates records and a role plan. It does not run agents, connect 
 
 Next, ask the agent to follow [explicit engagement entry](../../skills/omni-artifact-accelerator/references/engagement-entry.md): retain the original brief, prepare the execution responsibilities, explicitly read the generated entry and record `run-start` before the first artifact stage. The entry's sibling-folder rule belongs to this repository-only route. You do not need to hand-author its JSON records to use the guide.
 
-The conversation-evidence policy records your actual design choice against the exact concepts. It is workflow evidence, not independently authenticated approval or permission to install dependencies or write native content. Existing stricter engagements never switch policies automatically.
+The conversation-evidence policy records your actual design choice against the reviewed source specification or exact concepts. It is workflow evidence, not independently authenticated approval or permission to install dependencies or write native content. Existing stricter engagements never switch policies automatically.
 
 ## Send a first request
 
 Replace the bracketed descriptions with your actual context; these are learning placeholders.
 
-> Use the Omni Artifact Accelerator from [selected checkout or approved installed path]. Help [audience] investigate [decision] using [Omni instance and data reference]. Start with read-only data and my account's access. Keep work in [private engagement folder]. Follow A–F: understand the data and create a traceable story before design discovery, show three concrete visual concepts, and wait for my choice before detailed design and product coding. Reuse answers I already gave. Report missing tools or access; do not install dependencies or write to the tenant yet.
+> Use the Omni Artifact Accelerator from [selected checkout or approved installed path]. Help [audience] investigate [decision] using [Omni instance and data reference]. Start with read-only data and my account's access. Keep work in [private engagement folder]. Follow A–F: understand the data and create a traceable story before design discovery, show the source specification for a faithful migration or three concrete concepts for a new product or redesign. Wait for my decision before detailed design and coding. Reuse answers I already gave. Report missing tools or access; do not install dependencies or write to the tenant yet.
 
 **Checkpoint:** the agent can name the source copy, private engagement, actual tool access, source expectation and next allowed stage. A missing connection is a stated setup gap, not permission to substitute sample data silently.

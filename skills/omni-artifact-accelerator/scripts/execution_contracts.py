@@ -4,7 +4,7 @@ import copy
 OPERATIONS = {
     'execution_prepare': ('work', 'context', 'preflight', 'claim', 'recipe'),
     'execution_record': ('dispatch', 'checkpoint', 'usage', 'blocker', 'review'),
-    'execution_lifecycle': ('host_entry_check', 'host_entry_prepare', 'entry_prepare', 'entry_check', 'start', 'guidance', 'phase', 'stage', 'concept_preflight', 'freeze', 'product_brief', 'product_check', 'intent_select', 'intent_check'),
+    'execution_lifecycle': ('host_entry_check', 'host_entry_prepare', 'entry_prepare', 'entry_check', 'start', 'guidance', 'phase', 'stage', 'migration_select', 'concept_preflight', 'freeze', 'product_brief', 'product_check', 'intent_select', 'intent_check'),
     'execution_review': ('policy', 'impact', 'carry', 'manifest', 'requests'),
     'execution_qualification': ('catalog', 'record', 'check'),
     'execution_assembly': ('build', 'verify', 'compare'),
@@ -34,7 +34,8 @@ FIELDS = {
     ('execution_record', 'blocker'): (['attempt_id', 'event_id', 'error_family', 'detail'], []),
     ('execution_record', 'review'): (['attempt_id', 'action'], ['changes', 'dependency_state', 'result', 'correction_attempt_id']),
     ('execution_lifecycle', 'phase'): (['action'], []),
-    ('execution_lifecycle', 'concept_preflight'): ([], ['options', 'claims']),
+    ('execution_lifecycle', 'migration_select'): (['migration_treatment'], []),
+    ('execution_lifecycle', 'concept_preflight'): ([], ['options', 'claims', 'source_baseline']),
     ('execution_lifecycle', 'freeze'): (['id', 'artifacts', 'context'], ['builders', 'supporting_artifacts', 'review_manifest', 'create_spec']),
     ('execution_lifecycle', 'product_brief'): (['output'], []),
     ('execution_lifecycle', 'intent_select'): (['spec', 'output'], []),

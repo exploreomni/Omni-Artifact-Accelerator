@@ -82,8 +82,7 @@ visual ambition, exports and the desired [cache/refresh/expiry policy](../omni-p
 “No custom cache policy” is a valid answer. Source cache settings, export pagination or a
 metadata-only environment cannot silently dictate target behavior or lower craft.
 
-Offer exactly three concrete viable concepts at E, preserve analytical scope and
-quality across them, and record the actual user's selection before coding. Existing
+At E confirm one source-matched specification for preservation or present three scoped redesign concepts and record the user’s selection before coding. Existing
 engagements preserve their valid decisions. A source specialist never overrides
 the orchestrator's gates or grants itself target-write permission.
 

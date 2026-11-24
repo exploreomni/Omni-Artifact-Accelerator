@@ -24,8 +24,7 @@ Use `--surface report` for a report engagement and follow the
 [report workflow](../skills/omni-artifact-accelerator/references/report-workflow.md).
 The report designer and builder reuse A–F, branding, BI and independent QA.
 Start with the report's decision and data, then ask about page geometry, grouping,
-parameters, output formats, freshness and delivery. Review three concrete concepts
-before implementation. The existing `both` option still selects dashboard plus App.
+parameters, output formats, freshness and delivery. Confirm the source specification for a faithful migration or select among three concepts for a new or redesigned report. The existing `both` option still selects dashboard plus App.
 
 Example: “Prepare a native Report for regional operations, with parameterized
 detail, group totals and a branded header. I need a readable PDF and a separate
@@ -188,7 +187,7 @@ Create a separate migration engagement:
 OAA_MIGRATION_RUN="$HOME/omni-artifact-runs/migration-pilot"
 python skills/omni-artifact-accelerator/scripts/analyst_project.py init \
   --output "$OAA_MIGRATION_RUN" --name 'Migration pilot' \
-  --mode migration --surface dashboard
+  --mode migration --migration-treatment preserve --surface dashboard
 ```
 
 Use the [parser coverage matrix](parser-coverage.md) to select the correct reader, then the source-specific guide:
@@ -216,8 +215,7 @@ metric definitions; show unsupported behavior before proposing adaptations.
 Reuse compatible Omni Topics and send genuine semantic gaps to DMA. Keep source
 query permission separate from publishing the Omni candidate.” Supply the
 instance/version, selected IDs and available files through approved channels.
-All new migration engagements follow A–F, including three options and the actual
-user choice before coding. Reuse valid answers and record the desired App refresh
+At E, confirm one source-matched specification for preservation or choose from three equally scoped redesigns. See [work intent](../skills/omni-artifact-accelerator/references/work-intent.md). Reuse valid answers and record the desired App refresh
 policy when an App is selected; no custom policy is a valid answer.
 
 ### Try the offline reader with a synthetic example
@@ -480,7 +478,7 @@ numerical parity, runtime access and business acceptance require separate eviden
 
 Ask: “Use the ThoughtSpot specialist to migrate these selected Liveboards and
 Answers. Preserve filters, repeated placements, notes, exports and access behavior;
-show unsupported requirements before offering the three target designs.”
+show unsupported requirements alongside the source specification for my confirmation.”
 
 Follow the [ThoughtSpot workflow](../skills/omni-artifact-accelerator/references/thoughtspot-visual-run.md):
 qualify tenant/Org/version/principal, transfer JSON TML plus an independent inventory,
@@ -494,8 +492,7 @@ Local validation does not certify a live migration.
 ## Migrate Qlik sheets and analytical behavior
 
 Ask: “Use the Qlik specialist to migrate these selected sheets to Omni. Preserve
-our measures, selections and security, identify unsupported behavior, and offer
-three viable target designs after analysis.”
+our measures, selections and security. Show me the source specification and flag unsupported behavior before I confirm it.”
 
 Follow the [Qlik workflow](../skills/omni-artifact-accelerator/references/qlik-visual-run.md).
 Start with supplied original definitions and independent scope, or an already
@@ -520,8 +517,7 @@ obligations; there is no universal pixel-perfect or formula conversion.
 
 Use existing Omni fields or send scoped requirements to DMA. The product interview
 retains fidelity, quality ambition, branding, devices, dimensional visuals, exports
-and independent cache/refresh choices. Select one of exactly three concrete
-concepts before coding. Local checks do not replace live source/target acceptance.
+and independent cache/refresh choices. Confirm the source specification or choose among three concepts for an explicit redesign before coding. Local checks do not replace live source/target acceptance.
 
 ## Migrate Cognos reports
 
@@ -572,7 +568,7 @@ obligations. Local tools do not authorize refresh, rendering, save or publicatio
    preserves decimal/integer precision; use format `report-normalized` for comparison.
    Data-result exports do not prove report calculations or pagination.
 5. Continue A–F: analyze source/target, select reuse or a DMA route, establish
-   narrative and output requirements, choose one of three concepts, then resolve
+   narrative and output requirements, confirm source-matched pages or select a redesign concept, then resolve
    report design before authoring. Track all missing/unsupported behavior.
 6. Prepare a gated native candidate with `report_prepare`. Qualify the actual native
    interface and preserve actual readback/exports through the

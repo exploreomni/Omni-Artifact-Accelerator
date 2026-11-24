@@ -69,8 +69,7 @@ resolve faithful migration versus redesign, quality ambition, official branding,
 devices, interaction, dimensional visuals, exports and the user's
 [cache/refresh policy](../omni-product-owner/references/data-refresh-policy.md).
 No custom cache policy is a valid choice. Preserve existing valid answers.
-At E provide exactly three concrete viable concepts with the same analytical
-scope and quality bar. Record the actual user choice before detailed design and
+At E present one faithful source specification or, for redesign, three concepts with the same analytical scope and quality bar. Record the actual user choice before detailed design and
 F coding; source capture never authorizes target publication.
 
 Reuse suitable governed Omni fields. Send actual semantic/physical gaps through

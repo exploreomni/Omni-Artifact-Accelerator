@@ -192,5 +192,20 @@ class ReportContractTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'symlink'):
                 R.validate_handoff(root, self.design, self.spec, P)
 
+    def test_source_preservation_keeps_static_page_and_report_qualification(self):
+        detailed, baseline = F.migration_design('preserve')
+        baseline.update(views=[{'id': 'page-one', 'controls': []}], control_ids=[])
+        h = detailed['experience_handoff']
+        h.update(view_coverage=[{'view_id': 'page-one', 'destination_ids': ['main']}], control_coverage=[])
+        self.design['experience_handoff'] = h
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            self.prepare_files(root)
+            (root / 'concepts/a.json').unlink()
+            result = P.routing_helper('experience_contract').validate_handoff(
+                root, 'contracts/design.json', self.spec, P, source_baseline=baseline)
+            self.assertFalse(result['metadata']['report_native_authoring_qualified'])
+            self.assertEqual(result['metadata']['report_capability_gaps'][0]['status'], 'unverified')
+
 
 if __name__ == '__main__': unittest.main()

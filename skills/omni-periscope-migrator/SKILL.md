@@ -52,8 +52,7 @@ the source-specific obligations that must survive translation.
 
 All new engagements, including faithful migrations, follow
 [A–F](../omni-artifact-accelerator/references/stage-gates.md): access, analysis and
-narrative before artifact discovery, three concrete options and actual user
-selection before detailed design and coding. Reuse valid historical scope, answers
+narrative before artifact discovery. Before coding, confirm one source specification for preservation or select one of three redesign concepts and resolve detailed design. Reuse valid historical scope, answers
 and accepted design evidence within the applicable checkpoints. Existing
 journal/policy records remain in force; do not invent old choices or restart valid
 historical selection. Renaming the task or role never bypasses a gate.

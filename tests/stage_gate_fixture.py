@@ -4,14 +4,19 @@ from datetime import datetime, timezone
 import json
 
 
-def bootstrap(root, P, *, experience=False):
+def bootstrap(root, P, *, experience=False, historical_migration=True, app_release=False):
     """Synthetic startup/role evidence for isolated tests, never production identity."""
     project = P.load_project(root)[1]
     if project.get('execution_start'):
         return
+    # Original lifecycle fixtures represent engagements saved before route selection.
+    # New route tests initialize an explicit treatment or retain pending for intake.
+    if historical_migration and project.get('migration_treatment') == 'pending':
+        project.pop('migration_treatment')
     # Existing suites exercise historical contracts. Release-policy suites opt
     # back in explicitly and supply their own complete consumer/sequence evidence.
-    project.pop('app_release_policy', None)
+    if not app_release:
+        project.pop('app_release_policy', None)
     P.write_json(root / 'project.json', project, replace=True)
     # Existing gate suites intentionally exercise the prior supported policy.
     # Continuity suites pass experience=True to keep new-init defaults and cover
@@ -38,6 +43,8 @@ def bootstrap(root, P, *, experience=False):
     loaded += ['skills/omni-' + role + '/SKILL.md' for role in P.ROLES]
     loaded += ['skills/omni-product-owner/references/visual-experience-discovery.md']
     loaded += ['skills/omni-product-owner/references/data-refresh-policy.md']
+    if project.get('migration_treatment') in ('preserve', 'redesign'):
+        loaded.append('skills/omni-artifact-accelerator/references/migration-fidelity.md')
     loaded += ['skills/omni-design-systems/references/' + name + '.md' for name in
                ('experience-brief', 'visual-craft', 'experience-curriculum', 'ideation-playbook')]
     request = {'id': 'synthetic-fixture',

@@ -59,8 +59,7 @@ to an available Omni feature. Carry every unsupported behavior into target desig
 ## Continue through the existing gates
 
 All new engagements, including faithful migrations, follow [A–F](../omni-artifact-accelerator/references/stage-gates.md).
-Access, data analysis and narrative precede product discovery. Exactly three
-concrete viable options and the actual user's choice precede detailed design and
+Access, data analysis and narrative precede product discovery. Confirm one source-matched design for preservation or choose among three redesign concepts before detailed design and
 coding. Preserve quality ambition across those options. Existing engagements retain
 their recorded policy and valid decisions; do not fabricate historical approvals.
 

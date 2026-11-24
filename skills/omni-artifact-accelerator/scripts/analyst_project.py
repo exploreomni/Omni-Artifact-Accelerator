@@ -14,6 +14,8 @@ import uuid
 
 MAX_BYTES = 10 * 1024 * 1024
 PACKET_BYTES = 256 * 1024
+TREATMENTS = ("preserve", "redesign")
+TREATMENT_RECORD = "evidence/migration-treatment.json"
 STARTER_QUESTIONS = ["Who uses this and what decision or task must it support?",
                      "Which metrics and source behaviors are accepted or unresolved?",
                      "What branding, device, access and completion scope is required?"]
@@ -169,6 +171,15 @@ def relative_file(root, relative):
     return p
 
 
+def apply_migration_treatment(project, decision):
+    need(type(decision) is dict and set(decision) == {"project_id", "migration_treatment"} and
+         decision["project_id"] == project["id"] and project.get("mode") == "migration" and
+         decision["migration_treatment"] in TREATMENTS and
+         project.get("migration_treatment") in ("pending", decision["migration_treatment"]),
+         "recorded migration treatment changed")
+    project["migration_treatment"] = decision["migration_treatment"]
+
+
 def load_project(root):
     root = no_links(root)
     obj, _ = read_json(root / "project.json")
@@ -177,6 +188,12 @@ def load_project(root):
     need(type(obj.get("id")) is str and obj["id"] and type(obj.get("name")) is str and
          obj["name"].strip(), "project id and name required")
     need(obj.get("mode") in ("net-new", "migration", "enhancement"), "invalid mode")
+    if "migration_treatment" in obj:
+        need(obj["mode"] == "migration" and obj["migration_treatment"] in (*TREATMENTS, "pending"),
+             "invalid migration treatment")
+    if os.path.lexists(root / TREATMENT_RECORD):
+        decision, _ = read_json(relative_file(root, TREATMENT_RECORD))
+        apply_migration_treatment(obj, decision)
     surfaces = obj.get("surfaces")
     need(type(surfaces) is list and bool(surfaces) and all(type(s) is str for s in surfaces) and
          len(surfaces) == len(set(surfaces)) and
@@ -196,11 +213,53 @@ def load_project(root):
     return root, obj
 
 
-def init(output, name, mode, surface, branding=None, website=None, selection_policy='host-verified-v1', context_policy=None, modeling_lane=None):
+def intake_question(mode=None, treatment=None):
+    if mode is None:
+        return {"status": "choose_work_type", "question": "Are you migrating an existing artifact or building something new in Omni?",
+                "choices": ["migration", "net-new"]}
+    if mode == "migration" and treatment in (None, "pending"):
+        return {"status": "choose_migration_treatment",
+                "question": "Preserve the existing experience, or redesign it while retaining its required capabilities?",
+                "choices": list(TREATMENTS)}
+    return None
+
+
+def select_migration_treatment(root, treatment):
+    root, project = load_project(root)
+    need(treatment in TREATMENTS and "migration_treatment" in project, "select a treatment for a new migration")
+    current = project["migration_treatment"]
+    need(current in ("pending", treatment), "migration treatment already selected for this engagement")
+    if current == "pending":
+        # Concurrent selection must not overwrite another user's choice or other project edits.
+        final_path = no_links(root / TREATMENT_RECORD)
+        with tempfile.NamedTemporaryFile(dir=final_path.parent, prefix=".route-") as temp:
+            temp.write(canonical({"project_id": project["id"], "migration_treatment": treatment}))
+            temp.flush()
+            try:
+                os.link(temp.name, final_path)
+            except FileExistsError:
+                need(load_project(root)[1]["migration_treatment"] == treatment, "a different migration treatment was selected")
+    return {"status": "selected", "mode": "migration", "migration_treatment": treatment}
+
+
+def migration_design_step(project, legacy_step):
+    treatment = project.get("migration_treatment")
+    if treatment == "pending":
+        return "E: ask whether to preserve or redesign the source experience"
+    if treatment == "preserve":
+        return "E: confirm one source-matched specification and its deviations, then resolve detailed design"
+    if treatment == "redesign":
+        return "E: retain required source controls in all three concepts, record the choice and resolve detailed design"
+    return legacy_step
+
+
+def init(output, name, mode, surface, branding=None, website=None, selection_policy='host-verified-v1', context_policy=None, modeling_lane=None, migration_treatment=None):
     root = no_links(output)
     need(modeling_lane in (None, 'omni-only') and not (modeling_lane and surface == 'report'),
          'standalone modeling requires an App or dashboard')
     need(mode in ("net-new", "migration", "enhancement"), "invalid mode")
+    need(migration_treatment is None or (mode == "migration" and migration_treatment in TREATMENTS),
+         "migration treatment applies only to migrations")
     need(surface in ("dashboard", "app", "report", "both"), "invalid surface")
     need(isinstance(name, str) and name.strip(), "name required")
     need(selection_policy in {'host-verified-v1', 'conversation-evidence-v1'}, 'unknown selection policy')
@@ -221,6 +280,8 @@ def init(output, name, mode, surface, branding=None, website=None, selection_pol
         "open_questions": list(STARTER_QUESTIONS), "open_questions_kind": "starter_prompts",
     }
     # Every new engagement is gated. A caller-controlled mode is not an exemption.
+    if mode == "migration":
+        project["migration_treatment"] = migration_treatment or "pending"
     if modeling_lane:
         project['semantic_lane'] = 'omni-modeling-v1'
     project['stage_gate_policy'] = 'data-first-v1'
@@ -232,6 +293,8 @@ def init(output, name, mode, surface, branding=None, website=None, selection_pol
     if context_policy is not None:
         project['context_policy'] = context_policy
     write_json(root / "project.json", project)
+    if migration_treatment:
+        write_json(root / TREATMENT_RECORD, {"project_id": project["id"], "migration_treatment": migration_treatment})
     write_json(root / project["design_intent_draft"], intent)
     for contract in ("metrics", "queries", "design", "brand", "qa"):
         write_json(root / "contracts" / (contract + ".json"), {
@@ -265,7 +328,9 @@ def init(output, name, mode, surface, branding=None, website=None, selection_pol
         stage_record(root, {'stage': 'selection_policy', 'selection_policy': selection_policy,
             'expected_tail_sha256': stage_status(root)['tail_sha256'],
             'evidence': {'policy_decision': 'evidence/selection-policy.json'}})
-    return {"project": str(root), "status": "initialized", "agents_dispatched": False,
+    return {"project": str(root), "status": "initialized", "mode": mode,
+            **({"migration_treatment": project["migration_treatment"]} if mode == "migration" else {}),
+            "agents_dispatched": False,
             "selection_policy": selection_policy}
 
 
@@ -608,6 +673,8 @@ def plan(root, scope_ids=None):
     if gates['required']:
         stage = gates.get('next_stage')
         eligible = set(stage_roles(stage))
+        if obj["mode"] == "migration" and stage in {"access", "analysis", "brief", "options", "design", "review"}:
+            eligible.add("artifact-translator")
         if domo and stage in {'access', 'analysis', 'narrative', 'brief', 'options', 'design', 'candidate', 'review'}:
             eligible.add('domo-migrator')
         if sigma and stage in {'access', 'analysis', 'narrative', 'brief', 'options', 'design', 'candidate', 'review'}:
@@ -642,7 +709,9 @@ def plan(root, scope_ids=None):
                  (r != 'dashboard-designer' or 'dashboard' in obj['surfaces']) and
                  (r != 'app-engineer' or 'report' not in obj['surfaces'] or 'app' in obj['surfaces']) and
                  (r not in {'report-designer', 'report-builder'} or 'report' in obj['surfaces'])]
-    return {"kind": "suggested_role_plan", "agents_dispatched": False,
+    return {"kind": "suggested_role_plan", "agents_dispatched": False, "mode": obj["mode"],
+            **({"migration_treatment": obj["migration_treatment"],
+                "intake_question": intake_question(obj["mode"], obj["migration_treatment"])} if "migration_treatment" in obj else {}),
             "stage_gates": gates,
             "scope_ids": scope_ids, "focused_scope_missing": focused and scope_ids is None,
             "scope_note": "For a focused repair, supply affected existing requirement IDs with --scope-id; do not restart the interview. Full intent remains in force.",
@@ -901,7 +970,7 @@ def routing_helper(name='task_routing'):
                   'execution_runtime', 'execution_qualification', 'assembly_provenance', 'analytical_evidence',
                   'execution_contracts', 'execution_observability', 'execution_preparation', 'selective_reads',
                   'experience_intent', 'experience_review', 'engagement_bootstrap', 'dma_topics', 'semantic_lane',
-                  'host_entry', 'native_data_consumers'}, 'unknown routing helper')
+                  'host_entry', 'migration_fidelity', 'native_data_consumers'}, 'unknown routing helper')
     # Fixed first-party module only. The host verifier never comes from a request,
     # file path or environment variable. Share its scope across helper imports.
     # The existing DMA module is per caller. Share only the stage provider and
@@ -1105,6 +1174,10 @@ def packet_data(root, role, inputs, assignment=None):
     if gate['required']:
         result['stage_context'] = {'policy': gate['policy'],
                                    'stage_bindings': gate.get('stage_bindings', {})}
+        if 'migration_treatment' in obj:
+            result['stage_context']['migration_treatment'] = obj['migration_treatment']
+            if gate.get('migration_baseline'):
+                result['stage_context']['migration_baseline'] = gate['migration_baseline']
         result['allowed_actions'] = ['read selected evidence',
             'author only the role work permitted by the current A-F stage; no implicit build or release grant']
         result['stop_conditions'].append('A-F prerequisites or trusted user selection are missing, changed or revoked')
@@ -1201,10 +1274,11 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
     cmd = commands.add_parser("init")
-    cmd.add_argument("--output", required=True)
-    cmd.add_argument("--name", required=True)
-    cmd.add_argument("--mode", choices=("net-new", "migration", "enhancement"), required=True)
-    cmd.add_argument("--surface", choices=("dashboard", "app", "report", "both"), required=True)
+    cmd.add_argument("--output")
+    cmd.add_argument("--name")
+    cmd.add_argument("--mode", choices=("net-new", "migration", "enhancement"))
+    cmd.add_argument("--migration-treatment", choices=TREATMENTS)
+    cmd.add_argument("--surface", choices=("dashboard", "app", "report", "both"))
     cmd.add_argument("--branding", choices=("unknown", "requested", "none"),
                      help="defaults to requested with --website, otherwise unknown")
     cmd.add_argument("--website", help="official company HTTPS website; does not select a logo")
@@ -1213,6 +1287,9 @@ def main():
     cmd.add_argument('--modeling-lane', choices=('omni-only',), help='Prepare or reuse a governed Topic for a standalone App or dashboard')
     cmd.add_argument('--context-policy', choices=('bounded-context-v1', 'legacy-index-v1'), default='bounded-context-v1',
                      help='new CLI projects require bounded context receipts for managed dispatch; existing projects keep their policy')
+    cmd = commands.add_parser("migration-select", help="Record the user's treatment for a pending migration handoff")
+    cmd.add_argument("--project", required=True)
+    cmd.add_argument("--migration-treatment", choices=TREATMENTS, required=True)
     cmd = commands.add_parser('execution-tool', help='Host-neutral fixed execution operations; no worker adapter is loaded from CLI arguments')
     cmd.add_argument('--project', required=True)
     cmd.add_argument('--tool', required=True)
@@ -1282,7 +1359,14 @@ def main():
     args = parser.parse_args()
     try:
         if args.command == "init":
-            result = init(args.output, args.name, args.mode, args.surface, args.branding, args.website, args.selection_policy, args.context_policy, args.modeling_lane)
+            need(args.migration_treatment is None or args.mode == "migration", "migration treatment requires --mode migration")
+            result = intake_question(args.mode, args.migration_treatment)
+            if result is None:
+                need(all((args.output, args.name, args.surface)), "supply --output, --name and --surface to initialize the selected work")
+                result = init(args.output, args.name, args.mode, args.surface, args.branding, args.website,
+                              args.selection_policy, args.context_policy, args.modeling_lane, args.migration_treatment)
+        elif args.command == "migration-select":
+            result = select_migration_treatment(args.project, args.migration_treatment)
         elif args.command == 'execution-tool':
             result = routing_helper('execution_bridge').call(args.project, args.tool, read_json(args.request)[0])
         elif args.command in ('context-build', 'context-check'):

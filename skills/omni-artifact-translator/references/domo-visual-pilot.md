@@ -13,7 +13,7 @@ and [visual/App evidence contract](domo-evidence-contract.md). Reuse the existin
 Domo manager/run and accepted scope. Do not duplicate its engine or replace its
 typed gates with conversational status. Every new pilot follows A–F; discovery and
 source evidence can precede design, but target coding waits for the actual user's
-choice among exactly three concepts and the resolved detailed handoff.
+confirmation of the source-matched design for preservation or choice among three redesign concepts, followed by the resolved detailed handoff.
 
 ## 1. Establish the pilot and connections
 
@@ -116,8 +116,7 @@ send the minimum versioned requirement through [backend handoff](../../omni-back
 Preserve the selected route and source scope; a visual change is not an upstream
 warehouse requirement.
 
-Carry the verified analysis and narrative into D's interview and E's three
-concrete, equally scoped concepts. Record the actual user selection, detailed
+Carry the verified analysis and narrative into D's interview. At E confirm the faithful specification or choose among three equally scoped redesigns. Record the actual user selection, detailed
 design and target refresh policy. Then use the gated `domo_build_handoff` to
 prepare engineering work. A successful handoff is local preparation, not native
 write authorization. Keep all four consultant reviews after each build iteration.

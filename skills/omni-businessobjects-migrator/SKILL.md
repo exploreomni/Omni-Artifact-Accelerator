@@ -57,7 +57,7 @@ At D capture fidelity/redesign, dashboard/App/both, audience, ambition, brand,
 devices, exports/print, navigation, optional spatial/3D visuals and the target
 [cache/refresh policy](../omni-product-owner/references/data-refresh-policy.md).
 Source refresh schedules never choose target caching defaults.
-At E present exactly three concrete viable concepts at the accepted quality bar
+At E present one source specification for preservation or three concrete concepts for redesign
 and retain the actual user selection before detailed design and F coding.
 Reuse valid prior decisions for an existing engagement, not generic source defaults.
 

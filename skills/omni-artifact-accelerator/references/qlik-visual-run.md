@@ -24,7 +24,7 @@ bounded source rendering; it does not install a Qlik client or publish targets.
    and journal continuity; render authority does not permit source authoring.
 7. Complete A–C before the D interview. Preserve fidelity choices, visual ambition,
    branding, devices, exports and independent cache/refresh policy. At E present
-   exactly three concrete viable concepts and record the real user's selection
+   one source specification for preservation or three concepts for redesign and record the real user's selection
    before design and F coding. Reuse valid existing decisions.
 8. Use existing governed Omni bindings or exchange scoped backend requirements
    with DMA. No Qlik DMA adapter is assumed. Preserve route and source identity,

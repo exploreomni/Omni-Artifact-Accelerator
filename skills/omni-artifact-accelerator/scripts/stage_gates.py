@@ -195,6 +195,7 @@ def _pins(payload):
     result.extend(payload.get('discovery_dependencies', []))
     result.extend(payload.get('experience_dependencies', []))
     result.extend(payload.get('startup_dependencies', []))
+    result.extend(payload.get('migration_dependencies', []))
     result.extend(option['evidence'] for option in payload.get('options', []))
     result.extend(payload.get('artifacts', []))
     if 'review_manifest' in payload:
@@ -241,6 +242,15 @@ def _context(root, fd, P, *, changed_candidates=None):
           type(project.get('schema_version')) is int and project['schema_version'] == 1 and
           _text(project.get('id'), 256) and project.get('mode') in {'net-new', 'migration', 'enhancement'},
           'stage_gate_invalid_project')
+    if 'migration_treatment' in project:
+        _need(project['mode'] == 'migration' and project['migration_treatment'] in {'pending', 'preserve', 'redesign'},
+              'stage_gate_invalid_migration_treatment')
+    try:
+        decision = _read(fd, P.TREATMENT_RECORD, P.MAX_BYTES)
+    except FileNotFoundError:
+        pass
+    else:
+        P.apply_migration_treatment(project, _json(decision, P))
     policy = project.get('stage_gate_policy')
     _need('stage_gate_policy' not in project or policy == POLICY, 'stage_gate_unknown_policy')
     _need('workflow_quality_policy' not in project or project['workflow_quality_policy'] == QUALITY_POLICY,
@@ -354,14 +364,15 @@ def _discovery_snapshot(fd, project, payload, P, *, current=True):
     return helper.visual_report(spec), paths
 
 
-def _concept_inputs(root, fd, project, options, P):
+def _concept_inputs(root, fd, project, options, P, *, source_baseline=None):
     """Shared source checks for pre-review dispatch and the recorded options gate."""
     helper = P.routing_helper('product_intent')
     spec = _current_spec(fd, project, P)
     results, visuals, dependencies = [], [], {}
     for option in options:
         path = option['evidence']['path']
-        result = helper.validate_concept(root, path, spec, P)
+        result = (helper.validate_concept(root, path, spec, P, source_baseline=source_baseline) if source_baseline
+                  else helper.validate_concept(root, path, spec, P))
         metadata = result['metadata']
         if project.get('app_release_policy') == 'candidate-release-v1':
             surfaces = metadata.get('surface_metadata', [metadata])
@@ -389,7 +400,7 @@ def _concept_inputs(root, fd, project, options, P):
 def concept_preflight(root, request, P=None):
     """Prepare a small reviewer packet from the current analytical and design evidence."""
     P = _helpers(P)
-    _need(type(request) is dict and set(request) <= {'options', 'claims'} and
+    _need(type(request) is dict and set(request) <= {'options', 'claims', 'source_baseline'} and
           ('options' in request or not request), 'stage_gate_concept_preflight_request_invalid')
     gate = P.stage_require(root, 'options')
     with _root_fd(root, P) as (root, fd):
@@ -399,12 +410,22 @@ def concept_preflight(root, request, P=None):
         sources = {stage: state['current'][stage]['payload']['evidence'] for stage in ('analysis', 'narrative', 'brief')}
         packet = {'tail_sha256': state['tail'], 'analytical_and_design_evidence': sources,
                   'creative_review_complete': False, 'rendered_verified': False, 'choice_recorded': False}
+        if project.get('migration_treatment') == 'preserve':
+            _need(not request, 'stage_gate_faithful_migration_requires_source_baseline')
+            return {**packet, 'status': 'prepare_source_baseline'}
         if not request:
             return {**packet, 'status': 'concept_inputs_ready'}
         # Validate the ordinary options request shape without creating an event.
         _payload_shape('options', {'options': request['options'], 'evidence': {'comparison': 'evidence/pending.json'}}, saved=False)
         options = [dict(o, evidence=_pin(fd, o['evidence'], P)) for o in request['options']]
-        _, concepts, _ = _concept_inputs(root, fd, project, options, P)
+        source = None
+        if project.get('migration_treatment') == 'redesign':
+            _need('source_baseline' in request, 'stage_gate_migration_baseline_required')
+            evidence = {'source_baseline': _pin(fd, request['source_baseline'], P)}
+            source = _migration_baseline(root, fd, project, {'evidence': evidence}, P)
+        else:
+            _need('source_baseline' not in request, 'stage_gate_unexpected_migration_baseline')
+        _, concepts, _ = _concept_inputs(root, fd, project, options, P, source_baseline=source)
         proofs = request.get('claims', [])
         _need(type(proofs) is list and len(proofs) <= 128, 'stage_gate_invalid_concept_claims')
         labels = {c['option_id']: {s for surface in c.get('surface_metadata', [c])
@@ -425,8 +446,27 @@ def concept_preflight(root, request, P=None):
                     for o, c in zip(options, concepts)]}
 
 
-def _experience_options(root, fd, project, payload, P):
-    spec, results, dependencies = _concept_inputs(root, fd, project, payload['options'], P)
+def _offered_ids(payload):
+    if payload.get('migration_treatment') == 'preserve':
+        return ['source-baseline']
+    return [option['id'] for option in payload['options']]
+
+
+def _migration_baseline(root, fd, project, payload, P):
+    pin = payload['evidence']['source_baseline']
+    result = P.routing_helper('migration_fidelity').baseline(root, pin['path'])
+    _need(pin in result['pins'] and all(_pin(fd, d['path'], P) == d for d in result['pins']),
+          'stage_gate_source_baseline_changed')
+    return dict(result, source_baseline_path=pin['path'], migration_treatment=project['migration_treatment'])
+
+
+def _experience_options(root, fd, project, payload, P, *, source_baseline=None):
+    if payload.get('migration_treatment') == 'preserve':
+        return []
+    if payload.get('migration_treatment') == 'redesign' and source_baseline is None:
+        source_baseline = _migration_baseline(root, fd, project, payload, P)
+    spec, results, dependencies = _concept_inputs(root, fd, project, payload['options'], P,
+                                                  source_baseline=source_baseline)
     for pin in P.routing_helper('experience_review').comparison(
             root, payload['evidence']['comparison']['path'], payload['options'], results, spec, P,
             expected_reviewer=payload.get('workflow_context', {}).get('responsibilities', {}).get('creative_review', {}).get('worker')):
@@ -444,7 +484,8 @@ def review_requests(root, P=None):
     return {'candidate_sha256': report['candidate_sha256'], 'requests': [
         {'stage': 'review', 'scope': scope, 'iteration_sha256': candidate['event_sha256'],
          'candidate_sha256': report['candidate_sha256'], 'reviewer': None, 'outcome': None,
-         'basis': None, 'evidence': {'review': None}}
+         'basis': None, 'evidence': ({'review': None, 'migration_observations': None}
+              if scope == 'qa' and report.get('migration_treatment') else {'review': None})}
         for scope in REVIEW_SCOPES if scope not in report['reviews']]}
 
 
@@ -467,12 +508,23 @@ def _experience_handoff(root, fd, project, payload, state, P):
     path = payload['evidence']['design']['path']
     selected_designs = {s.get('design_path') for s in spec['selections']}
     _need(selected_designs == {path}, 'stage_gate_handoff_must_cover_all_selected_surfaces')
-    result = P.routing_helper('product_intent').validate_handoff(root, path, spec, P)
+    offer = state['current']['options']['payload']
+    treatment = offer.get('migration_treatment')
+    source = _migration_baseline(root, fd, project, offer, P) if treatment else None
+    handoff = P.routing_helper('product_intent').validate_handoff
+    result = handoff(root, path, spec, P, source_baseline=source) if source else handoff(root, path, spec, P)
+    if source:
+        _need(result['metadata'].get('source_baseline_sha256') == offer['baseline_sha256'] and
+              result['metadata'].get('source_baseline_path') == source['source_baseline_path'],
+              'stage_gate_handoff_must_match_source_baseline')
     choice = state['current']['choice']['payload']['option_id']
-    option = next(o for o in state['current']['options']['payload']['options'] if o['id'] == choice)
-    _need(result['metadata']['option_id'] == choice and
-          result['metadata']['concept_manifest_path'] == option['evidence']['path'],
-          'stage_gate_handoff_must_match_selected_concept')
+    if treatment == 'preserve':
+        selected = offer['evidence']['source_baseline']
+    else:
+        selected = next(o['evidence'] for o in offer['options'] if o['id'] == choice)
+        _need(result['metadata']['option_id'] == choice and
+              result['metadata']['concept_manifest_path'] == selected['path'],
+              'stage_gate_handoff_must_match_selected_concept')
     design = _json(_read(fd, path, P.MAX_BYTES), P)
     adjustments = design['experience_handoff'].get('selection_adjustments')
     if adjustments is not None:
@@ -483,7 +535,8 @@ def _experience_handoff(root, fd, project, payload, state, P):
               'stage_gate_adjustments_need_actual_choice_response')
         rows = adjustments['elements']
         _need(type(rows) is list and 0 < len(rows) <= 16, 'stage_gate_adjustments_elements_required')
-        option_ids = {o['id'] for o in state['current']['options']['payload']['options']}
+        _need(treatment != 'preserve', 'stage_gate_concept_adjustments_require_design_options')
+        option_ids = set(_offered_ids(offer))
         journey_ids = {j['id'] for j in design['journeys']}
         for row in rows:
             _need(type(row) is dict and set(row) == {'option_id', 'source_locator', 'application', 'journey_ids'}
@@ -498,7 +551,7 @@ def _experience_handoff(root, fd, project, payload, state, P):
         _need(pin['path'] not in dependencies or dependencies[pin['path']] == pin,
               'stage_gate_conflicting_handoff_dependency')
         dependencies[pin['path']] = pin
-    _need(dependencies.get(option['evidence']['path']) == option['evidence'],
+    _need(dependencies.get(selected['path']) == selected,
           'stage_gate_handoff_concept_binding_changed')
     return [dependencies[path] for path in sorted(dependencies)]
 
@@ -549,8 +602,11 @@ def _requalification(root, fd, project, request, state, P, provider):
     if 'brief' in current:
         _discovery_snapshot(fd, project, current['brief']['payload'], P)
     if 'options' in current:
-        _need(_experience_options(root, fd, project, current['options']['payload'], P) ==
-              current['options']['payload']['experience_dependencies'], 'stage_gate_requalification_options_changed')
+        offer = current['options']['payload']
+        _need(offer.get('migration_treatment') == project.get('migration_treatment'),
+              'stage_gate_migration_treatment_changed')
+        _need(_experience_options(root, fd, project, offer, P) ==
+              offer.get('experience_dependencies', []), 'stage_gate_requalification_options_changed')
     if 'design' in current:
         _need(_experience_handoff(root, fd, project, current['design']['payload'], state, P) ==
               current['design']['payload']['experience_dependencies'], 'stage_gate_requalification_handoff_changed')
@@ -630,6 +686,26 @@ def _payload_shape(stage, payload, saved=True):
               _hash(payload.get('expected_tail_sha256')), 'stage_gate_invalid_incremental_policy')
         if saved:
             _need(_hash(payload.get('request_sha256')), 'stage_gate_invalid_request_digest')
+    treatment = payload.get('migration_treatment')
+    if 'migration_treatment' in payload:
+        _need(stage == 'options' and treatment in {'preserve', 'redesign'}, 'stage_gate_invalid_migration_treatment')
+        expected.add('migration_treatment')
+        if treatment == 'preserve':
+            expected.remove('options')
+        if saved:
+            expected.add('baseline_sha256')
+            _need(_hash(payload.get('baseline_sha256')), 'stage_gate_migration_baseline_required')
+    qa = stage == 'review' and payload.get('scope') == 'qa'
+    if saved and 'migration_parity' in payload:
+        expected.add('migration_parity')
+        _need(qa and payload['migration_parity'] in {'matched', 'partial'}, 'stage_gate_invalid_migration_parity')
+    if saved and (treatment or 'migration_parity' in payload):
+        expected.add('migration_dependencies')
+        pins = payload.get('migration_dependencies')
+        _need(type(pins) is list and 0 < len(pins) <= 1024, 'stage_gate_migration_evidence_required')
+        for pin in pins:
+            _pin_shape(pin)
+        _need(len({pin['path'] for pin in pins}) == len(pins), 'stage_gate_duplicate_migration_dependency')
     discovery = stage == 'brief' and 'discovery_version' in payload
     if discovery:
         expected.add('discovery_version')
@@ -714,13 +790,19 @@ def _payload_shape(stage, payload, saved=True):
     if stage in EVIDENCE:
         evidence = payload['evidence']
         expected_evidence = {'brief', 'intent'} if discovery else EVIDENCE[stage]
+        if treatment == 'preserve':
+            expected_evidence = {'source_baseline'}
+        elif treatment == 'redesign':
+            expected_evidence = {'source_baseline', 'comparison'}
+        elif qa and type(evidence) is dict and 'migration_observations' in evidence:
+            expected_evidence = {'review', 'migration_observations'}
         _need(type(evidence) is dict and set(evidence) == expected_evidence, 'stage_gate_' + stage + '_evidence_required')
         for value in evidence.values():
             _pin_shape(value) if saved else _relative(value)
     for key in {'source_scope', 'user_identity', 'analyst', 'bi_engineer', 'storyteller',
                 'receipt_ref', 'subject', 'reviewer'} & set(payload):
         _need(_text(payload[key]), 'stage_gate_invalid_' + key)
-    if stage == 'options':
+    if stage == 'options' and treatment != 'preserve':
         options = payload['options']
         _need(type(options) is list and len(options) == 3, 'stage_gate_exactly_three_options_required')
         for option in options:
@@ -804,6 +886,9 @@ def _replay(root, project, journal, P):
             raise ValueError('stage_gate_invalid_timestamp') from exc
         stage, payload = event['stage'], event['payload']
         _payload_shape(stage, payload)
+        if stage == 'options' and payload.get('migration_treatment') is not None:
+            _need(payload['migration_treatment'] == project.get('migration_treatment'),
+                  'stage_gate_recorded_migration_treatment_changed')
         if 'app_release_policy' in payload:
             _need(project.get('app_release_policy') == 'candidate-release-v1', 'stage_gate_app_release_policy_removed')
             app_release_seen = True
@@ -848,7 +933,7 @@ def _replay(root, project, journal, P):
             predecessor = current[STAGES[i - 1]]['sha256'] if i else None
             if stage == 'choice':
                 choice_seen = True
-                _need(payload['option_id'] in {o['id'] for o in current['options']['payload']['options']},
+                _need(payload['option_id'] in _offered_ids(current['options']['payload']),
                       'stage_gate_choice_not_current_option')
                 _need((payload.get('basis') == 'conversation_evidence') == (selection_policy is not None),
                       'stage_gate_choice_policy_mismatch')
@@ -890,6 +975,8 @@ def _replay(root, project, journal, P):
             _need(not independent or
                   payload['reviewer'] not in candidate['payload']['builders'], 'stage_gate_independent_reviewer_required')
             if stage == 'review_carry_forward':
+                _need(not project.get('migration_treatment') or payload['scope'] != 'qa',
+                      'stage_gate_fresh_migration_qa_required')
                 _need(payload['expected_tail_sha256'] == previous, 'stage_gate_carry_tail_mismatch')
                 _need(payload['scope'] not in reviews, 'stage_gate_review_already_recorded')
                 P.routing_helper('incremental_review').validate_carry(
@@ -974,6 +1061,13 @@ def _report(root, fd, project, required, state, P, provider, *, changed_candidat
     report['incremental_review'] = P.routing_helper('incremental_review').impact_state(state)
     report['incremental_review']['policy_event_sha256'] = (
         state['incremental_policies'][-1]['sha256'] if state['incremental_policies'] else None)
+    if 'migration_treatment' in project:
+        report.update(migration_treatment=project['migration_treatment'], migration_parity='not_assessed',
+                      migration_parity_basis=None)
+        # Source observations establish parity for one frozen candidate only.
+        qa_impact = report['incremental_review']['scopes']['qa']
+        qa_impact.update(eligible=False, action='fresh_review')
+        qa_impact['reasons'].append('candidate_bound_migration_observations_required')
     if not required:
         return report
     if any(not _fresh(fd, event, P) for event in state['incremental_policies']):
@@ -1003,11 +1097,19 @@ def _report(root, fd, project, required, state, P, provider, *, changed_candidat
             # phase_check re-derives the failure; no cross-request cache/fallback.
             pass
     for stage in STAGES:
+        if stage == 'options' and project.get('migration_treatment') == 'pending':
+            report['findings'].append('migration_treatment_selection_required')
+            report['next_stage'] = stage
+            break
         if stage == 'design' and changed_candidates:
             break
         event = current.get(stage)
         if event is None:
             report['findings'].append('missing_stage:' + stage)
+            report['next_stage'] = stage
+            break
+        if stage == 'options' and event['payload'].get('migration_treatment') != project.get('migration_treatment'):
+            report['findings'].append('migration_treatment_changed_reopen_options')
             report['next_stage'] = stage
             break
         if stage in {'options', 'choice', 'design'} and project.get('app_release_policy') == 'candidate-release-v1' and \
@@ -1076,7 +1178,7 @@ def _report(root, fd, project, required, state, P, provider, *, changed_candidat
                 report['findings'].append('visual_discovery_checkpoint_required')
                 report['next_stage'] = 'brief'
                 break
-        if stage == 'options':
+        if stage == 'options' and event['payload'].get('migration_treatment') != 'preserve':
             helper = P.routing_helper('product_intent')
             spec = _current_spec(fd, project, P)
             if helper.experience_context(spec) is not None:
@@ -1114,8 +1216,12 @@ def _report(root, fd, project, required, state, P, provider, *, changed_candidat
         report['completed_stages'].append(stage)
         report['stage_bindings'][stage] = event['sha256']
     if 'options' in report['completed_stages']:
-        report['choice_bindings'] = {o['id']: _binding(root, project, current['options'], o['id'], state['selection_policy'])
-                                    for o in current['options']['payload']['options']}
+        offer = current['options']['payload']
+        report['choice_bindings'] = {ident: _binding(root, project, current['options'], ident, state['selection_policy'])
+                                     for ident in _offered_ids(offer)}
+        if 'baseline_sha256' in offer:
+            report['migration_baseline'] = dict(offer['evidence']['source_baseline'],
+                                                baseline_sha256=offer['baseline_sha256'])
     if 'choice' in report['completed_stages']:
         report['selected_option_id'] = current['choice']['payload']['option_id']
     # A new startup may make a retained prefix stale. Offer its existing journal
@@ -1156,6 +1262,13 @@ def _report(root, fd, project, required, state, P, provider, *, changed_candidat
             report['candidate_sha256'] = candidate['payload']['candidate_sha256']
             report['reviews'] = {scope: dict(e['payload'], event_sha256=e['sha256'])
                                  for scope, e in state['reviews'].items()}
+            qa = state['reviews'].get('qa')
+            if 'migration_treatment' in project and qa:
+                report['migration_parity'] = qa['payload'].get('migration_parity', 'not_assessed')
+                if 'migration_parity' in qa['payload']:
+                    report['migration_parity_basis'] = 'supplied_observations_only'
+                if 'stale_iteration_evidence' in report['findings'] and not _fresh(fd, qa, P):
+                    report['migration_parity'] = 'stale'
             by_basis = {}
             for scope, review in state['reviews'].items():
                 if review['payload']['outcome'] == 'resolved':
@@ -1180,6 +1293,9 @@ def _report(root, fd, project, required, state, P, provider, *, changed_candidat
                         except (ValueError, KeyError, TypeError, OSError):
                             report['findings'].append('standalone_topic_delivery_access_pending')
                             report['next_stage'] = 'review'
+                    if project.get('migration_treatment') and report['migration_parity'] != 'matched':
+                        report['findings'].append('migration_parity_evidence_required')
+                        report['next_stage'] = 'review'
                     report['release_ready'] = not report['findings']
     report['status'] = ('ready_for_release' if report['release_ready'] else
                         'blocked' if any(not x.startswith('missing_stage:') for x in report['findings']) else 'incomplete')
@@ -1193,10 +1309,15 @@ def _host_checkpoint(report):
                'candidate': 'prepare_candidate', 'review': 'complete_candidate_reviews',
                'workflow_requalification': 'verify_recorded_prefix',
                'repair_selected_candidate': 'repair_selected_candidate', 'repair_state': 'repair_evidence'}
+    preserve = report.get('migration_treatment') == 'preserve'
+    if preserve:
+        actions['options'] = 'prepare_source_baseline'
     waiting = (next_stage == 'choice' and report.get('findings') == ['missing_stage:choice']
-               and len(report.get('choice_bindings', {})) == 3)
+               and len(report.get('choice_bindings', {})) == (1 if preserve else 3))
     if waiting:
-        action = 'request_design_choice'
+        action = 'confirm_source_baseline' if preserve else 'request_design_choice'
+    elif 'migration_treatment_selection_required' in report.get('findings', ()):
+        action = 'select_migration_treatment'
     elif report.get('startup_required') and next_stage == 'access':
         action = 'record_startup'
     elif next_stage == 'candidate' and report.get('candidate') and report.get('status') != 'blocked':
@@ -1213,7 +1334,8 @@ def _host_checkpoint(report):
     return {'action': action, 'next_stage': next_stage, 'tail_sha256': report.get('tail_sha256'),
             'completed_stages': list(report.get('completed_stages', ())),
             'selected_option_id': report.get('selected_option_id'),
-            'pending_human_decision': 'design_choice' if waiting else None,
+            'pending_human_decision': (('source_baseline_confirmation' if preserve else 'design_choice') if waiting else
+                                       'migration_treatment' if action == 'select_migration_treatment' else None),
             'iteration_id': candidate.get('iteration_id'), 'candidate_sha256': report.get('candidate_sha256'),
             'pending_review_scopes': [scope for scope in REVIEW_SCOPES
                                       if candidate and scope not in report.get('reviews', {})]}
@@ -1294,6 +1416,7 @@ def _require(report, action, provider):
     needed = STAGES[:STAGES.index(stage)] if stage in STAGES else STAGES
     _need(set(needed) <= set(report['completed_stages']), 'stage_gate_predecessor_incomplete:' + action)
     if stage in {'options', 'choice'}:
+        _need(report.get('migration_treatment') != 'pending', 'migration_treatment_selection_required')
         discovery = report.get('visual_discovery', {})
         _need(discovery.get('version') == 1, 'stage_gate_upgrade_visual_discovery_before_options')
         _need(discovery.get('status') == 'ready', 'stage_gate_visual_discovery_unresolved')
@@ -1390,6 +1513,12 @@ def record(root, request, *, P=None, provider=None):
     with _root_fd(root, P) as (root, fd), _locked(fd):
         project, required, journal = _context(root, fd, P)
         _need(required, 'stage_gate_not_new_product')
+        if stage == 'options':
+            _need(project.get('migration_treatment') != 'pending', 'migration_treatment_selection_required')
+            _need(payload.get('migration_treatment') == project.get('migration_treatment'),
+                  'stage_gate_options_must_match_migration_treatment')
+        if stage == 'review_carry_forward' and project.get('migration_treatment'):
+            _need(payload['scope'] != 'qa', 'stage_gate_fresh_migration_qa_required')
         state = _replay(root, project, journal, P)
         before = _report(root, fd, project, required, state, P, provider)
         request_sha = P.digest(P.canonical(request))
@@ -1467,9 +1596,15 @@ def record(root, request, *, P=None, provider=None):
                     P.routing_helper('product_intent').experience_context(_current_spec(fd, project, P)) is not None):
                 _need(state['current']['brief']['payload'].get('experience_intent_version') == 1,
                       'stage_gate_experience_intent_checkpoint_required')
-            payload['options'] = [dict(o, evidence=_pin(fd, o['evidence'], P)) for o in payload['options']]
-            if project.get('workflow_quality_policy') == QUALITY_POLICY:
-                payload['experience_dependencies'] = _experience_options(root, fd, project, payload, P)
+            baseline = None
+            if project.get('migration_treatment'):
+                baseline = _migration_baseline(root, fd, project, payload, P)
+                payload['baseline_sha256'] = baseline['baseline_sha256']
+                payload['migration_dependencies'] = baseline['pins']
+            if payload.get('migration_treatment') != 'preserve':
+                payload['options'] = [dict(o, evidence=_pin(fd, o['evidence'], P)) for o in payload['options']]
+                if project.get('workflow_quality_policy') == QUALITY_POLICY:
+                    payload['experience_dependencies'] = _experience_options(root, fd, project, payload, P, source_baseline=baseline)
         if stage == 'choice':
             _need(payload['option_id'] in before['choice_bindings'], 'stage_gate_choice_not_current_option')
             if before['selection_policy'] == CHAT_SELECTION:
@@ -1507,6 +1642,20 @@ def record(root, request, *, P=None, provider=None):
                                              'workflow': payload.get('workflow_context')}
                 payload['review_context'].update(_incremental().freeze_context(
                     fd, payload['iteration_id'], payload['review_dependencies'], P.routing_helper('stage_gates'), P))
+        if stage == 'review' and payload['scope'] == 'qa':
+            observations = payload['evidence'].get('migration_observations')
+            if observations:
+                _need(project.get('migration_treatment') in {'preserve', 'redesign'}, 'stage_gate_unexpected_migration_qa')
+                offer = state['current']['options']['payload']
+                parity = P.routing_helper('migration_fidelity').parity(
+                    root, offer['evidence']['source_baseline']['path'], observations['path'], payload['candidate_sha256'])
+                _need(parity['baseline_sha256'] == offer['baseline_sha256'] and
+                      parity['candidate_sha256'] == payload['candidate_sha256'] and observations in parity['pins'] and
+                      all(_pin(fd, pin['path'], P) == pin for pin in parity['pins']), 'stage_gate_migration_qa_changed')
+                payload['migration_parity'] = parity['status']
+                payload['migration_dependencies'] = parity['pins']
+            if project.get('migration_treatment') and payload['outcome'] == 'resolved':
+                _need(payload.get('migration_parity') == 'matched', 'stage_gate_required_control_parity_unresolved')
         if stage == 'review' and P.routing_helper('product_intent').experience_context(_current_spec(fd, project, P)) is not None:
             dependencies = P.routing_helper('experience_review').fit(root, payload['evidence']['review']['path'],
                 _current_spec(fd, project, P), state['candidate']['payload'], payload, P)

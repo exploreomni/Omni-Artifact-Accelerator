@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1120" height="1544" viewBox="0 0 1120 1544" role="img" aria-labelledby="title description">
   <title id="title">From a business question to a reviewed Omni experience</title>
-  <desc id="description">Your approved AI host runs the orchestrator and relevant specialists. A verifies data and user access. B qualifies analysis and queries. C creates a traceable narrative. D captures product and brand requirements. E compares three concrete concepts, records your choice and resolves detailed design. F implements the selected product and receives security, UI/UX, product-owner and independent QA feedback each iteration. Migration specialists supply source evidence when needed. Backend gaps go to Data Model Accelerator or the model owner and return for revalidation. Native preview or publication requires separate authorization and verification. Roles are responsibilities, not automatic agent launches.</desc>
+  <desc id="description">Your approved AI host runs the orchestrator and relevant specialists. A verifies data and user access. B qualifies analysis and queries. C creates a traceable narrative. D captures product and brand requirements. E confirms the source specification for preservation, or compares three concepts for net-new and redesign, then resolves detailed design. F implements the selected product and receives security, UI/UX, product-owner and independent QA feedback each iteration. Migration specialists supply source evidence when needed. Backend gaps go to Data Model Accelerator or the model owner and return for revalidation. Native preview or publication requires separate authorization and verification. Roles are responsibilities, not automatic agent launches.</desc>
   <defs>
     <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
       <path d="M 1 1 L 9 5 L 1 9 Z" fill="#4D122C"/>
@@ -65,9 +65,9 @@
   <rect x="40" y="916" width="680" height="120" rx="25" fill="#FF5FA2"/>
   <circle cx="84" cy="966" r="24" fill="#4D122C"/>
   <text x="84" y="974" text-anchor="middle" class="body light">E</text>
-  <text x="128" y="957" class="heading">Compare three visual concepts</text>
+  <text x="128" y="957" class="heading">Confirm the design direction</text>
   <text x="128" y="993" class="small">Designers · design systems · branding</text>
-  <text x="128" y="1020" class="small">Same analytical scope and accepted quality ambition.</text>
+  <text x="128" y="1020" class="small">One faithful specification or three scoped concepts.</text>
   <path d="M 380 1036 V 1060" class="line"/>
 
   <rect x="40" y="1064" width="680" height="64" rx="25" fill="#4D122C"/>
