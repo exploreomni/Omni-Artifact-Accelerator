@@ -19,7 +19,8 @@ def module(name, path):
 HERE = Path(__file__).resolve().parent
 ap = module('domo_workflow_project', HERE / 'analyst_project.py')
 wf = module('domo_workflow_visual', HERE / 'visual_workflow.py')
-contract = module('domo_plan_contract', HERE.parents[1] / 'omni-artifact-translator/scripts/domo_source_contract.py')
+host = module('domo_workflow_host', HERE / 'domo_host.py')
+contract = host.contract
 ROUTES = ('reuse_existing', 'omni_semantic_reconstruction', 'warehouse_first_refactor')
 
 

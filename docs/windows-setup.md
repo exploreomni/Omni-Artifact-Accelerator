@@ -18,13 +18,22 @@ New-Item -ItemType Directory -Force -Path $workspace | Out-Null
 Set-Location -LiteralPath $workspace
 ```
 
-Once the preview revision is available in your Git remote, clone the repository with `git clone https://github.com/exploreomni/Omni-Artifact-Accelerator.git` and select the supplied revision in that new checkout. Open the parent folder in your assistant.
+For a published preview revision, let your assistant clone the repository and select the supplied commit in that new checkout. The equivalent PowerShell steps are:
+
+```powershell
+git clone https://github.com/exploreomni/Omni-Artifact-Accelerator.git
+$previewRevision = Read-Host 'Paste the full Windows preview commit supplied by the maintainer'
+git -C Omni-Artifact-Accelerator switch --detach $previewRevision
+git -C Omni-Artifact-Accelerator rev-parse HEAD
+```
+
+Confirm the printed revision matches the one you selected, then open the parent folder in your assistant.
 
 The assistant should confirm the checkout, use your stated migration or net-new goal, and run the workspace check below. A local checkout can be used directly. WSL, copying global skills and installing another CLI are unnecessary for this setup.
 
 ## What the assistant checks
 
-Run the helper from the checkout. Use the actual local interpreter discovered in the host. For a Windows Python launcher the equivalent PowerShell command is:
+Run the helper from the checkout. In PowerShell, use `Get-Command py,python -ErrorAction SilentlyContinue` to locate installed interpreters. Use the approved local Python for this workspace. For a Windows Python launcher the equivalent PowerShell command is:
 
 ```powershell
 Set-Location -LiteralPath (Join-Path $workspace 'Omni-Artifact-Accelerator')
@@ -37,6 +46,7 @@ The result reports the interpreter platform, the local workflow and the connecti
 | --- | --- |
 | Local onboarding, project creation, journal, and resume | Implemented for private single-user projects on local NTFS. The assistant uses the existing `init`, `run-start`, `stage-status` and other stage commands in the selected checkout. Native behavior is pending verification. |
 | Migration and net-new design | Preserve migrations use one source-matched specification. Redesign and net-new work retain three choices. Local controls, assembly and review use the same contracts as Mac. Domo Pro Code planning accepts supplied original files. Individual readers and connected source capture need separate qualification. |
+| Additional migration readers, report imports and Data Model Accelerator handoffs | Windows execution for these paths is pending. Keep the original source evidence and handoff receipts. Use a qualified host for a reader that requires POSIX. |
 | Existing Omni MCP or CLI | Discover an operation-specific host MCP tool or existing Windows CLI. A declared route still needs identity and access checks. Host-managed read access can support authorized discovery. |
 | Windows CLI release | Existing executable inspection and release planning are available. For a separately approved, pinned binary, a scoped version preview prepares the exact host action. Packaged installation and tenant transport require further Windows qualification. [CLI setup](../skills/omni-artifact-accelerator/references/omni-cli-setup.md) |
 | Native create, update, publication, installed-skill activation and local visual MCP server | Outside this Windows preview. Record the missing operation and retain the candidate for authorized continuation. The host's Omni connector and the optional local visual MCP server are separate tools. |
