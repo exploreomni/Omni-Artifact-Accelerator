@@ -8,7 +8,6 @@ import copy
 import html
 import importlib.util
 import os
-import stat
 import time
 from pathlib import Path
 
@@ -25,12 +24,9 @@ def now():
 @contextmanager
 def locked(root):
     ap.validation_helper().before_mutation()
-    import fcntl
     root, project = ap.load_project(root)
     lock = ap.no_links(root / '.task-operations.lock')
-    fd = os.open(lock, os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW, 0o600)
-    try:
-        fcntl.flock(fd, fcntl.LOCK_EX)
+    with ap.local_file_lock(lock, wait=True):
         path = ap.no_links(root / 'task-operations.json')
         state = ap.read_json(path)[0] if path.exists() else {
             'schema_version': 1, 'project_id': project['id'], 'max_workers': 2, 'attempts': [], 'reuse_count': 0}
@@ -44,6 +40,9 @@ def locked(root):
             import json
             payload = json.dumps(state, indent=2, allow_nan=False).encode()
             ap.need(len(payload) <= ap.MAX_BYTES, 'Task ledger exceeds the readable size limit; retain it and start a linked scope')
+            if os.name == 'nt':
+                ap.private_write(path, payload, replace=path.exists())
+                return
             fd_tmp, temp = tempfile.mkstemp(prefix='.operations-', dir=root)
             try:
                 with os.fdopen(fd_tmp, 'wb') as stream:
@@ -59,8 +58,6 @@ def locked(root):
             finally:
                 if os.path.exists(temp):
                     os.unlink(temp)
-    finally:
-        os.close(fd)
 
 
 def capture(root, paths):
@@ -307,18 +304,12 @@ def review_work(root, request):
 @contextmanager
 def _read_lock(root):
     """Only ledger/project capture uses this shared lock; no expensive validators."""
-    import fcntl
     root = ap.no_links(root)
     path = ap.no_links(root / '.task-operations.lock')
-    fd = os.open(path, os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW | os.O_NONBLOCK, 0o600)
-    try:
-        ap.need(stat.S_ISREG(os.fstat(fd).st_mode), 'Task lock must be a regular file')
-        started = time.perf_counter()
-        fcntl.flock(fd, fcntl.LOCK_SH)
+    started = time.perf_counter()
+    with ap.local_file_lock(path, shared=True, wait=True):
         ap.validation_helper().lock_wait(time.perf_counter() - started)
         yield root
-    finally:
-        os.close(fd)
 
 
 def _generation(root):

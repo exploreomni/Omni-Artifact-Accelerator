@@ -40,7 +40,7 @@ def latest(root, P, D):
     versions = routes(root)
     if not versions:
         return None
-    path = str(versions[-1].relative_to(root))
+    path = versions[-1].relative_to(root).as_posix()
     return D.pin(root, path, P)
 
 
@@ -49,13 +49,17 @@ def store(root, relative, value, P, D):
     dest = P.no_links(root / D.safe_output(relative))
     need(dest.parent == root / 'contracts', 'output_must_be_in_contracts')
     P.validation_helper().before_mutation()
-    with tempfile.NamedTemporaryFile(dir=dest.parent) as new:
-        new.write(P.canonical(value) + b'\n')
-        new.flush()
-        try:
-            os.link(new.name, dest)
-        except FileExistsError:
-            need(D.same(D.read(root, relative, P)[0], value, P), 'output_conflict')
+    raw = P.canonical(value) + b'\n'
+    try:
+        if os.name == 'nt':
+            P.private_write(dest, raw)
+        else:
+            with tempfile.NamedTemporaryFile(dir=dest.parent) as new:
+                new.write(raw)
+                new.flush()
+                os.link(new.name, dest)
+    except FileExistsError:
+        need(D.same(D.read(root, relative, P)[0], value, P), 'output_conflict')
     return D.pin(root, relative, P)
 
 

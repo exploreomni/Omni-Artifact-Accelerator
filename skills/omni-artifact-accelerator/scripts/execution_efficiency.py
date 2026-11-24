@@ -25,6 +25,8 @@ def atomic_json(path, value):
     path = P.no_links(path)
     raw = (json.dumps(value, indent=2, allow_nan=False) + '\n').encode()
     P.need(len(raw) <= P.MAX_BYTES, 'Efficiency record exceeds project size limit')
+    if os.name == 'nt':
+        return P.private_write(path, raw, replace=path.exists())
     fd, temporary = tempfile.mkstemp(prefix='.efficiency-', dir=path.parent)
     try:
         with os.fdopen(fd, 'wb') as stream:

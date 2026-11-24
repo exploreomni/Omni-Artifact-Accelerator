@@ -7,6 +7,8 @@ description: Orchestrate Omni dashboard, native App and Reports Beta design, ana
 
 Begin a new engagement with [work intent](references/work-intent.md). Ask migration or net-new, then preservation or redesign if needed. Preserve a named source in one spec, and carry its controls into implementation and QA. Three concepts apply to net-new or explicit redesign. A saved route or clear original request answers its question.
 
+Use the [Windows preview entry](references/engagement-entry.md#windows-preview) when running under native Windows Python. Other platforms use their existing entry.
+
 Before the first native action, follow [Omni connection setup](references/omni-cli-setup.md). Honor an existing route choice. Otherwise discover the host’s Omni MCP tools for the next operation, then check for an existing Omni CLI if needed. Either connection can be sufficient. When neither is available, offer MCP setup, permission-based CLI installation or offline work.
 
 **Artifact validation.** Use the existing engagement's `stage-status` to resume the

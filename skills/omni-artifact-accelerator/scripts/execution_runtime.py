@@ -9,9 +9,6 @@ import importlib.util
 from pathlib import Path
 import uuid
 from contextlib import contextmanager
-import fcntl
-import os
-import stat
 
 _spec = importlib.util.spec_from_file_location('runtime_project', Path(__file__).with_name('analyst_project.py'))
 P = importlib.util.module_from_spec(_spec)
@@ -70,13 +67,8 @@ class Runtime:
         P.routing_helper().text(attempt_id)
         key = P.digest(attempt_id.encode('utf-8'))
         path = P.no_links(self.root / ('.host-launch-' + key + '.lock'))
-        fd = os.open(path, os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW | os.O_NONBLOCK, 0o600)
-        try:
-            P.need(stat.S_ISREG(os.fstat(fd).st_mode), 'Host launch fence must be a regular file')
-            fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        with P.local_file_lock(path):
             yield
-        finally:
-            os.close(fd)
 
     def launch(self, attempt_id):
         try:

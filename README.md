@@ -4,6 +4,12 @@ Use your AI coding assistant to build native Omni Apps and dashboards, prepare n
 
 ## Quick start
 
+Choose **[Mac setup](#mac-setup)** or **[Windows setup (preview)](docs/windows-setup.md)**. Both use the same accelerator and starter prompt.
+
+### Mac setup
+
+Linux users can use these terminal steps too. To continue an existing project, reopen its original workspace and checkout. Use a separate workspace to try a new release while the project is active. [Resuming and upgrading](docs/HOW_TO.md#resume-a-project-on-its-original-version)
+
 **1. Create a workspace and clone the accelerator.** Run these commands once in a terminal with Git installed. If you already have a clone, use its containing folder in step 2.
 
 ```sh
@@ -420,7 +426,7 @@ For a substantial new experience, expect **A–C evidence → D requirements →
 
 See [design and implementation](docs/HOW_TO.md#3-design-and-implement-the-selected-scope) for the review workflow and evidence checks. Correct numbers, a saved screenshot and a published document establish different things; none alone establishes a polished, usable experience.
 
-Local planning and source inspection need no Omni credentials. Native work needs separately configured, authorized source/target access, verified API or CLI capabilities and an appropriate development draft. The native helpers and local stdio host use POSIX facilities; macOS/Linux is the supported execution environment described here.
+Local planning and source inspection need no Omni credentials. Native work needs separately configured, authorized source/target access, verified API or CLI capabilities and an appropriate development draft. The packaged native delivery adapters and local visual MCP server use a qualified POSIX execution environment. The [Windows preview](docs/windows-setup.md) covers a separately scoped local workflow.
 
 | Intended operation | Implemented route and boundary |
 | --- | --- |

@@ -1394,7 +1394,7 @@ def coverage(root, requirements_path, candidate_path, evidence_paths, destinatio
             # Recompute instead of accepting an edited pass flag or a resealed summary.
             import tempfile
             with tempfile.TemporaryDirectory(dir=root / "evidence") as temporary:
-                temp = str((Path(temporary) / "check.json").relative_to(root))
+                temp = (Path(temporary) / "check.json").relative_to(root).as_posix()
                 compare(root, evidence["spec"]["path"], temp)
                 need(load(root, temp) == evidence, "coverage.comparison_changed")
         else:

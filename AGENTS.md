@@ -4,6 +4,8 @@ When someone points you at this checkout to get started, read [the orchestrator]
 
 For a new artifact engagement, ask **“Are you migrating an existing artifact or building something new in Omni?”** Use an explicit answer from the request. For migration, confirm **preserve** or **redesign**. A 1:1 request selects preserve. Carry the route through the [migration and net-new workflow](skills/omni-artifact-accelerator/references/work-intent.md). Resume saved work and focused repairs from their existing decisions.
 
+For native Windows Python, use the [Windows preview setup](docs/windows-setup.md) before initializing or resuming. Keep local workflow readiness separate from Omni connectivity. When a required operation is blocked, retain the brief and offer supported discovery or recovery. A working CLI or MCP connection does not authorize an alternate build or publication.
+
 When the host is Cursor, the [Cursor entry guide](skills/omni-artifact-accelerator/references/cursor-entry.md) explains checkout discovery and rule conflicts. A saved migration decision still governs the first design handoff.
 
 On first use, follow [Omni connection setup](skills/omni-artifact-accelerator/references/omni-cli-setup.md). Check the host for an Omni MCP tool that covers the next operation or use an existing verified Omni CLI. Honor the user's selected route on resume. Offer CLI installation only when the user chooses it.

@@ -8,7 +8,9 @@ from contextlib import contextmanager
 from contextvars import ContextVar
 import copy
 from datetime import datetime, timezone
+from functools import lru_cache
 import hashlib
+import importlib.util
 import json
 import os
 from pathlib import Path
@@ -32,13 +34,29 @@ class MutationDenied(ValueError):
 
 
 def _path(value):
+    if os.name == 'nt':
+        return windows_files().canonical_path(value)
     path = Path(value).absolute()
     if '..' in path.parts:
         raise ValueError('validation_unsafe_path')
     return path
 
 
+@lru_cache(maxsize=1)
+def windows_files():
+    spec = importlib.util.spec_from_file_location('oaa_windows_files', Path(__file__).with_name('windows_files.py'))
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
 def _read(path, maximum):
+    if os.name == 'nt':
+        backend = windows_files()
+        try:
+            return backend.read_path(path, maximum)
+        except backend.ReadChanged as exc:
+            raise Changed('validation_input_changed_during_read') from exc
     path = _path(path)
     parent = os.open(path.anchor, os.O_RDONLY | os.O_DIRECTORY)
     handle = None

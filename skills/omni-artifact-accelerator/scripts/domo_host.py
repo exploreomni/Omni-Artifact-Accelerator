@@ -3,10 +3,11 @@
 Pins establish integrity, not permission. A qualified local host must separately
 authorize the reviewed runtime/dependency closure. No target or model-call tools.
 """
-import fcntl
 import importlib.util
 import json
 import os
+if os.name != 'nt':
+    import fcntl
 from pathlib import Path
 import re
 import tempfile
@@ -62,6 +63,8 @@ def capabilities(value):
 
 class DomoOperations:
     def __init__(self, project, configuration, *, allow_read=False, allow_dataflows=False, runner=None):
+        if os.name == 'nt':
+            raise ValueError('Connected source execution requires a qualified host. Use previously supplied evidence for local Windows planning.')
         need(allow_read is True and type(allow_dataflows) is bool, 'startup_read_grant_required')
         self.root, _ = ap.load_project(project)
         path = ap.relative_file(self.root, configuration)

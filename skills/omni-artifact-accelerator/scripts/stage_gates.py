@@ -13,10 +13,9 @@ arbitrary file/code edits, qualify a host, certify real access, prove how/when w
 was performed, or confer publication, native, rendered or business acceptance.
 Candidate and review files must be preserved snapshots, not overwritten in place.
 """
-from contextlib import contextmanager
+from contextlib import contextmanager, ExitStack
 from datetime import datetime, timezone
 from functools import lru_cache
-import fcntl
 import importlib.util
 import json
 import os
@@ -24,6 +23,9 @@ from pathlib import Path
 import re
 import secrets
 import stat
+
+if os.name != 'nt':
+    import fcntl
 
 POLICY = 'data-first-v1'
 QUALITY_POLICY = 'experience-evidence-v1'
@@ -86,6 +88,11 @@ def _incremental():
     return module
 
 
+@lru_cache(maxsize=1)
+def _windows():
+    return _helpers(None).validation_helper().windows_files()
+
+
 def _need(ok, code):
     if not ok:
         raise ValueError(code)
@@ -118,6 +125,10 @@ def _root_fd(root, P):
     root = P.no_links(root)
     _need(root.is_dir() and root == root.resolve() and not root.resolve().is_relative_to(SOURCE_ROOT),
           'stage_gate_private_engagement_outside_package_required')
+    if os.name == 'nt':
+        with _windows().pinned_directory(root, private_root=True) as directory:
+            yield root, directory
+        return
     # Check every ancestor through openat: neither an existing symlink nor a
     # parent swapped to a symlink may redirect evidence or durable state writes.
     fd = os.open(root.anchor, os.O_RDONLY | os.O_DIRECTORY)
@@ -136,6 +147,8 @@ def _read(fd, relative, maximum):
     _need(parts and not Path(relative).is_absolute() and '..' not in parts and
           '\\' not in relative and Path(relative).as_posix() == relative,
           'stage_gate_unsafe_path')
+    if os.name == 'nt':
+        return _windows().read(fd, relative, maximum)
     current = os.dup(fd)
     handle = None
     try:
@@ -1456,6 +1469,14 @@ def require_action(root, action, *, P=None, provider=None):
 
 @contextmanager
 def _locked(fd):
+    if os.name == 'nt':
+        with ExitStack() as stack:
+            try:
+                stack.enter_context(_windows().locked(fd, LOCK))
+            except BlockingIOError as exc:
+                raise ValueError('stage_gate_busy') from exc
+            yield
+        return
     handle = os.open(LOCK, os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW | os.O_NONBLOCK, 0o600, dir_fd=fd)
     try:
         _need(stat.S_ISREG(os.fstat(handle).st_mode), 'stage_gate_invalid_lock')
@@ -1471,6 +1492,8 @@ def _locked(fd):
 def _atomic(fd, value, P):
     data = P.canonical(value) + b'\n'
     _need(len(data) <= MAX_JOURNAL_BYTES, 'stage_gate_journal_too_large')
+    if os.name == 'nt':
+        return _windows().atomic_write(fd, JOURNAL, data, replace=True)
     temporary = '.stage-gates-' + secrets.token_hex(16)
     handle = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600, dir_fd=fd)
     try:

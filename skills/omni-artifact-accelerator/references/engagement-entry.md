@@ -18,6 +18,10 @@ For Cursor Agent, open the selected checkout as a workspace folder. The [Cursor 
 
 If the user opened a folder containing the clone, resolve their named checkout inside it and run helpers from the checkout root. Once the work mode and surface are known, use `analyst_project.py init` to create a new sibling engagement, or resume the named existing one. Perform the startup steps below on the user's behalf. Opening the parent and explicitly reading the checkout works even when the host loads no nested project rules. If a host has access only to the checkout, identify the sibling directory access it needs. A fresh project directory is created by `init`; an empty pre-created directory fails the new-project check. [Human quick start](../../../README.md#quick-start)
 
+## Windows preview
+
+Use the [Windows setup guide](../../../docs/windows-setup.md). Inspect the workspace and connection separately. Run local helpers under the same interpreter used for the preflight. Resume the original project and checkout. Preserve uncertain outcomes for review. A local gate failure stops dependent build and release actions.
+
 ## Inspect the host entry first
 
 Use [Omni connection setup](omni-cli-setup.md) to identify the host’s Omni MCP

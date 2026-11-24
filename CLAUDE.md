@@ -2,6 +2,8 @@
 
 For a new artifact engagement, ask **“Are you migrating an existing artifact or building something new in Omni?”** Use an explicit answer from the request. For migration, confirm **preserve** or **redesign**. A 1:1 request selects preserve. Carry the route through the [migration and net-new workflow](skills/omni-artifact-accelerator/references/work-intent.md). Resume saved work and focused repairs from their existing decisions.
 
+For native Windows Python, follow the [Windows preview setup](docs/windows-setup.md) before creating or resuming a project. Report the specific blocked operation and preserve the project if setup cannot proceed.
+
 On first use, follow [Omni connection setup](skills/omni-artifact-accelerator/references/omni-cli-setup.md). Check the host for an Omni MCP tool that covers the next operation or use an existing verified Omni CLI. Honor the user's selected route on resume. Offer CLI installation only when the user chooses it.
 
 For a request to create, redesign or migrate an Omni App or dashboard, first read

@@ -251,7 +251,7 @@ def _check(root, request):
         docs = documents(record)
         need(record['documents'] == {name: P.digest(data) for name, data in docs.items()}, 'entry_documents_invalid')
         for name, content in docs.items():
-            need(P.read_bytes(P.relative_file(root, str(Path(relative_path).parent / name))) == content, 'entry_document_changed')
+            need(P.read_bytes(P.relative_file(root, (Path(relative_path).parent / name).as_posix())) == content, 'entry_document_changed')
         findings, next_actions = [], []
         source_matches = W.source_manifest(package) == source['manifest'] and W.git_identity(package) == source['git']
         if not source_matches:
@@ -292,7 +292,7 @@ def _check(root, request):
         else:
             findings.append('startup_missing')
             next_actions.append({'code': 'record_startup', 'action': 'Read the exact repository entry, copy the startup template to a new requests file, add only guidance actually read, then use the existing run-start.',
-                                 'template': str(Path(relative_path).parent / 'STARTUP_REQUEST.json')})
+                                 'template': (Path(relative_path).parent / 'STARTUP_REQUEST.json').as_posix()})
         if workflow['startup_status'] == 'matching_local_record':
             try:
                 gates = P.stage_status(root)
@@ -310,7 +310,7 @@ def _check(root, request):
                 findings.append('stage_state_requires_repair')
                 next_actions.append({'code': 'stage_status', 'action': 'Inspect and reconcile the existing stage-status findings before resuming phase work.'})
         return {'kind': 'engagement_entry_check', 'status': 'not_ready' if findings else 'entry_current',
-                'record': request['record'], 'instruction_fragment': str(Path(relative_path).parent / 'START_HERE.md'),
+                'record': request['record'], 'instruction_fragment': (Path(relative_path).parent / 'START_HERE.md').as_posix(),
                 'package_check': {'status': 'matching' if source_matches else 'changed', 'scope': 'source_manifest_and_entry_files_only',
                                   'source_expectation': source['expectation']['kind'], 'tests_executed': False},
                 'initialized_engagement': {'status': 'existing', 'project_id': project['id'], 'relationship': 'sibling'},

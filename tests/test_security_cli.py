@@ -19,6 +19,7 @@ SPEC.loader.exec_module(native)
 transport = native.CLI_PROCESS
 
 
+@unittest.skipUnless(os.name == "posix", "bounded process execution is POSIX-only")
 class SecurityCliTests(unittest.TestCase):
     def test_environment_is_allowlisted_and_help_has_no_credential(self):
         calls = []
@@ -116,6 +117,39 @@ class SecurityCliTests(unittest.TestCase):
             adapter = native.NativeAdapter(folder, target, runner=lambda argv, **kw: subprocess.CompletedProcess(argv, 0, b'\xff', b''))
             with self.assertRaisesRegex(native.NativeError, "UTF-8"):
                 adapter._cli(["--help"], auth=False, text=True)
+
+
+class NativeWindowsAdapterBoundaryTests(unittest.TestCase):
+    def test_import_preserves_offline_workflow_without_posix_file_locks(self):
+        spec = importlib.util.spec_from_file_location("source_preview_native", SPEC.origin)
+        imported = importlib.util.module_from_spec(spec)
+        with patch.dict(sys.modules, {"fcntl": None, spec.name: imported}), patch.object(sys, "platform", "win32"):
+            spec.loader.exec_module(imported)
+            self.assertTrue(callable(imported.WORKFLOW.need))
+            with self.assertRaisesRegex(imported.NativeError, "native Windows"):
+                imported.require_native_adapter()
+
+    def test_adapter_and_transport_refuse_before_config_process_or_storage_access(self):
+        import contextlib
+        import io
+
+        with tempfile.TemporaryDirectory() as folder, patch.object(sys, "platform", "win32"), \
+                patch.object(transport, "pinned_file") as check_pin, \
+                patch.object(transport.subprocess, "Popen") as launch:
+            with self.assertRaisesRegex(transport.ProcessError, "native Windows"):
+                transport.command({})
+            with self.assertRaisesRegex(transport.ProcessError, "native Windows"):
+                transport.run(["omni.exe", "documents"], env={}, cwd=folder)
+            with self.assertRaisesRegex(native.NativeError, "native Windows"):
+                native.NativeAdapter(folder, None, runner=lambda *args, **kwargs: None)
+            stderr = io.StringIO()
+            with contextlib.redirect_stderr(stderr):
+                code = native.main(["--workspace", folder, "--target", "missing.json", "inspect"])
+            self.assertEqual(code, 2)
+            self.assertIn("native Windows", stderr.getvalue())
+            self.assertEqual(list(Path(folder).iterdir()), [])
+            check_pin.assert_not_called()
+            launch.assert_not_called()
 
 
 if __name__ == "__main__":

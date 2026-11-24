@@ -406,7 +406,7 @@ def check(root, receipt_path, packet_path=None):
         if packet_path is not None:
             need(receipt['packet']['path'] == packet_path, 'wrong_assignment_packet')
         raw, expected = prepare(root, receipt['request'])
-        expected['task'] = {'path': str(Path(receipt_path).parent / 'TASK.md'),
+        expected['task'] = {'path': (Path(receipt_path).parent / 'TASK.md').as_posix(),
                             'sha256': digest(raw), 'bytes': len(raw)}
         need(receipt == expected, 'receipt_changed_or_stale')
         need(read(root, expected['task']['path']) == raw, 'task_bytes_changed')

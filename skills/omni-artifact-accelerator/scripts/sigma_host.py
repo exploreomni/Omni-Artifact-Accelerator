@@ -3,11 +3,12 @@
 Only a locally qualified host may activate this adapter after dependency review.
 No target credentials, arbitrary command, HTTP server, install or publish path.
 """
-import fcntl
 import hashlib
 import importlib.util
 import json
 import os
+if os.name != 'nt':
+    import fcntl
 from pathlib import Path
 import re
 import tempfile
@@ -49,6 +50,8 @@ class SigmaOperations:
     in the source journal and must not be restarted in another output directory.
     """
     def __init__(self, project, configuration, *, allow_read=False, allow_query=False, runner=None):
+        if os.name == 'nt':
+            raise ValueError('Connected source execution requires a qualified host. Use previously supplied evidence for local Windows planning.')
         need(allow_read is True, "source_read_grant_required")
         self.root, _ = ap.load_project(project)
         self.configuration = {"path": configuration,

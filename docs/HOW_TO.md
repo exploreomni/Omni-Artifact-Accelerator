@@ -6,6 +6,12 @@ Start with a business question, a migration source or an existing model. The orc
 
 For first use, follow the [three-step local quick start](../README.md#quick-start). Your assistant reads the cloned repository directly and sets up your project in a sibling folder.
 
+### Resume a project on its original version
+
+Reopen the original workspace, select the same checkout and ask the assistant to continue the existing project. Source checks include the checkout path, revision and product files. Moving an identical clone or pulling new product files into the active checkout can make the saved startup stale.
+
+For a new project on a later release, use a separate workspace. To deliberately upgrade an active project, keep its journal, prepare a new entry and startup, then follow [workflow requalification](../skills/omni-artifact-accelerator/references/stage-gates.md). The package checks which earlier decisions remain current and requires a fresh candidate and reviews for an eligible upgrade. Preserve the historical evidence and inspect any remaining blocker before continuing. A downgrade of an upgraded engagement requires separate verification.
+
 ### Optional checks for operators
 
 To validate a checkout, run `python3 -I -S -B scripts/check_package.py` from the repository root using an existing approved Python 3 runtime. The check uses the standard library. For package development and release checks, see [testing](TESTING.md).

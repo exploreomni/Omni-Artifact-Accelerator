@@ -12,7 +12,6 @@ import argparse
 import copy
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
-import fcntl
 import hashlib
 import importlib.util
 import json
@@ -87,6 +86,13 @@ def _standalone_module():
 
 class NativeError(ValueError):
     """A bounded operation rejected, failed, or needs reconciliation."""
+
+
+def require_native_adapter():
+    try:
+        CLI_PROCESS.require_bounded_transport()
+    except CLI_PROCESS.ProcessError as exc:
+        raise NativeError(str(exc)) from None
 
 
 def now():
@@ -385,6 +391,7 @@ class NativeAdapter:
     surface = "dashboard"
 
     def __init__(self, workdir, target: TargetConfig, runner=None, http=None):
+        require_native_adapter()
         self.root = Path(workdir).resolve(strict=True)
         if not self.root.is_dir():
             raise NativeError("Workspace must be a directory")
@@ -839,6 +846,8 @@ class NativeAdapter:
         return candidate
 
     def _lock(self):
+        import fcntl
+
         path = self._path(".omni-native/execution.lock", exists=False)
         fd = os.open(path, os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW, 0o600)
         stream = os.fdopen(fd, "a+")
@@ -1193,6 +1202,7 @@ def main(argv=None):
         sub.add_parser(name).add_argument("--export-id", required=True)
     args = parser.parse_args(argv)
     try:
+        require_native_adapter()
         root = Path(args.workspace).resolve(strict=True)
         target_path = root / args.target
         if Path(args.target).is_absolute() or ".." in Path(args.target).parts:

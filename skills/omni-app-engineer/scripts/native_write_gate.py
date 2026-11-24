@@ -75,6 +75,7 @@ def execute(project, prepared, *, host):
     Host code owns transport bounds, credential isolation and redirect rejection.
     No method is selected from JSON or loaded from an engagement path.
     """
+    A.need(os.name != 'nt', 'Native App writes on Windows await qualification. Retain the reviewed candidate.')
     A.need(callable(getattr(host, 'authorize', None)) and callable(getattr(host, 'send', None)),
            'Operator-configured authorization and transport required')
     expected = rebuild(project, prepared, host)

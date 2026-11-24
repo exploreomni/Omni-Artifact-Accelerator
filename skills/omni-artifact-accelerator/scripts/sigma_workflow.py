@@ -122,7 +122,7 @@ def materialize(root, plan_path, destination):
     # saved plan's immutable content through a temporary private output.
     import tempfile
     with tempfile.TemporaryDirectory(prefix='.sigma-plan-', dir=root) as folder:
-        relative = str((Path(folder) / 'plan.json').relative_to(root))
+        relative = (Path(folder) / 'plan.json').relative_to(root).as_posix()
         plan(root, value['intake']['path'], relative)
         regenerated = wf.load(root, relative)
         ap.need(regenerated == value, 'sigma.plan_changed')

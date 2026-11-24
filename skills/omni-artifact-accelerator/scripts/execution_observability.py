@@ -1,11 +1,10 @@
 """Bounded local structural measurements. No payload logging or billing inference."""
 import importlib.util
-import fcntl
+from contextlib import ExitStack
 import json
 import os
 from pathlib import Path
 import re
-import stat
 import time
 import uuid
 
@@ -95,22 +94,21 @@ def record(root, *, tool, operation, arguments, result, started_ns, outcome, con
         P.need(len(raw) <= MAX_EVENT_BYTES, 'observation exceeds bound')
         # Do not delay execution for metrics. A short nonblocking collector lock
         # keeps the event cap exact even when several workers finish together.
-        lock = os.open(P.no_links(directory / '.collector.lock'), os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW, 0o600)
-        try:
-            info = os.fstat(lock)
-            P.need(stat.S_ISREG(info.st_mode) and info.st_nlink == 1, 'unsafe collector lock')
+        with ExitStack() as locks:
             try:
-                fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                locks.enter_context(P.local_file_lock(P.no_links(directory / '.collector.lock'), single_link=True))
             except BlockingIOError:
                 return 'collector_busy'
             if sum(1 for _ in directory.glob('*.json')) >= MAX_EVENTS:
                 return 'limit_reached'
-            fd = os.open(P.no_links(directory / (item['event_id'] + '.json')),
-                         os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
-            with os.fdopen(fd, 'wb') as stream:
-                stream.write(raw)
-        finally:
-            os.close(lock)
+            path = P.no_links(directory / (item['event_id'] + '.json'))
+            # Collection is independent of the read-only artifact operation.
+            if os.name == 'nt':
+                P.routing_helper('windows_files').private_write(path, raw)
+            else:
+                fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
+                with os.fdopen(fd, 'wb') as stream:
+                    stream.write(raw)
         return 'recorded'
     except (ValueError, OSError, TypeError, OverflowError):
         return 'unavailable'

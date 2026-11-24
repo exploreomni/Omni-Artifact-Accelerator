@@ -23,6 +23,7 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 CASES = {
     "source-runner": "tests/test_source_runner.py",
+    "workspace-setup": "tests/test_workspace_setup.py",
     "omni-cli-setup": "tests/test_omni_cli_setup.py",
     "cursor-entry": "tests/test_cursor_entry.py",
     "work-intent": "tests/test_work_intent.py",

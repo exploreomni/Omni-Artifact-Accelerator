@@ -68,6 +68,8 @@ def canonical(value):
 
 
 def no_links(path):
+    if os.name == 'nt':
+        return routing_helper('windows_files').no_links(path)
     p = Path(path).absolute()
     need(not any(part.is_symlink() for part in (p, *p.parents)),
          "symlink paths are not supported")
@@ -131,6 +133,8 @@ def read_json(path):
 
 def private_write(path, data, replace=False):
     validation_helper().before_mutation()
+    if os.name == 'nt':
+        return routing_helper('windows_files').private_write(path, data, replace=replace)
     p = no_links(path)
     need(p.parent.is_dir(), "output parent must exist")
     if not replace:
@@ -147,6 +151,26 @@ def private_write(path, data, replace=False):
     finally:
         if os.path.exists(temp):
             os.unlink(temp)
+
+
+@contextmanager
+def local_file_lock(path, *, shared=False, wait=False, single_link=False):
+    """Process lock for cooperating helpers on the private engagement filesystem."""
+    if os.name == 'nt':
+        with routing_helper('windows_files').locked_path(path, shared=shared, wait=wait):
+            yield
+        return
+    import fcntl
+    import stat
+    handle = os.open(path, os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW | os.O_NONBLOCK, 0o600)
+    try:
+        info = os.fstat(handle)
+        need(stat.S_ISREG(info.st_mode) and (not single_link or info.st_nlink == 1), 'unsafe local lock')
+        mode = fcntl.LOCK_SH if shared else fcntl.LOCK_EX
+        fcntl.flock(handle, mode if wait else mode | fcntl.LOCK_NB)
+        yield
+    finally:
+        os.close(handle)
 
 
 def write_json(path, value, replace=False):
@@ -183,6 +207,8 @@ def apply_migration_treatment(project, decision):
 
 def load_project(root):
     root = no_links(root)
+    if os.name == 'nt':
+        routing_helper('windows_files').check_private_project(root)
     obj, _ = read_json(root / "project.json")
     need(type(obj) is dict and type(obj.get("schema_version")) is int and obj.get("schema_version") == 1 and
          obj.get("kind") == "omni_analyst_project", "unsupported project schema")
@@ -233,13 +259,17 @@ def select_migration_treatment(root, treatment):
     if current == "pending":
         # Concurrent selection must not overwrite another user's choice or other project edits.
         final_path = no_links(root / TREATMENT_RECORD)
-        with tempfile.NamedTemporaryFile(dir=final_path.parent, prefix=".route-") as temp:
-            temp.write(canonical({"project_id": project["id"], "migration_treatment": treatment}))
-            temp.flush()
-            try:
-                os.link(temp.name, final_path)
-            except FileExistsError:
-                need(load_project(root)[1]["migration_treatment"] == treatment, "a different migration treatment was selected")
+        raw = canonical({"project_id": project["id"], "migration_treatment": treatment})
+        try:
+            if os.name == 'nt':
+                private_write(final_path, raw)
+            else:
+                with tempfile.NamedTemporaryFile(dir=final_path.parent, prefix=".route-") as temp:
+                    temp.write(raw)
+                    temp.flush()
+                    os.link(temp.name, final_path)
+        except FileExistsError:
+            need(load_project(root)[1]["migration_treatment"] == treatment, "a different migration treatment was selected")
     return {"status": "selected", "mode": "migration", "migration_treatment": treatment}
 
 
@@ -269,9 +299,32 @@ def init(output, name, mode, surface, branding=None, website=None, selection_pol
     intent = intent_helper().starter(selected_surfaces,
         branding if branding is not None else ("requested" if website else "unknown"), website)
     need(not root.exists() and root.parent.is_dir(), "use a new directory with an existing parent")
+    if os.name == 'nt':
+        win = routing_helper('windows_files')
+        win.check_workspace(root.parent)
+        # A complete project becomes visible under its requested name in a single
+        # no-replace move. Keep interrupted staging for an explicit recovery.
+        staging = root.parent / ('.oaa-init-' + uuid.uuid4().hex)
+        win.mkdir_private(staging)
+        try:
+            result = _populate_project(staging, intent, name, mode, surface, selected_surfaces,
+                                       selection_policy, context_policy, modeling_lane, migration_treatment)
+            win.publish_directory(staging, root)
+        except (OSError, ValueError) as exc:
+            raise ValueError(f"Windows initialization stopped. Inspect private staging at {staging}. {exc}") from exc
+        return {**result, 'project': str(root)}
     root.mkdir(mode=0o700)
+    return _populate_project(root, intent, name, mode, surface, selected_surfaces,
+                             selection_policy, context_policy, modeling_lane, migration_treatment)
+
+
+def _populate_project(root, intent, name, mode, surface, selected_surfaces, selection_policy,
+                      context_policy, modeling_lane, migration_treatment):
     for directory in ("inputs", "contracts", "tasks", "requests", "evidence", "deliverables"):
-        (root / directory).mkdir(mode=0o700)
+        if os.name == 'nt':
+            routing_helper('windows_files').mkdir_private(root / directory)
+        else:
+            (root / directory).mkdir(mode=0o700)
     project = {
         "schema_version": 1, "kind": "omni_analyst_project",
         "id": str(uuid.uuid4()), "name": name,
@@ -989,12 +1042,12 @@ def routing_helper(name='task_routing'):
                   'execution_runtime', 'execution_qualification', 'assembly_provenance', 'analytical_evidence',
                   'execution_contracts', 'execution_observability', 'execution_preparation', 'selective_reads',
                   'experience_intent', 'experience_review', 'engagement_bootstrap', 'dma_topics', 'semantic_lane',
-                  'host_entry', 'migration_fidelity', 'domo_workflow', 'native_data_consumers'}, 'unknown routing helper')
+                  'host_entry', 'migration_fidelity', 'domo_workflow', 'native_data_consumers', 'windows_files', 'workspace_setup', 'omni_cli_setup'}, 'unknown routing helper')
     # Fixed first-party module only. The host verifier never comes from a request,
     # file path or environment variable. Share its scope across helper imports.
     # The existing DMA module is per caller. Share only the stage provider and
     # the standalone coordinator; their evidence reads remain operation scoped.
-    shared = name in ('stage_gates', 'semantic_lane')
+    shared = name in ('stage_gates', 'semantic_lane', 'windows_files')
     cache_key = '_oaa_' + name + '_' + digest(str(Path(__file__).resolve().parent).encode())
     if shared and cache_key in sys.modules:
         return sys.modules[cache_key]
@@ -1303,6 +1356,11 @@ def packet_check(root, packet_relative):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
+    setup = commands.add_parser('workspace-setup', help='Inspect local platform and connection options without writing files')
+    setup.add_argument('--workspace', required=True, help='existing folder containing the checkout')
+    setup.add_argument('--route', default='auto', choices=('auto', 'mcp', 'cli', 'api', 'offline'))
+    setup.add_argument('--mcp-tool', help='actual host-discovered Omni tool for the intended operation')
+    setup.add_argument('--mcp-checked', action='store_true', help='host inspected its tool inventory')
     cmd = commands.add_parser("init")
     cmd.add_argument("--output")
     cmd.add_argument("--name")
@@ -1392,6 +1450,11 @@ def main():
                 cmd.add_argument('--assignment', help='explicit versioned specialist assignment JSON')
     args = parser.parse_args()
     try:
+        if args.command == 'workspace-setup':
+            result = routing_helper('workspace_setup').inspect(
+                args.workspace, args.route, args.mcp_tool, args.mcp_checked, routing_helper)
+            print(json.dumps(result, indent=2))
+            return 2 if result['workflow'] == 'blocked' else 0
         if args.command == "init":
             need(args.migration_treatment is None or args.mode == "migration", "migration treatment requires --mode migration")
             result = intake_question(args.mode, args.migration_treatment)

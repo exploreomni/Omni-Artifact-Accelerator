@@ -1,11 +1,9 @@
 """Fixed resumable work/context/preflight/reservation recipe; never launches."""
 import copy
-import fcntl
+from contextlib import ExitStack
 import importlib.util
-import os
 from pathlib import Path
 import re
-import stat
 
 _spec = importlib.util.spec_from_file_location('recipe_project', Path(__file__).with_name('analyst_project.py'))
 P = importlib.util.module_from_spec(_spec)
@@ -37,11 +35,9 @@ def prepare(root, request):
     directory = P.no_links(root / '.execution-preparation')
     directory.mkdir(mode=0o700, exist_ok=True)
     lock_path = P.no_links(directory / (request['idempotency_key'] + '.lock'))
-    fd = os.open(lock_path, os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW | os.O_NONBLOCK, 0o600)
-    try:
-        P.need(stat.S_ISREG(os.fstat(fd).st_mode), 'Preparation lock must be regular')
+    with ExitStack() as locks:
         try:
-            fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            locks.enter_context(P.local_file_lock(lock_path))
         except BlockingIOError:
             return {'status': 'busy', 'agents_dispatched': False, 'next_action': 'Resume the same request after the active preparation finishes.'}
         binding = _binding(root, request)
@@ -76,5 +72,3 @@ def prepare(root, request):
         return {'status': 'ready', 'resumed': reused, 'prepared': work, 'context': receipt, 'reservation': claim,
                 'agents_dispatched': False, 'publication_authorized': False,
                 'next_action': 'Reuse the recorded attempt; worker launch remains a separate guarded operation.'}
-    finally:
-        os.close(fd)

@@ -248,7 +248,10 @@ def build(root, request, *, P=None, provider=None):
             _need(S._read(fd, dep['path'], MAX_INPUT_BYTES) == content[dep['id']],
                   'dependency_changed:' + dep['id'])
         _need(_builder(S, P) == builder, 'builder_changed')
-        _write_new_pair(fd, request['output'], output, request['record'], record_raw, S)
+        if os.name == 'nt':
+            P.routing_helper('windows_files').write_pair(fd, request['output'], output, request['record'], record_raw)
+        else:
+            _write_new_pair(fd, request['output'], output, request['record'], record_raw, S)
     return {'status': 'built', 'record': _pin(request['record'], record_raw, P),
             'provenance_sha256': record['sha256'], 'output': record['output'], **_boundaries()}
 

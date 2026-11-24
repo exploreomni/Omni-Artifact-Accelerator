@@ -37,7 +37,7 @@ def metadata_scalars(text, keys, indent=""):
 
 
 def check(root=ROOT):
-    package = json.loads((root / "package.json").read_text())
+    package = json.loads((root / "package.json").read_text(encoding='utf-8'))
     names = package["skills"]
     errors, links = [], 0
     if len(names) != len(set(names)):
@@ -47,7 +47,7 @@ def check(root=ROOT):
         errors.append("package skill list does not match folders")
     for name in names:
         path = root / "skills" / name / "SKILL.md"
-        text = path.read_text()
+        text = path.read_text(encoding='utf-8')
         if not text.startswith("---\n") or "\n---\n" not in text[4:]:
             errors.append(f"{path.relative_to(root)}: missing frontmatter")
             continue
@@ -55,7 +55,7 @@ def check(root=ROOT):
             header = metadata_scalars(text.split("---", 2)[1], {"name", "description"})
             if header["name"] != name:
                 raise ValueError("skill name mismatch")
-            interface = (path.parent / "agents/openai.yaml").read_text()
+            interface = (path.parent / "agents/openai.yaml").read_text(encoding='utf-8')
             if not interface.startswith("interface:\n"):
                 raise ValueError("missing agent interface")
             metadata_scalars(interface.split("\n", 1)[1],
@@ -76,7 +76,7 @@ def check(root=ROOT):
             errors.append(f"{relative}: excluded repository artifact")
         if path.suffix != ".md":
             continue
-        content = path.read_text()
+        content = path.read_text(encoding='utf-8')
         if re.search(r"/Users/[A-Za-z0-9._-]+/", content):
             errors.append(f"{relative}: personal workstation path")
         for target in re.findall(r"\[[^\]]*\]\(([^)]+)\)", content):

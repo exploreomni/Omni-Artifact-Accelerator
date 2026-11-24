@@ -6,11 +6,12 @@ Target writes additionally require an exact candidate digest at startup. This
 single-user boundary is not a hosted authorization or multi-tenant service.
 """
 import argparse
-import fcntl
 import hashlib
 import importlib.util
 import json
 import os
+if os.name != 'nt':
+    import fcntl
 from pathlib import Path
 import re
 import subprocess
@@ -2064,6 +2065,9 @@ def serve(bridge, incoming, outgoing):
 
 
 def main(argv=None):
+    if os.name == 'nt':
+        sys.stderr.write('The packaged visual MCP server requires a qualified POSIX host. Use local planning or an existing host-connected Omni MCP tool.\n')
+        return 2
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--project", type=Path, required=True)
     parser.add_argument('--tool-profile', choices=('legacy', 'execution', 'selected'), default='legacy',

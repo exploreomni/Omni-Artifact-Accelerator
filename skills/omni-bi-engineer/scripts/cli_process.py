@@ -7,6 +7,7 @@ import selectors
 import signal
 import stat
 import subprocess
+import sys
 import time
 
 MAX_EXECUTABLE = 128 * 1024 * 1024
@@ -15,6 +16,13 @@ MAX_STDERR = 64 * 1024
 
 class ProcessError(ValueError):
     pass
+
+
+def require_bounded_transport():
+    if sys.platform == "win32":
+        raise ProcessError("Packaged Omni CLI adapter unavailable on native Windows; use the host version preview")
+    if os.name != "posix" or not hasattr(os, "killpg"):
+        raise ProcessError("Bounded CLI transport requires a qualified POSIX host")
 
 
 def pinned_file(path, expected, executable=False):
@@ -52,6 +60,7 @@ def pinned_file(path, expected, executable=False):
 
 def command(environment):
     """Resolve no PATH entries, shell startup, shebang interpreter or packages."""
+    require_bounded_transport()
     path, sha = environment.get("OAA_OMNI_CLI_PATH"), environment.get("OAA_OMNI_CLI_SHA256")
     runtime, runtime_sha = environment.get("OAA_OMNI_RUNTIME_PATH"), environment.get("OAA_OMNI_RUNTIME_SHA256")
     prefix = pinned_file(path, sha, executable=not runtime)
@@ -80,8 +89,7 @@ def run(argv, *, input=None, env, cwd, timeout=60, max_stdout=8 * 1024 * 1024,
     POSIX process groups clean up cooperating descendants. A compromised child
     can escape a process group; this function is not host isolation.
     """
-    if os.name != "posix" or not hasattr(os, "killpg"):
-        raise ProcessError("Bounded CLI transport requires a qualified POSIX host")
+    require_bounded_transport()
     if input is not None and (not isinstance(input, bytes) or len(input) > max_stdout):
         raise ProcessError("CLI request exceeds bounded size")
     proc = subprocess.Popen(argv, stdin=subprocess.PIPE if input else subprocess.DEVNULL,

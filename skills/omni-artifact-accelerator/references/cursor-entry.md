@@ -8,6 +8,8 @@ When working from a private engagement, keep its files in a sibling folder. To w
 
 For a skills-only installation, use the host-entry preflight to identify the available orchestrator and its revision. If project-rule discovery is the behavior under test, open the checkout containing the rule. An installed skills folder by itself does not supply a workspace project rule. [Host-entry preflight](engagement-entry.md#inspect-the-host-entry-first)
 
+On native Windows Python use the [Windows preview setup](../../../docs/windows-setup.md). Follow its operation-level support table before writing project files or issuing any tenant action.
+
 ## Check the first response
 
 In a fresh Agent chat, ask to migrate an existing Domo Pro Code App 1:1 and name two controls from that App. Give only the business request. Agent should recognize preservation, retain both controls, identify the available source evidence, and offer one source specification for confirmation. It should ask for only the material evidence missing from the authorized source route. A redesign is a separate user decision. Review against the [shared intake](work-intent.md) and [source comparison](migration-fidelity.md).

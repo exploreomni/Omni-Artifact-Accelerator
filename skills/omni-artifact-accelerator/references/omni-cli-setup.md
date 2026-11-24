@@ -28,6 +28,18 @@ python3 -I -S -B "$OAA_SETUP" --no-matching-omni-mcp-tool
 
 Use `--route mcp` for an explicit MCP choice. An explicit API or offline route skips both connection checks. In a host without a shell, use the same MCP selection directly and retain the existing execution requirements for later gates.
 
+## Preview a Windows CLI version check
+
+Native Windows x64 setup reports `version_check: host_preview_only`. After confirming the official origin of an existing `omni.exe`, have the host supply its absolute path as `OAA_OMNI_CLI_PATH` and its independently verified **installed binary** digest as `OAA_OMNI_CLI_SHA256`. Use a direct executable on a local fixed NTFS volume. The file reader rejects reparse points and files with multiple hard links. From the checkout in PowerShell, run
+
+```powershell
+py -3 -I -S -B skills/omni-artifact-accelerator/scripts/omni_cli_setup.py --route cli --preview-windows-version
+```
+
+The preview reads the file, checks the pin and x64 PE header, and returns `executed: false` with an argument list for the host. A separately authorized host can run that exact `--version` check after protecting the pinned path through launch. Use an empty private profile and temporary directory, omit credentials, disable the update notifier, cap each output stream at 4 KiB, and terminate the process tree if the ten-second deadline or a byte limit is reached. Only the host's observed output establishes the installed version.
+
+The packaged native tenant adapter is unavailable on Windows. An independently configured host CLI, Omni MCP or API has its own operation and access checks. If installation is needed, Windows setup can prepare the official x64 ZIP offer. Archive staging and installation require a separately qualified host. The package's staging helper stops before writing a payload on Windows.
+
 ## Check before offering CLI installation
 
 Once the user chooses the CLI, use the selected orchestrator's own helper on the intended machine:
